@@ -1,0 +1,12 @@
+.menu-subtitle {
+    letter-spacing: .05em;
+    cursor: default;
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--vz-vertical-menu-title-color);
+}
+.menu-title span {
+    padding: 12px 20px;
+    display: inline-block;
+}

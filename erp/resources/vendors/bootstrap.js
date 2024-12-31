@@ -1,0 +1,1 @@
+const FnbApi = require('fnb-api').Api;

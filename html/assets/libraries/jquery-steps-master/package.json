@@ -1,0 +1,41 @@
+{
+  "name": "jquery.steps",
+  "version": "1.0.2",
+  "description": "A simple, lightweight jQuery step wizard plugin.",
+  "main": "./dist/jquery-steps.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oguzhanoya/jquery-steps.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oguzhanoya/jquery-steps/issues"
+  },
+  "homepage": "https://oguzhanoya.github.io/jquery-steps",
+  "scripts": {
+    "build:css": "stylus src/styl/jquery-steps.styl -m -o dist/",
+    "build:js": "rollup -c",
+    "build": "npm run build:js && npm run build:css",
+    "lint": "eslint src",
+    "lint-fix": "eslint --fix src",
+    "compress": "uglifyjs dist/jquery-steps.js -o dist/jquery-steps.min.js -c -m --comments /^!/",
+    "prebuild": "npm run lint",
+    "postbuild": "npm run compress",
+    "clean": "rm -rf dist/*"
+  },
+  "author": "oguzhanoya",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
+    "eslint": "^6.1.0",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.18.2",
+    "rollup": "^1.19.4",
+    "rollup-plugin-babel": "^4.3.3",
+    "stylus": "^0.54.5",
+    "uglify-js": "^3.6.0"
+  },
+  "dependencies": {
+    "jquery": "^3.4.1"
+  }
+}

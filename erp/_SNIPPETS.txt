@@ -1,0 +1,12 @@
+mysqlcheck -u root -p --auto-repair --check --optimize --all-databases
+
+perl mysqltuner.pl --host=127.0.0.1 --user root --pass xf2XpsZ4Q7Gn2pOM
+
+^.*(aa\().*\n?
+
+phpenmod xdebug
+
+phpdismod xdebug
+
+apt-get remove php7.4-xdebug -y
+apt-get install php7.4-xdebug -y

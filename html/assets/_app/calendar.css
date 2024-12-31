@@ -1,0 +1,149 @@
+
+.e-schedule .e-vertical-view .e-resource-cells {
+    height: 58px;
+}
+
+.e-appointment .template-wrap{
+    width:100%;
+}
+.cal_icon_chart:before{
+    content: '\e868';
+}
+.e-recurrence-icon{
+    display:none;
+}
+.timelinebtn{
+    color: #fff !important;
+    border-color: #fff !important;
+    background-color: transparent !important;
+}
+.timelinebtn:hover{
+    color: #000 !important;
+    border-color: #000 !important;
+    background-color: #fff !important;
+}
+
+
+.e-location-container{
+    display:none;
+    
+}
+
+#calendar_sidebar{
+    width:20%;
+}
+
+/* more popup */
+
+.e-more-popup-wrapper .e-appointment {
+    height: auto !important;
+}
+
+.e-more-popup-wrapper {
+    width: 275px;
+}
+.e-more-popup-wrapper .reportsblock,.e-more-popup-wrapper .stepsblock{
+    display:none !important;
+}
+.e-quick-popup-wrapper .e-popup-footer .delbtn {
+    float: left !important;
+}
+.e-popup-footer{
+    border-top:1px solid #ccc;
+}
+.quick-info-header-content{
+    border-left: 10px solid rgba(0,0,0, 0.25);
+}
+.quick-info-title {
+    padding: 12px 10px;
+}
+.e-quick-popup-wrapper .e-event-popup .e-popup-content {
+    padding: 0px;
+}
+li.report_link{
+cursor: pointer;
+}
+.quick-info-content .list-group-item {
+    padding: .50rem 1.0rem;
+}
+.e-schedule .e-timeline-view .e-appointment .e-appointment-details .e-subject{
+   font-weight:bold;
+   padding: 10px 5px;
+}
+
+.e-quick-popup-wrapper{
+    max-width:400px;
+}
+.month-week-divider,.week-divider{
+    border-left:2px solid #ccc !important;
+}
+
+
+.e-schedule .e-month-view .e-appointment .e-subject {
+      width: 100px; 
+}
+.e-subject-container{
+    width:100% !important;
+}
+.e-appointment{
+    background: none !important;
+}
+.e-appointment-details{
+    margin-left: -5px;
+    margin-right: -5px;
+    padding: 0 5px;
+}
+.e-schedule .e-month-view .e-appointment {
+    height: 28px;
+}
+.e-schedule .e-month-view .e-date-header-wrap table td{
+        border-width: 1px 0 1px 1px;
+}
+.e-schedule .e-month-view .e-work-cells{
+    
+        border-width: 1px 0 0 1px;
+}
+.e-work-cells.month-cell-mute{
+    background-color:#dedede !important;
+}
+.e-toolbar-left:first-child{
+    padding-left:0px;
+}
+
+.control-section{
+    background-color:#f7f7f7;
+}
+.e-date-header,.e-schedule .e-month-view .e-date-header-wrap table td{
+    color: #000 !important;
+}
+.e-schedule .e-month-view .e-current-date .e-date-header{
+    color: #fff !important;
+}
+.e-header-cells e-current-day{
+    color: #0078d6 !important;
+}
+.e-accordion-header{
+    padding-left: 6px !important;
+}
+.e-accordion .e-acrdn-item .e-acrdn-panel .e-acrdn-content .e-acrdn-header {
+    padding-left: 6px !important;
+}
+.notes_edit_btn{
+    padding: 3px 6px !important;
+}
+
+.policy-header{
+    background-color: #e48138;
+    color: #fff;
+}
+.policy-header h6{
+    font-size:15px;
+}
+#role_policies  > .e-acrdn-item > .e-acrdn-header{
+    background-color: #e8e8e8;
+    
+}
+
+.e-work-cells.e-current-date{
+    background-color: #d0e9ff !important;
+}

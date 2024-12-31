@@ -1,0 +1,6 @@
+<!DOCTYPE html>
+<html><head>
+</head>
+<body style="padding: 0; margin: 0; background-color: #ebecf0; color: #000;"><div style="background-color:#ebecf0;margin:0;text-align:center;width:100%;"><figure class="table"><table style="background-color:#fff;border-collapse:collapse;margin:0 auto;width:600px;"><tbody><tr><td style="padding:30px 30px 50px 30px;text-align:left;width:100%;"><span style="color:#000000;">Hi {{$customer-&gt;contact}},</span><br>@if(!empty($reseller_user_company))Reseller user: {{$reseller_user_compay}}@endif<br><span style="color:#000000;">{!! $msg !!}</span></td></tr><tr>
+<td style="width: 100%; padding: 0px; margin: 0; background-color: #ebecf0;">[footer_image]</td>
+</tr></tbody></table></figure></div></body></html>

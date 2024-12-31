@@ -1,0 +1,4 @@
+src/lib/hash.lo: \
+ /home/erpcloud-live/htdocs/zadmin/assets/xdebug-3.3.0/src/lib/hash.c \
+ /home/erpcloud-live/htdocs/zadmin/assets/xdebug-3.3.0/src/lib/hash.h \
+ /home/erpcloud-live/htdocs/zadmin/assets/xdebug-3.3.0/src/lib/llist.h

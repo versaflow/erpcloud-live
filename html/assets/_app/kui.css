@@ -1,0 +1,47 @@
+.kui-toolbar{
+    border-color: rgba(0,0,0,.08) !important;
+    color: #424242 !important;
+    background-color: #fafafa !important;
+}
+.kui-btn{
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    font: 400 14px Arial,Helvetica,sans-serif;
+    list-style: none;
+    -webkit-tap-highlight-color: transparent;
+    padding: 4px 8px;
+    box-sizing: border-box;
+    border-width: 1px;
+    border-style: solid;
+    font-size: 14px;
+    line-height: 1.4285714286;
+    font-family: inherit;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    vertical-align: middle;
+    user-select: none;
+    cursor: pointer;
+    outline: 0;
+    -webkit-appearance: none;
+    position: relative;
+    border-color: rgba(0,0,0,.08);
+    color: #424242;
+    background-image: linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.02));
+    border-radius: 0;
+    background-color: #e1e1e1;
+    z-index: 2;
+    border-top-left-radius: 2px;
+    border-bottom-left-radius: 2px;
+}
+.k-button.k-state-focused, .k-button.k-state-focused.k-state-disabled, .k-button:focus, .k-button:focus:hover, .k-state-disabled .k-button.k-state-focused {
+    border-color: inherit !important;
+    box-shadow: inherit !important;
+}
+.k-button.e-menu-item{
+    text-align:left;
+}

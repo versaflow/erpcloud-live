@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body style="padding: 0; margin: 0; background-color: #ebecf0; color: #000;">
+<div style="text-align: center; width: 100%; margin: 0; background-color: #ebecf0;">
+<table style="border-collapse: collapse; width: 600px; background-color: #fff; margin: 0 auto;">
+<tbody>
+<tr>
+<td style="width: 100%; text-align: left; padding: 30px 30px 50px 30px;"><span style="color: #000000;">Hello {{$company}},<br /></span><br /><span style="color: #000000;">{!! $msg !!} </span><br /><br /><span style="color: #000000;">Regards,</span><br /><span style="color: #000000;">{{$partner_company}}</span></td>
+</tr>
+<tr>
+<td style="width: 100%; padding: 0px; margin: 0; background-color: #ebecf0;"> </td>
+</tr>
+</tbody>
+</table>
+</div>
+</body>
+</html>

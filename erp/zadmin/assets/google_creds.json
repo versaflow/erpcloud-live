@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "still-gravity-266012",
+  "private_key_id": "7687fb7157815066d5519b80eee49027ff909100",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCTmvWQgJ1F6zG6\nI9rpwXU7rCENPPbxs6AkYtKNKgdlH68zfjRapya4CWOjxuzCCft0DwOdttERlska\nZJ6Br4ecvmoRxi6VkLAQ/V/ES8e116ENzDu3++CVYKXZ7THdEU+adqIJ/SVBdEdq\nPE4l95JZNFq6VBQzWmFDq9oqxFUENGa2XdoUuKDEvALUNFz/nLhp6Pc5bBmzf3CU\nap16mhVa0uFs9/xHRTmG049417FK3LbkBzzyBAteLUXeXjesJBKTUs9iskW81/FL\nlPqjlF3MWjpLRvpfvFu74FN4CLJydqrwdS5XfjEMd85PqMtTjBz9xdzQ/jkOSTAh\nUzlfqsZJAgMBAAECggEAD+E1zkEh+mfQUp7hIjEZjk0JRMH0bMInBkcZ8Q0unLzd\nBdCL7B1Lu3SqIzBnYARAKMclO9JTWX2z/rqIuXnDgJPVODqOoDFf2cISi50d/BSZ\ny3DXk2Z+DcAHM8Pyj36ZZmwhKGszNwCeHsIkY64H8QAiiyV4w2ITsPqz9tImtdQO\nCKt/n5ESrKwNys48IEh6qodnBLQUjtJjPzKMXs367g9nZl07PatzHxJ2FvS+UFT7\nPNBzqv7lwEzHCZN6NNvHguwck9uFJZlHlCnedGH0TbXqj8fv/uoPjlpH/1c3rueZ\nKqewe6+d4JoamsnZ+3rBryu3ZXJKzWTRJ/aZovETMQKBgQDIfaeCSJ14Hf8DLgIo\n+wDpEK/fak4123lQkoorQLGmFpbjtbwIm0bISSRym6uOwVuwp9CCLs+gEROM3XxX\nf8PvlKG0FaeQtNn2TF/uQS1kMnmJdHNpsIDas94Q2RHSbgUy0pLFRCVINhVH+FTy\nN1g6R4lZceBg1sFvZ5s+1zstEQKBgQC8eOVjeQY7SqMcmf2mDL8/zR5LnQZvIMsZ\nFTbPEG0NoEYx//S96mk0/XyshLGefPwhqQwUtwxJ9mYCR63yxPkXp5iX+RZz8Xzj\nE3OIFqpSNhtNL9sRByuet4bxVav0mHIstSugclBhEh0TnReOdx/8qDvdwtKoeked\nsgaHeSfluQKBgGpDr3UuZ8gynedhi2ONJn5hidYw0iNZoINEKFekgoQ1lOQ8ft1Q\n78NYgSj9uYCAm8iWKb3WcdW1N1eCTVVTMtbZQJvinl3kfWI+ONpfUV+6IRDp2AI8\nuw8wJpNnejq+daLqWUCVTe1oPP9YcC2xh+Hb6MCvyu2I5h3WHELCcWsBAoGAXTVA\n5JfmwA3iavOxIJyvPINZlzV6CB1ks+vs5iyOci2waWvXAtFZ5G30aXFaUjInkxIC\nOoBoYG+t9TSzzxsgwVUOPyJdu0tTYw2slkH3S58ck2i2Y05zgRPsdY/T8awu0vNq\nNvgxzj/iB2AqVTeOpyogKUT/X3jR0ChJ2FfPpmkCgYEAhNTG+FeggKgXBHMRw9gS\nBjuvaxrRzi8kHqw+hoQglBdpZH+dAeNaVgUqxJhuMKLigJXEeEPCr2rlJmRPJVsG\nuB/F0EVRfBRbaqtwXjSQUxy2VWqtD0EO3UPIhESJDZZLE+DWN3uauN6RAhv96VaJ\n8a6nfJ4izrn8+op3nHuhGg8=\n-----END PRIVATE KEY-----\n",
+  "client_email": "cloudtelanalytics@still-gravity-266012.iam.gserviceaccount.com",
+  "client_id": "107749986399749434851",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/cloudtelanalytics%40still-gravity-266012.iam.gserviceaccount.com"
+}

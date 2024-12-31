@@ -1,0 +1,1 @@
+<object height="100%" width="100%" type="application/pdf" data="{{ $file_url }}">

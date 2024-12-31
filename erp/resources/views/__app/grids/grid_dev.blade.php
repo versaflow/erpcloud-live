@@ -1,0 +1,1 @@
+ @livewire('grid-component',['module_id'=>$module_id])

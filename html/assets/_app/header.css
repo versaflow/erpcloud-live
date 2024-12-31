@@ -1,0 +1,158 @@
+#header{
+    background: #19457e !important;
+    color: #fff !important;
+}
+#header .dock-menu .e-menu-wrapper, #header .dock-menu.e-menu-wrapper, #header .dock-menu.e-menu-wrapper ul>*, #header .dock-menu .e-menu-wrapper ul>* {
+    background: #19457e !important;
+    color: #fff !important;
+}
+
+#header .e-menu-wrapper ul .e-menu-item .e-menu-url, #header .e-menu-container ul .e-menu-item .e-menu-url,
+#header .e-menu-wrapper ul .e-menu-item .e-menu-icon, #header .e-menu-container ul .e-menu-item .e-menu-icon,
+#header .e-menu-wrapper ul .e-menu-item .e-caret, #header .e-menu-container ul .e-menu-item .e-caret{
+    color: #000 !important;
+}
+#header .e-menu-item .e-caret {
+    /*line-height: 42px;*/
+}
+
+#customer_toolbar_btn #hamburger:hover{
+    color: #f58634 !important;
+}
+#header .e-menu-wrapper ul .e-menu-item:hover{
+    background-color: #f58634 !important;
+}
+#header .e-menu-wrapper ul .e-menu-item a:hover .e-menu-url, #header .e-menu-container ul .e-menu-item a:hover .e-menu-url,
+#header .e-menu-wrapper ul .e-menu-item a:hover .e-menu-icon, #header .e-menu-container ul .e-menu-item a:hover .e-menu-icon,
+#header .e-menu-wrapper ul .e-menu-item a:hover .e-caret, #header .e-menu-container ul .e-menu-item a:hover .e-caret{
+    color: #fff !important;
+}
+#customer_toolbar_btn #hamburger.icon-menu {
+font-size: 20px;
+float: left;
+/*line-height: 42px;*/
+padding-left:2px;
+}
+
+#logo_dropdown .dropdown-menu{
+    z-index:2000;
+}
+#logo_dropdown ul{ 
+    background: #19457e !important;
+    color: #fff !important;
+}
+#logo_dropdown ul li a{
+    color: #fff !important;
+}
+.erp_login_btn{
+    font-size:12px;
+    line-height:15px;
+    padding-bottom:5px;
+}
+#logobtn:focus {
+    box-shadow: none !important;
+}
+.dock-menu.e-menu-wrapper ul .e-menu-item.e-focused .e-menu-icon,.dock-menu.e-menu-wrapper ul .e-menu-item .e-menu-icon {
+    color: #fff !important;
+}
+
+#header .e-input-group, #header .e-input-group.e-control-wrapper{
+    background: none !important;
+    color:#fff !important;
+}
+
+#header input::-webkit-input-placeholder {
+    color: #fff !important; 
+    font-weight: bold !important;
+}
+    
+#header    .sidebar-input::-webkit-input-placeholder {
+color: #fff !important; 
+font-weight: 500 !important;
+}
+
+#header .sidebar-input {
+padding-bottom: 0px !important;
+}
+#header .e-ddl-icon{color:#fff !important;}
+
+#header .e-menu-wrapper ul .e-menu-item .e-menu-icon:not(.fa-user), #header .e-menu-container ul .e-menu-item .e-menu-icon:not(.fa-user) {
+
+     margin-right: 4px; 
+}
+
+#header .e-menu-wrapper ul .e-menu-caret-icon .e-menu-icon, #header .e-menu-container ul e-menu-caret-icon .e-menu-icon {
+
+     margin-right: 8px; 
+}
+#header .e-menu-wrapper ul.e-menu .e-menu-item .e-menu-icon:not(.fa-user), #header .e-menu-container ul.e-menu .e-menu-item .e-menu-icon:not(.fa-user) {
+    width: auto;
+}
+#logo_dropdown .dropdown-menu {
+    width: 250px;
+}
+
+   height: 26px !important;
+    line-height: 26px;
+    min-height: 26px !important;
+}
+.e-menu-wrapper.k-button-group ul .e-menu-item .e-caret, .e-menu-container ul .e-menu-item.k-button .e-caret {
+    line-height: 26px;
+}
+.e-menu-item.k-button{
+    font-size:12px;
+    border-radius: 0px !important;
+    border-color: #bbb !important;
+    color: #2e2e2e !important;
+    background-color: #e9e9e9 !important;
+    background-position: 50% 50% !important;
+    background-image: url(https://kendo.cdn.telerik.com/2021.2.616/styles/textures/highlight.png) !important;
+    background-image: none,linear-gradient(to bottom,rgba(255,255,255,.25) 0,rgba(255,255,255,0) 100%) !important;
+}
+.k-button-group .k-button:first-child, .k-button-group .k-group-start {
+    border-top-left-radius: 4px !important;
+    border-bottom-left-radius: 4px !important;
+}
+.k-button-group .k-button:last-child, .k-button-group .k-group-end {
+    border-top-right-radius: 4px !important;
+    border-bottom-right-radius: 4px !important;
+}
+
+.k-button-group .k-button+.k-button {
+    margin-left: -1px !important;
+}
+
+.e-menu-item.k-button.k-state-hover, .e-menu-item.k-button:hover {
+    color: #2e2e2e !important;
+    border-color: #b6b6b6 !important;
+    background-color: #a99f9a !important;
+    background-image: url(https://kendo.cdn.telerik.com/2021.2.616/styles/textures/highlight.png) !important;
+    background-image: none,linear-gradient(to bottom,rgba(255,255,255,.25) 0,rgba(255,255,255,0) 100%) !important;
+}
+#header .e-menu-item.k-button .e-caret {
+    line-height: 26px !important;
+}
+
+#header a.e-menu-text.e-menu-url:hover {
+    color: white !important;
+}
+
+.global_search_input.e-input-group{
+    height: 26px !important;
+    line-height: 26px !important;
+}
+/*report exports*/
+.filterHeaderCell{
+font-weight: bold !important;
+background-color: #e9e9e9 !important;
+color: #111 !important;
+}
+
+.e-menu-popup.top-menu .e-menu-item:not(.menu_border_top){
+border-width: 0px!important;
+}
+.global_search_input{
+    border-radius: 0px !important;
+    border-top-left-radius: 4px !important;
+    border-bottom-left-radius: 4px !important;
+}

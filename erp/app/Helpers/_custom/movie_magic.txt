@@ -1,0 +1,95 @@
+https://cms.easyip.xyz/
+
+KEY
+65aeb70670f1865aeb70670f1a65aeb70670f1b65aeb70670f1c
+
+
+ DOCS?
+ 
+https://yourdns.com/api/wclient/v1/create-line  = normal line
+https://yourdns.com/api/wclient/v1/create-line/1 = trial
+
+Header: Authorization: Bearer «hereyourtoken»
+Header: username
+Header: password
+
+
+Example
+
+
+function gen_request($endpoint, $post = [])
+{
+    // header('Content-Type: application/json');
+    $url = 'https://cms.easyip.xyz/api/wclient/v1/'. $endpoint;
+    $client_username = 'cloudtelecoms';
+    $client_password = 'Webmin786';
+    $token = '65aeb70670f1865aeb70670f1a65aeb70670f1b65aeb70670f1c';
+    
+    $ch = curl_init($url);
+    $authorization = "Authorization: Bearer " . $token;
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', $authorization, "username: " . $client_username, "password: " . $client_password)); // Inject the token into the header
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    if (!empty($post)) {
+        $post = json_encode($post);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+    }
+
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+    $result = curl_exec($ch);
+    
+    if($result === false)
+    {
+        echo 'Curl error: ' . curl_error($ch);
+    }
+    else
+    {
+        echo 'Operation completed without any errors';
+    }
+
+    curl_close($ch);
+    return $result;
+}
+
+
+$d = gen_request('https://heredns:port/api/wclient/v1/create-line', $token, $username, $password, $data);
+
+  $data = ["line_type" => "line", "package" => 1, "description" => 'test', "username" => $client_username, "password" => $client_password];
+
+
+line_type = line or mag
+
+
+#extend
+$ex = gen_request('https://heredns:port/api/wclient/v1/extend/[id], $token, $username, $password, ['package' => $package_id]);
+
+
+# enable
+$ex = gen_request('https://heredns:port/api/wclient/v1/enable/[id]', $token, $username, $password, ['enable' => 1]);
+
+
+$ex = gen_request('https://heredns:port/api/wclient/v1/enable/[id]', $token, $username, $password, ['enable' => 1]);
+
+
+# delete
+$ex = gen_request('https://heredns:port/api/wclient/v1/delete/[id]', $token, $username, $password);
+
+
+
+[id] = id placeholder
+
+
+packages you can fetch base don
+
+
+https://heredns:port/api/wclient/v1/lines/packages/1 = trial
+https://heredns:port/api/wclient/v1/lines/packages/0 = normal
+
+for packages
+
+
+lines/mag = mag overview
+lines/lines = lines overview
+lines/lines?per_page=500
+lines/lines?page=2

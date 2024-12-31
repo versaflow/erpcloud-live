@@ -1,0 +1,28 @@
+{
+    "favorites.resources": [
+        {
+            "filePath": "erp/app/Helpers",
+            "group": "Default"
+        },
+        {
+            "filePath": "erp/app/Library",
+            "group": "Default"
+        },
+        {
+            "filePath": "erp/resources/views",
+            "group": "Default"
+        },
+        {
+            "filePath": "erp/app/Http/Controllers",
+            "group": "Default"
+        },
+        {
+            "filePath": "erp/routes",
+            "group": "Default"
+        },
+        {
+            "filePath": "erp/storage/logs",
+            "group": "Default"
+        }
+    ]
+}

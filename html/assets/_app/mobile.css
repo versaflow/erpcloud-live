@@ -1,0 +1,15 @@
+
+@media screen and (max-width: 768px) {
+.k-button {
+    padding: 8px 16px !important;
+}
+body {
+    font-size: 1rem;
+}
+.grid-toolbar .k-widget.k-button-group, .report-toolbar .k-widget.k-button-group {
+    height: 30px;
+}
+.ag-theme-alpine, .ag-theme-alpine .ag-row{
+    font-size: 1rem !important;
+}
+}

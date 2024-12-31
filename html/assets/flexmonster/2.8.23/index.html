@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Flexmonster Pivot Table & Charts</title>
+    <!-- Styling for the demo (optional) -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <section id="app">
+        <header class="mainheader fixed-head">
+            <div class="container-xl">
+                <a href="https://www.flexmonster.com/" target="blank" class="logo">
+                    <img src="https://www.flexmonster.com/base/assets/img/svg/logo.svg" alt />
+                </a>
+                <ul class="mainnav">
+                    <li class>
+                        <a href="https://www.flexmonster.com/doc/" target="blank">Docs</a>
+                    </li>
+                    <li class>
+                        <a href="https://www.flexmonster.com/support/" target="blank">Support</a>
+                    </li>
+                    <li class>
+                        <a href="https://www.flexmonster.com/contact/" target="blank">Contact us</a>
+                    </li>
+                </ul>
+            </div>
+        </header>
+        <div class="wrap">
+            <!-- 1. Create a DIV container to insert the component -->
+            <div id="pivot-container" style="padding-bottom: 30px;"></div>
+
+            <!-- 2. Include flexmonster.js and CSS files -->
+            <script src="flexmonster/flexmonster.js" type="text/javascript"></script>
+            <link href="flexmonster/flexmonster.min.css" rel="stylesheet" type="text/css" />
+            <!-- You can use a different theme by specifying the corresponding path. -->
+            <!-- For example, to load the Green theme: -->
+            <!-- <link href="flexmonster/theme/green/flexmonster.min.css" rel="stylesheet" type="text/css" />  -->
+            <!-- See the full list of available themes: https://www.flexmonster.com/doc/customizing-appearance/#built-in-themes -->
+
+            <!-- 3. Create an instance of the component using new Flexmonster() -->
+            <script type="text/javascript">
+                var pivot = new Flexmonster({
+                    container: "pivot-container",
+                    toolbar: true,
+                    height: 600,
+                    report: {
+                        "dataSource": {
+                            "type": "json",
+                            "mapping": {
+                                "Quantity": {
+                                    "type": "number"
+                                },
+                                "Price": {
+                                    "type": "number"
+                                },
+                                "Retail Category": {
+                                    "type": "string"
+                                },
+                                "Sales": {
+                                    "type": "number"
+                                },
+                                "Order Date": {
+                                    "type": "year/quarter/month/day"
+                                },
+                                "Date": {
+                                    "type": "date"
+                                },
+                                "Status": {
+                                    "type": "string"
+                                },
+                                "Product Code": {
+                                    "type": "string"
+                                },
+                                "Phone": {
+                                    "type": "string"
+                                },
+                                "Country": {
+                                    "type": "string",
+                                    "hierarchy": "Location"
+                                },
+                                "City": {
+                                    "type": "string",
+                                    "hierarchy": "Location",
+                                    "parent": "Country"
+                                },
+                                "CurrencyID": {
+                                    "type": "property",
+                                    "hierarchy": "Country"
+                                },
+                                "Contact Last Name": {
+                                    "type": "string"
+                                },
+                                "Contact First Name": {
+                                    "type": "string"
+                                },
+                                "Deal Size": {
+                                    "type": "string"
+                                }
+                            },
+                            "filename": "https://cdn.flexmonster.com/data/retail-data.json"
+                        },
+                        "slice": {
+                            "reportFilters": [{
+                                    "uniqueName": "Date.Year",
+                                    "filter": {
+                                        "members": [
+                                            "date.year.[2019]"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "uniqueName": "Date.Month"
+                                }
+                            ],
+                            "rows": [{
+                                    "uniqueName": "Location"
+                                },
+                                {
+                                    "uniqueName": "Retail Category",
+                                    "filter": {
+                                        "members": [
+                                            "retail category.[books & movies]",
+                                            "retail category.[cellphones & accessories]",
+                                            "retail category.[health & personal care]"
+                                        ]
+                                    }
+                                }
+                            ],
+                            "columns": [{
+                                    "uniqueName": "Order Date"
+                                },
+                                {
+                                    "uniqueName": "[Measures]"
+                                }
+                            ],
+                            "measures": [{
+                                "uniqueName": "Price",
+                                "aggregation": "sum",
+                                "format": "-17j4ga3utwpe00"
+                            }],
+                            "expands": {
+                                "rows": [{
+                                        "tuple": [
+                                            "location.[norway]"
+                                        ]
+                                    },
+                                    {
+                                        "tuple": [
+                                            "location.[australia]"
+                                        ]
+                                    }
+                                ]
+                            },
+                            "drills": {
+                                "columns": [{
+                                    "tuple": [
+                                        "order date.[2019]"
+                                    ]
+                                }]
+                            }
+                        },
+                        "conditions": [{
+                                "formula": "#value > 35000",
+                                // "isTotal": true,
+                                "measure": "Price",
+                                "format": {
+                                    "backgroundColor": "#00A45A",
+                                    "color": "#FFFFFF",
+                                    "fontFamily": "Arial",
+                                    "fontSize": "12px"
+                                }
+                            },
+                            {
+                                "formula": "#value < 700",
+                                // "isTotal": false,
+                                "measure": "Price",
+                                "format": {
+                                    "backgroundColor": "#df3800",
+                                    "color": "#FFFFFF",
+                                    "fontFamily": "Arial",
+                                    "fontSize": "12px"
+                                }
+                            }
+                        ],
+                        "formats": [{
+                            "name": "-17j4ga3utwpe00",
+                            "thousandsSeparator": ",",
+                            "decimalPlaces": 0,
+                            "currencySymbol": "$"
+                        }]
+                    },
+                    licenseKey: "Z797-XAH11J-1R4G2E-4Z2N41"
+                });
+            </script>
+        </div>
+    </section>
+</body>
+
+</html>

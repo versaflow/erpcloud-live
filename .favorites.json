@@ -1,0 +1,65 @@
+[
+    {
+        "type": "Directory",
+        "name": "c:\\Users\\info\\Documents\\GitHub\\versaflow\\erp\\resources\\views",
+        "parent_id": null,
+        "fsPath": "c:\\Users\\info\\Documents\\GitHub\\versaflow\\erp\\resources\\views",
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "OsH1LPqmTWuAZode"
+    },
+    {
+        "type": "File",
+        "name": "c:\\Users\\info\\Documents\\GitHub\\versaflow\\erp\\app\\Helpers\\core\\debug.php",
+        "parent_id": null,
+        "fsPath": "c:\\Users\\info\\Documents\\GitHub\\versaflow\\erp\\app\\Helpers\\core\\debug.php",
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "OQEbNeWrZ38fo7RU"
+    },
+    {
+        "type": "Directory",
+        "name": "c:\\Users\\info\\Documents\\GitHub\\versaflow\\erp\\app\\Helpers",
+        "parent_id": null,
+        "fsPath": "c:\\Users\\info\\Documents\\GitHub\\versaflow\\erp\\app\\Helpers",
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "a1WH6DgXJjZwnysA"
+    },
+    {
+        "type": "Directory",
+        "name": "c:\\Users\\info\\Documents\\GitHub\\versaflow\\erp\\app\\Http",
+        "parent_id": null,
+        "fsPath": "c:\\Users\\info\\Documents\\GitHub\\versaflow\\erp\\app\\Http",
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "elB6kj7Zc3VfwFG5"
+    },
+    {
+        "type": "Directory",
+        "name": "c:\\Users\\info\\Documents\\GitHub\\versaflow\\erp\\app\\Library",
+        "parent_id": null,
+        "fsPath": "c:\\Users\\info\\Documents\\GitHub\\versaflow\\erp\\app\\Library",
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "pvB6zL3ke4qCya7r"
+    },
+    {
+        "type": "Directory",
+        "name": "c:\\Users\\info\\Documents\\GitHub\\versaflow\\erp\\app\\Models",
+        "parent_id": null,
+        "fsPath": "c:\\Users\\info\\Documents\\GitHub\\versaflow\\erp\\app\\Models",
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "MOhs8tkLp3Ea7lW0"
+    },
+    {
+        "type": "Directory",
+        "name": "c:\\Users\\info\\Documents\\GitHub\\versaflow\\erp\\routes",
+        "parent_id": null,
+        "fsPath": "c:\\Users\\info\\Documents\\GitHub\\versaflow\\erp\\routes",
+        "workspaceRoot": null,
+        "workspacePath": null,
+        "id": "TlQCf2rbvJBLnjP9"
+    }
+]

@@ -1,0 +1,44 @@
+{
+  "private": true,
+  "scripts": {
+    "development": "mix",
+    "watch": "mix watch",
+    "watch-poll": "mix watch -- --watch-options-poll=1000",
+    "hot": "mix watch --hot",
+    "production": "mix --production"
+  },
+  "devDependencies": {
+    "babel-loader": "^8.2.2",
+    "bootstrap-sass": "^3.4.1",
+    "cross-env": "^7.0.3",
+    "deepmerge": "^4.2.2",
+    "jquery": "^3.6.0",
+    "laravel-mix": "^6.0.29",
+    "resolve-url-loader": "^4.0.0",
+    "sass": "~1.32",
+    "sass-loader": "^12.1.0",
+    "vue-loader": "^15.9.8",
+    "vue-template-compiler": "^2.6.14"
+  },
+  "dependencies": {
+    "@formio/bulma": "^2.0.0",
+    "@progress/kendo-data-query": "^1.5.5",
+    "@progress/kendo-drawing": "^1.11.0",
+    "@progress/kendo-licensing": "^1.2.0",
+    "@progress/kendo-theme-default": "^4.41.0",
+    "@progress/kendo-vue-animation": "^2.4.2",
+    "@progress/kendo-vue-data-tools": "^2.4.2",
+    "@progress/kendo-vue-dateinputs": "^2.4.2",
+    "@progress/kendo-vue-dialogs": "^2.4.2",
+    "@progress/kendo-vue-dropdowns": "^2.4.2",
+    "@progress/kendo-vue-grid": "^2.4.2",
+    "@progress/kendo-vue-inputs": "^2.4.2",
+    "@progress/kendo-vue-intl": "^2.4.2",
+    "axios": "^0.21.1",
+    "lodash": "^4.17.21",
+    "puppeteer": "^15.2.0",
+    "quasar-extras": "^2.0.9",
+    "quasar-framework": "^0.17.20",
+    "vue": "^2.6.14"
+  }
+}
