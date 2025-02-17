@@ -1364,7 +1364,7 @@ function render_sidebar_files_uploader{{$grid_id}}(){
    
     
  
-    @if(isset($layout_filter_user))
+    @if($layout_filter_user)
    
     window['layout_filter_user_{{ $grid_id }}'] = new ej.dropdowns.DropDownList({
     	dataSource: {!! json_encode($layout_user_datasource) !!},
@@ -2940,7 +2940,7 @@ Call center functions
                         window.open(link_url,'_blank');
                     }
                 }
-                // this.unselectItem();
+                this.unselectItem();
             }
         });
         //Render initialized ListView

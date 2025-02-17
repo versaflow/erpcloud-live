@@ -20,6 +20,7 @@ class CreateCrmServerManagementTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

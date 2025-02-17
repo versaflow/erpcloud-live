@@ -13,7 +13,7 @@ class Flexmonster
     {
         $this->instance_id = $instance_id;
         $this->port = '950'.$instance_id;
-        if ($instance_id > 10) {
+        if ($instance_id>10) {
             $this->port = '95'.$instance_id;
         }
         $this->erp_conn = \DB::connection('system')->table('erp_instances')->where('id', $instance_id)->pluck('db_connection')->first();
@@ -22,12 +22,12 @@ class Flexmonster
         $this->server_path = '/home/_admin/flexmonster_'.$this->port;
 
         $this->config_path = $this->server_path.'/flexmonster-config.json';
-        if (! file_exists($this->server_path)) {
+        if (!file_exists($this->server_path)) {
             $cmd = 'cp -a '.$this->server_base_path.'/. '.$this->server_path.'/';
             $result = Erp::ssh('localhost', 'root', 'Ahmed777', $cmd);
         }
 
-        if (! file_exists($this->server_path.'/flexmonster-data-server-'.$this->port)) {
+        if (!file_exists($this->server_path.'/flexmonster-data-server-'.$this->port)) {
             $cmd = 'mv '.$this->server_path.'/flexmonster-data-server '.$this->server_path.'/flexmonster-data-server-'.$this->port;
             $result = Erp::ssh('localhost', 'root', 'Ahmed777', $cmd);
             $cmd = 'chmod 777 '.$this->config_path;
@@ -53,21 +53,20 @@ class Flexmonster
             } else {
                 $sql_query = str_replace(PHP_EOL, ' ', $report->sql_query);
                 try {
-                    $sql = $sql_query.' LIMIT 1';
+                    $sql = $sql_query. ' LIMIT 1';
                     $result = \DB::connection($report_conn)->select($sql);
-                } catch (\Throwable $ex) {
-                    exception_log($ex);
+                } catch (\Throwable $ex) {  exception_log($ex);
                     $invalid_query = 1;
                     $query_error = $ex->getMessage();
                 }
             }
 
-            \DB::connection($this->erp_conn)->table('erp_reports')->where('id', $report->id)->update(['invalid_query' => $invalid_query, 'query_error' => $query_error, 'report_index' => $report_index]);
+            \DB::connection($this->erp_conn)->table('erp_reports')->where('id', $report->id)->update(['invalid_query' => $invalid_query, 'query_error' => $query_error,'report_index' => $report_index]);
         }
-
         return \DB::connection($this->erp_conn)->table('erp_reports')->where('fds', 1)->where('invalid_query', 0)->where('report_index', '>', '')->get();
     }
-
+    
+    
     public function testReportQueries()
     {
         \DB::connection($this->erp_conn)->table('erp_reports')->update(['invalid_query' => 0, 'query_error' => '']);
@@ -86,18 +85,17 @@ class Flexmonster
             } else {
                 $sql_query = str_replace(PHP_EOL, ' ', $report->sql_query);
                 try {
-                    $sql = $sql_query.' LIMIT 1';
+                    $sql = $sql_query. ' LIMIT 1';
                     $result = \DB::connection($report_conn)->select($sql);
-                } catch (\Throwable $ex) {
-                    exception_log($ex);
+                } catch (\Throwable $ex) {  exception_log($ex);
                     $invalid_query = 1;
                     $query_error = $ex->getMessage();
                 }
             }
 
-            \DB::connection($this->erp_conn)->table('erp_reports')->where('id', $report->id)->update(['invalid_query' => $invalid_query, 'query_error' => $query_error, 'report_index' => $report_index]);
+            \DB::connection($this->erp_conn)->table('erp_reports')->where('id', $report->id)->update(['invalid_query' => $invalid_query, 'query_error' => $query_error,'report_index' => $report_index]);
         }
-
+      
     }
 
     public function loadIndexes()
@@ -110,18 +108,18 @@ class Flexmonster
 
         $indexes = [];
         $connection_list = [];
-
+        
         foreach ($reports as $report) {
             $db_conn = str_replace('_'.$report->id, '', $report->report_index);
-            if (str_contains($db_conn, 'pbx') && $this->port != 9501) {
-                continue;
+            if(str_contains($db_conn,'pbx') && $this->port!=9501){
+            continue;
             }
-            if (! isset($indexes[$db_conn])) {
+            if (!isset($indexes[$db_conn])) {
                 $indexes[$db_conn] = [];
             }
             $sql_query = str_replace(PHP_EOL, ' ', $report->sql_query);
             $indexes[$db_conn][$report->report_index] = ['Query' => $sql_query];
-            if (! in_array($db_conn, $connection_list)) {
+            if (!in_array($db_conn, $connection_list)) {
                 $connection_list[] = $db_conn;
             }
         }
@@ -129,14 +127,14 @@ class Flexmonster
         foreach ($connection_list as $connection) {
             $connection_info = $databases[$connection];
             $driver = 'mysql';
-            if ($connection == 'pbx' || $connection == 'pbx_cdr') {
-                $driver = 'pgsql';
+            if($connection == 'pbx' || $connection == 'pbx_cdr'){
+                $driver = 'pgsql';    
             }
             $datasource = [
-                'Type' => 'database',
-                'DatabaseType' => $driver,
-                'ConnectionString' => 'Server='.$connection_info['host'].';Port='.$connection_info['port'].';Uid='.$connection_info['username'].';Pwd='.$connection_info['password'].';Database='.$connection_info['database'].'; convert zero datetime=True',
-                'Indexes' => $indexes[$connection],
+            "Type" => "database",
+            "DatabaseType" => $driver,
+            "ConnectionString" => "Server=".$connection_info['host'].";Port=".$connection_info['port'].";Uid=".$connection_info['username'].";Pwd=".$connection_info['password'].";Database=".$connection_info['database']."; convert zero datetime=True",
+            "Indexes" => $indexes[$connection]
             ];
             $config['DataSources'][] = $datasource;
         }
@@ -144,10 +142,11 @@ class Flexmonster
         $config['Security'] = [
             'Authorization' => [
                 'Enabled' => false,
-            ],
+            ]
+            ,
             'CORS' => [
-                'AllowOrigin' => '*',
-            ],
+                'AllowOrigin' => "*",
+            ]
         ];
         /*
         $config["HTTPS"] = [
@@ -160,9 +159,10 @@ class Flexmonster
         ];
         */
         $config['DataStorageOptions'] = [
-            'DataRefreshTime' => '30',
+            'DataRefreshTime' => "30"
         ];
         $config['Port'] = $this->port;
+       
 
         $json = json_encode($config, JSON_PRETTY_PRINT);
 
@@ -171,32 +171,30 @@ class Flexmonster
 
     public function getLinuxPid($process)
     {
-        $cmd = '/usr/sbin/pidof '.$process;
+        $cmd = "/usr/sbin/pidof ".$process;
 
         $output = $this->runCommand($cmd, 'instant');
-
         return str_replace(PHP_EOL, '', trim($output));
     }
 
     private function runCommand($cmd, $output = false, $stream_success = '')
     {
-        if (! $output) {
+        if (!$output) {
             $cmd .= ' > /dev/null 2>&1 &';
         }
 
         $process = Process::fromShellCommandline($cmd);
 
         $process->setTimeout(180);
-        if (! $output) {
+        if (!$output) {
             // start executes shell command without waiting for response or a program that outputs a stream
             $process->start();
-
             return true;
         } elseif ($output == 'stream') {
             $process->start();
 
             foreach ($process as $type => $data) {
-                if ($type === 'err') {
+                if ('err' === $type) {
                 } else {
                 }
 
@@ -207,14 +205,13 @@ class Flexmonster
         } elseif ($output == 'instant') {
             // executes shell command and returns response
             $process->run();
-
             return $process->getOutput();
         }
     }
 
     public function dataServerStop()
     {
-        $process_id = $this->getLinuxPid('flexmonster-data-server-'.$this->port);
+        $process_id = $this->getLinuxPid("flexmonster-data-server-".$this->port);
 
         if ($process_id) {
             $cmd = 'kill -9 '.$process_id;
@@ -229,17 +226,16 @@ class Flexmonster
 
     public function dataServerStatus()
     {
-        $process_id = $this->getLinuxPid('flexmonster-data-server-'.$this->port);
+        $process_id = $this->getLinuxPid("flexmonster-data-server-".$this->port);
         if ($process_id) {
             return true;
         }
-
         return false;
     }
 
     public function dataServerStart()
     {
-        $process_id = $this->getLinuxPid('flexmonster-data-server-'.$this->port);
+        $process_id = $this->getLinuxPid("flexmonster-data-server-".$this->port);
 
         if ($process_id) {
             return false;
@@ -253,7 +249,6 @@ class Flexmonster
     {
         $this->dataServerStop();
         $result = $this->dataServerStart();
-
         return $result;
     }
 }

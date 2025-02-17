@@ -15,29 +15,29 @@ class OnlyOffice extends ApiCurl
     public function setDebug()
     {
         $this->debug = 'output';
-
         return $this;
     }
 
     public function getProjects()
     {
-        return $this->curl('project');
+        return $this->curl("project");
     }
 
     /// CURL
     private function login()
     {
-        $args['userName'] = $this->username;
-        $args['password'] = $this->password;
+        $args["userName"] = $this->username;
+        $args["password"] = $this->password;
 
-        $response = $this->curl('authentication', $args, 'post');
+        $response = $this->curl("authentication", $args, 'post');
 
         $this->auth_token = $response->response;
     }
 
+
     private function checkSession()
     {
-        if (empty($this->auth_token) || (! empty($this->auth_token) && date('Y-m-d H:i:s', strtotime($this->auth_token->expires)) < date('Y-m-d H:i:s'))) {
+        if (empty($this->auth_token) || (!empty($this->auth_token) && date('Y-m-d H:i:s', strtotime($this->auth_token->expires)) < date('Y-m-d H:i:s'))) {
             $this->login();
         }
     }
@@ -47,7 +47,7 @@ class OnlyOffice extends ApiCurl
         if ($endpoint != 'authentication') {
             $this->checkSession();
         }
-        $endpoint_url = $this->service_url.'api/2.0/'.$endpoint.'.json';
+        $endpoint_url = $this->service_url . 'api/2.0/' . $endpoint . '.json' ;
 
         return ['endpoint_url' => $endpoint_url, 'args' => $args];
     }
@@ -60,6 +60,7 @@ class OnlyOffice extends ApiCurl
 
         return $api_request;
     }
+
 
     protected function curl($endpoint, $args = [], $method = 'get')
     {
@@ -79,6 +80,7 @@ class OnlyOffice extends ApiCurl
                 exception_log($method);
                 exception_log($args);
             }
+
 
             if ($method == 'post') {
                 $api_request = ApiRequest::post($url);
@@ -120,15 +122,13 @@ class OnlyOffice extends ApiCurl
                 exception_log($response);
             }
 
-            if (! empty($response->body)) {
+            if (!empty($response->body)) {
                 return $response->body;
             } else {
                 return (object) ['intCode' => $response->code];
             }
-
             return $response;
-        } catch (\Throwable $ex) {
-            exception_log($ex);
+        } catch (\Throwable $ex) {  exception_log($ex);
             if ($this->debug == 'output') {
             }
 

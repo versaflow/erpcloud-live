@@ -4,7 +4,7 @@ function schedule_payfast_update_totals()
 {
     $payment_option = get_payment_option('Payfast');
 
-    $payfast_subscription = new PayfastSubscription;
+    $payfast_subscription = new PayfastSubscription();
     $payfast_subscription->setCredentials($payment_option->payfast_id, $payment_option->payfast_key, $payment_option->payfast_pass_phrase);
 
     $subs = \DB::table('acc_payfast_subscriptions')->where('status', '!=', 'Deleted')->orderBy('id', 'desc')->get();
@@ -14,36 +14,36 @@ function schedule_payfast_update_totals()
         if (in_array($sub->account_id, $account_ids)) {
             $payfast_subscription->cancel($sub->token);
             \DB::table('acc_payfast_subscriptions')->where('account_id', $id)->where('id', '!=', $pf_sub->id)->update(['status' => 'Deleted']);
-
             continue;
         }
         $account_ids[] = $sub->account_id;
 
-        if ($sub->paused) {
-            $response = $payfast_subscription->unpause($sub->token);
+        // if ($sub->paused) {
+        //     $response = $payfast_subscription->unpause($sub->token);
 
-            if ($response && $response['code'] == 200 && ! empty($response['data']) && $response['data']['response'] === true) {
-                \DB::table('acc_payfast_subscriptions')->where('id', $sub->id)->update(['paused' => 0]);
-            }
-        }
+        //     if ($response && $response['code'] == 200 && !empty($response['data']) && $response['data']['response'] === true) {
+        //         \DB::table('acc_payfast_subscriptions')->where('id', $sub->id)->update(['paused' => 0]);
+        //     }
+        // }
 
-        $response = $payfast_subscription->get($sub->token);
+        // $response = $payfast_subscription->get($sub->token);
 
-        if ($response['code'] == 200 && $response['data']['response']['status_text'] == 'ACTIVE') {
-            \DB::table('acc_payfast_subscriptions')->where('id', $sub->id)->update(['status' => 'Enabled']);
-            process_account_declined_payfast_subscription($account_id);
-        } else {
-            \DB::table('acc_payfast_subscriptions')->where('id', $sub->id)->update(['status' => $response['data']['response']['status_text']]);
-        }
+        // if ($response['code'] == 200 && $response['data']['response']['status_text'] == 'ACTIVE') {
+        //     \DB::table('acc_payfast_subscriptions')->where('id', $sub->id)->update(['status' => 'Enabled']);
+        //     process_account_declined_payfast_subscription($account_id);
+        // } else {
+        //     \DB::table('acc_payfast_subscriptions')->where('id', $sub->id)->update(['status' => $response['data']['response']['status_text']]);
+        // }
     }
     \DB::table('acc_payfast_subscriptions')->where('status', 'Enabled')->update(['paused' => 0]);
     $subs = \DB::table('acc_payfast_subscriptions')->where('status', 'Enabled')->get();
 
-    $ErpSubs = new ErpSubs;
+    $ErpSubs = new ErpSubs();
     foreach ($subs as $sub) {
         $ErpSubs->updatePayfastSubscription($sub->account_id);
     }
 }
+
 
 function process_account_declined_payfast_subscription($account_id)
 {
@@ -55,7 +55,7 @@ function process_account_declined_payfast_subscription($account_id)
         $service_account_ids = \DB::table('crm_accounts')->where('partner_id', $account_id)->pluck('id')->toArray();
     }
     \DB::table('sub_services')->whereIn('account_id', $service_account_ids)->update(['contract_period' => 0]);
-    $sub = new ErpSubs;
+    $sub = new ErpSubs();
     foreach ($service_account_ids as $service_account_id) {
         $sub->updateProductPricesByAccount($service_account_id);
     }
@@ -64,7 +64,7 @@ function process_account_declined_payfast_subscription($account_id)
 function payfast_set_subscription_totals()
 {
     $payment_option = get_payment_option('Payfast');
-    $payfast_subscription = new PayfastSubscription;
+    $payfast_subscription = new PayfastSubscription();
     $payfast_subscription->setCredentials($payment_option->payfast_id, $payment_option->payfast_key, $payment_option->payfast_pass_phrase);
     $subs = \DB::table('acc_payfast_subscriptions')->where('status', 'Enabled')->get();
     foreach ($subs as $sub) {
@@ -76,7 +76,7 @@ function payfast_set_subscription_totals()
     }
 
     $subs = \DB::table('acc_payfast_subscriptions')->where('status', 'Enabled')->get();
-    $ErpSubs = new ErpSubs;
+    $ErpSubs = new ErpSubs();
     foreach ($subs as $sub) {
         $ErpSubs->updatePayfastSubscription($sub->account_id);
     }
@@ -87,7 +87,7 @@ function process_subscription_payments()
     return false;
     $payment_option = get_payment_option('Payfast');
 
-    $payfast = new Payfast;
+    $payfast = new Payfast();
     $payfast->setCredentials($payment_option->payfast_id, $payment_option->payfast_key, $payment_option->payfast_pass_phrase);
     $transactions = $payfast->getTransactionsDaily(date('Y-m-d'));
 
@@ -118,7 +118,7 @@ function process_subscription_payments()
         // \DB::table('acc_cashbook_transactions')->where('api_id',$request->pf_payment_id)->delete();
         $post_data = $request;
         $created_at = date('Y-m-d H:i:s', strtotime($request->date));
-        $db = new \DBEvent;
+        $db = new \DBEvent();
         $cashbook = \DB::table('acc_cashbook')->where('id', 5)->get()->first();
 
         $reference = $request->m_payment_id.'_'.$request->pf_payment_id;
@@ -139,48 +139,48 @@ function process_subscription_payments()
         }
 
         $payment_data = [
-            'docdate' => date('Y-m-d', strtotime($created_at)),
-            'total' => $amount,
-            'reference' => $reference,
-            'account_id' => $account_id,
-            'source' => 'PayFast',
-        ];
+        'docdate' => date('Y-m-d', strtotime($created_at)),
+        'total' => $amount,
+        'reference' => $reference,
+        'account_id' => $account_id,
+        'source' => 'PayFast',
+    ];
 
         $pre_payment_exists = \DB::table('acc_cashbook_transactions')->where('reference', $reference)->count();
 
-        if (! $pre_payment_exists) {
+        if (!$pre_payment_exists) {
             if (isset($post_data->amount_fee)) {
                 $fee_data = [
-                    'ledger_account_id' => 22,
-                    'cashbook_id' => $cashbook->id,
-                    'total' => abs($post_data->amount_fee),
-                    'api_id' => $post_data->pf_payment_id,
-                    'reference' => 'Payfast Fee '.$payment_id,
-                    'api_status' => 'Complete',
-                    'doctype' => 'Cashbook Control Payment',
-                    'docdate' => date('Y-m-d H:i:s', strtotime($created_at)),
-                ];
+                'ledger_account_id' => 22,
+                'cashbook_id' => $cashbook->id,
+                'total' => abs($post_data->amount_fee),
+                'api_id' => $post_data->pf_payment_id,
+                'reference' => 'Payfast Fee '.$payment_id,
+                'api_status' => 'Complete',
+                'doctype' => 'Cashbook Control Payment',
+                'docdate' => date('Y-m-d H:i:s', strtotime($created_at)),
+            ];
 
                 $fee_result = $db->setTable('acc_cashbook_transactions')->save($fee_data);
 
-                if (! is_array($fee_result) || empty($fee_result['id'])) {
+                if (!is_array($fee_result) || empty($fee_result['id'])) {
                     throw new \ErrorException('Error inserting Payfast Fee into journals.'.json_encode($fee_result));
                 }
             }
 
             $api_data = [
-                'api_status' => 'Complete',
-                'account_id' => $account_id,
-                'reference' => $reference,
-                'cashbook_id' => $cashbook->id,
-                'docdate' => date('Y-m-d H:i:s', strtotime($created_at)),
-                'api_data' => serialize($post_data),
-                'api_id' => $post_data->pf_payment_id,
-            ];
+            'api_status' => 'Complete',
+            'account_id' => $account_id,
+            'reference' => $reference,
+            'cashbook_id' => $cashbook->id,
+            'docdate' => date('Y-m-d H:i:s', strtotime($created_at)),
+            'api_data' => serialize($post_data),
+            'api_id' => $post_data->pf_payment_id,
+        ];
 
             $result = $db->setTable('acc_cashbook_transactions')->save($api_data);
 
-            if (! is_array($result) || empty($result['id'])) {
+            if (!is_array($result) || empty($result['id'])) {
                 if ($fee_result['id']) {
                     $db->setTable('acc_general_journals')->deleteRecord(['id' => $fee_result['id']]);
                 }
@@ -188,11 +188,11 @@ function process_subscription_payments()
             }
 
             $subscription_data = [
-                'last_billed_time' => date('Y-m-d H:i:s', strtotime($created_at)),
-                'last_bill_amount' => $request->amount_gross,
-                'last_billed_status' => 'Completed',
-                'api_id' => $post_data->pf_payment_id,
-            ];
+            'last_billed_time' => date('Y-m-d H:i:s', strtotime($created_at)),
+            'last_bill_amount' => $request->amount_gross,
+            'last_billed_status' => 'Completed',
+            'api_id' => $post_data->pf_payment_id,
+        ];
             \DB::table('acc_payfast_subscriptions')->where('token', $request->token)->update($subscription_data);
             \DB::table('acc_debit_orders')->where('account_id', $account_id)->update(['status' => 'Deleted']);
         }
@@ -214,18 +214,18 @@ function payfast_get_transactions_range($from, $to)
 function get_pending_invoices_total($account_id)
 {
     $pending_total = \DB::table('sub_services as s')
-        ->join('crm_documents as d', 's.invoice_id', '=', 'd.id')
-        ->where('d.doctype', 'Order')
-        ->where('s.account_id', $account_id)
-        ->where('s.status', 'Pending')
-        ->sum('s.price_incl');
+                    ->join('crm_documents as d', 's.invoice_id', '=', 'd.id')
+                    ->where('d.doctype', 'Order')
+                    ->where('s.account_id', $account_id)
+                    ->where('s.status', 'Pending')
+                    ->sum('s.price_incl');
 
     return $pending_total;
 }
 
 function payfast_get_transactions_month($date)
 {
-    $payfast = new Payfast;
+    $payfast = new Payfast();
     $response = $payfast->getTransactionHistory(date('Y-m-01', strtotime($date)), date('Y-m-t', strtotime($date)));
     if (empty($response->body)) {
         return [];
@@ -242,7 +242,7 @@ function payfast_get_transactions_month($date)
 
 function payfast_get_transactions_day($date)
 {
-    $payfast = new Payfast;
+    $payfast = new Payfast();
     $response = $payfast->getTransactionHistory($date, $date);
     if (empty($response->body)) {
         return [];
@@ -259,7 +259,7 @@ function payfast_get_transactions_day($date)
 
 function payfast_get_transactions($date)
 {
-    $payfast = new Payfast;
+    $payfast = new Payfast();
     $response = $payfast->getTransactionHistoryPeriod($date);
 
     if (empty($response->body)) {
@@ -272,7 +272,7 @@ function payfast_get_transactions($date)
         $transactions = $response->body;
     }
 
-    if (! empty($transactions) && is_array($transactions)) {
+    if (!empty($transactions) && is_array($transactions)) {
         $keys = array_shift($transactions);
         foreach ($transactions as $i => $t) {
             $transactions[$i] = array_combine($keys, $t);
@@ -284,7 +284,7 @@ function payfast_get_transactions($date)
 
 function payfast_get_energy_transactions($date)
 {
-    $payfast = new Payfast;
+    $payfast = new Payfast();
     $payfast->setCredentials('21667228', 'go4op6pugjt2o', 'CloudTelecoms786');
     $response = $payfast->getTransactionHistoryPeriod($date);
 
@@ -315,10 +315,10 @@ function create_payfast_payout_transaction($api_trx)
         $exists = \DB::table('acc_cashbook_transactions')->where('reference', 'LIKE', 'Payfast Fee%')->where('api_id', $api_trx['PF Payment ID'])->count();
     }
 
-    if (! $exists) {
+    if (!$exists) {
         if ($api_trx['Type'] == 'PAYOUT') {
             $payout_exists = \DB::table('acc_cashbook_transactions')->where('reference', 'LIKE', 'Cashbook Transaction ID%')->where('docdate', date('Y-m-d', strtotime($api_trx['Date'])))->count();
-            if (! $payout_exists) {
+            if (!$payout_exists) {
                 return false;
             }
             $reference = 'Payfast payout fee '.$api_trx['PF Payment ID'];
@@ -330,7 +330,7 @@ function create_payfast_payout_transaction($api_trx)
         }
 
         if (currency($api_trx['Fee']) != 0) {
-            $db = new DBEvent;
+            $db = new DBEvent();
             $fee_data = [
                 'ledger_account_id' => 22,
                 'cashbook_id' => 5,
@@ -351,13 +351,13 @@ function create_payfast_payout_transaction($api_trx)
         } else {
             if ($api_trx['Type'] != 'FUNDS_RECEIVED_REVERSAL') {
                 \DB::table('acc_cashbook_transactions')->where('reference', 'NOT LIKE', '%REVERSAL%')
-                    ->where('reference', 'LIKE', 'Payfast Fee%')->where('api_id', $api_trx['PF Payment ID'])
-                    ->update(['total' => abs(currency($api_trx['Fee']))]);
+                ->where('reference', 'LIKE', 'Payfast Fee%')->where('api_id', $api_trx['PF Payment ID'])
+                ->update(['total' => abs(currency($api_trx['Fee']))]);
             } else {
                 $reference = 'Payfast Fee Reversal '.$api_trx['PF Payment ID'];
                 \DB::table('acc_cashbook_transactions')
-                    ->where('reference', $reference)->where('api_id', $api_trx['PF Payment ID'])
-                    ->update(['total' => currency($api_trx['Fee']) * -1]);
+                ->where('reference', $reference)->where('api_id', $api_trx['PF Payment ID'])
+                ->update(['total' => currency($api_trx['Fee']) * -1]);
             }
         }
     }
@@ -366,7 +366,7 @@ function create_payfast_payout_transaction($api_trx)
         if ($api_trx['Sign'] == 'CREDIT') {
             $trx_exists = \DB::table('acc_cashbook_transactions')->where('doctype', 'Cashbook Customer Receipt')->where('api_id', $api_trx['PF Payment ID'])->count();
 
-            if (! $trx_exists) {
+            if (!$trx_exists) {
                 $data = [
                     'ledger_account_id' => 22,
                     'cashbook_id' => 5,
@@ -404,18 +404,18 @@ function create_payfast_payout_transaction($api_trx)
         } else {
             if ($api_trx['Type'] == 'FUNDS_SENT') {
                 $trx_exists = \DB::table('acc_cashbook_transactions')
-                    ->where('total', abs(currency($api_trx['Gross'])) * -1)->where('api_id', $api_trx['PF Payment ID'])->count();
+                ->where('total', abs(currency($api_trx['Gross'])) * -1)->where('api_id', $api_trx['PF Payment ID'])->count();
 
-                if (! $trx_exists) {
+                if (!$trx_exists) {
                     $data = [
-                        'ledger_account_id' => 12,
-                        'cashbook_id' => 5,
-                        'total' => abs(currency($api_trx['Gross'])) * -1,
-                        'api_id' => $api_trx['PF Payment ID'],
-                        'reference' => $api_trx['Description'].' '.$api_trx['Party'],
-                        'doctype' => 'Cashbook Expense',
-                        'api_status' => 'Complete',
-                        'docdate' => date('Y-m-d H:i:s', strtotime($api_trx['Date'])),
+                    'ledger_account_id' => 12,
+                    'cashbook_id' => 5,
+                    'total' => abs(currency($api_trx['Gross'])) * -1,
+                    'api_id' => $api_trx['PF Payment ID'],
+                    'reference' => $api_trx['Description'].' '.$api_trx['Party'],
+                    'doctype' => 'Cashbook Expense',
+                    'api_status' => 'Complete',
+                    'docdate' => date('Y-m-d H:i:s', strtotime($api_trx['Date'])),
                     ];
                     \DB::table('acc_cashbook_transactions')->insert($data);
                 }
@@ -423,17 +423,17 @@ function create_payfast_payout_transaction($api_trx)
 
             if ($api_trx['Type'] == 'FUNDS_RECEIVED_REVERSAL') {
                 $trx_exists = \DB::table('acc_cashbook_transactions')
-                    ->where('total', abs(currency($api_trx['Gross'])) * -1)->where('api_id', $api_trx['PF Payment ID'])->count();
-                if (! $trx_exists) {
+                ->where('total', abs(currency($api_trx['Gross'])) * -1)->where('api_id', $api_trx['PF Payment ID'])->count();
+                if (!$trx_exists) {
                     $data = [
-                        'account_id' => $api_trx['custom int1'],
-                        'cashbook_id' => 5,
-                        'total' => abs(currency($api_trx['Gross'])) * -1,
-                        'api_id' => $api_trx['PF Payment ID'],
-                        'reference' => $api_trx['Description'].' '.$api_trx['Party'].'REVERSAL',
-                        'doctype' => 'Cashbook Customer Receipt',
-                        'api_status' => 'Complete',
-                        'docdate' => date('Y-m-d H:i:s', strtotime($api_trx['Date'])),
+                    'account_id' => $api_trx['custom int1'],
+                    'cashbook_id' => 5,
+                    'total' => abs(currency($api_trx['Gross'])) * -1,
+                    'api_id' => $api_trx['PF Payment ID'],
+                    'reference' => $api_trx['Description'].' '.$api_trx['Party'].'REVERSAL',
+                    'doctype' => 'Cashbook Customer Receipt',
+                    'api_status' => 'Complete',
+                    'docdate' => date('Y-m-d H:i:s', strtotime($api_trx['Date'])),
                     ];
 
                     \DB::table('acc_cashbook_transactions')->insert($data);
@@ -441,17 +441,17 @@ function create_payfast_payout_transaction($api_trx)
 
                 $reference = 'Payfast Fee Reversal '.$api_trx['PF Payment ID'];
                 $fee_trx_exists = \DB::table('acc_cashbook_transactions')->where('reference', $reference)->where('api_id', $api_trx['PF Payment ID'])->count();
-                if (! $fee_trx_exists && currency($api_trx['Fee']) > 0) {
-                    $db = new DBEvent;
+                if (!$fee_trx_exists && currency($api_trx['Fee']) > 0) {
+                    $db = new DBEvent();
                     $fee_data = [
-                        'ledger_account_id' => 22,
-                        'cashbook_id' => 5,
-                        'total' => currency($api_trx['Fee']) * -1,
-                        'api_id' => $api_trx['PF Payment ID'],
-                        'reference' => $reference,
-                        'doctype' => 'Cashbook Control Payment',
-                        'api_status' => 'Complete',
-                        'docdate' => date('Y-m-d H:i:s', strtotime($api_trx['Date'])),
+                    'ledger_account_id' => 22,
+                    'cashbook_id' => 5,
+                    'total' => currency($api_trx['Fee']) * -1,
+                    'api_id' => $api_trx['PF Payment ID'],
+                    'reference' => $reference,
+                    'doctype' => 'Cashbook Control Payment',
+                    'api_status' => 'Complete',
+                    'docdate' => date('Y-m-d H:i:s', strtotime($api_trx['Date'])),
                     ];
 
                     $db->setTable('acc_cashbook_transactions')->save($fee_data);

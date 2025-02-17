@@ -33,6 +33,7 @@ class CreateHrPayrollTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

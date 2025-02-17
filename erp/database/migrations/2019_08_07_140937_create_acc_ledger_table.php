@@ -27,6 +27,7 @@ class CreateAccLedgerTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

@@ -17,6 +17,7 @@ class AddForeignKeysToAccLedgerAccountsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

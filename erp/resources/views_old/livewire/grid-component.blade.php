@@ -3362,8 +3362,8 @@ var gridOptions = {
                             }
                             var celldate = new Date(cellValue);
                           
-                            if( celldate <= date_today){
-                              
+                            var dateParts = cellValue.split(/[- :]/);
+                            if((dateParts[2] == cur_day && dateParts[1] == cur_month && dateParts[0] == cur_year) || (celldate < date_today)){
                                 return true;    
                             }else{
                                 
@@ -3381,7 +3381,8 @@ var gridOptions = {
                            
                            var celldate = new Date(cellValue);
                          
-                            if(celldate >= date_today){
+                           var dateParts = cellValue.split(/[- :]/);
+                           if((dateParts[2] == cur_day && dateParts[1] == cur_month && dateParts[0] == cur_year) || (celldate > date_today)){
                               
                                 return true;    
                             }else{

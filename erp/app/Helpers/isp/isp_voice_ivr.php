@@ -3,14 +3,14 @@
 /// IVR MENU
 function beforesave_ivr_menu_check_extension($request)
 {
-    if (! is_numeric($request->ivr_menu_extension)) {
+    if (!is_numeric($request->ivr_menu_extension)) {
         return json_alert('Extension needs to be digits.', 'warning');
     }
 }
 
 function aftersave_ivr_menu_copy_audio_files($request)
 {
-    if (! empty($request->id)) {
+    if (!empty($request->id)) {
         $ivr_menu_uuid = $request->id;
     } else {
         $ivr_menu_uuid = $request->ivr_menu_uuid;
@@ -18,7 +18,7 @@ function aftersave_ivr_menu_copy_audio_files($request)
     $ivr = \DB::connection('pbx')->table('v_ivr_menus')->where('ivr_menu_uuid', $ivr_menu_uuid)->get()->first();
     $domain_name = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $ivr->domain_uuid)->pluck('domain_name')->first();
 
-    if (! empty($ivr->ivr_menu_greet_long)) {
+    if (!empty($ivr->ivr_menu_greet_long)) {
         $file = $ivr->ivr_menu_greet_long;
 
         $file_path = uploads_path(775).$file;
@@ -39,13 +39,13 @@ function aftersave_ivr_menu_copy_audio_files($request)
         }
     }
 
-    if (! empty($ivr->ivr_menu_invalid_sound)) {
+    if (!empty($ivr->ivr_menu_invalid_sound)) {
         $file = $ivr->ivr_menu_invalid_sound;
         $file_path = uploads_path(775).$file;
 
         $file = strtolower(str_replace(' ', '_', $file));
         $file = strtolower(str_replace('-', '_', $file));
-        \DB::connection('pbx')->table('v_ivr_menus')->where('ivr_menu_uuid', $ivr_menu_uuid)->update(['ivr_menu_invalid_sound' => $file]);
+        \DB::connection('pbx')->table('v_ivr_menus')->where('ivr_menu_uuid', $ivr_menu_uuid)->update(['ivr_menu_invalid_sound'=>$file]);
         if (file_exists($file_path)) {
             $ssh = new \phpseclib\Net\SSH2('pbx.cloudtools.co.za');
             if ($ssh->login('root', 'Ahmed777')) {
@@ -65,7 +65,7 @@ function aftersave_ivr_menu_copy_audio_files($request)
 
 function aftersave_ivr_menu_set_dialplan($request)
 {
-    if (! empty($request->id)) {
+    if (!empty($request->id)) {
         $ivr_menu_uuid = $request->id;
     } else {
         $ivr_menu_uuid = $request->ivr_menu_uuid;
@@ -83,45 +83,47 @@ function aftersave_ivr_menu_set_dialplan($request)
         $dialplan_uuid = $ivr->dialplan_uuid;
     }
 
-    $dialplan_xml = '<extension name="'.$ivr->ivr_menu_name.'" continue="false" uuid="'.$dialplan_uuid."\">\n";
-    $dialplan_xml .= '	<condition field="destination_number" expression="^'.$ivr->ivr_menu_extension."\$\">\n";
+    $dialplan_xml = "<extension name=\"".$ivr->ivr_menu_name."\" continue=\"false\" uuid=\"".$dialplan_uuid."\">\n";
+    $dialplan_xml .= "	<condition field=\"destination_number\" expression=\"^".$ivr->ivr_menu_extension."\$\">\n";
     $dialplan_xml .= "		<action application=\"ring_ready\" data=\"\"/>\n";
     $dialplan_xml .= "		<action application=\"answer\" data=\"\"/>\n";
     $dialplan_xml .= "		<action application=\"sleep\" data=\"1000\"/>\n";
     $dialplan_xml .= "		<action application=\"set\" data=\"hangup_after_bridge=true\"/>\n";
-    $dialplan_xml .= '		<action application="set" data="ringback='.$ivr->ivr_menu_ringback."\"/>\n";
-    $dialplan_xml .= '		<action application="set" data="presence_id='.$ivr->ivr_menu_extension.'@'.$_SESSION['domain_name']."\"/>\n";
+    $dialplan_xml .= "		<action application=\"set\" data=\"ringback=".$ivr->ivr_menu_ringback."\"/>\n";
+    $dialplan_xml .= "		<action application=\"set\" data=\"presence_id=".$ivr->ivr_menu_extension."@".$_SESSION['domain_name']."\"/>\n";
 
-    $dialplan_xml .= '		<action application="set" data="transfer_ringback='.$ivr->ivr_menu_ringback."\"/>\n";
-    $dialplan_xml .= '		<action application="set" data="ivr_menu_uuid='.$ivr->ivr_menu_uuid."\"/>\n";
+    $dialplan_xml .= "		<action application=\"set\" data=\"transfer_ringback=".$ivr->ivr_menu_ringback."\"/>\n";
+    $dialplan_xml .= "		<action application=\"set\" data=\"ivr_menu_uuid=".$ivr->ivr_menu_uuid."\"/>\n";
 
-    $dialplan_xml .= '		<action application="ivr" data="'.$ivr->ivr_menu_uuid."\"/>\n";
 
-    $dialplan_xml .= '		<action application="'.$ivr->ivr_menu_exit_app.'" data="'.$ivr->ivr_menu_exit_data."\"/>\n";
+    $dialplan_xml .= "		<action application=\"ivr\" data=\"".$ivr->ivr_menu_uuid."\"/>\n";
+
+
+    $dialplan_xml .= "		<action application=\"".$ivr->ivr_menu_exit_app."\" data=\"".$ivr->ivr_menu_exit_data."\"/>\n";
     $dialplan_xml .= "	</condition>\n";
     $dialplan_xml .= "</extension>\n";
 
     //build the dialplan array
-    $dialplan['domain_uuid'] = $ivr->domain_uuid;
-    $dialplan['dialplan_uuid'] = $dialplan_uuid;
-    $dialplan['dialplan_name'] = $ivr->ivr_menu_name;
-    $dialplan['dialplan_number'] = $ivr->ivr_menu_extension;
-    $dialplan['dialplan_context'] = $domain_name;
-    $dialplan['dialplan_continue'] = 'false';
-    $dialplan['dialplan_xml'] = $dialplan_xml;
-    $dialplan['dialplan_order'] = '101';
-    $dialplan['dialplan_enabled'] = 'true';
-    $dialplan['dialplan_description'] = $ivr->ivr_menu_description;
-    $dialplan['app_uuid'] = 'a5788e9b-58bc-bd1b-df59-fff5d51253ab';
+    $dialplan["domain_uuid"] = $ivr->domain_uuid;
+    $dialplan["dialplan_uuid"] = $dialplan_uuid;
+    $dialplan["dialplan_name"] = $ivr->ivr_menu_name;
+    $dialplan["dialplan_number"] = $ivr->ivr_menu_extension;
+    $dialplan["dialplan_context"] = $domain_name;
+    $dialplan["dialplan_continue"] = "false";
+    $dialplan["dialplan_xml"] = $dialplan_xml;
+    $dialplan["dialplan_order"] = "101";
+    $dialplan["dialplan_enabled"] = "true";
+    $dialplan["dialplan_description"] = $ivr->ivr_menu_description;
+    $dialplan["app_uuid"] = "a5788e9b-58bc-bd1b-df59-fff5d51253ab";
 
     if ($new_dialplan) {
         \DB::connection('pbx')->table('v_dialplans')->insert($dialplan);
-        \DB::connection('pbx')->table('v_ivr_menus')->where('ivr_menu_uuid', $ivr->ivr_menu_uuid)->update(['dialplan_uuid' => $dialplan_uuid]);
+        \DB::connection('pbx')->table('v_ivr_menus')->where('ivr_menu_uuid', $ivr->ivr_menu_uuid)->update(['dialplan_uuid'=>$dialplan_uuid]);
     } else {
         \DB::connection('pbx')->table('v_dialplans')->where('dialplan_uuid', $dialplan_uuid)->update($dialplan);
     }
 
-    $pbx = new FusionPBX;
+    $pbx = new FusionPBX();
     $pbx->portalCmd('portal_ivr_dialplan_save', $domain_name);
     $pbx->portalCmd('portal_ivr_conf_save', $ivr->ivr_menu_uuid);
 }
@@ -131,7 +133,7 @@ function afterdelete_ivr_menu_set_dialplan($request)
     \DB::connection('pbx')->table('v_dialplans')->where('dialplan_uuid', $request->dialplan_uuid)->delete();
     \DB::connection('pbx')->table('v_ivr_menu_options')->where('ivr_menu_uuid', $request->ivr_menu_uuid)->delete();
     $domain_name = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $request->domain_uuid)->pluck('domain_name')->first();
-    $pbx = new FusionPBX;
+    $pbx = new FusionPBX();
     $pbx->portalCmd('portal_ivr_dialplan_save', $domain_name);
     $pbx->portalCmd('portal_ivr_conf_save', $request->ivr_menu_uuid);
 }
@@ -140,16 +142,16 @@ function afterdelete_ivr_menu_set_dialplan($request)
 function aftersave_ivr_menu_details_set_dialplan($request)
 {
     $ivr = \DB::connection('pbx')->table('v_ivr_menus')->where('ivr_menu_uuid', $request->ivr_menu_uuid)->get()->first();
-    \DB::connection('pbx')->table('v_ivr_menu_options')->where('ivr_menu_uuid', $request->ivr_menu_uuid)->update(['domain_uuid' => $ivr->domain_uuid]);
+    \DB::connection('pbx')->table('v_ivr_menu_options')->where('ivr_menu_uuid', $request->ivr_menu_uuid)->update(['domain_uuid'=>$ivr->domain_uuid]);
 
     $domain_name = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $ivr->domain_uuid)->pluck('domain_name')->first();
-    if (! str_contains($request->ivr_menu_option_param, 'transfer ')) {
+    if (!str_contains($request->ivr_menu_option_param, 'transfer ')) {
         \DB::connection('pbx')->table('v_ivr_menu_options')
-            ->where('ivr_menu_option_uuid', $request->ivr_menu_option_uuid)
-            ->update(['ivr_menu_option_param' => 'transfer '.$request->ivr_menu_option_param.' XML '.$domain_name]);
+        ->where('ivr_menu_option_uuid', $request->ivr_menu_option_uuid)
+        ->update(['ivr_menu_option_param'=>'transfer '.$request->ivr_menu_option_param.' XML '.$domain_name]);
     }
 
-    $pbx = new FusionPBX;
+    $pbx = new FusionPBX();
     $pbx->portalCmd('portal_ivr_dialplan_save', $domain_name);
     $pbx->portalCmd('portal_ivr_conf_save', $request->ivr_menu_uuid);
 }
@@ -158,9 +160,9 @@ function afterdelete_ivr_menu_details_set_dialplan($request)
 {
     $ivr = \DB::connection('pbx')->table('v_ivr_menus')->where('ivr_menu_uuid', $request->ivr_menu_uuid)->get()->first();
 
-    \DB::connection('pbx')->table('v_ivr_menu_options')->where('ivr_menu_uuid', $request->ivr_menu_uuid)->update(['domain_uuid' => $ivr->domain_uuid]);
+    \DB::connection('pbx')->table('v_ivr_menu_options')->where('ivr_menu_uuid', $request->ivr_menu_uuid)->update(['domain_uuid'=>$ivr->domain_uuid]);
     $domain_name = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $ivr->domain_uuid)->pluck('domain_name')->first();
-    $pbx = new FusionPBX;
+    $pbx = new FusionPBX();
     $pbx->portalCmd('portal_ivr_dialplan_save', $domain_name);
     $pbx->portalCmd('portal_ivr_conf_save', $request->ivr_menu_uuid);
 }
@@ -171,12 +173,12 @@ function ivr_menu_exit_routing_select($row)
 {
     $row = (object) $row;
 
-    if (! empty(request()->domain_uuid)) {
+    if (!empty(request()->domain_uuid)) {
         $domain_uuid = request()->domain_uuid;
-    } elseif (! empty($row->domain_uuid)) {
+    } elseif (!empty($row->domain_uuid)) {
         $domain_uuid = $row->domain_uuid;
     } else {
-        $ivr_menu_uuid = request()->ivr_menu_uuid;
+        $ivr_menu_uuid =  request()->ivr_menu_uuid;
         $ivr = \DB::connection('pbx')->table('v_ivr_menus')->where('ivr_menu_uuid', $ivr_menu_uuid)->get()->first();
         $domain_uuid = $ivr->domain_uuid;
     }
@@ -206,10 +208,10 @@ function ivr_menu_details_routing_select($row)
 {
     $row = (object) $row;
 
-    if (! empty($row->domain_uuid)) {
+    if (!empty($row->domain_uuid)) {
         $domain_uuid = $row->domain_uuid;
     } else {
-        $ivr_menu_uuid = request()->ivr_menu_uuid;
+        $ivr_menu_uuid =  request()->ivr_menu_uuid;
         $ivr = \DB::connection('pbx')->table('v_ivr_menus')->where('ivr_menu_uuid', $ivr_menu_uuid)->get()->first();
         $domain_uuid = $ivr->domain_uuid;
     }
@@ -232,9 +234,9 @@ function ivr_menu_details_routing_select($row)
         $routing['transfer '.$ext->dialplan_number.' XML '.$domain_name] = 'Time Condition - '.$ext->dialplan_name.' '.$ext->dialplan_number;
     }
 
-    if (! empty($row->ivr_menu_option_param)) {
-        if (! in_array($row->ivr_menu_option_param, array_keys($routing))) {
-            $routing[$row->ivr_menu_option_param] = 'Custom - '.str_replace(['transfer ', ' XML '.$domain_name], '', $row->ivr_menu_option_param);
+    if (!empty($row->ivr_menu_option_param)) {
+        if (!in_array($row->ivr_menu_option_param, array_keys($routing))) {
+            $routing[$row->ivr_menu_option_param] = 'Custom - '.str_replace(['transfer ',' XML '.$domain_name], '', $row->ivr_menu_option_param);
         }
     }
 

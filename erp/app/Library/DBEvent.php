@@ -5,19 +5,12 @@ use Illuminate\Support\Facades\DB;
 class DBEvent
 {
     protected $module_id;
-
     protected $table;
-
     protected $event_type;
-
     protected $fields;
-
     public $request;
-
     public $ledgers;
-
     protected $ledger_ids;
-
     public $validate_document = false;
 
     public function __construct($module_id = 2, $settings = [])
@@ -46,7 +39,7 @@ class DBEvent
 
     public function setProperties($settings = [])
     {
-        if (! empty($settings) && is_array($settings) && count($settings) > 0) {
+        if (!empty($settings) && is_array($settings) && count($settings) > 0) {
             foreach ($settings as $key => $value) {
                 $this->{$key} = $value;
             }
@@ -108,8 +101,8 @@ class DBEvent
         if ($this->table == 'crm_documents') {
             $account = dbgetaccount($this->request->account_id);
 
-            if ($account->type == 'reseller') {
-                if (! in_array(147, $this->request->product_id) && empty($this->request->reseller_user)) {
+            if ('reseller' == $account->type) {
+                if (!in_array(147, $this->request->product_id) && empty($this->request->reseller_user)) {
                     return 'Partner user required.';
                 }
             }
@@ -119,12 +112,12 @@ class DBEvent
 
             $request_tax = currency($this->request->tax);
 
-            if ($request_total > 0 && $reseller->vat_enabled && ! $account->currency == 'USD') {
+            if ($request_total > 0 && $reseller->vat_enabled && !$account->currency == 'USD') {
                 $subtotal = currency($request_total / 1.15);
 
                 $tax = currency($request_total - $subtotal);
 
-                if (! empty($request_tax) && $request_tax > 0) {
+                if (!empty($request_tax) && $request_tax > 0) {
                     if ($tax != $request_tax) {
                         $this->request->request->add(['tax' => $tax]);
                     }
@@ -143,7 +136,7 @@ class DBEvent
         }
 
         // webform validation
-        if (! empty(session('webform_module_id')) && $this->module->public_access) {
+        if (!empty(session('webform_module_id')) && $this->module->public_access) {
             if (in_array('account_id', $this->fields)) {
                 $this->request->request->add(['account_id' => session('webform_account_id')]);
             }
@@ -173,7 +166,7 @@ class DBEvent
 
         session(['rollback_connections' => []]);
         $exclude_rollback_tables = ['erp_instance_migrations', 'acc_cashbook_transactions', 'v_ring_group_destinations', 'crm_accounts', 'sub_services'];
-        if (! in_array($this->table, $exclude_rollback_tables) && ! in_array($this->connection, ['pbx', 'pbx_cdr'])) {
+        if (!in_array($this->table, $exclude_rollback_tables) && !in_array($this->connection, ['pbx', 'pbx_cdr'])) {
             $rollback_connections = [$this->connection];
             session(['rollback_connections' => $rollback_connections]);
 
@@ -181,7 +174,7 @@ class DBEvent
         }
 
         try {
-            if (! $request instanceof \Illuminate\Http\Request) {
+            if (!$request instanceof \Illuminate\Http\Request) {
                 $request = (array) $request;
                 $request = new \Illuminate\Http\Request($request);
                 $request->setMethod('POST');
@@ -190,7 +183,7 @@ class DBEvent
                 $rules = $this->validateForm();
 
                 $validator = Validator::make($request->all(), $rules);
-                if (! $validator->passes()) {
+                if (!$validator->passes()) {
                     foreach ($validator->getMessageBag()->toArray() as $key => $val) {
                         if (request()->segment(1) == 'rest_api') {
                             $message .= $key.':'.$val[0];
@@ -231,7 +224,7 @@ class DBEvent
 
             $data = $this->validatePost();
 
-            if (! is_main_instance() && in_array('custom', $this->fields) && empty($this->request->id)) {
+            if (!is_main_instance() && in_array('custom', $this->fields) && empty($this->request->id)) {
                 $data['custom'] = 1;
             }
 
@@ -244,7 +237,7 @@ class DBEvent
             } catch (\Throwable $ex) {
                 exception_log($ex->getMessage());
                 exception_log($ex->getTraceAsString());
-                if (! in_array($this->table, $exclude_rollback_tables)) {
+                if (!in_array($this->table, $exclude_rollback_tables)) {
                     foreach (session('rollback_connections') as $rollback_connection) {
                         //aa('rollback1');
 
@@ -273,7 +266,7 @@ class DBEvent
 
             //aa(['doctypeAfterSavevalidation' => $validation]);
             if ($validation) {
-                if (! in_array($this->table, $exclude_rollback_tables)) {
+                if (!in_array($this->table, $exclude_rollback_tables)) {
                     foreach (session('rollback_connections') as $rollback_connection) {
                         //aa('rollback1');
 
@@ -291,7 +284,7 @@ class DBEvent
             }
 
             if ($result) {
-                if (! in_array($this->table, $exclude_rollback_tables)) {
+                if (!in_array($this->table, $exclude_rollback_tables)) {
                     foreach (session('rollback_connections') as $rollback_connection) {
                         //aa('rollback2');
 
@@ -311,7 +304,7 @@ class DBEvent
 
             $return_document_popup = false;
             if ($this->validate_document && empty($this->array_post)) {
-                if (! in_array($this->table, $exclude_rollback_tables)) {
+                if (!in_array($this->table, $exclude_rollback_tables)) {
                     foreach (session('rollback_connections') as $rollback_connection) {
                         //aa('rollback3 commit');
 
@@ -323,7 +316,7 @@ class DBEvent
                 }
 
                 $return_document_popup = true;
-            } elseif (! in_array($this->table, $exclude_rollback_tables)) {
+            } elseif (!in_array($this->table, $exclude_rollback_tables)) {
                 foreach (session('rollback_connections') as $rollback_connection) {
                     //aa('rollback4 commit');
 
@@ -336,7 +329,7 @@ class DBEvent
             $this->afterCommit();
             $this->commitLogData();
 
-            if (! empty($this->return_document_id)) {
+            if (!empty($this->return_document_id)) {
                 return ['id' => $id];
             } elseif ($return_document_popup) {
                 return $this->getDocumentResponse($id);
@@ -347,7 +340,7 @@ class DBEvent
             exception_log($ex);
             $post_data = (array) $this->simple_request;
             exception_email($ex, 'Save error', $post_data);
-            if (! in_array($this->table, $exclude_rollback_tables)) {
+            if (!in_array($this->table, $exclude_rollback_tables)) {
                 foreach (session('rollback_connections') as $rollback_connection) {
                     //aa('rollback5');
                     \DB::connection($rollback_connection)->rollback();
@@ -374,7 +367,7 @@ class DBEvent
 
             // delete from ledger
 
-            if ($this->table == 'crm_documents' || $this->table == 'crm_supplier_documents') {
+            if ('crm_documents' == $this->table || 'crm_supplier_documents' == $this->table) {
                 $result = $this->voidRecord();
                 process_document_approvals();
                 $this->postDocument($request->id);
@@ -383,7 +376,7 @@ class DBEvent
                 return $result;
             }
 
-            if ($this->table == 'erp_form_events' && ! empty($this->db_record->function_name)) {
+            if ('erp_form_events' == $this->table && !empty($this->db_record->function_name)) {
                 if (function_exists($this->db_record->function_name)) {
                     return 'Function code needs to be deleted first.';
                 }
@@ -517,7 +510,7 @@ class DBEvent
             // get changed values
             $changed_values = [];
             $beforesave_row = session($this->table.'_event_db_record');
-            if (! empty($beforesave_row) && ! empty($beforesave_row->{$key})) {
+            if (!empty($beforesave_row) && !empty($beforesave_row->{$key})) {
                 foreach ($data as $key => $val) {
                     if ($key == 'updated_at') {
                         continue;
@@ -546,7 +539,7 @@ class DBEvent
         $account_status = \DB::connection('default')->table('crm_accounts')->where('id', $account_id)->pluck('status')->first();
         $account_type = \DB::connection('default')->table('crm_accounts')->where('id', $account_id)->pluck('type')->first();
         $partner_id = \DB::connection('default')->table('crm_accounts')->where('id', $account_id)->pluck('partner_id')->first();
-        if (! $process_deleted && $account_status == 'Deleted') {
+        if (!$process_deleted && $account_status == 'Deleted') {
             return false;
         }
         if ($account_status != 'Deleted') {
@@ -586,7 +579,7 @@ class DBEvent
             $aging_date = \DB::connection('default')->table('crm_documents')->where('doctype', 'Tax Invoice')->where('reseller_user', $account_id)->orderby('docdate', 'desc')->pluck('docdate')->first();
         }
         $data['invoice_days'] = 0;
-        if (! empty($aging_date)) {
+        if (!empty($aging_date)) {
             if (date('Y-m-d', strtotime($aging_date)) < date('Y-m-d')) {
                 $date = Carbon\Carbon::parse($aging_date);
                 $now = Carbon\Carbon::today();
@@ -632,14 +625,14 @@ class DBEvent
     /*afterCommit functions  start*/
     private function updateRecordNoteLog()
     {
-        if (! empty($this->request->new_record) && ! empty($this->request->last_note)) {
+        if (!empty($this->request->new_record) && !empty($this->request->last_note)) {
             try {
                 add_module_note($this->module_id, $this->request->id, $this->request->last_note);
             } catch (\Throwable $ex) {
             }
         } else {
             $beforesave_row = session($this->table.'_event_db_record');
-            if (! empty($this->request->last_note) && $beforesave_row->last_note != $this->request->last_note) {
+            if (!empty($this->request->last_note) && $beforesave_row->last_note != $this->request->last_note) {
                 try {
                     add_module_note($this->module_id, $this->request->id, $this->request->last_note);
                 } catch (\Throwable $ex) {
@@ -660,10 +653,10 @@ class DBEvent
 
     private function updateOpportunities()
     {
-        if ($this->table == 'crm_documents') {
+        if ('crm_documents' == $this->table) {
             \DB::table('crm_opportunities')
-                ->join('crm_documents', 'crm_documents.id', '=', 'crm_opportunities.document_id')
-                ->update(['crm_opportunities.doctype' => \DB::raw('crm_documents.doctype'), 'crm_opportunities.total' => \DB::raw('crm_documents.total')]);
+            ->join('crm_documents', 'crm_documents.id', '=', 'crm_opportunities.document_id')
+            ->update(['crm_opportunities.doctype' => \DB::raw('crm_documents.doctype'), 'crm_opportunities.total' => \DB::raw('crm_documents.total')]);
             if ($this->request->doctype == 'Quotation') {
                 \DB::table('crm_opportunities')->where('document_id', $this->request->id)->update(['status' => 'Quoted']);
             }
@@ -675,26 +668,26 @@ class DBEvent
 
     private function createActivations()
     {
-        if (! empty($this->request->account_id) && $this->table == 'crm_documents' || ($this->table == 'acc_cashbook_transactions' && $this->request->account_id > 0)) {
+        if (!empty($this->request->account_id) && 'crm_documents' == $this->table || ('acc_cashbook_transactions' == $this->table && $this->request->account_id > 0)) {
             $account_id = \DB::table($this->table)->where('id', $this->request->id)->pluck('account_id')->first();
-        } elseif (! empty($this->request->id) && $this->table == 'crm_accounts') {
+        } elseif (!empty($this->request->id) && 'crm_accounts' == $this->table) {
             $account_id = $this->request->id;
         }
-        if ($this->table == 'crm_documents') {
+        if ('crm_documents' == $this->table) {
             // postApprove Invoice
             $doc = \DB::table($this->table)->where('id', $this->request->id)->get()->first();
-            if ($doc->completed && ! $doc->subscription_created && $doc->doctype == 'Tax Invoice') {
+            if ($doc->completed && !$doc->subscription_created && $doc->doctype == 'Tax Invoice') {
                 provision_auto($doc->id);
             }
         }
 
-        if ($this->table == 'crm_documents' || ($this->table == 'acc_cashbook_transactions' && $this->request->account_id > 0) || $this->table == 'crm_accounts') {
+        if ('crm_documents' == $this->table || ('acc_cashbook_transactions' == $this->table && $this->request->account_id > 0) || 'crm_accounts' == $this->table) {
             $converted_doc_ids = $this->updateDocumentPaymentStatus($account_id);
-            if ($this->table == 'crm_documents' && $this->request->id && count($converted_doc_ids) == 0) {
+            if ('crm_documents' == $this->table && $this->request->id && count($converted_doc_ids) == 0) {
                 email_document_pdf($this->request->id);
-            } elseif ($this->table == 'crm_documents' && count($converted_doc_ids) > 0 && ! in_array($this->request->id, $converted_doc_ids)) {
+            } elseif ('crm_documents' == $this->table && count($converted_doc_ids) > 0 && !in_array($this->request->id, $converted_doc_ids)) {
                 email_document_pdf($this->request->id);
-            } elseif ($this->table == 'crm_documents') {
+            } elseif ('crm_documents' == $this->table) {
                 email_document_pdf($this->request->id);
             }
             provision_invoices($account_id);
@@ -711,7 +704,7 @@ class DBEvent
 
     private function processEvent($row = false)
     {
-        if (! $row) {
+        if (!$row) {
             $row = $this->request;
         }
 
@@ -726,7 +719,7 @@ class DBEvent
             ->get();
 
         if ($this->event_type == 'beforesave' || $this->event_type == 'aftersave' || $this->event_type == 'beforedelete' || $this->event_type == 'afterdelete') {
-            if (! $row) {
+            if (!$row) {
                 return 'An error occurred, request row not set.';
             }
         }
@@ -735,7 +728,7 @@ class DBEvent
             try {
                 $function = $helper->function_name;
 
-                if (! function_exists($function)) {
+                if (!function_exists($function)) {
                     debug_email($this->event_type.' function missing: '.$helper->function_name);
                     system_log('event', $helper->function_name, $this->event_type.' function missing: '.$helper->function_name, $this->event_type, $this->event_type, 0, $helper->id);
                     set_db_connection($current_conn);
@@ -763,7 +756,7 @@ class DBEvent
                     return $result;
                 }
                 $log_message = 'completed';
-                if (! empty($this->request->id)) {
+                if (!empty($this->request->id)) {
                     $log_message .= ' id:'.$this->request->id;
                 }
                 system_log('event', $helper->function_name, $log_message, $this->event_type, $this->event_type, 1, $helper->id);
@@ -804,14 +797,14 @@ class DBEvent
         foreach ($forms as $form) {
             if ($form['required'] && $form['add']) {
                 $requirements = [];
-                if ($form['field_type'] == 'email') {
+                if ('email' == $form['field_type']) {
                     $requirements[] = 'email';
-                } elseif ($form['field_type'] == 'integer' || $form['field_type'] == 'currency') {
+                } elseif ('integer' == $form['field_type'] || 'currency' == $form['field_type']) {
                     $requirements[] = 'numeric';
-                } elseif ($form['field_type'] == 'date' || $form['field_type'] == 'datetime') {
+                } elseif ('date' == $form['field_type'] || 'datetime' == $form['field_type']) {
                     $requirements[] = 'date';
                 }
-                if ($form['field_type'] != 'file') {
+                if ('file' != $form['field_type']) {
                     $rules[$form['field']] = 'required';
                 }
 
@@ -867,21 +860,21 @@ class DBEvent
                 $field_visible = '';
             }
 
-            if (str_contains($f['field_type'], 'hidden') || (empty($this->request->id) && in_array($field_visible, ['add', 'both'])) || (! empty($this->request->id) && in_array($field_visible, ['edit', 'both'])) || (empty($this->validation_required) && ! empty($this->array_post))) {
-                if ($f['field_type'] == 'textarea_editor' || $f['field_type'] == 'textarea') {
+            if (str_contains($f['field_type'], 'hidden') || (empty($this->request->id) && in_array($field_visible, ['add', 'both'])) || (!empty($this->request->id) && in_array($field_visible, ['edit', 'both'])) || (empty($this->validation_required) && !empty($this->array_post))) {
+                if ('textarea_editor' == $f['field_type'] || 'textarea' == $f['field_type']) {
                     $data[$field] = $this->request->input($field);
                 } else {
-                    if (! is_null($this->request->input($field))) {
+                    if (!is_null($this->request->input($field))) {
                         $data[$field] = $this->request->input($field);
                     }
 
-                    if ($f['field_type'] == 'signature' && ! empty($this->request->input($field))) {
+                    if ('signature' == $f['field_type'] && !empty($this->request->input($field))) {
                         if (str_contains($this->request->input($field), 'data:image')) {
                             $img_data = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $this->request->input($field)));
 
                             $destinationPath = uploads_path($this->module->id);
                             $filename = $field.date('Hi').'.png';
-                            if (! is_dir($destinationPath)) {
+                            if (!is_dir($destinationPath)) {
                                 mkdir($destinationPath);
                             }
                             $destinationPath .= $filename;
@@ -893,35 +886,35 @@ class DBEvent
                     if (empty(session('webform_module_id'))) {
                         $files = is_array($this->request->file($field)) ? $this->request->file($field) : [$this->request->file($field)];
 
-                        if (! $f['opts_multiple'] && ($f['field_type'] == 'file' || $f['field_type'] == 'image') && $f['required'] && empty($this->request->file($field))) {
+                        if (!$f['opts_multiple'] && ('file' == $f['field_type'] || 'image' == $f['field_type']) && $f['required'] && empty($this->request->file($field))) {
                             $validatePostError = $f['label'].': File required.';
                         }
                     }
 
                     //formio files
-                    if ($f['field_type'] == 'file' || $f['field_type'] == 'image') {
+                    if ('file' == $f['field_type'] || 'image' == $f['field_type']) {
                         $file_array = $this->request->{$field};
                         $file_names = [];
                         //if (!is_array($file_array) && $file_array instanceof \Illuminate\Http\UploadedFile) {
                         //$file_array = [$file_array];
                         //}
 
-                        if (! empty($file_array) && is_array($file_array) && count($file_array) > 0) {
+                        if (!empty($file_array) && is_array($file_array) && count($file_array) > 0) {
                             foreach ($file_array as $file) {
                                 if ($file instanceof \Illuminate\Http\UploadedFile) {
                                     $name = $file->getClientOriginalName();
                                     $file_names[] = $name;
 
-                                    // if(!file_exists(uploads_path($this->module_id).$name)){
-                                    //    File::move(uploads_path($this->module_id).$file['name'],uploads_path($this->module_id).$name);
-                                    // }
+                                // if(!file_exists(uploads_path($this->module_id).$name)){
+                                        //    File::move(uploads_path($this->module_id).$file['name'],uploads_path($this->module_id).$name);
+                                       // }
                                 } elseif (is_array($file)) {
                                     $name = $file['name'];
                                     if ($file['originalName'] > '') {
                                         $name = $file['originalName'];
                                         //  if(!file_exists(uploads_path($this->module_id).$name)){
-                                        //      File::move(uploads_path($this->module_id).$file['name'],uploads_path($this->module_id).$name);
-                                        //  }
+                                      //      File::move(uploads_path($this->module_id).$file['name'],uploads_path($this->module_id).$name);
+                                      //  }
                                     }
                                     if (empty($file['data'])) {
                                         $file_names[] = ($file['originalName'] > '') ? $file['originalName'] : $file['name'];
@@ -935,7 +928,7 @@ class DBEvent
                         $data[$field] = implode(',', $file_names);
                     }
 
-                    if (($f['field_type'] == 'file' || $f['field_type'] == 'image') && ! empty($this->request->file($field))) {
+                    if (('file' == $f['field_type'] || 'image' == $f['field_type']) && !empty($this->request->file($field))) {
                         $files = is_array($this->request->file($field)) ? $this->request->file($field) : [$this->request->file($field)];
 
                         $filenames = [];
@@ -947,14 +940,14 @@ class DBEvent
                             $file_type = $file->getMimeType();
                             $file_extension = $file->getClientOriginalExtension();
 
-                            if ($f['field_type'] == 'image') {
-                                if (! in_array($file_extension, ['jpg', 'jpeg', 'png'])) {
+                            if ('image' == $f['field_type']) {
+                                if (!in_array($file_extension, ['jpg', 'jpeg', 'png'])) {
                                     $validatePostError = 'Invalid image extension '.$file_extension.' use jpg,jpeg,png';
                                 }
                             }
 
                             $destinationPath = uploads_path($this->module->id);
-                            if (! is_dir($destinationPath)) {
+                            if (!is_dir($destinationPath)) {
                                 mkdir($destinationPath);
                             }
                             $filename = $file->getClientOriginalName();
@@ -969,18 +962,18 @@ class DBEvent
                         $data[$field] = $filenames[0];
                     }
 
-                    if (! empty($this->request->syncfusion_form)) {
-                        if (($f['field_type'] == 'file' || $f['field_type'] == 'image') && empty($this->request->file($field))) {
+                    if (!empty($this->request->syncfusion_form)) {
+                        if (('file' == $f['field_type'] || 'image' == $f['field_type']) && empty($this->request->file($field))) {
                             unset($data[$field]);
                         }
                     }
 
-                    if (empty($this->request->{$field}) && ($f['field_type'] == 'integer' || $f['field_type'] == 'currency')) {
+                    if (empty($this->request->{$field}) && ('integer' == $f['field_type'] || 'currency' == $f['field_type'])) {
                         $data[$field] = '0';
                     }
 
-                    if ($f['field_type'] == 'boolean') {
-                        if (! $this->request->{$field} || $this->request->{$field} === 'false' || $this->request->{$field} === 0) {
+                    if ('boolean' == $f['field_type']) {
+                        if (!$this->request->{$field} || $this->request->{$field} === 'false' || $this->request->{$field} === 0) {
                             $checked = 0;
                         } elseif ($this->request->{$field} || $this->request->{$field} === 'true' || $this->request->{$field} === 1) {
                             $checked = 1;
@@ -992,7 +985,7 @@ class DBEvent
                             $this->request->request->add([$field => 0]);
                         }
 
-                        if ($this->connection == 'pbx') {
+                        if ('pbx' == $this->connection) {
                             $col_type = get_column_type($this->table, $field, $this->connection);
 
                             if ($field == 'toll_allow') {
@@ -1023,26 +1016,26 @@ class DBEvent
                                 $data[$field] = '0';
                             }
                         }
-                    } elseif ($f['field_type'] == 'date') {
-                        if (! empty($this->request->input($field))) {
+                    } elseif ('date' == $f['field_type']) {
+                        if (!empty($this->request->input($field))) {
                             $data[$field] = date('Y-m-d', strtotime($this->request->input($field)));
                         }
-                    } elseif ($f['field_type'] == 'datetime') {
-                        if (! empty($this->request->input($field))) {
+                    } elseif ('datetime' == $f['field_type']) {
+                        if (!empty($this->request->input($field))) {
                             $data[$field] = date('Y-m-d H:i:s', strtotime($this->request->input($field)));
                         }
                     } elseif (str_contains($f['field_type'], 'select')) {
-                        if (! empty($f['opts_multiple'])) {
+                        if (!empty($f['opts_multiple'])) {
                             if (isset($this->request->{$field}) && is_array($this->request->{$field})) {
                                 if (is_array($this->request->input($field))) {
                                     $multival = implode(',', $this->request->input($field));
                                 }
                                 $data[$field] = $multival;
-                            } elseif (! empty($this->request->{$field})) {
+                            } elseif (!empty($this->request->{$field})) {
                                 $data[$field] = $this->request->{$field};
                             } elseif (isset($this->request->{$field}) && empty($this->request->{$field})) {
                                 $data[$field] = '';
-                            } elseif (! isset($this->request->{$field})) {
+                            } elseif (!isset($this->request->{$field})) {
                                 $data[$field] = '';
                             }
                         } else {
@@ -1063,59 +1056,59 @@ class DBEvent
 
                         if (empty($data[$field]) && isset($this->request->{$field})) {
                             $data[$field] = '';
-                        } elseif (! empty($this->request->{$field}) && is_array($opts_values) && count($opts_values) > 0) {
+                        } elseif (!empty($this->request->{$field}) && is_array($opts_values) && count($opts_values) > 0) {
                             if ($field == 'status' && $this->request->{$field} != 'Deleted') {
-                                if (! is_array($this->request->{$field})) {
-                                    if (! in_array($this->request->{$field}, $opts_values)) {
+                                if (!is_array($this->request->{$field})) {
+                                    if (!in_array($this->request->{$field}, $opts_values)) {
                                         $validatePostError = 'Invalid value for '.$f['label'].' field. Valid options: '.implode(', ', $opts_values);
                                     }
                                 } else {
                                     foreach ($this->request->{$field} as $selected) {
-                                        if (! in_array($selected, $opts_values)) {
+                                        if (!in_array($selected, $opts_values)) {
                                             $validatePostError = 'Invalid value for '.$f['label'].' field. Valid options: '.implode(', ', $opts_values);
                                         }
                                     }
                                 }
                             }
                         }
-                    } elseif ($f['field_type'] == 'password') {
+                    } elseif ('password' == $f['field_type']) {
                         $password = $this->request->input($field);
 
-                        if (isset($password) && $password == '') {
+                        if (isset($password) && '' == $password) {
                             unset($data[$field]);
-                        } elseif ($f['field'] == 'fnb_password' && ! empty($password)) {
+                        } elseif ($f['field'] == 'fnb_password' && !empty($password)) {
                             $data[$field] = $password;
-                        } elseif (! empty($password)) {
+                        } elseif (!empty($password)) {
                             $data[$field] = \Hash::make($password);
                         }
-                    } elseif ($f['field_type'] == 'phone_number' && ! empty($this->request->{$field})) {
-                        $number = $this->request->{$field};
+                    // } elseif ('phone_number' == $f['field_type'] && !empty($this->request->{$field})) {
+                    //     $number = $this->request->{$field};
 
-                        try {
-                            $number = phone($this->request->{$field}, ['ZA', 'US', 'Auto'])->formatForMobileDialingInCountry('ZA');
+                    //     try {
+                    //         $number = phone($this->request->{$field}, ['ZA', 'US', 'Auto'])->formatForMobileDialingInCountry('ZA');
 
-                            $data[$field] = $number;
-                        } catch (\Throwable $ex) {
-                            exception_log($ex);
+                    //         $data[$field] = $number;
+                    //     } catch (\Throwable $ex) {
+                    //         exception_log($ex);
 
-                            return ['error' => $f['label'].': Invalid phone number format.'];
-                        }
-                    } elseif ($f['field_type'] == 'email' && ! empty($this->request->{$field})) {
+                    //         return ['error' => $f['label'].': Invalid phone number format.'];
+                    //     }
+                    } elseif ('email' == $f['field_type'] && !empty($this->request->{$field})) {
                         $email = $this->request->{$field};
                         try {
-                            if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                                 $validatePostError = $f['label'].': Invalid email format.';
                             }
                         } catch (\Throwable $ex) {
                             exception_log($ex);
                             $validatePostError = $f['label'].': Invalid email format.';
                         }
-                    } elseif ($f['field_type'] == 'tags' && ! empty($this->request->{$field})) {
+                    } elseif ('tags' == $f['field_type'] && !empty($this->request->{$field})) {
                         $data[$field] = (is_array($this->request->{$field})) ? implode(',', $this->request->{$field}) : $this->request->{$field};
                     }
                 }
             }
-            if (! empty($this->request->insert_at_id)) {
+            if (!empty($this->request->insert_at_id)) {
                 if ($field == 'sort_order' && isset($this->request->{$field})) {
                     $data['sort_order'] = $this->request->{$field};
                 }
@@ -1125,7 +1118,7 @@ class DBEvent
             }
         }
 
-        if (! empty($validatePostError)) {
+        if (!empty($validatePostError)) {
             return ['validatePostError' => $validatePostError];
         }
 
@@ -1137,7 +1130,7 @@ class DBEvent
             $values[$field] = null;
         }
         foreach ($values as $k => $v) {
-            if (is_null($v) && ! in_array($k, $null_fields)) {
+            if (is_null($v) && !in_array($k, $null_fields)) {
                 unset($values[$k]);
             }
         }
@@ -1150,15 +1143,15 @@ class DBEvent
 
     private function setRequestProperties($request)
     {
-        if ($this->table == 'crm_documents' || $this->table == 'crm_supplier_documents') {
-            if (! empty($this->request->product_id) && is_array($this->request->product_id) &&
-            ! empty($this->request->qty) && is_array($this->request->qty) &&
-            ! empty($this->request->price) && is_array($this->request->price)) {
+        if ('crm_documents' == $this->table || 'crm_supplier_documents' == $this->table) {
+            if (!empty($this->request->product_id) && is_array($this->request->product_id) &&
+            !empty($this->request->qty) && is_array($this->request->qty) &&
+            !empty($this->request->price) && is_array($this->request->price)) {
                 $this->setProperties(['validate_document' => true]);
             }
 
-            if ($this->table == 'crm_documents') {
-                if (! empty($this->request->doctype) && ($this->request->doctype == 'Tax Invoice' || $this->request->doctype == 'Credit Note')) {
+            if ('crm_documents' == $this->table) {
+                if (!empty($this->request->doctype) && ($this->request->doctype == 'Tax Invoice' || $this->request->doctype == 'Credit Note')) {
                     $this->request->request->add(['completed' => 1]);
                 }
             }
@@ -1176,7 +1169,7 @@ class DBEvent
 
     private function setDBRecord()
     {
-        if (! empty($this->request->id)) {
+        if (!empty($this->request->id)) {
             $key = $this->module->db_key;
 
             $this->db_record = DB::connection($this->connection)->table($this->table)->where($key, $this->request->id)->get()->first();
@@ -1188,14 +1181,14 @@ class DBEvent
 
     private function restoreDBRecord($id)
     {
-        if (! empty($this->request->new_record)) {
+        if (!empty($this->request->new_record)) {
             DB::connection($this->connection)->table($this->table)->where('id', $id)->delete();
         } else {
             $data = (array) $this->db_record;
             DB::connection($this->connection)->table($this->table)->where('id', $this->request->id)->update($data);
         }
 
-        if (! empty(session('rollback_records'))) {
+        if (!empty(session('rollback_records'))) {
             foreach (session('rollback_records') as $conn => $table_data) {
                 foreach ($table_data as $table => $rows) {
                     foreach ($rows as $row) {
@@ -1220,11 +1213,11 @@ class DBEvent
                 return 'Document date not set.';
             }
 
-            if (! accounting_year_active($docdate)) {
+            if (!accounting_year_active($docdate)) {
                 return 'Accounting Period Closed';
             }
 
-            if (! accounting_month_active($docdate)) {
+            if (!accounting_month_active($docdate)) {
                 return 'Period Closed';
             }
         }
@@ -1235,10 +1228,10 @@ class DBEvent
     private function checkProvisioningConditions()
     {
         /// VALIDATE PROVISIONING
-        if ($this->validate_document && $this->table == 'crm_documents') {
+        if ($this->validate_document && 'crm_documents' == $this->table) {
             $invoice = (object) $this->request;
 
-            if (! empty($invoice->reseller_user)) {
+            if (!empty($invoice->reseller_user)) {
                 $account = dbgetaccount($invoice->reseller_user);
             } else {
                 $account = dbgetaccount($invoice->account_id);
@@ -1254,7 +1247,7 @@ class DBEvent
                 $has_migration = false;
                 foreach ($invoice->lines as $invoice_line) {
                     $invoice_line = (object) $invoice_line;
-                    if (! $has_migration) {
+                    if (!$has_migration) {
                         $has_migration = \DB::table('sub_services')->where('account_id', $account->id)->where('migrate_product_id', $invoice_line->product_id)->where('status', '!=', 'Deleted')->where('to_migrate', 1)->count();
                     }
                 }
@@ -1267,26 +1260,26 @@ class DBEvent
                 return 'No Pricelist Set.';
             }
 
-            if ($account->type != 'reseller' && ! empty($account->pricelist_id)) {
+            if ($account->type != 'reseller' && !empty($account->pricelist_id)) {
                 $valid_pricelist = DB::table('crm_pricelists')->where('id', $account->pricelist_id)->where('partner_id', $account->partner_id)->count();
-                if (! $valid_pricelist) {
+                if (!$valid_pricelist) {
                     return 'Invalid Pricelist.';
                 }
             }
 
-            if ($account->type == 'lead' || $account->type == 'reseller') {
+            if ('lead' == $account->type || 'reseller' == $account->type) {
                 return '';
             }
 
-            if ($invoice->doctype != 'Credit Note' && $invoice->doctype != 'Credit Note Draft') {
+            if ('Credit Note' != $invoice->doctype && 'Credit Note Draft' != $invoice->doctype) {
                 $voice_packages = get_activation_type_product_ids('airtime_contract');
 
                 $package_exists = DB::table('sub_services')->where('account_id', $account->id)
                     ->where('status', '!=', 'Deleted')->where('provision_type', 'airtime_contract')->count();
 
                 // check documents
-                if (! $package_exists) {
-                    if (! empty($invoice->reseller_user)) {
+                if (!$package_exists) {
+                    if (!empty($invoice->reseller_user)) {
                         $line_package_exists = DB::table('crm_documents')
                             ->join('crm_document_lines', 'crm_document_lines.document_id', '=', 'crm_documents.id')
                             ->where('crm_documents.reseller_user', $invoice->reseller_user)
@@ -1323,7 +1316,7 @@ class DBEvent
                     }
 
                     if ($product->code != 'vehicledbcredits') {
-                        if (($invoice->doctype == 'Order' || $invoice->doctype == 'Tax Invoice') && $product->type == 'Stock' && ! $product->is_subscription) {
+                        if (('Order' == $invoice->doctype || 'Tax Invoice' == $invoice->doctype) && 'Stock' == $product->type && !$product->is_subscription) {
                             $qty_on_hand = dbgetcell('crm_products', 'id', $invoice_line->product_id, 'qty_on_hand');
                             if ($qty_on_hand < $invoice_line->qty) {
                                 return 'Not enough stock on hand - '.$product->code;
@@ -1339,24 +1332,24 @@ class DBEvent
 
     public function setCreditorBalance($supplier_ids = false)
     {
-        if (! empty($this->auto_reconciled)) {
+        if (!empty($this->auto_reconciled)) {
             return $this;
         }
 
-        if (! $supplier_ids) {
+        if (!$supplier_ids) {
             $supplier_ids = [];
-            if ($this->request->supplier_id > 0 && ($this->table == 'acc_cashbook_transactions' || $this->table == 'crm_supplier_documents')) {
+            if ($this->request->supplier_id > 0 && ('acc_cashbook_transactions' == $this->table || 'crm_supplier_documents' == $this->table)) {
                 $supplier_ids[] = $this->request->supplier_id;
 
                 // if request does not match previous db value update aging for previous account
-                if (! empty($this->db_record) && $this->db_record->supplier_id != $this->request->supplier_id) {
+                if (!empty($this->db_record) && $this->db_record->supplier_id != $this->request->supplier_id) {
                     $supplier_ids[] = $this->db_record->supplier_id;
                 }
             }
         }
 
         if ($supplier_ids) {
-            if (! is_array($supplier_ids)) {
+            if (!is_array($supplier_ids)) {
                 $val = $supplier_ids;
                 $supplier_ids = [];
                 $supplier_ids[] = $val;
@@ -1398,7 +1391,7 @@ class DBEvent
         $converted_doc_ids = [];
         if ($account_id) {
             $account = \DB::connection('default')->table('crm_accounts')->select('id', 'partner_id')->where('id', $account_id)->get()->first();
-            if ($account->partner_id == 1) {
+            if (1 == $account->partner_id) {
                 $accounts = \DB::connection('default')->table('crm_accounts')->where('id', $account_id)->get();
             } else {
                 $accounts = \DB::connection('default')->table('crm_accounts')->where('id', $account->partner_id)->get();
@@ -1464,20 +1457,20 @@ class DBEvent
 
             $balance = $payments_total + $credit_total + $journals_total;
 
-            if (! empty($tax_invoices)) {
+            if (!empty($tax_invoices)) {
                 foreach ($tax_invoices as $doc) {
                     $balance -= $doc->total;
-                    if ($balance >= -5 || $doc->total == 0) {
+                    if ($balance >= -5 || 0 == $doc->total) {
                         \DB::connection('default')->table('crm_documents')->where('id', $doc->id)->update(['payment_status' => 'Complete', 'completed' => 1]);
                     }
                 }
             }
 
             $admin_user_ids = \DB::connection('default')->table('erp_users')->where('account_id', 1)->pluck('id')->toArray();
-            if (! empty($proforma_invoices)) {
+            if (!empty($proforma_invoices)) {
                 foreach ($proforma_invoices as $doc) {
                     $balance -= $doc->total;
-                    if ($balance >= -5 || $doc->total == 0 || ($balance < 0 && abs($balance) < $credit_limit)) {
+                    if ($balance >= -5 || 0 == $doc->total || ($balance < 0 && abs($balance) < $credit_limit)) {
                         \DB::connection('default')->table('crm_documents')->where('id', $doc->id)->update(['doctype' => 'Tax Invoice', 'payment_status' => 'Complete']);
                         \DB::connection('default')->table('crm_documents')->where('id', $doc->id)->where('completed', 0)->update(['completed' => 1]);
                         if (in_array($doc->id, $order_ids)) {
@@ -1501,7 +1494,7 @@ class DBEvent
         }
 
         if (count($ledger_doc_ids) > 0) {
-            $db = new DBEvent;
+            $db = new DBEvent();
             $db->setTable('crm_documents');
             foreach ($ledger_doc_ids as $ledger_doc_id) {
                 $db->postDocument($ledger_doc_id);
@@ -1514,26 +1507,26 @@ class DBEvent
 
     public function setDebtorBalance($account_ids = false, $process_deleted = false)
     {
-        if (! $account_ids) {
+        if (!$account_ids) {
             $account_ids = [];
             $debtor_tables = ['acc_cashbook_transactions', 'crm_documents'];
             if (in_array($this->table, $debtor_tables)) {
-                if (! empty($this->db_record) && ! empty($this->db_record->account_id)) {
+                if (!empty($this->db_record) && !empty($this->db_record->account_id)) {
                     $account_ids[] = $this->db_record->account_id;
-                } elseif (! empty($this->request->account_id)) {
+                } elseif (!empty($this->request->account_id)) {
                     $account_ids[] = $this->request->account_id;
                 }
             }
         }
 
-        if (! $account_ids) {
+        if (!$account_ids) {
             if ($this->table == 'crm_accounts') {
                 $account_ids = $this->request->id;
             }
         }
 
         if ($account_ids) {
-            if (! is_array($account_ids)) {
+            if (!is_array($account_ids)) {
                 $val = $account_ids;
                 $account_ids = [];
                 $account_ids[] = $val;
@@ -1562,21 +1555,21 @@ class DBEvent
 
     public function updateAccountType()
     {
-        if ($this->table == 'crm_documents' || ($this->table == 'acc_cashbook_transactions' && $this->request->account_id > 0)) {
+        if ('crm_documents' == $this->table || ('acc_cashbook_transactions' == $this->table && $this->request->account_id > 0)) {
             $row = DB::connection($this->connection)->table($this->table)->where('id', $this->request->id)->get()->first();
             $account = dbgetaccount($row->account_id);
         }
 
-        if ($this->table == 'crm_accounts') {
+        if ('crm_accounts' == $this->table) {
             $account = dbgetaccount($this->request->id);
         }
 
-        if ($account->type == 'lead') {
+        if ('lead' == $account->type) {
             $has_order = DB::table('crm_documents')->where('account_id', $account->id)->where('doctype', 'Order')->where('reversal_id', 0)->count();
             $has_invoice = DB::table('crm_documents')->where('account_id', $account->id)->where('doctype', 'Tax Invoice')->where('reversal_id', 0)->count();
 
             if ($has_invoice || $has_order) {
-                if ($account->partner_id == 1) {
+                if (1 == $account->partner_id) {
                     DB::table('crm_accounts')->where('id', $account->id)->update(['type' => 'customer', 'status' => 'Enabled']);
                 } else {
                     DB::table('crm_accounts')->where('id', $account->id)->update(['type' => 'reseller_user', 'status' => 'Enabled']);
@@ -1590,28 +1583,28 @@ class DBEvent
 
     public function setStockBalance($product_ids = false)
     {
-        if (! $product_ids) {
+        if (!$product_ids) {
             $stock_tables = ['crm_products', 'crm_documents', 'acc_inventory', 'crm_supplier_documents'];
-            if (! in_array($this->table, $stock_tables)) {
+            if (!in_array($this->table, $stock_tables)) {
                 return false;
             }
 
             $product_ids = [];
-            if ($this->table == 'crm_products') {
+            if ('crm_products' == $this->table) {
                 $product_ids[] = $this->request->id;
-            } elseif ($this->table == 'crm_documents' || $this->table == 'crm_supplier_documents') {
-                $lines_table = ($this->table == 'crm_documents') ? 'crm_document_lines' : 'crm_supplier_document_lines';
+            } elseif ('crm_documents' == $this->table || 'crm_supplier_documents' == $this->table) {
+                $lines_table = ('crm_documents' == $this->table) ? 'crm_document_lines' : 'crm_supplier_document_lines';
                 $product_ids = \DB::table($lines_table)->where('document_id', $this->request->id)->pluck('product_id')->toArray();
             } else {
                 $product_ids[] = $this->request->product_id;
             }
         }
-        if ($product_ids && ! is_array($product_ids)) {
+        if ($product_ids && !is_array($product_ids)) {
             $product_ids = [$product_ids];
         }
 
         if (count($product_ids) > 0) {
-            if ($this->table == 'acc_inventory' || $this->table == 'crm_documents' || $this->table == 'crm_supplier_documents') {
+            if ('acc_inventory' == $this->table || 'crm_documents' == $this->table || 'crm_supplier_documents' == $this->table) {
                 foreach ($product_ids as $product_id) {
                     if (empty($product_id)) {
                         continue;
@@ -1628,7 +1621,7 @@ class DBEvent
                     continue;
                 }
 
-                if ($this->table == 'acc_inventory') {
+                if ('acc_inventory' == $this->table) {
                     rebuild_inventory_totals($product_id);
                 }
 
@@ -1638,12 +1631,12 @@ class DBEvent
                 $data = (array) $product;
                 $stock_data = get_stock_balance_approved($product_id);
 
-                if (! $stock_data['qty_on_hand']) {
+                if (!$stock_data['qty_on_hand']) {
                     $stock_data['qty_on_hand'] = 0;
                 }
 
                 $stock_data['stock_value'] = $stock_data['qty_on_hand'] * $stock_data['cost_price'];
-                if ($product_type != 'Stock') {
+                if ('Stock' != $product_type) {
                     $stock_data['qty_on_hand'] = 0;
                     $stock_data['stock_value'] = 0;
                 }
@@ -1660,7 +1653,7 @@ class DBEvent
 
                 \DB::table('crm_products')->where('id', $product_id)->update($data);
 
-                if ($this->table == 'acc_inventory') {
+                if ('acc_inventory' == $this->table) {
                     validate_pricelists_cost_price($product_id);
                 }
             }
@@ -1669,10 +1662,10 @@ class DBEvent
 
     public function saveProductsPricingChanges()
     {
-        if ($this->table == 'crm_products') {
+        if ('crm_products' == $this->table) {
             $beforesave_row = session($this->table.'_event_db_record');
 
-            if (! empty($beforesave_row) && ! empty($beforesave_row->selling_price_incl)) {
+            if (!empty($beforesave_row) && !empty($beforesave_row->selling_price_incl)) {
                 if ($beforesave_row->selling_price_incl != $this->request->selling_price_incl) {
                     $data = [
                         'product_id' => $this->request->id,
@@ -1688,7 +1681,7 @@ class DBEvent
 
     private function cacheClear()
     {
-        if ($this->table == 'erp_instance_migrations' || $this->table == 'erp_menu_role_access' || $this->table == 'erp_forms' || $this->table == 'erp_menu' || $this->table == 'erp_cruds' || $this->table == 'erp_grid_views' || $this->table == 'erp_grid_styles' || $this->table == 'erp_module_fields') {
+        if ('erp_instance_migrations' == $this->table || 'erp_menu_role_access' == $this->table || 'erp_forms' == $this->table || 'erp_menu' == $this->table || 'erp_cruds' == $this->table || 'erp_grid_views' == $this->table || 'erp_grid_styles' == $this->table || 'erp_module_fields' == $this->table) {
             cache_clear();
         }
         /*
@@ -1721,23 +1714,23 @@ class DBEvent
 
     private function doctypeAfterSave()
     {
-        if ($this->event_type == 'afterdelete') {
+        if ('afterdelete' == $this->event_type) {
             $this->setRequestProperties($this->db_record);
         }
-        if ($this->table == 'crm_documents') {
+        if ('crm_documents' == $this->table) {
             \DB::connection('default')->table('crm_documents')->update(['period' => \DB::raw("DATE_FORMAT(docdate, '%Y-%m')")]);
             \DB::connection('default')->table('crm_documents')->update(['docdate_month' => \DB::raw("DATE_FORMAT(docdate, '%Y-%m-01')")]);
         }
-        if ($this->table == 'crm_supplier_documents') {
+        if ('crm_supplier_documents' == $this->table) {
             \DB::connection('default')->table('crm_supplier_documents')->update(['docdate_month' => \DB::raw("DATE_FORMAT(docdate, '%Y-%m-01')")]);
         }
-        if ($this->table == 'crm_documents' || $this->table == 'crm_supplier_documents') {
-            if (! empty($this->request->doctype)) {
+        if ('crm_documents' == $this->table || 'crm_supplier_documents' == $this->table) {
+            if (!empty($this->request->doctype)) {
                 set_doctype_doc_no($this->request->doctype);
             }
         }
 
-        if ($this->table == 'acc_inventory') {
+        if ('acc_inventory' == $this->table) {
             update_inventory_totals();
         }
 
@@ -1750,7 +1743,7 @@ class DBEvent
     {
         // build lines
 
-        if (empty($this->request->product_id) || count($this->request->product_id) == 0) {
+        if (empty($this->request->product_id) || 0 == count($this->request->product_id)) {
             return response()->json(['status' => 'error', 'message' => 'Document Lines Required']);
         }
 
@@ -1764,26 +1757,26 @@ class DBEvent
                 'full_price' => $this->request->price[$index],
                 'product_id' => $this->request->product_id[$index],
             ];
-            if (! empty($this->request->description) && ! empty($this->request->description[$index])) {
+            if (!empty($this->request->description) && !empty($this->request->description[$index])) {
                 $line['description'] = $this->request->description[$index];
             }
-            if (! empty($this->request->ledger_account_id) && ! empty($this->request->ledger_account_id[$index])) {
+            if (!empty($this->request->ledger_account_id) && !empty($this->request->ledger_account_id[$index])) {
                 $line['ledger_account_id'] = $this->request->ledger_account_id[$index];
             }
-            if (! empty($this->request->shipment_share) && ! empty($this->request->shipment_share[$index])) {
+            if (!empty($this->request->shipment_share) && !empty($this->request->shipment_share[$index])) {
                 $line['shipment_share'] = $this->request->shipment_share[$index];
             }
-            if (! empty($this->request->cdr_destination) && ! empty($this->request->cdr_destination[$index])) {
+            if (!empty($this->request->cdr_destination) && !empty($this->request->cdr_destination[$index])) {
                 $line['cdr_destination'] = $this->request->cdr_destination[$index];
             }
 
-            if (! empty($this->request->shipping_price) && ! empty($this->request->shipping_price[$index])) {
+            if (!empty($this->request->shipping_price) && !empty($this->request->shipping_price[$index])) {
                 $line['shipping_price'] = $this->request->shipping_price[$index];
             }
-            if (! empty($this->request->domain_tld) && ! empty($this->request->domain_tld[$index])) {
+            if (!empty($this->request->domain_tld) && !empty($this->request->domain_tld[$index])) {
                 $line['domain_tld'] = $this->request->domain_tld[$index];
             }
-            if (! empty($this->request->contract_period) && ! empty($this->request->contract_period[$index])) {
+            if (!empty($this->request->contract_period) && !empty($this->request->contract_period[$index])) {
                 $line['contract_period'] = $this->request->contract_period[$index];
                 $has_contract_product = true;
             }
@@ -1792,8 +1785,8 @@ class DBEvent
 
         $this->request->request->add(['lines' => $lines]);
 
-        if ($this->table == 'crm_supplier_documents' || $this->table == 'crm_supplier_import_documents') {
-            if (! empty($this->request->account_id) && empty($this->request->supplier_id)) {
+        if ('crm_supplier_documents' == $this->table || 'crm_supplier_import_documents' == $this->table) {
+            if (!empty($this->request->account_id) && empty($this->request->supplier_id)) {
                 $this->request->request->add(['supplier_id' => $this->request->account_id]);
             }
         }
@@ -1808,9 +1801,9 @@ class DBEvent
     private function setDocumentLines()
     {
         $id = $this->request->id;
-        $lines_table = ($this->table == 'crm_documents') ? 'crm_document_lines' : 'crm_supplier_document_lines';
+        $lines_table = ('crm_documents' == $this->table) ? 'crm_document_lines' : 'crm_supplier_document_lines';
 
-        $lines_table = ($this->table == 'crm_supplier_import_documents') ? 'crm_supplier_import_document_lines' : $lines_table;
+        $lines_table = ('crm_supplier_import_documents' == $this->table) ? 'crm_supplier_import_document_lines' : $lines_table;
 
         $document = DB::connection($this->connection)->table($this->table)->where('id', $id)->get()->first();
         DB::table($lines_table)->where('document_id', $id)->delete();
@@ -1819,20 +1812,20 @@ class DBEvent
 
         foreach ($document_lines as $docline) {
             $line = (array) $docline;
-            if ($this->table == 'crm_documents') {
+            if ('crm_documents' == $this->table) {
                 $line['cost_price'] = get_document_cost_price($document, $docline);
             }
 
             $line['document_id'] = $id;
 
-            if (! empty($line['description']) && $line['product_id'] != 147) {
+            if (!empty($line['description']) && $line['product_id'] != 147) {
                 // unset($line['description']);
             }
 
             DB::table($lines_table)->insert($line);
         }
 
-        if ($this->table == 'crm_documents') {
+        if ('crm_documents' == $this->table) {
             $this->setServiceInvoice();
         }
         $doc = $document;
@@ -1840,15 +1833,15 @@ class DBEvent
 
     public function setServiceInvoice($id = false)
     {
-        if (! $id) {
+        if (!$id) {
             $id = $this->request->id;
         }
 
-        if ($this->table == 'crm_documents') {
+        if ('crm_documents' == $this->table) {
             $document = \DB::table('crm_documents')->where('id', $id)->get()->first();
             $account = dbgetaccount($document->account_id);
 
-            if (($account->type == 'customer' || $account->type == 'reseller_user') && $account->partner_id != 1) {
+            if (('customer' == $account->type || 'reseller_user' == $account->type) && 1 != $account->partner_id) {
                 $admin = dbgetaccount(1);
                 $reseller = dbgetaccount($account->partner_id);
                 // submitted by service account
@@ -1874,7 +1867,7 @@ class DBEvent
 
                     if (empty($document->billing_type)) {
                         $product = \DB::table('crm_products')->where('id', $line->product_id)->get()->first();
-                        if (! empty($product->activation_fee)) {
+                        if (!empty($product->activation_fee)) {
                             $line_data['price'] = currency($product->activation_fee);
                             $line_data['full_price'] = pricelist_get_price($account->partner_id, $line->product_id, $line->qty)->full_price;
                             $line_data['description'] = 'Activation fee.'.PHP_EOL.'The service will be invoiced fully upon activation.';
@@ -1888,10 +1881,10 @@ class DBEvent
                     \DB::table('crm_document_lines')->where('id', $line->id)->update($line_data);
                 }
 
-                if ($admin->vat_enabled == 1) {
+                if (1 == $admin->vat_enabled) {
                     $tax = $subtotal * 0.15;
                 }
-                if ($reseller->vat_enabled == 1) {
+                if (1 == $reseller->vat_enabled) {
                     $service_tax = $service_subtotal * 0.15;
                 }
 
@@ -1909,7 +1902,7 @@ class DBEvent
                 \DB::table('crm_documents')->where('id', $document->id)->update($document_data);
             }
 
-            if ($account->type == 'reseller' && ! empty($document->reseller_user)) {
+            if ('reseller' == $account->type && !empty($document->reseller_user)) {
                 // submitted by reseller
                 $document_lines = \DB::table('crm_document_lines')->where('document_id', $document->id)->get();
 
@@ -1924,7 +1917,7 @@ class DBEvent
 
                     if (empty($document->billing_type)) {
                         $product = \DB::table('crm_products')->where('id', $line->product_id)->get()->first();
-                        if (! empty($product->activation_fee)) {
+                        if (!empty($product->activation_fee)) {
                             $line_data['service_price'] = currency($product->activation_fee);
                             $line_data['service_full_price'] = pricelist_get_price($document->reseller_user, $line->product_id, $line->qty)->full_price;
                             $line_data['description'] = 'Activation fee.'.PHP_EOL.'The service will be invoiced fully upon activation.';
@@ -1935,7 +1928,7 @@ class DBEvent
                     $subtotal += $line_total;
                     \DB::table('crm_document_lines')->where('id', $line->id)->update($line_data);
                 }
-                if ($account->vat_enabled == 1) {
+                if (1 == $account->vat_enabled) {
                     $tax = $subtotal * 0.15;
                 }
                 $total = $subtotal + $tax;
@@ -1951,7 +1944,7 @@ class DBEvent
 
     public function getDocumentResponse($id)
     {
-        if ($this->table == 'crm_documents') {
+        if ('crm_documents' == $this->table) {
             $doc = DB::table('crm_documents')->where('id', $id)->get()->first();
             $documents_url = get_menu_url_from_table('crm_documents');
             $activations_url = get_menu_url_from_table('sub_activations');
@@ -1960,7 +1953,7 @@ class DBEvent
             $products_ordered = DB::table('sub_activations')->where('invoice_id', $id)->where('provision_type', 'product')->where('status', 'Pending')->count();
 
             $beforesave_row = session('event_db_record');
-            if (! empty($beforesave_row) && ! empty($beforesave_row->doctype)) {
+            if (!empty($beforesave_row) && !empty($beforesave_row->doctype)) {
                 if ($beforesave_row->doctype != $doc->doctype) {
                     if ($beforesave_row->doctype == 'Credit Note Draft') {
                         return ['id' => $id];
@@ -1994,7 +1987,7 @@ class DBEvent
             return json_alert('Document not found', 'error');
         }
 
-        if ($type != 'Credit Note Draft' && ! empty($invoice->reversal_id)) {
+        if ($type != 'Credit Note Draft' && !empty($invoice->reversal_id)) {
             return json_alert('Document already credited.', 'error');
         }
 
@@ -2003,7 +1996,7 @@ class DBEvent
                 return json_alert('No access.', 'error');
             }
 
-            if ($invoice->doctype == 'Quotation' || $invoice->doctype == 'Order') {
+            if ('Quotation' == $invoice->doctype || 'Order' == $invoice->doctype) {
             } else {
                 return json_alert('No access.', 'error');
             }
@@ -2011,7 +2004,7 @@ class DBEvent
 
         $type = $invoice->doctype;
 
-        if ($type == 'Order') {
+        if ('Order' == $type) {
             $updated = DB::connection($this->connection)->table($this->table)->where('id', $this->request->id)->update(['payment_status' => '', 'doctype' => 'Quotation', 'subscription_created' => 0]);
 
             $this->setDebtorBalance($invoice->account_id);
@@ -2023,7 +2016,7 @@ class DBEvent
             } else {
                 return json_alert('Update failed', 'error');
             }
-        } elseif ($type == 'Credit Note') {
+        } elseif ('Credit Note' == $type) {
             DB::connection($this->connection)->table($this->table)->where('id', $invoice->reversal_id)->update(['reversal_id' => 0]);
             DB::table('crm_document_lines')->where('document_id', $id)->delete();
             DB::table('crm_documents')->where('id', $id)->delete();
@@ -2033,32 +2026,31 @@ class DBEvent
             $this->commitLogData();
 
             return json_alert('Credit Note Deleted');
-        } elseif ($type == 'Tax Invoice') {
+        } elseif ('Tax Invoice' == $type) {
             $invoice_lines = DB::table('crm_document_lines')->where('document_id', $id)->get();
 
             $void_result = void_transaction($this->table, $id, 'Credit Note');
 
             // aa($void_result);
             $this->setDebtorBalance($invoice->account_id);
-            if ($void_result === 'draft') {
+            if ('draft' === $void_result) {
                 $this->setLogData($id, 'deleted', 'draft invoice deleted');
                 $this->commitLogData();
 
                 return json_alert('Draft Transaction deleted.');
-            } elseif ($void_result === 'nonrefund') {
+            } elseif ('nonrefund' === $void_result) {
                 return json_alert('Cannot reverse airtime invoices.', 'error');
             } elseif ($void_result) {
                 $this->setLogData($id, 'updated', 'credit note '.$void_result.' created');
                 $this->commitLogData();
                 $documents_url = get_menu_url_from_table('crm_documents');
-
                 //aa('/'.$documents_url.'/edit/'.$void_result);
                 return json_alert('Document credited', 'success');
-                //return json_alert('/'.$documents_url.'/edit/'.$void_result, 'transactionDialog');
+            //return json_alert('/'.$documents_url.'/edit/'.$void_result, 'transactionDialog');
             } else {
                 return json_alert('Document cannot be credited', 'error');
             }
-        } elseif ($type == 'Supplier Debit Note' || $type == 'Supplier Order') {
+        } elseif ('Supplier Debit Note' == $type || 'Supplier Order' == $type) {
             DB::table('crm_supplier_document_lines')->where('document_id', $id)->delete();
             DB::table('crm_supplier_documents')->where('id', $id)->delete();
             DB::table('crm_supplier_documents')->where('reversal_id', $id)->update(['reversal_id' => 0]);
@@ -2069,12 +2061,12 @@ class DBEvent
             $this->setCreditorBalance($invoice->supplier_id);
 
             return json_alert($type.' deleted.');
-        } elseif (! empty($this->table)) {
-            if ($type == 'Supplier Invoice') {
+        } elseif (!empty($this->table)) {
+            if ('Supplier Invoice' == $type) {
                 $type = 'Supplier Debit Note';
             }
 
-            if (! empty($this->request->revert)) {
+            if (!empty($this->request->revert)) {
                 $void_result = void_transaction($this->table, $id, $type, false, true);
             } else {
                 $void_result = void_transaction($this->table, $id, $type);
@@ -2084,12 +2076,12 @@ class DBEvent
             } else {
                 $this->setDebtorBalance($invoice->account_id);
             }
-            if (! empty($this->request->revert)) {
+            if (!empty($this->request->revert)) {
                 $this->setLogData($id, 'updated', 'Document Reverted');
                 $this->commitLogData();
 
                 return json_alert('Document reverted.');
-            } elseif ($void_result === 'draft') {
+            } elseif ('draft' === $void_result) {
                 $this->setLogData($id, 'deleted', 'Draft Deleted');
                 $this->commitLogData();
 
@@ -2144,22 +2136,22 @@ class DBEvent
             return $this;
         }
 
-        if ($document->doctype == 'Payroll' && $document->status != 'Complete') {
+        if ('Payroll' == $document->doctype && $document->status != 'Complete') {
             return $this;
         }
 
-        if ($document->doctype == 'Inventory' && ($document->document_id > 0 || $document->supplier_document_id > 0)) {
+        if ('Inventory' == $document->doctype && ($document->document_id > 0 || $document->supplier_document_id > 0)) {
             return $this;
         }
-        if ($document->doctype == 'Inventory' && $document->approved == 0) {
+        if ('Inventory' == $document->doctype && $document->approved == 0) {
             return $this;
         }
 
         $payment_gateway_statuses = ['Complete', 'Declined', 'Debit Order Declined', 'Debit Order Declined Fee'];
-        if ($document->doctype == 'Cashbook Customer Receipt' && $document->api_status == 'Invalid') {
+        if ('Cashbook Customer Receipt' == $document->doctype && $document->api_status == 'Invalid') {
             return $this;
         }
-        if ($document->doctype == 'Cashbook Customer Receipt' && $document->approved == 0) {
+        if ('Cashbook Customer Receipt' == $document->doctype && $document->approved == 0) {
             return $this;
         }
 
@@ -2175,19 +2167,19 @@ class DBEvent
             $ledger['reference'] = '';
         }
         $ledger['docdate'] = $docdate;
-        if (! empty($document->docdate)) {
+        if (!empty($document->docdate)) {
             $ledger['docdate'] = $document->docdate;
         }
         $ledger['account_id'] = 0;
-        if (! empty($document->account_id)) {
+        if (!empty($document->account_id)) {
             $ledger['account_id'] = $document->account_id;
         }
         $ledger['supplier_id'] = 0;
-        if (! empty($document->supplier_id)) {
+        if (!empty($document->supplier_id)) {
             $ledger['supplier_id'] = $document->supplier_id;
         }
         $ledger['product_id'] = 0;
-        if (! empty($document->product_id)) {
+        if (!empty($document->product_id)) {
             $ledger['product_id'] = $document->product_id;
         }
         $ledger['doctype'] = $doctype->doctype;
@@ -2198,11 +2190,11 @@ class DBEvent
             $ledger['retained_earnings'] = date('Y', strtotime($document->docdate));
         }
 
-        if ($doctype->doctype == 'General Journal' && ! empty($document->transaction_id)) {
+        if ($doctype->doctype == 'General Journal' && !empty($document->transaction_id)) {
             $journal_header = DB::table('acc_general_journal_transactions')->where('id', $document->transaction_id)->get()->first();
 
             $ledger['docdate'] = $journal_header->docdate;
-            if (! $journal_header->posted) {
+            if (!$journal_header->posted) {
                 return $this;
             }
         }
@@ -2237,17 +2229,17 @@ class DBEvent
                 */
 
                 foreach ($document_lines as $document_line) {
-                    if (! empty($document_line->product_id)) {
+                    if (!empty($document_line->product_id)) {
                         $ledger['product_id'] = $document_line->product_id;
                     }
                     $ledger['amount'] = ledger_post_amount($doctype, $doctype_detail, $document_line, $document);
                     $ledger['ledger_account_id'] = ledger_post_ledger_account_id($doctype, $doctype_detail, $document_line, $stock_product_ids, $airtime_product_ids);
 
                     if ($doctype->doctable == 'crm_documents' || $doctype->doctable == 'acc_inventory') {
-                        if (($ledger['ledger_account_id'] == 32 || $ledger['ledger_account_id'] == 34) && ! in_array($document_line->product_id, $stock_product_ids)) {
+                        if (($ledger['ledger_account_id'] == 32 || $ledger['ledger_account_id'] == 34) && !in_array($document_line->product_id, $stock_product_ids)) {
                             continue;
                         }
-                        if ($doctype->doctable == 'acc_inventory' && $ledger['ledger_account_id'] == 25 && ! in_array($document_line->product_id, $stock_product_ids)) {
+                        if ($doctype->doctable == 'acc_inventory' && $ledger['ledger_account_id'] == 25 && !in_array($document_line->product_id, $stock_product_ids)) {
                             continue;
                         }
                     }
@@ -2255,7 +2247,7 @@ class DBEvent
                     if ($ledger['amount'] != 0) {
                         $ledger['original_amount'] = $ledger['amount'];
                         $ledger['document_currency'] = 'ZAR';
-                        if (! empty($document->document_currency) && $document->document_currency != 'ZAR') {
+                        if (!empty($document->document_currency) && $document->document_currency != 'ZAR') {
                             $ledger['document_currency'] = $document->document_currency;
                             $ledger['amount'] = currency_to_zar($document->document_currency, $ledger['amount'], $document->docdate);
                         }
@@ -2267,10 +2259,10 @@ class DBEvent
                 $ledger['ledger_account_id'] = ledger_post_ledger_account_id($doctype, $doctype_detail, $document, $stock_product_ids, $airtime_product_ids);
 
                 if ($doctype->doctable == 'crm_documents' || $doctype->doctable == 'acc_inventory') {
-                    if (($ledger['ledger_account_id'] == 32 || $ledger['ledger_account_id'] == 34) && ! in_array($document->product_id, $stock_product_ids)) {
+                    if (($ledger['ledger_account_id'] == 32 || $ledger['ledger_account_id'] == 34) && !in_array($document->product_id, $stock_product_ids)) {
                         continue;
                     }
-                    if ($doctype->doctable == 'acc_inventory' && $ledger['ledger_account_id'] == 25 && ! in_array($document->product_id, $stock_product_ids)) {
+                    if ($doctype->doctable == 'acc_inventory' && $ledger['ledger_account_id'] == 25 && !in_array($document->product_id, $stock_product_ids)) {
                         continue;
                     }
                 }
@@ -2278,7 +2270,7 @@ class DBEvent
                 if ($ledger['amount'] != 0) {
                     $ledger['original_amount'] = $ledger['amount'];
                     $ledger['document_currency'] = 'ZAR';
-                    if (! empty($document->document_currency) && $document->document_currency != 'ZAR') {
+                    if (!empty($document->document_currency) && $document->document_currency != 'ZAR') {
                         $ledger['document_currency'] = $document->document_currency;
                         $ledger['amount'] = currency_to_zar($document->document_currency, $ledger['amount'], $document->docdate);
                     }
@@ -2292,7 +2284,7 @@ class DBEvent
 
     public function postDocumentCommit()
     {
-        if (! empty($this->ledgers) && count($this->ledgers) > 0) {
+        if (!empty($this->ledgers) && count($this->ledgers) > 0) {
             foreach ($this->ledger_ids as $doctype => $ids) {
                 if ($doctype == 'General Journal') {
                     \DB::table('acc_general_journals')->whereIn('id', $ids)->update(['posted' => 1]);

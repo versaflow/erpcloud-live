@@ -3,11 +3,11 @@
 function schedule_import_facebook_leads()
 {
     $active_ads = \DB::table('crm_ad_campaigns')
-        ->where('status', 'Published')
-        ->where('form_id', '>', '')->get();
+    ->where('status', 'Published')
+    ->where('form_id', '>', '')->get();
     // dd($active_ads);
     foreach ($active_ads as $ad) {
-        if (! $ad->form_name) {
+        if (!$ad->form_name) {
             $form = fb_get_form_details($ad->form_id);
             // dd($form);
             \DB::table('crm_ad_campaigns')->where('id', $ad->id)->update(['form_name' => $form['name']]);
@@ -15,8 +15,8 @@ function schedule_import_facebook_leads()
     }
 
     $active_ads = \DB::table('crm_ad_campaigns')
-        ->where('status', 'Published')
-        ->where('form_id', '>', '')->get();
+    ->where('status', 'Published')
+    ->where('form_id', '>', '')->get();
 
     foreach ($active_ads as $active_ad) {
         $leads = fb_get_leads($active_ad->form_id);
@@ -24,16 +24,16 @@ function schedule_import_facebook_leads()
 
         // dd($leads['data']);
         foreach ($leads['data'] as $lead) {
-            if ($lead['ad_id'] && ! $campaign_id_set) {
+            if ($lead['ad_id'] && !$campaign_id_set) {
                 $campaign_id_set = true;
                 $ad_details = fb_get_ad_details($lead['ad_id']);
                 \DB::table('crm_ad_campaigns')
-                    ->where('id', $ad->id)
-                    ->update(['facebook_campaign_id' => $ad_details['campaign_id']]);
+                ->where('id', $ad->id)
+                ->update(['facebook_campaign_id' => $ad_details['campaign_id']]);
             }
 
             $exists = \DB::table('crm_accounts')->where('external_id', $lead['id'])->count();
-            if (! $exists) {
+            if (!$exists) {
                 $field_data = $lead['field_data'];
 
                 $lead_data = collect($field_data)->mapWithKeys(function ($item) {
@@ -43,7 +43,7 @@ function schedule_import_facebook_leads()
                 })->toArray();
 
                 $company = $lead_data['full_name'];
-                if (! empty($lead_data['company_name'])) {
+                if (!empty($lead_data['company_name'])) {
                     $company = $lead_data['company_name'];
                 }
 
@@ -65,7 +65,7 @@ function schedule_import_facebook_leads()
                     'deal_status' => 'New Enquiry',
                 ];
 
-                if (! empty($lead_data['street_address'])) {
+                if (!empty($lead_data['street_address'])) {
                     $marketing_lead['address'] = $lead_data['street_address'];
                 }
 
@@ -212,7 +212,7 @@ function facebook_import_leads_from_form_id($form_id)
     foreach ($leads['data'] as $lead) {
         $exists = \DB::table('crm_accounts')->where('external_id', $lead['id'])->count();
 
-        if (! $exists) {
+        if (!$exists) {
             $field_data = $lead['field_data'];
 
             $lead_data = collect($field_data)->mapWithKeys(function ($item) {
@@ -220,7 +220,7 @@ function facebook_import_leads_from_form_id($form_id)
             })->toArray();
 
             $company = $lead_data['full_name'];
-            if (! empty($lead_data['company_name'])) {
+            if (!empty($lead_data['company_name'])) {
                 $company = $lead_data['company_name'];
             }
 
@@ -241,7 +241,7 @@ function facebook_import_leads_from_form_id($form_id)
                 'created_by' => get_system_user_id(),
             ];
 
-            if (! empty($lead_data['street_address'])) {
+            if (!empty($lead_data['street_address'])) {
                 $marketing_lead['address'] = $lead_data['street_address'];
             }
 
@@ -255,9 +255,9 @@ function facebook_import_leads_from_form_id($form_id)
             }
 
             $id = \DB::table('crm_accounts')->insertGetId($marketing_lead);
-            $leads_imported++;
+            ++$leads_imported;
         } else {
-            $existing_leads++;
+            ++$existing_leads;
         }
     }
 

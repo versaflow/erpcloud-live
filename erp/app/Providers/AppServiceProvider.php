@@ -2,17 +2,21 @@
 
 namespace App\Providers;
 
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Arr;
 use Symfony\Component\Finder\Finder;
+use Illuminate\Database\Events\TransactionBeginning;
+use Illuminate\Database\Events\TransactionCommitted;
+use Illuminate\Database\Events\TransactionRolledBack;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 class AppServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap any application services.
      */
+
     public function boot()
     {
         error_reporting(E_ALL ^ E_NOTICE);
@@ -32,7 +36,7 @@ class AppServiceProvider extends ServiceProvider
         });
         Collection::macro('paginateLinks', function ($perPage, $total = null, $page = null, $pageName = 'page') {
             $page = $page ?: LengthAwarePaginator::resolveCurrentPage($pageName);
-
+        
             $paginator = new LengthAwarePaginator(
                 $this->forPage($page, $perPage),
                 $total ?: $this->count(),
@@ -43,10 +47,10 @@ class AppServiceProvider extends ServiceProvider
                     'pageName' => $pageName,
                 ]
             );
-
+        
             return $paginator->links();
         });
-
+        
         // \Event::listen('Illuminate\Database\Events\QueryExecuted', function ($query) {
         //      echo '<pre>';
         //      print_r([ $query->sql, $query->bindings, $query->time]);
@@ -60,20 +64,20 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         $rewrite_public_path = env('REWRITE_PUBLIC_PATH');
-        if ($rewrite_public_path) {
+        if($rewrite_public_path){
             $this->app->bind('path.public', function () {
-                return realpath(base_path().'/../html');
+               return realpath(base_path().'/../html');
             });
         }
-
+        
         try {
             $hostname = request()->root();
 
-            $allowed_proxies = ['report', 'report_dashboard', 'processes', 'process_dashboard', 'dashboard_user', 'dashboard', 'dashboards_reports'];
+            $allowed_proxies = ['report','report_dashboard','processes','process_dashboard','dashboard_user','dashboard','dashboards_reports'];
 
-            if (! empty($hostname) && $hostname == 'http://reports.turnkeyerp.io') {
+            if (!empty($hostname) && $hostname == 'http://reports.turnkeyerp.io') {
 
-                if (! empty(request()->token) && in_array(request()->segment(1), $allowed_proxies)) {
+                if (!empty(request()->token) && in_array(request()->segment(1), $allowed_proxies)) {
 
                     $token = \Erp::decode(request()->token);
 
@@ -82,11 +86,11 @@ class AppServiceProvider extends ServiceProvider
                     }
                     $connection = $token['token'];
                     $instance = \DB::connection('system')->table('erp_instances')->where('db_connection', $connection)->get()->first();
-                    if (! empty($instance) && ! empty($instance->domain_name)) {
+                    if (!empty($instance) && !empty($instance->domain_name)) {
                         // \URL::forceRootUrl('https://'.$instance->domain_name);
-                        //  \URL::forceScheme('https');
+                      //  \URL::forceScheme('https');
                     }
-                } elseif (! empty(request()->cookie('connection'))) {
+                } elseif (!empty(request()->cookie('connection'))) {
 
                     // get the encrypter service
                     $encrypter = app(\Illuminate\Contracts\Encryption\Encrypter::class);
@@ -96,13 +100,13 @@ class AppServiceProvider extends ServiceProvider
                     $decryptedStringArr = explode('|', $decryptedString);
                     $db_connection = $decryptedStringArr[1];
                     $instance = \DB::connection('system')->table('erp_instances')->where('db_connection', $db_connection)->get()->first();
-                    if (! empty($instance) && ! empty($instance->domain_name)) {
+                    if (!empty($instance) && !empty($instance->domain_name)) {
                         \URL::forceRootUrl('https://'.$instance->domain_name);
                         \URL::forceScheme('https');
                     }
                 }
-            } elseif (! empty($hostname)) {
-                $hostname = str_replace(['http://', 'https://'], '', $hostname);
+            } elseif (!empty($hostname)) {
+                $hostname = str_replace(['http://','https://'], '', $hostname);
 
                 $instance = \DB::connection('system')->table('erp_instances')->where('domain_name', $hostname)->orwhere('alias', $hostname)->get()->first();
             }
@@ -126,27 +130,29 @@ class AppServiceProvider extends ServiceProvider
             */
 
             if (empty($instance)) {
-                abort(500);
+               abort(500);
             }
-
-            if (! empty(request()->cidb)) {
-
+            
+            
+            
+            if(!empty(request()->cidb)){
+             
                 $instance = \DB::connection('system')->table('erp_instances')->where('db_connection', request()->cidb)->get()->first();
             }
-
+           
             $instance_dir = $instance->db_connection;
             $directory = base_path().'/instance_config/'.$instance_dir;
 
             foreach (Finder::create()->in($directory)->name('*.php') as $file) {
                 $this->mergeConfigFrom($file->getRealPath(), basename($file->getRealPath(), '.php'));
             }
-
+            
             $this->app['config']->set('app.url', 'https://'.$instance->domain_name);
-
-            config(['app.url' => 'https://'.$instance->domain_name]);
-        } catch (\Throwable $ex) {
+            
+            config(['app.url' =>  'https://'.$instance->domain_name]);
+        } catch (\Throwable $ex) {  
             exception_log($ex);
-            // abort(500);
+            abort(500);
         }
     }
 
@@ -177,6 +183,8 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Merges the configs together and takes multi-dimensional arrays into account.
      *
+     * @param  array  $original
+     * @param  array  $merging
      * @return array
      */
     protected function mergeConfig(array $original, array $merging)

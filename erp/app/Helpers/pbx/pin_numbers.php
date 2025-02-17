@@ -17,11 +17,11 @@ function pinnumbers_extension_select($row)
     return $routing;
 }
 
-function aftersave_pin_numbers_accountcode($request)
-{
 
-    $pin = \DB::connection('pbx')->table('v_pin_numbers')->where('pin_number_uuid', $request->pin_number_uuid)->get()->first();
+function aftersave_pin_numbers_accountcode($request){
+    
+    $pin = \DB::connection('pbx')->table('v_pin_numbers')->where('pin_number_uuid',$request->pin_number_uuid)->get()->first();
     $domain_uuid = $pin->domain_uuid;
-    $domain_name = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $domain_uuid)->pluck('domain_name')->first();
-    \DB::connection('pbx')->table('v_pin_numbers')->where('pin_number_uuid', $request->pin_number_uuid)->update(['accountcode' => $domain_name]);
+    $domain_name = \DB::connection('pbx')->table('v_domains')->where('domain_uuid',$domain_uuid)->pluck('domain_name')->first();
+    \DB::connection('pbx')->table('v_pin_numbers')->where('pin_number_uuid',$request->pin_number_uuid)->update(['accountcode'=>$domain_name]);
 }

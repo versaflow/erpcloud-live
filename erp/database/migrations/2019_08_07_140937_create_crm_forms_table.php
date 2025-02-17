@@ -26,6 +26,7 @@ class CreateCrmFormsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

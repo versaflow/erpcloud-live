@@ -20,6 +20,7 @@ class CreateCrmProductPackagesTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

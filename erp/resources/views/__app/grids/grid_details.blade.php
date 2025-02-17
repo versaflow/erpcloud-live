@@ -716,8 +716,8 @@ function  getContextMenuItems{{$grid_id}}(params) {
     @endif
     }
    
-    @if(isset($grid_menu_context))
-        {!! $grid_menu_context !!} 
+    @if($grid_menu_context)
+    {!! $grid_menu_context !!}
     @endif
     
     
@@ -1095,7 +1095,7 @@ function detailGridReady(params){
 /** LAYOUT FUNCTIONS **/ 
     function detail_layout_load{{ $master_grid_id }}(){
         
-       //console.log('detail_layout_load');
+       console.log('detail_layout_load');
         if(window['detail_col_defs{{$master_grid_id}}']){
             // set column defs for colmenu buttons
             if(detailGridOptions)
@@ -1370,12 +1370,11 @@ var detailGridOptions = {
                                return true;
                             }
                             var celldate = new Date(cellValue);
-                          
-                            if( celldate <= date_today){
-                              
+                            var dateParts = cellValue.split(/[- :]/);
+                           
+                            if((dateParts[2] == cur_day && dateParts[1] == cur_month && dateParts[0] == cur_year) || (celldate < date_today)){
                                 return true;    
-                            }else{
-                                
+                            } else {
                                 return false;    
                             }
                       
@@ -1390,11 +1389,10 @@ var detailGridOptions = {
                            
                            var celldate = new Date(cellValue);
                          
-                            if(celldate >= date_today){
-                              
+                           var dateParts = cellValue.split(/[- :]/);
+                           if((dateParts[2] == cur_day && dateParts[1] == cur_month && dateParts[0] == cur_year) || (celldate > date_today)){
                                 return true;    
                             }else{
-                                
                                 return false;    
                             }
                       
@@ -1899,7 +1897,7 @@ var detailGridOptions = {
         },
         @else
         @foreach($detail_col_defs as $i => $detailcolDef)
-            @if(isset($detailcolDef['children']))
+            @if($detailcolDef['children'])
                 @foreach($detailcolDef['children'] as $i => $col)
                     @if(!empty($col['filter_options']))
                     {{ $col['field'].$module_id }}Field: {
@@ -1914,14 +1912,20 @@ var detailGridOptions = {
                             suppressSelectAll: true,
                             buttons: ['reset']
                         },
-                        @if(isset($col['select_multiple']))
-                            valueGetter: multiValueGetter,
+                        @if($col['select_multiple'])
+                        valueGetter: multiValueGetter,
                         @endif
                         comparator: function (valueA, valueB, nodeA, nodeB, isInverted) {
+                       
                         var detail_field_values = window["detail_field_values{{ $col['field'] }}{{ $module_id}}"];
+                       
+                      
                         var key1 = detail_field_values.indexOf(valueA);
-                        var key2 = detail_field_values.indexOf(valueB);
                         
+                        var key2 = detail_field_values.indexOf(valueB);
+                         
+                       
+                      
                         if (key1 === null && key2 === null) {
                       
                             return 0;
@@ -1960,7 +1964,7 @@ var detailGridOptions = {
                         suppressSelectAll: true,
                         buttons: ['reset']
                     },
-                    @if(isset($detailcolDef['select_multiple']))
+                    @if($detailcolDef['select_multiple'])
                     valueGetter: multiValueGetter,
                     @endif
                     comparator: function (valueA, valueB, nodeA, nodeB, isInverted) {
@@ -2185,7 +2189,7 @@ var detailGridOptions = {
         },
         imageField: {
             cellRenderer: function(params){
-                //console.log('imageField',params);
+                console.log('imageField',params);
                 if(params.value > ''){
                     var files = params.value.split(",");
                     var cell_value = '';

@@ -14,8 +14,8 @@ class StoreHostnameMiddleware
         // Check if the hostname is store.example.com
         if ($hostname === session('instance')->store_url) {
             // Check if the request is going to StoreController
-            if (! $request->is('store*')) {
-                return redirect('/store');
+            if (!$request->is('store*')) {
+               return redirect('/store');
             }
         }
 

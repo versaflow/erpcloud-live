@@ -34,6 +34,7 @@ class CreateIspSummaryTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

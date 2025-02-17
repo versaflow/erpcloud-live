@@ -3,9 +3,7 @@
 class ErpBilling
 {
     public $account_id;
-
     public $annual_billing;
-
     public $billing_frequency;
 
     public function __construct()
@@ -42,19 +40,19 @@ class ErpBilling
     public function monthly_billing($docdate = false)
     {
         ini_set('max_execution_time', '600');
-        if (! $this->customer_type) {
+        if (!$this->customer_type) {
             return false;
         }
 
-        if (! $docdate) {
+        if (!$docdate) {
             $docdate = date('Y-m-01');
         }
 
-        // $renewal_start = $docdate;
-        // $renewal_end = $docdate;
-        // if($this->billing_on_renewal){
-        // $renewal_end = date('Y-m-01');
-        // }
+        $renewal_start = $docdate;
+        $renewal_end = $docdate;
+        if ($this->billing_on_renewal) {
+            $renewal_end = date('Y-m-01');
+        }
 
         $billing = [
             'billing_date' => $docdate,
@@ -67,13 +65,13 @@ class ErpBilling
         $billing['name'] = $docdate.' '.$billing['billing_type'];
         $billing_id = \DB::table('acc_billing')->where('billing_type', $billing['billing_type'])->where('billing_date', $docdate)->pluck('id')->first();
 
-        if (! $billing_id) {
+        if (!$billing_id) {
             $billing_id = \DB::table('acc_billing')->insertGetId($billing);
         }
 
         $admin = dbgetaccount(1);
 
-        $db = new \DBEvent;
+        $db = new \DBEvent();
         $bills_created = false;
 
         \DB::table('sub_services')->whereNull('renews_at')->update(['renews_at' => $docdate]);
@@ -81,8 +79,8 @@ class ErpBilling
         $currency = 'ZAR';
         //Check Instance and renewal type
         if (session('instance')->id == 1) {
-            if ($this->billing_on_renewal) { //305
-                $account_ids = \DB::table('crm_accounts')->where('renewal_date_billing', 1)->where('id', '!=', 1)->where('type', $this->customer_type)->where('status', '!=', 'Deleted')->pluck('id')->toArray();
+            if ($this->billing_on_renewal) {
+                $account_ids = \DB::table('crm_accounts')->where('service_status', 'Annual')->where('id', '!=', 1)->where('type', $this->customer_type)->where('status', '!=', 'Deleted')->pluck('id')->toArray();
             } else {
                 $account_ids = \DB::table('crm_accounts')->where('renewal_date_billing', 0)->where('type', $this->customer_type)->where('status', '!=', 'Deleted')->pluck('id')->toArray();
             }
@@ -91,20 +89,21 @@ class ErpBilling
             } else {
             }
             if ($this->billing_on_renewal) {
-                $account_ids = \DB::table('sub_services')->where('bill_frequency', '!=', 1)->where('status', '!=', 'Deleted')->pluck('account_id')->toArray();
-                $account_ids = \DB::table('crm_accounts')->whereIn('id', $account_ids)->where('id', '!=', 1)->where('type', $this->customer_type)->where('status', '!=', 'Deleted')->pluck('id')->toArray();
+                $sub_account_ids = \DB::table('sub_services')->where('bill_frequency', '!=', 1)->where('status', '!=', 'Deleted')->pluck('account_id')->toArray();
+                $account_ids = \DB::table('crm_accounts')->whereIn('id', $sub_account_ids)->where('id', '!=', 1)->where('type', $this->customer_type)->where('status', '!=', 'Deleted')->pluck('id')->toArray();
             } else {
-                $account_ids = \DB::table('sub_services')->where('bill_frequency', 1)->where('status', '!=', 'Deleted')->pluck('account_id')->toArray();
-                $account_ids = \DB::table('crm_accounts')->whereIn('id', $account_ids)->where('id', '!=', 1)->where('type', $this->customer_type)->where('status', '!=', 'Deleted')->pluck('id')->toArray();
+                $sub_account_ids = \DB::table('sub_services')->where('bill_frequency', 1)->where('status', '!=', 'Deleted')->pluck('account_id')->toArray();
+                $account_ids = \DB::table('crm_accounts')->whereIn('id', $sub_account_ids)->where('id', '!=', 1)->where('type', $this->customer_type)->where('status', '!=', 'Deleted')->pluck('id')->toArray();
             }
         }
         if (empty($account_ids)) {
             return false;
         }
-        $service_account_ids = $account_ids;
-        if ($this->customer_type == 'reseller') {
-            $service_account_ids = \DB::table('crm_accounts')->whereIn('partner_id', $account_ids)->where('status', '!=', 'Deleted')->pluck('id')->toArray();
-        }
+        // vd($account_ids);
+        // $service_account_ids = $account_ids;
+        // if ($this->customer_type == 'reseller') {
+        //     $service_account_ids = \DB::table('crm_accounts')->whereIn('partner_id', $account_ids)->where('status', '!=', 'Deleted')->pluck('id')->toArray();
+        // }
 
         //Get subscriptions
         if ($this->billing_on_renewal) {
@@ -131,7 +130,7 @@ class ErpBilling
                     'sub_services.invoice_id',
                     'sub_services.renews_at'
                 )
-                ->whereIn('sub_services.account_id', $service_account_ids)
+                // ->whereIn('sub_services.account_id', $service_account_ids)
                 ->where('crm_products.is_subscription', 1)
                 ->whereRaw('(sub_services.to_cancel=0 or (sub_services.to_cancel=1 and sub_services.cancel_date>"'.$docdate.'"))')
                 ->where('sub_services.bundle_id', 0)
@@ -165,7 +164,7 @@ class ErpBilling
                     'sub_services.invoice_id',
                     'sub_services.renews_at'
                 )
-                ->whereIn('sub_services.account_id', $service_account_ids)
+                // ->whereIn('sub_services.account_id', $service_account_ids)
                 ->where('crm_products.is_subscription', 1)
                 ->whereRaw('(sub_services.to_cancel=0 or (sub_services.to_cancel=1 and sub_services.cancel_date > '.$docdate.'))')
                 ->where('sub_services.bundle_id', 0)
@@ -176,7 +175,7 @@ class ErpBilling
                 ->where('sub_services.created_at', '<', $docdate)
                 ->where('sub_services.renews_at', '<=', $docdate);
         }
-        if (! empty($this->limit_account_id)) {
+        if (!empty($this->limit_account_id)) {
             $subscriptions_query->where('sub_services.account_id', $this->limit_account_id);
         }
 
@@ -186,12 +185,13 @@ class ErpBilling
         // print_r($sql);
 
         $account_subscriptions = collect($subscriptions)->groupBy('account_id');
-
         $process_account_ids = [];
         $invoice_ids = [];
         foreach ($account_subscriptions as $account_id => $subscriptions) {
+            vd($account_id);
+            
             //Check if documents exist
-            $exists = \DB::table('crm_documents')->where('account_id', $account_id)->where('docdate', $docdate)->where('billing_type', 'Monthly')->count();
+            $exists = \DB::table('crm_documents')->where('account_id', $account_id)->where('docdate', $docdate)->where('billing_type', $billing['billing_type'])->count();
             if ($exists) {
                 continue;
             }
@@ -213,16 +213,10 @@ class ErpBilling
                     $invoice['reseller_user'] = 0;
                 }
 
-                if ($this->billing_on_renewal) {
-                    //$invoice['doctype'] = 'Tax Invoice';
-                    $invoice['doctype'] = 'Quotation';
-                } else {
-                    $invoice['doctype'] = 'Quotation';
-                }
-
+                $invoice['doctype'] = 'Quotation';
                 $invoice['docdate'] = $docdate;
                 $invoice['duedate'] = $duedate;
-                $invoice['billing_type'] = ($this->billing_frequency == 1) ? 'Monthly' : 'Contract';
+                $invoice['billing_type'] = ($this->billing_frequency == 1) ? 'Monthly' : 'Renewal';
                 if ($this->billing_on_renewal) {
                     $invoice['billing_type'] = 'Renewal';
                 }
@@ -248,11 +242,12 @@ class ErpBilling
 
                 $invoice['subscription_created'] = 1;
                 $invoice['doc_no'] = \DB::table('crm_documents')->where('doctype', 'Tax Invoice')->max('doc_no');
-                $invoice['doc_no']++;
+                ++$invoice['doc_no'];
 
                 $invoice['id'] = dbinsert('crm_documents', $invoice);
 
                 foreach ($subscriptions as $subscription) {
+                    vd($subscription);
                     //CUSTOMER
                     $line = [];
                     $line['document_id'] = $invoice['id'];
@@ -266,21 +261,22 @@ class ErpBilling
 
                     $product = dbgetrow('crm_products', 'id', $subscription->product_id);
                     $line['cost_price'] = $product->cost_price;
-                    if ($this->billing_frequency != 1) {
-                        if ($subscription->product_bill_frequency == $subscription->bill_frequency) {
-                            $line['qty'] = $subscription->qty;
-                        } elseif ($subscription->bill_frequency > 1) {
-                            $line['qty'] = $subscription->qty * $subscription->bill_frequency;
-                        }
-                    }
+                    // if ($this->billing_frequency != 1) {
+                    //     if ($subscription->product_bill_frequency == $subscription->bill_frequency) {
+                    //         $line['qty'] = $subscription->qty;
+                    //     } elseif ($subscription->bill_frequency > 1) {
+                    //         $line['qty'] = $subscription->qty * $subscription->bill_frequency;
+                    //     }
+                    // }
 
                     $line['full_price'] = $line['price'] = $subscription->price_incl;
+                    vd($line['price']);
 
-                    if ($customer->currency == 'ZAR' && $admin->vat_enabled == 1) {
+                    if ('ZAR' == $customer->currency && 1 == $admin->vat_enabled) {
                         $line['full_price'] = $line['full_price'] / 1.15;
                         $line['price'] = $line['price'] / 1.15;
                     }
-                    if (! str_contains($subscription->detail, 'voice')) {
+                    if (!str_contains($subscription->detail, 'voice')) {
                         $line['description'] = $subscription->name.' - '.$subscription->detail;
                     } else {
                         $line['description'] = $subscription->name;
@@ -292,7 +288,7 @@ class ErpBilling
                     $invoice['description'] .= PHP_EOL.'Billing: '.date($date_format, strtotime($renewal_date)).' - '.$billing_period_end;
 
                     // PRORATA: DISCOUNT FOR INITIAL INVOICE
-                    if (! $this->billing_on_renewal && $subscription->invoice_id && date('Y-m', strtotime($subscription->date_activated)) == date('Y-m', strtotime($docdate.' -1 month'))) {
+                    if (!$this->billing_on_renewal && $subscription->invoice_id && date('Y-m', strtotime($subscription->date_activated)) == date('Y-m', strtotime($docdate.' -1 month'))) {
                         // calculate prorata days from initial invoice
                         $invoice_doc_date = \DB::table('crm_documents')->where('id', $subscription->invoice_id)->pluck('docdate')->first();
                         $invoice_date_days = intval(date('t', strtotime($invoice_doc_date)));
@@ -300,7 +296,6 @@ class ErpBilling
                         $line['prorata_difference'] = $prorata_price;
                         if ($prorata_price > 0) {
                             $line['price'] -= $line['prorata_difference'] / $line['qty'];
-
                             $line['description'] .= PHP_EOL.get_currency_symbol($customer->currency).' '.currency($line['prorata_difference'] / $line['qty']).' 1st month prorata.';
                         }
                     }
@@ -311,6 +306,7 @@ class ErpBilling
                     $line['description'] .= PHP_EOL.$renewal_date.' - '.$new_renewal_date;
                     $line_id = dbinsert('crm_document_lines', $line);
                     $invoice['total'] += $line['qty'] * $line['price'];
+                    vd($invoice['total']);
                     \DB::table('sub_services')->where('id', $subscription->id)->update(['renews_at' => $new_renewal_date, 'last_invoice_date' => $docdate]);
                 }
 
@@ -318,7 +314,7 @@ class ErpBilling
 
                 $bills_created = true;
                 $invoice_ids[] = $invoice['id'];
-                if ($customer->currency == 'ZAR' && $admin->vat_enabled == 1) {
+                if ('ZAR' == $customer->currency && 1 == $admin->vat_enabled) {
                     $invoice['tax'] = $invoice['total'] * 0.15;
                     $invoice['total'] = $invoice['total'] + $invoice['tax'];
                 } else {
@@ -346,17 +342,17 @@ class ErpBilling
 
     public function resetAdminBalance($docdate)
     {
-        if (! is_main_instance()) {
+        if (!is_main_instance()) {
             return false;
         }
     }
 
     public function processCancellations($docdate)
     {
-        $erp_subscriptions = new ErpSubs;
+        $erp_subscriptions = new ErpSubs();
         $subscription_ids = \DB::table('sub_services')->where('to_cancel', 1)->where('cancel_date', '<=', $docdate)->pluck('id')->toArray();
 
-        if (! empty($subscription_ids) && is_array($subscription_ids) && count($subscription_ids) > 0) {
+        if (!empty($subscription_ids) && is_array($subscription_ids) && count($subscription_ids) > 0) {
             foreach ($subscription_ids as $subscription_id) {
                 $erp_subscriptions->deleteSubscription($subscription_id, true);
             }
@@ -365,7 +361,7 @@ class ErpBilling
 
     public function saveSubscriptionTable()
     {
-        if (empty($this->annual_billing) && ! $this->billing_on_renewal) {
+        if (empty($this->annual_billing) && !$this->billing_on_renewal) {
             $table = 'sub_services_lastmonth';
             \Schema::connection('default')->dropIfExists($table);
             schema_clone_db_table($table, 'sub_services');

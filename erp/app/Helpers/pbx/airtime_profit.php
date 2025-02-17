@@ -1,7 +1,6 @@
-<?php
+<?php 
 
-function schedule_populate_airtime_profitability()
-{
+function schedule_populate_airtime_profitability(){
     $rows = \DB::connection('pbx_cdr')->select('
     SELECT
     gateway,
@@ -20,10 +19,10 @@ function schedule_populate_airtime_profitability()
     billing_method,
     gateway,
     hangup_date;');
-    foreach ($rows as $row) {
+    foreach($rows as $row){
         $data = (array) $row;
-        $wdata = ['gateway' => $row->gateway, 'call_date' => $row->call_date, 'hangup_cause' => $row->hangup_cause, 'billing_method' => $row->billing_method];
-        \DB::connection('pbx_cdr')->table('p_airtime_profitability')->updateOrInsert($wdata, $data);
+        $wdata = ['gateway' => $row->gateway,'call_date' => $row->call_date,'hangup_cause' => $row->hangup_cause,'billing_method' => $row->billing_method];
+        \DB::connection('pbx_cdr')->table('p_airtime_profitability')->updateOrInsert($wdata,$data);
     }
     $rows = \DB::connection('pbx_cdr')->select('
     SELECT
@@ -43,17 +42,17 @@ function schedule_populate_airtime_profitability()
     billing_method,
     gateway,
     hangup_date;');
-    foreach ($rows as $row) {
+    foreach($rows as $row){
         $data = (array) $row;
-        $wdata = ['gateway' => $row->gateway, 'call_date' => $row->call_date, 'hangup_cause' => $row->hangup_cause, 'billing_method' => $row->billing_method];
-
-        \DB::connection('pbx_cdr')->table('p_airtime_profitability')->updateOrInsert($wdata, $data);
+        $wdata = ['gateway' => $row->gateway,'call_date' => $row->call_date,'hangup_cause' => $row->hangup_cause,'billing_method' => $row->billing_method];
+       
+        \DB::connection('pbx_cdr')->table('p_airtime_profitability')->updateOrInsert($wdata,$data);
     }
     // set gpp
     $rows = \DB::connection('pbx_cdr')->table('p_airtime_profitability')->get();
-    foreach ($rows as $row) {
+    foreach($rows as $row){
         $gpp = ($row->cost != 0) ? $row->profit / $row->cost : 0;
-
-        \DB::connection('pbx_cdr')->table('p_airtime_profitability')->where('id', $row->id)->update(['gpp' => $gpp]);
+        
+        \DB::connection('pbx_cdr')->table('p_airtime_profitability')->where('id',$row->id)->update(['gpp'=>$gpp]);
     }
 }

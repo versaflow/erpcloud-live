@@ -18,6 +18,7 @@ class AddForeignKeysToAccSubscriptionsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

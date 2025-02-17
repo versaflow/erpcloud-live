@@ -23,6 +23,7 @@ class CreateAccAssetRegisterTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

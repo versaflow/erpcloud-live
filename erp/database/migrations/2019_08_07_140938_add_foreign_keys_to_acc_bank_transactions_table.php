@@ -19,6 +19,7 @@ class AddForeignKeysToAccBankTransactionsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

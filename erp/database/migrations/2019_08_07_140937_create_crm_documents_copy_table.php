@@ -42,6 +42,7 @@ class CreateCrmDocumentsCopyTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

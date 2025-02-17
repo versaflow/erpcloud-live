@@ -10,17 +10,17 @@ function schedule_payfast_reconcile()
 
     $payment_option = get_payment_option('Payfast');
     $payfast_enabled = $payment_option->enabled;
-    if (! $payfast_enabled) {
+    if (!$payfast_enabled) {
         return false;
     }
     // aa('1');
     // shopify_import_payments();
     $unreconciled_count = \DB::table('acc_cashbook_transactions')->where('cashbook_id', 5)->where('reconciled', 0)->count();
-    if (! $unreconciled_count) {
-        return true;
+    if (!$unreconciled_count) {
+          return true;
     }
 
-    if (! $payment_option->enabled || empty($payment_option->payfast_id) || empty($payment_option->payfast_key) && empty($payment_option->payfast_pass_phrase)) {
+    if (!$payment_option->enabled || empty($payment_option->payfast_id) || empty($payment_option->payfast_key) && empty($payment_option->payfast_pass_phrase)) {
         return false;
     }
     aa('2');
@@ -32,22 +32,22 @@ function schedule_payfast_reconcile()
         \DB::table('acc_cashbook_transactions')->where('reference', 'Payfast Fee '.$payfast_transaction->api_id)->update(['api_id' => $payfast_transaction->api_id]);
     }
     aa('3');
-    $cashbook_transactions = \DB::table('acc_cashbook_transactions')->where('cashbook_id', 5)->where('api_id', '<>', 0)->where('api_id', '<>', null)->orderBy('docdate', 'desc')->orderBy('id', 'desc')->get();
+    $cashbook_transactions = \DB::table('acc_cashbook_transactions')->where('cashbook_id', 5)->where('api_id','<>',0)->where('api_id','<>',null)->orderBy('docdate', 'desc')->orderBy('id', 'desc')->get();
     // aa($cashbook_transactions);
     foreach ($cashbook_transactions as $cashbook_transaction) {
         // aa($cashbook_transaction);
         if (isset($cashbook_transaction->api_balance) && isset($cashbook_transaction->balance) && $cashbook_transaction->api_balance == $cashbook_transaction->balance) {
             \DB::table('acc_cashbook_transactions')
-                ->where('cashbook_id', 5)
-                ->where('api_id', '<>', 0)
-                ->where('id', '=', $cashbook_transaction->id)
-                ->where('docdate', '=', $cashbook_transaction->docdate)
-                ->update(['reconciled' => 1]);
+            ->where('cashbook_id', 5)
+            ->where('api_id','<>',0)
+            ->where('id', '=', $cashbook_transaction->id)
+            ->where('docdate', '=', $cashbook_transaction->docdate)
+            ->update(['reconciled' => 1]);
             break;
         }
     }
     aa('4');
-
+    
     $date = \DB::table('acc_cashbook_transactions')->where('cashbook_id', 5)->where('reconciled', 0)->orderBy('docdate', 'asc')->pluck('docdate')->first();
     if (empty($date)) {
         $date = date('Y-m-d');
@@ -65,7 +65,7 @@ function schedule_payfast_reconcile()
             $transactions[] = $trx;
         }
         $date = date('Y-m-01', strtotime($date.' +1 month'));
-        $i++;
+        ++$i;
         if ($i >= 8) {
             return false;
         }
@@ -80,25 +80,25 @@ function schedule_payfast_reconcile()
 
     // dddd($transactions);
 
-    if (! empty($transactions) && is_array($transactions) && count($transactions) > 0) {
+    if ($transactions[0] != "400" && !empty($transactions) && is_array($transactions) && count($transactions) > 0) {
         foreach ($transactions as $api_trx) {
             if ($api_trx['Type'] = 'PAYOUT') {
                 $total = currency($api_trx['Gross']) * -1;
                 \DB::table('acc_cashbook_transactions')
-                    ->where('total', $total)
-                    ->where('cashbook_id', 5)
-                    ->where('docdate', '>', date('Y-m-d', strtotime($api_trx['Date'].' - 2 days')))
-                    ->where('docdate', '<', date('Y-m-d', strtotime($api_trx['Date'].' + 2 days')))
-                    ->update(['api_id' => $api_trx['PF Payment ID'], 'docdate' => $api_trx['Date']]);
+                ->where('total', $total)
+                ->where('cashbook_id', 5)
+                ->where('docdate', '>', date('Y-m-d', strtotime($api_trx['Date'].' - 2 days')))
+                ->where('docdate', '<', date('Y-m-d', strtotime($api_trx['Date'].' + 2 days')))
+                ->update(['api_id' => $api_trx['PF Payment ID'], 'docdate' => $api_trx['Date']]);
             } else {
                 $total = currency($api_trx['Gross']);
                 \DB::table('acc_cashbook_transactions')
-                    ->where('total', $total)
-                    ->where('cashbook_id', 5)
-                    ->where('docdate', date('Y-m-d', strtotime($api_trx['Date'])))
-                    ->where('Description', '<>', $ref)
-                    ->orderBy(['date', 'api_id'])
-                    ->update(['api_id' => $api_trx['PF Payment ID']]);
+                ->where('total', $total)
+                ->where('cashbook_id', 5)
+                ->where('docdate', date('Y-m-d', strtotime($api_trx['Date'])))
+                ->where('Description', '<>', $ref)
+                ->orderBy(['date', 'api_id'])
+                ->update(['api_id' => $api_trx['PF Payment ID']]);
             }
             $ref = $api_trx['Description'];
             // $date1 = date('Y-m-d',strtotime($api_trx["Date"]));
@@ -139,6 +139,10 @@ function schedule_payfast_reconcile()
     }
 }
 
+
+
+
+
 function schedule_customer_control_set_rand_amounts()
 {
     \DB::table('acc_cashbook_transactions')->where('document_currency', 'ZAR')->whereRaw('rand_total!=total')->update(['rand_total' => \DB::raw('total')]);
@@ -174,7 +178,7 @@ function beforesave_allocate_cash_payment_check($request)
 
 function aftersave_allocate_cash_payment($request)
 {
-    if (! in_array($trx->cashbook_id, [8, 14, 16, 17])) {
+    if (!in_array($trx->cashbook_id, [8, 14, 16, 17])) {
         \DB::table('acc_cashbook_transactions')->where('id', $request->id)->update(['approved' => 1]);
     }
 
@@ -182,30 +186,30 @@ function aftersave_allocate_cash_payment($request)
     $cashbook = \DB::table('acc_cashbook')->where('id', $trx->cashbook_id)->get()->first();
     \DB::table('acc_cashbook_transactions')->where('id', $request->id)->update(['document_currency' => $cashbook->currency]);
     if ($trx->cashbook_id == 8) {
-        $erp = new \DBEvent;
+        $erp = new \DBEvent();
 
         if ($trx->ledger_account_id) {
             delete_journal_entry_by_cashbook_transaction_id($trx->id);
         }
         $trx_data = (array) $trx;
-        if ($trx->total == 0) {
+        if (0 == $trx->total) {
             return json_alert('Cannot allocate zero total transactions', 'error');
         }
 
         \DB::table('acc_cashbook_transactions')
-            ->where('id', $trx->id)
-            ->update([
-                'document_currency' => 'ZAR',
-            ]);
+        ->where('id', $trx->id)
+        ->update([
+            'document_currency' => 'ZAR',
+        ]);
 
-        if (! empty($request->account_id)) {
+        if (!empty($request->account_id)) {
             $trx_data['doctype'] = 'Cashbook Customer Receipt';
-        } elseif (! empty($request->supplier_id)) {
+        } elseif (!empty($request->supplier_id)) {
             $trx_data['doctype'] = 'Cashbook Supplier Payment';
-        } elseif (! empty($request->ledger_account_id)) {
+        } elseif (!empty($request->ledger_account_id)) {
             $trx_data['doctype'] = 'Cashbook Expense';
         }
-        if (! empty($request->new_record)) {
+        if (!empty($request->new_record)) {
             $trx_data['approved'] = 0;
         }
         if (is_superadmin()) {
@@ -213,37 +217,37 @@ function aftersave_allocate_cash_payment($request)
         }
 
         \DB::table('acc_cashbook_transactions')->where('id', $trx->id)->update($trx_data);
-        if (! empty($request->account_id)) {
-            (new DBEvent)->setDebtorBalance($request->account_id);
+        if (!empty($request->account_id)) {
+            (new DBEvent())->setDebtorBalance($request->account_id);
         }
         cashbook_reconcile(8);
     }
 
     if ($trx->cashbook_id == 14) {
-        $erp = new \DBEvent;
+        $erp = new \DBEvent();
 
         if ($trx->ledger_account_id) {
             delete_journal_entry_by_cashbook_transaction_id($trx->id);
         }
         $trx_data = (array) $trx;
-        if ($trx->total == 0) {
+        if (0 == $trx->total) {
             return json_alert('Cannot allocate zero total transactions', 'error');
         }
 
         \DB::table('acc_cashbook_transactions')
-            ->where('id', $trx->id)
-            ->update([
-                'document_currency' => 'USD',
-            ]);
+        ->where('id', $trx->id)
+        ->update([
+            'document_currency' => 'USD',
+        ]);
 
-        if (! empty($request->account_id)) {
+        if (!empty($request->account_id)) {
             $trx_data['doctype'] = 'Cashbook Customer Receipt';
-        } elseif (! empty($request->supplier_id)) {
+        } elseif (!empty($request->supplier_id)) {
             $trx_data['doctype'] = 'Cashbook Supplier Payment';
-        } elseif (! empty($request->ledger_account_id)) {
+        } elseif (!empty($request->ledger_account_id)) {
             $trx_data['doctype'] = 'Cashbook Expense';
         }
-        if (! empty($request->new_record)) {
+        if (!empty($request->new_record)) {
             $trx_data['approved'] = 0;
         }
         if (is_superadmin()) {
@@ -251,37 +255,37 @@ function aftersave_allocate_cash_payment($request)
         }
 
         \DB::table('acc_cashbook_transactions')->where('id', $trx->id)->update($trx_data);
-        if (! empty($request->account_id)) {
-            (new DBEvent)->setDebtorBalance($request->account_id);
+        if (!empty($request->account_id)) {
+            (new DBEvent())->setDebtorBalance($request->account_id);
         }
         cashbook_reconcile(14);
     }
 
     if ($trx->cashbook_id == 16) {
-        $erp = new \DBEvent;
+        $erp = new \DBEvent();
 
         if ($trx->ledger_account_id) {
             delete_journal_entry_by_cashbook_transaction_id($trx->id);
         }
         $trx_data = (array) $trx;
-        if ($trx->total == 0) {
+        if (0 == $trx->total) {
             return json_alert('Cannot allocate zero total transactions', 'error');
         }
 
         \DB::table('acc_cashbook_transactions')
-            ->where('id', $trx->id)
-            ->update([
-                'document_currency' => 'USD',
-            ]);
+        ->where('id', $trx->id)
+        ->update([
+            'document_currency' => 'USD',
+        ]);
 
-        if (! empty($request->account_id)) {
+        if (!empty($request->account_id)) {
             $trx_data['doctype'] = 'Cashbook Customer Receipt';
-        } elseif (! empty($request->supplier_id)) {
+        } elseif (!empty($request->supplier_id)) {
             $trx_data['doctype'] = 'Cashbook Supplier Payment';
-        } elseif (! empty($request->ledger_account_id)) {
+        } elseif (!empty($request->ledger_account_id)) {
             $trx_data['doctype'] = 'Cashbook Expense';
         }
-        if (! empty($request->new_record)) {
+        if (!empty($request->new_record)) {
             $trx_data['approved'] = 0;
         }
         if (is_superadmin()) {
@@ -289,37 +293,37 @@ function aftersave_allocate_cash_payment($request)
         }
 
         \DB::table('acc_cashbook_transactions')->where('id', $trx->id)->update($trx_data);
-        if (! empty($request->account_id)) {
-            (new DBEvent)->setDebtorBalance($request->account_id);
+        if (!empty($request->account_id)) {
+            (new DBEvent())->setDebtorBalance($request->account_id);
         }
         cashbook_reconcile(16);
     }
 
     if ($trx->cashbook_id == 17) {
-        $erp = new \DBEvent;
+        $erp = new \DBEvent();
 
         if ($trx->ledger_account_id) {
             delete_journal_entry_by_cashbook_transaction_id($trx->id);
         }
         $trx_data = (array) $trx;
-        if ($trx->total == 0) {
+        if (0 == $trx->total) {
             return json_alert('Cannot allocate zero total transactions', 'error');
         }
 
         \DB::table('acc_cashbook_transactions')
-            ->where('id', $trx->id)
-            ->update([
-                'document_currency' => 'USD',
-            ]);
+        ->where('id', $trx->id)
+        ->update([
+            'document_currency' => 'USD',
+        ]);
 
-        if (! empty($request->account_id)) {
+        if (!empty($request->account_id)) {
             $trx_data['doctype'] = 'Cashbook Customer Receipt';
-        } elseif (! empty($request->supplier_id)) {
+        } elseif (!empty($request->supplier_id)) {
             $trx_data['doctype'] = 'Cashbook Supplier Payment';
-        } elseif (! empty($request->ledger_account_id)) {
+        } elseif (!empty($request->ledger_account_id)) {
             $trx_data['doctype'] = 'Cashbook Expense';
         }
-        if (! empty($request->new_record)) {
+        if (!empty($request->new_record)) {
             $trx_data['approved'] = 0;
         }
         if (is_superadmin()) {
@@ -327,8 +331,8 @@ function aftersave_allocate_cash_payment($request)
         }
 
         \DB::table('acc_cashbook_transactions')->where('id', $trx->id)->update($trx_data);
-        if (! empty($request->account_id)) {
-            (new DBEvent)->setDebtorBalance($request->account_id);
+        if (!empty($request->account_id)) {
+            (new DBEvent())->setDebtorBalance($request->account_id);
         }
         cashbook_reconcile(17);
     }
@@ -341,7 +345,7 @@ function aftersave_allocate_cash_payment($request)
     foreach ($cash_trxs as $trx) {
         $cashbook_name = \DB::table('acc_cashbook')->where('id', $trx->cashbook_id)->pluck('name')->first();
         $exists = \DB::table('crm_approvals')->where('module_id', 1837)->where('row_id', $trx->id)->count();
-        if (! $exists) {
+        if (!$exists) {
             $title = $trx->docdate.' '.$trx->total;
             if ($trx->account_id) {
                 $name = dbgetcell('crm_accounts', 'id', $trx->account_id, 'company');
@@ -364,7 +368,7 @@ function aftersave_allocate_cash_payment($request)
                 'processed' => 0,
                 'requested_by' => get_user_id_default(),
             ];
-            (new \DBEvent)->setTable('crm_approvals')->save($data);
+            (new \DBEvent())->setTable('crm_approvals')->save($data);
         }
     }
 }
@@ -372,7 +376,7 @@ function aftersave_allocate_cash_payment($request)
 function beforedelete_pettycash_delete_payment($request)
 {
     $trx = \DB::table('acc_cashbook_transactions')->where('id', $request->id)->get()->first();
-    $erp = new \DBEvent;
+    $erp = new \DBEvent();
 
     if ($trx->ledger_account_id) {
         delete_journal_entry_by_cashbook_transaction_id($trx->id);
@@ -383,14 +387,14 @@ function beforesave_cash_register_check_allocate($request)
 {
     if ($request->cashbook_id == 8) {
         $allocations = 0;
-        if (! empty($request->account_id)) {
-            $allocations++;
+        if (!empty($request->account_id)) {
+            ++$allocations;
         }
-        if (! empty($request->supplier_id)) {
-            $allocations++;
+        if (!empty($request->supplier_id)) {
+            ++$allocations;
         }
-        if (! empty($request->ledger_account_id)) {
-            $allocations++;
+        if (!empty($request->ledger_account_id)) {
+            ++$allocations;
         }
 
         if ($allocations == 0) {
@@ -423,13 +427,13 @@ function button_cashbook_transaction_allocate($request)
 {
     $bank = \DB::table('acc_cashbook_transactions')->where('id', $request->id)->get()->first();
     $cashbook = \DB::table('acc_cashbook')->where('id', $bank->cashbook_id)->get()->first();
-    if (! is_dev() && ! $cashbook->allow_allocate) {
+    if (!is_dev() && !$cashbook->allow_allocate) {
         return json_alert('Manual allocations are not allowed for this cashbook.', 'error');
     }
     $period = date('Y-m', strtotime($bank->docdate));
     $period_status = dbgetcell('acc_periods', 'period', $period, 'status');
 
-    if ($period_status != 'Open') {
+    if ('Open' != $period_status) {
         return json_alert('Period closed', 'warning');
     }
     if ($bank->account_id > '') {
@@ -555,7 +559,7 @@ function button_cash_register_write_off($request)
             'cashbook_id' => $cashbook_id,
             'document_currency' => $document_currency,
         ];
-        $trx = (new DBEvent)->setTable('acc_cashbook_transactions')->save($cash_trx);
+        $trx = (new DBEvent())->setTable('acc_cashbook_transactions')->save($cash_trx);
 
         return json_alert('Allocated to Directors Loan');
     } else {
@@ -568,7 +572,7 @@ function button_cash_register_write_off($request)
             'cashbook_id' => $cashbook_id,
             'document_currency' => $document_currency,
         ];
-        $trx = (new DBEvent)->setTable('acc_cashbook_transactions')->save($cash_trx);
+        $trx = (new DBEvent())->setTable('acc_cashbook_transactions')->save($cash_trx);
 
         return json_alert('Allocated to Directors Loan');
     }
@@ -578,7 +582,7 @@ function button_cash_register_write_off($request)
 function aftersave_debitordertransaction_createpayment($request)
 {
     // aa($request->debit_order_batch_id);
-    if (! empty($request->debit_order_batch_id)) {
+    if (!empty($request->debit_order_batch_id)) {
         $debit_order_transaction = \DB::table('acc_cashbook_transactions')->where('id', $request->id)->get()->first();
         if ($debit_order_transaction->cashbook_id == 1 && $debit_order_transaction->debit_order_batch_id > 0 && $debit_order_transaction->account_id > 0 && $debit_order_transaction->api_status == 'Complete') {
             $allocated_total = \DB::table('acc_cashbook_transactions')
@@ -598,18 +602,18 @@ function aftersave_debitordertransaction_createpayment($request)
 
 function aftersave_payments_convert_quote($request)
 {
-    if (! empty($request->account_id)) {
+    if (!empty($request->account_id)) {
         $total = currency($request->total);
         $order = \DB::table('crm_documents')->where('total', $total)->where('docdate', '<=', date('Y-m-d'))->where('billing_type', '')->where('doctype', 'Order')->where('account_id', $request->account_id)->count();
         $quote = \DB::table('crm_documents')->where('total', $total)->where('docdate', '<=', date('Y-m-d'))->where('billing_type', '')->where('doctype', 'Quotation')->where('account_id', $request->account_id)->get()->first();
-        if (! empty($quote) && ! $order) {
+        if (!empty($quote) && !$order) {
             $quote->doctype = 'Order';
             $quote->product_id = \DB::table('crm_document_lines')->where('document_id', $quote->id)->orderby('product_id')->pluck('product_id')->toArray();
             $quote->qty = \DB::table('crm_document_lines')->where('document_id', $quote->id)->orderby('product_id')->pluck('qty')->toArray();
             $quote->price = \DB::table('crm_document_lines')->where('document_id', $quote->id)->orderby('product_id')->pluck('price')->toArray();
             $quote->full_price = \DB::table('crm_document_lines')->where('document_id', $quote->id)->orderby('product_id')->pluck('full_price')->toArray();
-            $result = (new \DBEvent)->setTable('crm_documents')->save($quote);
-            if (! is_array($result) || empty($result['id'])) {
+            $result = (new \DBEvent())->setTable('crm_documents')->save($quote);
+            if (!is_array($result) || empty($result['id'])) {
                 return $result;
             }
         }
@@ -618,7 +622,7 @@ function aftersave_payments_convert_quote($request)
 
 function aftersave_send_receipt_process_orders($request)
 {
-    if (! empty($request->account_id) && ! empty($request->approved)) {
+    if (!empty($request->account_id) && !empty($request->approved)) {
         $account = dbgetaccount($request->account_id);
         if ($account->partner_id == 1) {
             $function_variables = get_defined_vars();
@@ -673,20 +677,20 @@ function cashbook_reconcile($cashbook_id)
     // ->update(['reconciled'=>0]);
 
     $transactions = \DB::table('acc_cashbook_transactions')
-        ->select('id', 'docdate', 'api_balance')
-        ->where('cashbook_id', $cashbook_id)
-        ->where('docdate', '<=', $check_date)
-        ->orderBy('docdate', 'desc')->orderBy('id', 'desc')
-        ->get();
+    ->select('id', 'docdate', 'api_balance')
+    ->where('cashbook_id', $cashbook_id)
+    ->where('docdate', '<=', $check_date)
+    ->orderBy('docdate', 'desc')->orderBy('id', 'desc')
+    ->get();
 
     foreach ($transactions as $trx) {
         $reconciled_transaction = \DB::table('acc_cashbook_transactions')
-            ->select('id', 'docdate')
-            ->where('cashbook_id', $cashbook_id)
-            ->where('balance', $trx->api_balance)
-            ->where('docdate', $trx->docdate)
-            ->orderBy('docdate', 'desc')->orderBy('id', 'desc')
-            ->get()->first();
+        ->select('id', 'docdate')
+        ->where('cashbook_id', $cashbook_id)
+        ->where('balance', $trx->api_balance)
+        ->where('docdate', $trx->docdate)
+        ->orderBy('docdate', 'desc')->orderBy('id', 'desc')
+        ->get()->first();
         if ($reconciled_transaction) {
             break;
         }
@@ -694,39 +698,39 @@ function cashbook_reconcile($cashbook_id)
 
     if ($reconciled_transaction && $reconciled_transaction->id) {
         \DB::table('acc_cashbook_transactions')
-            ->where('cashbook_id', $cashbook_id)
-            ->where('docdate', '<=', $reconciled_transaction->docdate)
-            ->update(['reconciled' => 1]);
+        ->where('cashbook_id', $cashbook_id)
+        ->where('docdate', '<=', $reconciled_transaction->docdate)
+        ->update(['reconciled' => 1]);
     }
 
     $reconciled = \DB::table('acc_cashbook_transactions')
-        ->select('reconciled')
-        ->where('cashbook_id', $cashbook_id)
-        ->where('docdate', '<=', $check_date)
-        ->orderBy('docdate', 'desc')->orderBy('id', 'desc')
-        ->pluck('reconciled')->first();
+    ->select('reconciled')
+    ->where('cashbook_id', $cashbook_id)
+    ->where('docdate', '<=', $check_date)
+    ->orderBy('docdate', 'desc')->orderBy('id', 'desc')
+    ->pluck('reconciled')->first();
 
     //Reconcile is cashbook has no transactions
-    if (! $reconciled) {
+    if (!$reconciled) {
         $trx_count = \DB::table('acc_cashbook_transactions')
-            ->where('cashbook_id', $cashbook_id)
-            ->count();
-        if (! $trx_count) {
+        ->where('cashbook_id', $cashbook_id)
+        ->count();
+        if (!$trx_count) {
             $reconciled = 1;
         }
     }
 
     $update_data['reconciled'] = $reconciled;
     $unallocated_transactions = \DB::table('acc_cashbook_transactions')
-        ->where('cashbook_id', $cashbook_id)
-        ->whereNull('account_id')
-        ->whereNull('ledger_account_id')
-        ->whereNull('supplier_id')
-        ->count();
+    ->where('cashbook_id', $cashbook_id)
+    ->whereNull('account_id')
+    ->whereNull('ledger_account_id')
+    ->whereNull('supplier_id')
+    ->count();
 
     $cashbook_always_reconciled = \DB::table('acc_cashbook')->where('id', $cashbook_id)->pluck('always_reconciled')->first();
     $allocated_reconciled = 1;
-    if ($unallocated_transactions || (! $cashbook_always_reconciled && ! $reconciled)) {
+    if ($unallocated_transactions || (!$cashbook_always_reconciled && !$reconciled)) {
         $allocated_reconciled = 0;
     }
     $update_data['allocated_reconciled'] = $allocated_reconciled;
@@ -743,14 +747,14 @@ function cashbook_reconcile($cashbook_id)
     $first_docdate = \DB::table('acc_cashbook_transactions')->where('cashbook_id', $cashbook_id)->orderby('docdate', 'asc')->pluck('docdate')->first();
 
     $debit_balance_query = \DB::table('acc_general_journals as aj')
-        ->join('acc_general_journal_transactions as ajt', 'aj.transaction_id', '=', 'ajt.id')
-        ->where('ledger_account_id', $ledger_account_id)
-        ->where('debit_amount', '>', 0);
+    ->join('acc_general_journal_transactions as ajt', 'aj.transaction_id', '=', 'ajt.id')
+    ->where('ledger_account_id', $ledger_account_id)
+    ->where('debit_amount', '>', 0);
 
     $credit_balance_query = \DB::table('acc_general_journals as aj')
-        ->join('acc_general_journal_transactions as ajt', 'aj.transaction_id', '=', 'ajt.id')
-        ->where('ledger_account_id', $ledger_account_id)
-        ->where('credit_amount', '>', 0);
+    ->join('acc_general_journal_transactions as ajt', 'aj.transaction_id', '=', 'ajt.id')
+    ->where('ledger_account_id', $ledger_account_id)
+    ->where('credit_amount', '>', 0);
 
     if ($first_docdate) {
         $debit_balance = $debit_balance_query->where('ajt.docdate', '<', $first_docdate)->sum('debit_amount');

@@ -8,46 +8,39 @@ use Illuminate\Support\Facades\Cache;
 class ErpModelDev extends Model
 {
     public $module_name;
-
     public $table;
-
     public $primary_key;
-
     public $info;
-
     public $menu;
-
     public $module;
-
     public $join_order_fields;
-
     public $aliased_fields;
 
     public function __construct($table = null)
     {
         if ($table) {
             $module_id = \DB::connection('default')->table('erp_cruds')->where('db_table', $table)->pluck('id')->first();
-
+            
             $this->setModelData($module_id);
         }
     }
 
     public function setMenuData($menu)
     {
-
-        if (str_starts_with($menu, 'detailmodule_')) {
-
-            $detail_module_id = str_replace('detailmodule_', '', $menu);
+       
+        if(str_starts_with($menu,'detailmodule_')){
+          
+            $detail_module_id = str_replace('detailmodule_','',$menu);
             $this->is_detail_module = true;
-            $this->setModelData($detail_module_id);
-
-        } else {
+            $this->setModelData($detail_module_id); 
+         
+        }else{
             $current_conn = \DB::getDefaultConnection();
             $module_id = \DB::connection('default')->table('erp_cruds')->where('slug', $menu)->pluck('id')->first();
             $this->menu = \DB::connection('default')->table('erp_menu')->where('module_id', $module_id)->where('menu_type', 'module')->get()->first();
-
+            
             $this->setModelData($module_id);
-            if (! $this->menu) {
+            if (!$this->menu) {
                 return false;
             }
         }
@@ -56,19 +49,19 @@ class ErpModelDev extends Model
     public function setModelData($module_id)
     {
         $this->module = \DB::connection('default')->table('erp_cruds')->where('id', $module_id)->get()->first();
-
-        if (str_contains($this->module->connection, 'pbx')) {
-            $this->use_pg = true;
-        } else {
-            $this->use_pg = false;
+        
+        if(str_contains($this->module->connection,'pbx')){
+            $this->use_pg = true;    
+        }else{
+            $this->use_pg = false;        
         }
-
-        if ($this->module->soft_delete) {
-            if (empty(session('show_deleted'.$module_id))) {
-                if (! empty($this->module->db_where)) {
-                    $this->module->db_where .= ' and '.$this->module->db_table.'.is_deleted=0 ';
-                } else {
-                    $this->module->db_where .= ' where '.$this->module->db_table.'.is_deleted=0 ';
+       
+        if($this->module->soft_delete){
+            if(empty(session('show_deleted'.$module_id))){
+                if(!empty($this->module->db_where)){
+                     $this->module->db_where .= ' and '.$this->module->db_table.'.is_deleted=0 ';   
+                }else{
+                     $this->module->db_where .= ' where '.$this->module->db_table.'.is_deleted=0 '; 
                 }
             }
         }
@@ -77,7 +70,7 @@ class ErpModelDev extends Model
         $this->table = $this->module->db_table;
         $this->primary_key = $this->module->db_key;
         $this->makeInfo();
-        $this->aliased_fields = \DB::connection('default')->table('erp_module_fields')->where('aliased_field', 1)->where('module_id', $module_id)->pluck('field')->toArray();
+        $this->aliased_fields = \DB::connection('default')->table('erp_module_fields')->where('aliased_field',1)->where('module_id',$module_id)->pluck('field')->toArray();
 
         session(['module_connection' => $this->module->connection]);
         set_db_connection($this->module->connection);
@@ -91,7 +84,6 @@ class ErpModelDev extends Model
         //////aa($SQL);
         $results = \DB::connection($this->module->connection)->select($SQL);
         $filter_options = collect($results)->pluck($field);
-
         return $filter_options;
     }
 
@@ -107,11 +99,11 @@ class ErpModelDev extends Model
 
     public function getData($request)
     {
-
+       
         //aa($request->all());
         foreach ($request->all() as $k => $v) {
             //    ////aa($k);
-            //    ////aa($v);
+        //    ////aa($v);
         }
         $SQL = $this->buildSql($request);
         //aa($SQL);
@@ -121,89 +113,95 @@ class ErpModelDev extends Model
         $results = \DB::connection($this->module->connection)->select($SQL);
 
         $count_SQL = $this->buildSql($request, 'count');
-        //aa($count_SQL);
+       //aa($count_SQL);
 
         $rowCount = \DB::connection($this->module->connection)->select($count_SQL)[0]->lastrow;
         //////aa($rowCount);
-
+   
         //////aa(count($results));
 
         // ////aa($results);
         $resultsForPage = $this->cutResultsToPageSize($request, $results);
 
+    
+    
         if (($this->module->serverside_model && $this->grouping) || $request->rowTotals == 1) {
-            if (! $this->grouping) {
-
+            if(!$this->grouping){
+               
+                
                 $totals_SQL = $this->buildSql($request, 'totals');
-
+                
                 $rowTotals = \DB::connection($this->module->connection)->select($totals_SQL);
-            } else {
-
-                $totals_SQL = str_replace($this->limitSql, '', $SQL);
-
-                $groupedTotals = \DB::connection($this->module->connection)->select($totals_SQL);
+            }else{
+        
+            $totals_SQL = str_replace($this->limitSql,'',$SQL);
+           
+         
+            
+             $groupedTotals = \DB::connection($this->module->connection)->select($totals_SQL);
                 $rowTotals = [];
                 $total_fields = [];
-                foreach ($request->valueCols as $vCol) {
-                    if ($vCol['aggFunc'] == 'sum') {
-                        $total_field = $vCol['field'];
+                foreach($request->valueCols as $vCol){
+                    if($vCol['aggFunc'] == 'sum'){
+                        $total_field = $vCol['field'];   
                         $rowTotals[$total_field] = 0;
                         $total_fields[] = $total_field;
-                    }
+                    }    
                 }
-
-                foreach ($groupedTotals as $groupedTotal) {
-                    foreach ($total_fields as $total_field) {
-                        $rowTotals[$total_field] += $groupedTotal->{$total_field};
+               
+                foreach($groupedTotals as $groupedTotal){
+                    foreach($total_fields as $total_field){
+                        $rowTotals[$total_field] += $groupedTotal->{$total_field};    
                     }
                 }
             }
-
-            foreach ($rowTotals as $k => $v) {
-                $rowTotals[$k] = currency($v);
+            
+            foreach($rowTotals as $k => $v){
+                $rowTotals[$k] = currency($v);    
             }
-
+                    
             $rowTotals = [$rowTotals];
-
-            foreach ($rowTotals[0] as $k => $v) {
-                foreach ($this->info['module_fields'] as $f) {
-                    if (('join_'.$f['field'] == $k || $f['field'] == $k) && ! $f['pinned_row_total']) {
-                        unset($rowTotals[0]->{$k});
-                    }
-                }
+            
+            foreach($rowTotals[0] as $k => $v){
+               foreach($this->info['module_fields'] as $f){
+                   if(('join_'.$f['field'] == $k || $f['field'] == $k) && !$f['pinned_row_total']){
+                       unset($rowTotals[0]->{$k});
+                   }
+               }
             }
-
+           
             return ['rows' => $resultsForPage, 'lastRow' => $rowCount, 'rowTotals' => $rowTotals];
         }
-
         return ['rows' => $resultsForPage, 'lastRow' => $rowCount];
-
+       
     }
+    
 
     public function getRowTotals($request)
     {
         //aa($request->all());
         foreach ($request->all() as $k => $v) {
             //    ////aa($k);
-            //    ////aa($v);
+        //    ////aa($v);
         }
+       
 
         //////aa($resultsForPage);
-
-        $totals_SQL = $this->buildSql($request, 'totals');
-        //dd($totals_SQL);
-        $rowTotals = \DB::connection($this->module->connection)->select($totals_SQL);
-        //aa($rowTotals);
-        foreach ($rowTotals[0] as $k => $v) {
-            foreach ($this->info['module_fields'] as $f) {
-                if (('join_'.$f['field'] == $k || $f['field'] == $k) && ! $f['pinned_row_total']) {
-                    unset($rowTotals[0]->{$k});
-                }
+    
+            $totals_SQL = $this->buildSql($request, 'totals');
+            //dd($totals_SQL);
+            $rowTotals = \DB::connection($this->module->connection)->select($totals_SQL);
+            //aa($rowTotals);
+            foreach($rowTotals[0] as $k => $v){
+               foreach($this->info['module_fields'] as $f){
+                   if(('join_'.$f['field'] == $k || $f['field'] == $k) && !$f['pinned_row_total']){
+                       unset($rowTotals[0]->{$k});
+                   }
+               }
             }
-        }
-
-        return $rowTotals;
-
+           
+            return  $rowTotals;
+        
     }
 
     public function buildSql($request, $query_type = 'data', $pivotCol = false)
@@ -226,16 +224,17 @@ class ErpModelDev extends Model
 
             //////aa($whereSql);
             if (empty($whereSql)) {
-                $whereSql = ' WHERE 1=1 ';
+                $whereSql = " WHERE 1=1 ";
             }
-
+          
+            
             $accountFilter = $this->accountFilter();
 
             $whereSql .= $accountFilter;
             $erpFilter = $this->erpFilter();
             $whereSql .= $erpFilter;
 
-            if (! empty($request->search)) {
+            if (!empty($request->search)) {
                 $search_query = ' and  (';
                 $fields = $this->info['module_fields'];
                 $search_fields = [];
@@ -247,14 +246,14 @@ class ErpModelDev extends Model
                     if (\Schema::connection($this->module->connection)->hasColumn($f['alias'], $f['field'])) {
                         $col_type = get_column_type($f['alias'], $f['field'], $this->module->connection);
                         if ($col_type == 'text') {
-                            $search_fields[] = $f['alias'].'.'.$f['field'].' LIKE "%'.$request->search.'%" ';
-                        } elseif ($f['field_type'] == 'select_module') {
-                            $search_fields[] = 'join_'.$f['field'].' LIKE "%'.$request->search.'%" ';
+                            $search_fields[] = $f['alias'].'.'.$f['field']. ' LIKE "%'.$request->search.'%" ';
+                        } elseif ($f["field_type"] == 'select_module') {
+                            $search_fields[] = 'join_'.$f['field']. ' LIKE "%'.$request->search.'%" ';
                         }
                     }
                 }
 
-                $search_query .= implode(' || ', $search_fields);
+                $search_query .= implode(" || ", $search_fields);
                 $search_query .= ') ';
 
                 if (count($search_fields) > 0) {
@@ -263,9 +262,9 @@ class ErpModelDev extends Model
             }
 
             if ($request->detail_field) {
-                if ($request->detail_field == 'product_category_id' && $this->module->id == 508) {
+                if($request->detail_field == 'product_category_id' && $this->module->id ==508){
                     $whereSql .= ' and crm_products.'.$request->detail_field.' = "'.$request->detail_value.'"';
-                } else {
+                }else{
                     $whereSql .= ' and '.$this->table.'.'.$request->detail_field.' = "'.$request->detail_value.'"';
                 }
             }
@@ -273,17 +272,16 @@ class ErpModelDev extends Model
             $groupBySql = '';
             $orderBySql = '';
             $limitSql = '';
-        } elseif ($query_type == 'pivot') {
+        } elseif ($query_type == "pivot") {
             $whereSql = '';
             $groupBySql = 'group by '.$pivotCol['field'];
             $orderBySql = '';
             $limitSql = '';
-        } elseif ($query_type == 'totals') {
+        } elseif ($query_type == "totals") {
             $whereSql = $this->createWhereSql($request);
 
-            if ($this->info['db_where'] > '') {
-                $whereSql .= str_ireplace('where', ' and', $this->info['db_where']);
-            }
+            if($this->info['db_where']> '')
+            $whereSql .= str_ireplace('where',' and',$this->info['db_where']);
             if ($request->detail_field) {
                 $whereSql .= ' and '.$request->detail_field.' = "'.$request->detail_value.'"';
             }
@@ -291,40 +289,40 @@ class ErpModelDev extends Model
             $orderBySql = '';
             $limitSql = '';
         } else {
-
-            ////aa(111);
+            
+           ////aa(111);
             $whereSql = $this->createWhereSql($request);
-
-            if ($this->info['db_where'] > '') {
-                $whereSql .= str_ireplace('where', ' and', $this->info['db_where']);
-            }
-
-            //////aa($whereSql);
+            
+            if($this->info['db_where']> '')
+            $whereSql .= str_ireplace('where',' and',$this->info['db_where']);
+            
+    //////aa($whereSql);
             if ($request->detail_field) {
                 $whereSql .= ' and '.$request->detail_field.' = "'.$request->detail_value.'"';
             }
             $groupBySql = $this->createGroupBySql($request);
             $orderBySql = $this->createOrderBySql($request);
-            //aa($groupBySql);
-            //  foreach ($this->info['module_fields'] as $field) {
-            //     if ($field['aliased_field']) {
-            //          $orderBySql = str_replace($this->db_table.'.'.$field['field'], $field['field'], $orderBySql);
-            //      }
-            //   }
+//aa($groupBySql);
+          //  foreach ($this->info['module_fields'] as $field) {
+           //     if ($field['aliased_field']) {
+          //          $orderBySql = str_replace($this->db_table.'.'.$field['field'], $field['field'], $orderBySql);
+          //      }
+         //   }
 
             $limitSql = $this->createLimitSql($request);
-
+      
         }
-
+       
+        
         if (count($this->joins) > 0) {
-
+          
             $SQL = $this->createJoinSql($query_type, $request, $selectSql, $whereSql, $groupBySql, $orderBySql, $limitSql);
         } else {
             if ($query_type == 'count') {
                 //////aa($whereSql);
-                $SQL = 'SELECT COUNT(*) AS lastrow from ( '.$selectSql.' '.$whereSql.$groupBySql.' ) as total_count';
+                $SQL = "SELECT COUNT(*) AS lastrow from ( " . $selectSql . ' ' . $whereSql . $groupBySql . " ) as total_count";
             } else {
-                $SQL = $selectSql.' '.$whereSql.$groupBySql.$orderBySql.$limitSql;
+                $SQL = $selectSql . ' ' . $whereSql . $groupBySql . $orderBySql . $limitSql;
             }
         }
 
@@ -332,30 +330,30 @@ class ErpModelDev extends Model
         $previous_part = '';
         foreach ($this->info['module_fields'] as $field) {
             foreach ($sql_parts as $i => $sql_part) {
-                if ($previous_part != 'as' && ($sql_part == $field['field'] || str_contains($sql_part, '('.$field['field']))) {
+                if ($previous_part != 'as' && ($sql_part == $field['field'] || str_contains($sql_part, '('.$field['field'])) ) {
                     if (empty($field['alias'])) {
                         $field['alias'] = $this->db_table;
                     }
-                    if (! $field['aliased_field']) {
+                    if (!$field['aliased_field']) {
                         $sql_parts[$i] = str_replace($field['field'], $field['alias'].'.'.$field['field'], $sql_part);
                     }
                 }
                 $previous_part = $sql_part;
             }
         }
-
+        
         $SQL = implode(' ', $sql_parts);
         $rowGroupCols = $request->rowGroupCols;
         $valueCols = $request->valueCols;
         $groupKeys = $request->groupKeys;
-
-        if (! empty($rowGroupCols) && is_array($rowGroupCols)) {
+        
+        if(!empty($rowGroupCols) && is_array($rowGroupCols)){
             $rowGroupColsFields = collect($rowGroupCols)->pluck('field')->filter()->unique()->toArray();
-            if ($this->use_pg && $this->isDoingGrouping($rowGroupCols, $groupKeys)) {
-                foreach ($request->sortModel as $sort) {
-                    if (in_array($sort['colId'], $rowGroupColsFields)) {
+            if($this->use_pg && $this->isDoingGrouping($rowGroupCols, $groupKeys)){
+                foreach($request->sortModel as $sort){
+                    if(in_array($sort['colId'],$rowGroupColsFields)){
                         foreach ($this->info['module_fields'] as $field) {
-                            if ($field['field'] == $sort['colId']) {
+                            if($field['field'] == $sort['colId']){
                                 $SQL = str_replace($field['alias'].'.'.$field['field'], $field['field'], $SQL);
                             }
                         }
@@ -363,17 +361,17 @@ class ErpModelDev extends Model
                 }
             }
         }
-
+        
         $SQL = $SQL;
 
-        $SQL = str_ireplace('(select '.$this->table.'.id from crm_pricelists', ' (select id from crm_pricelists', $SQL);
-        $SQL = str_ireplace('(select '.$this->table.'.domain_uuid from v_domains', ' (select domain_uuid from v_domains', $SQL);
-        $SQL = str_ireplace('(select '.$this->table.'.pricelist_id from crm_accounts', ' (select pricelist_id from crm_accounts', $SQL);
-        $SQL = str_ireplace('(select '.$this->table.'.id from crm_accounts', ' (select id from crm_accounts', $SQL);
-        $SQL = str_ireplace(" in ('yes') ", ' = 1 ', $SQL);
-        $SQL = str_ireplace(" in ('no') ", ' = 0 ', $SQL);
+        $SQL = str_ireplace("(select ".$this->table.".id from crm_pricelists", " (select id from crm_pricelists", $SQL);
+        $SQL = str_ireplace("(select ".$this->table.".domain_uuid from v_domains", " (select domain_uuid from v_domains", $SQL);
+        $SQL = str_ireplace("(select ".$this->table.".pricelist_id from crm_accounts", " (select pricelist_id from crm_accounts", $SQL);
+        $SQL = str_ireplace("(select ".$this->table.".id from crm_accounts", " (select id from crm_accounts", $SQL);
+        $SQL = str_ireplace(" in ('yes') ", " = 1 ", $SQL);
+        $SQL = str_ireplace(" in ('no') ", " = 0 ", $SQL);
 
-        if ($this->table == 'call_records_outbound_lastmonth' && ! empty(session('cdr_archive_table'))) {
+        if ($this->table == 'call_records_outbound_lastmonth' && !empty(session('cdr_archive_table'))) {
             $SQL = str_replace('call_records_outbound_lastmonth', session('cdr_archive_table'), $SQL);
             $crl = get_columns_from_schema('call_records_outbound_lastmonth', null, 'pbx_cdr');
             $crlv = get_columns_from_schema(session('cdr_archive_table'), null, 'pbx_cdr');
@@ -382,7 +380,7 @@ class ErpModelDev extends Model
                 return strlen($b) <=> strlen($a);
             });
             foreach ($crl as $uc) {
-                if (! in_array($uc, $crlv)) {
+                if (!in_array($uc, $crlv)) {
                     $SQL = str_replace(', '.session('cdr_archive_table').'.'.$uc, '', $SQL);
                     $SQL = str_replace(','.session('cdr_archive_table').'.'.$uc, '', $SQL);
                     $SQL = str_replace(session('cdr_archive_table').'.'.$uc, '', $SQL);
@@ -394,47 +392,51 @@ class ErpModelDev extends Model
         if ($request->detail_field) {
             //   ////aa($SQL);
         }
-        $SQL = str_replace('"', "'", $SQL);
-        $SQL = str_replace('||', 'or', $SQL);
-
+        $SQL = str_replace('"',"'",$SQL);
+        $SQL = str_replace('||','or',$SQL);
+       
+       
+        
         //aa($SQL);
         return $SQL;
     }
+
 
     public function createSelectSql($request, $query_type)
     {
         $rowGroupCols = $request->rowGroupCols;
         $valueCols = $request->valueCols;
         $groupKeys = $request->groupKeys;
-
+        
         $sortModel = $request->sortModel;
-
-        if (! empty($sortModel)) {
-            foreach ($sortModel as $sort) {
-                $field_selected = false;
-                foreach ($valueCols as $v) {
-                    if ($sort['colId'] == $v['field']) {
-                        $field_selected = true;
-                    }
-                }
-                if (! $field_selected) {
-                    $valueCols[] = [
-                        'id' => $sort['colId'],
-                        'displayName' => ucwords(str_replace('_', ' ', $sort['colId'])),
-                        'field' => $sort['colId'],
-                        'aggFunc' => 'max',
-                    ];
-                }
+       
+        if(!empty($sortModel)){
+        foreach($sortModel as $sort){
+            $field_selected = false;
+            foreach($valueCols as $v){
+                if($sort['colId'] == $v['field']){
+                    $field_selected = true;    
+                }    
+            }
+            if(!$field_selected){
+                $valueCols[] = [
+                  'id' => $sort['colId'],
+                  'displayName' => ucwords(str_replace('_',' ',$sort['colId'])), 
+                  'field' => $sort['colId'], 
+                  'aggFunc' => 'max',
+                ];
             }
         }
-
-        // aa($query_type);
+        }
+        
+       // aa($query_type);
         if ($query_type == 'count' && $this->isDoingGrouping($rowGroupCols, $groupKeys)) {
-            return "SELECT max('".$this->primary_key."') from ".$this->table;
+            return "SELECT max('".$this->primary_key."') from ".$this->table; 
         }
         if ($query_type == 'totals') {
-
-            $select_fields = $this->getSelectFields();
+            
+            
+              $select_fields = $this->getSelectFields();
 
             foreach ($valueCols as $key => $value) {
                 foreach ($select_fields as $i => $field) {
@@ -443,12 +445,14 @@ class ErpModelDev extends Model
                     }
                 }
             }
-            if (! empty($this->info['sql_function'])) {
+            if (!empty($this->info['sql_function'])) {
                 $function = $this->info['sql_function'];
                 $select = $function();
             } else {
                 $select = $this->info['db_sql'];
             }
+
+
 
             if (empty($select)) {
                 if (is_array($select_fields) && count($select_fields) > 0) {
@@ -457,13 +461,13 @@ class ErpModelDev extends Model
                     $select = 'SELECT '.$this->table.'.* FROM '.$this->table;
                 }
             }
-
+          
             $tables = $this->info['module_fields'];
             if (isset($tables[0]['sort_order'])) {
                 usort($tables, '\Erp::_sortorder');
             }
-            //aa($select);
-
+//aa($select);
+          
             $select = trim(preg_replace('/\s+/', ' ', $select));
             $select = str_replace(' from ', ' FROM ', $select);
             if (str_contains($select, 'union all') || str_contains($select, 'p_rates_summary as p1')) {
@@ -477,22 +481,24 @@ class ErpModelDev extends Model
             //aa($select_arr);
             $value_select = '';
             $vCols = [];
-
+            
             foreach ($tables as $i => $grid) {
-                if (! empty($grid['pinned_row_total'])) {
-
-                    $vCols[] = 'SUM('.$grid['field'].') as '.$grid['field'];
+                if (!empty($grid['pinned_row_total'])) {
+                   
+                    $vCols[] =  'SUM(' . $grid['field'] . ') as ' . $grid['field'];
                 }
             }
-            if (! empty($request->result_field)) {
-                $vCols[] = 'SUM('.$this->table.'.'.$request->result_field.') as '.$request->result_field;
+            if(!empty($request->result_field)){
+                $vCols[] =  'SUM('.$this->table.'.'.$request->result_field.') as '.$request->result_field;
             }
-
+            
             if (count($vCols) > 0) {
-                $value_select .= ' '.implode(', ', $vCols).' ';
+                $value_select .= ' '.implode(', ', $vCols). ' ';
             }
             $final_select = 'SELECT '.$value_select.' FROM '.$select_arr[1];
-
+            
+            
+            
             return $final_select;
         }
 
@@ -507,12 +513,14 @@ class ErpModelDev extends Model
                     }
                 }
             }
-            if (! empty($this->info['sql_function'])) {
+            if (!empty($this->info['sql_function'])) {
                 $function = $this->info['sql_function'];
                 $select = $function();
             } else {
                 $select = $this->info['db_sql'];
             }
+
+
 
             if (empty($select)) {
                 if (is_array($select_fields) && count($select_fields) > 0) {
@@ -521,11 +529,11 @@ class ErpModelDev extends Model
                     $select = 'SELECT '.$this->table.'.* FROM '.$this->table;
                 }
             }
-            if ($query_type == 'count') {
+            if ($query_type == "count") {
                 return $select;
             }
             //////aa($select);
-
+            
             $select = trim(preg_replace('/\s+/', ' ', $select));
             $select = str_replace(' from ', ' FROM ', $select);
             if (str_contains($select, 'union all') || str_contains($select, 'p_rates_summary as p1')) {
@@ -538,25 +546,25 @@ class ErpModelDev extends Model
             $select_arr = explode('||', $select);
             $value_select = '';
             $vCols = [];
-            //aa($this->aliased_fields);
-            //aa($valueCols);
-            foreach ($rowGroupCols as $rowGroupCol) {
-                foreach ($this->info['module_fields'] as $mf) {
-
-                    if ($rowGroupCol['field'] == $mf['field'] && ! $mf['aliased_field']) {
-                        $vCols[] = 'max('.$rowGroupCol['field'].') as '.$rowGroupCol['field'];
-                    }
+         //aa($this->aliased_fields);
+         //aa($valueCols);
+            foreach($rowGroupCols as $rowGroupCol){
+                foreach($this->info['module_fields'] as $mf){
+                        
+                            if($rowGroupCol['field'] == $mf['field'] && !$mf['aliased_field']){
+            $vCols[] = 'max('.$rowGroupCol['field'].') as '.$rowGroupCol['field'];
+                            }
                 }
             }
             /*
             $sortModel = $request->sortModel;
-
+    
             if ($sortModel) {
                 foreach ($sortModel as $key=>$item) {
                 foreach($this->info['module_fields'] as $mf){
-
+                        
                             if($item['colId'] == $mf['field'] && !$mf['aliased_field']){
-
+                  
                     $vCols[] = 'max('.$item['colId'].') as '.$item['colId'];
                             }
                 }
@@ -564,48 +572,47 @@ class ErpModelDev extends Model
             }
             */
             foreach ($valueCols as $key => $value) {
-
-                //aa($value);
-                if (! empty($this->aliased_fields) && count($this->aliased_fields) > 0) {
-
-                    if (in_array($value['field'], $this->aliased_fields)) {
-                        foreach ($this->info['module_fields'] as $mf) {
-
-                            if ($value['field'] == $mf['field'] && $mf['virtual_field_expression_aggregate'] > '') {
-                                $vCols[] = '('.$mf['virtual_field_expression_aggregate'].') as '.$value['field'];
-
+                
+                    //aa($value);
+                if(!empty($this->aliased_fields) && count($this->aliased_fields) > 0){
+                  
+                    if(in_array($value['field'],$this->aliased_fields)){
+                        foreach($this->info['module_fields'] as $mf){
+                        
+                            if($value['field'] == $mf['field'] && $mf['virtual_field_expression_aggregate'] > ''){
+                                $vCols[] =  '(' . $mf['virtual_field_expression_aggregate'] . ') as ' . $value['field'];
+                           
                             }
                         }
-
-                        continue;
-                    }
+                    
+                        continue;    
+                    }    
                 }
-                foreach ($this->info['module_fields'] as $mf) {
-
-                    if ($value['field'] == $mf['field'] && empty($mf['cell_expression'])) {
-                        if ($value['aggFunc'] == 'value') {
-                            //aa('aggFunc1');
-                            $vCols[] = '('.$value['field'].') as '.$value['field'];
-                        } else {
-                            //aa('aggFunc2');
-                            $vCols[] = $value['aggFunc'].'('.$value['field'].') as '.$value['field'];
-                        }
-                    }
+                 foreach($this->info['module_fields'] as $mf){
+                        
+                            if($value['field'] == $mf['field'] && empty($mf['cell_expression'])){
+                if ($value['aggFunc'] == 'value') {
+                     //aa('aggFunc1');
+                    $vCols[] =  '(' . $value['field'] . ') as ' . $value['field'];
+                } else {
+                     //aa('aggFunc2');
+                    $vCols[] = $value['aggFunc'] . '(' . $value['field'] . ') as ' . $value['field'];
                 }
+                            }
+                 }
             }
-            //aa($vCols);
+               //aa($vCols);
             if (count($vCols) > 0) {
-                $value_select .= implode(', ', $vCols).' ';
+                $value_select .= implode(', ', $vCols). ' ';
             }
-
+            
             //aa($value_select);
             $final_select = 'select '.$value_select.' FROM '.$select_arr[1];
-
             //aa($final_select);
             return $final_select;
         }
 
-        if (! empty($this->info['sql_function'])) {
+        if (!empty($this->info['sql_function'])) {
             $function = $this->info['sql_function'];
             $select = $function();
         } else {
@@ -620,7 +627,6 @@ class ErpModelDev extends Model
                 $select = 'SELECT '.$this->table.'.* FROM '.$this->table;
             }
         }
-
         return $select;
     }
 
@@ -640,11 +646,12 @@ class ErpModelDev extends Model
                 'value' => '',
             ];
 
-            if (! empty($grid['opt_db_table']) && ! empty($grid['opt_db_display']) && ! empty($grid['opt_db_key']) && $grid['field_type'] == 'select_module') {
+            if (!empty($grid['opt_db_table']) && !empty($grid['opt_db_display']) && !empty($grid['opt_db_key']) && 'select_module' == $grid['field_type']) {
                 if (empty($grid['opts_multiple'])) {
                     $join_fields = explode(',', $grid['opt_db_display']);
 
-                    if (count($join_fields) == 1) {
+
+                    if (1 == count($join_fields)) {
                         $join_value = 'join'.$i.'.'.$join_fields[0];
                     } elseif (count($join_fields) > 1) {
                         if ($this->module->connection == 'shop') {
@@ -666,14 +673,17 @@ class ErpModelDev extends Model
                     }
 
                     $join_field['value'] = $join_value;
-                    $join_field['selects'][] = 'TRIM('.$join_value.') as join_'.$grid['field'];
+                    $join_field['selects'][] = 'TRIM('.$join_value .') as join_'.$grid['field'];
+
+
+
 
                     $join_field['table_join'] = ' LEFT JOIN '.$grid['opt_db_table'].' as join'.$i.' ON '.
                     'join'.$i.'.'.$grid['opt_db_key'].' = '.$grid['alias'].'.'.$grid['field'];
 
                     if ($grid['opt_db_where']) {
                         $where = $grid['opt_db_where'];
-                        if (! empty($where) && ! str_contains($where, '{{') && ! str_contains($where, '{!!')) {
+                        if (!empty($where) && !str_contains($where, '{{') && !str_contains($where, '{!!')) {
 
                             // @TODO replace fieldnames with table aliases
                             $join_cols = get_columns_from_schema($grid['opt_db_table'], $types = null, $this->module->connection);
@@ -705,13 +715,14 @@ class ErpModelDev extends Model
             }
         }
 
+
         $joinSQL = '';
         foreach ($table_joins as $join) {
             $joinSQL .= ' '.$join.' ';
         }
 
         // $selectSql
-
+       
         $select = $selectSql;
         $select = trim(preg_replace('/\s+/', ' ', $select));
         $select = str_replace(' from ', ' FROM ', $select);
@@ -722,21 +733,21 @@ class ErpModelDev extends Model
             $select = str_replace_last(' FROM ', '||', $select);
         }
         $select_arr = explode('||', $select);
-
+      
         $select_join_fields .= ', '.implode(',', $join_selects);
 
         $selectSql = $select_arr[0].$select_join_fields.' FROM '.$select_arr[1];
         //////aa($selectSql);
         // $whereSql
         foreach ($this->joins as $field_name => $join) {
-            $whereSql = str_replace($field_name." in ('')", str_replace('join_', '', $field_name).' = 0', $whereSql);
+            $whereSql = str_replace($field_name." in ('')", str_replace("join_", "", $field_name)." = 0", $whereSql);
             $whereSql = str_replace($field_name, $join['value'], $whereSql);
         }
 
         if ($query_type == 'count') {
-            $SQL = 'SELECT COUNT(*) AS lastrow from ( '.$selectSql.$joinSQL.' '.$whereSql.$groupBySql.' ) as total_count';
+            $SQL = "SELECT COUNT(*) AS lastrow from ( " . $selectSql . $joinSQL . ' ' . $whereSql . $groupBySql . " ) as total_count";
         } else {
-            $SQL = $selectSql.$joinSQL.' '.$whereSql.$groupBySql.$orderBySql.$limitSql;
+            $SQL = $selectSql . $joinSQL . ' ' . $whereSql . $groupBySql . $orderBySql . $limitSql;
         }
 
         return $SQL;
@@ -748,23 +759,24 @@ class ErpModelDev extends Model
         $groupKeys = $request->groupKeys;
         $filterModel = $request->filterModel;
 
+
         //////aa('createWhereSql');
         //////aa($rowGroupCols);
         //////aa($groupKeys);
         //////aa($filterModel);
         $whereParts = [];
-        if (! empty($groupKeys)) {
+        if(!empty($groupKeys)){
             foreach ($groupKeys as $key => $value) {
                 $colName = $rowGroupCols[$key]['field'];
-                $whereParts[] = $colName.' = "'.$value.'"';
+                $whereParts[] = $colName . ' = "' . $value . '"';
             }
         }
-        if (! empty($filterModel)) {
+        if(!empty($filterModel)){
             foreach ($filterModel as $key => $value) {
                 //////aa($key);
                 //////aa($value);
                 $item = $filterModel[$key];
-
+            
                 //$value = addslashes($value);
                 $wherePart = $this->createFilterSql($key, $value);
                 //////aa($wherePart);
@@ -772,27 +784,27 @@ class ErpModelDev extends Model
             }
         }
         if (count($whereParts) > 0) {
-            $whereSql = ' WHERE '.implode(' and ', $whereParts);
+            $whereSql = " WHERE " . join(' and ', $whereParts);
         } else {
-            $whereSql = ' WHERE 1=1';
+            $whereSql = " WHERE 1=1";
         }
-
+        
         //PDD PMD
-        if (str_contains($whereSql, ' pdd ')) {
-            $whereSql = str_replace('pdd', 'timestampdiff(second,start_time,media_time)', $whereSql);
+        if(str_contains($whereSql,' pdd ')){
+            $whereSql = str_replace('pdd','timestampdiff(second,start_time,media_time)',$whereSql);
+        }
+        
+        if(str_contains($whereSql,' pmd ')){
+            $whereSql = str_replace('pmd','timestampdiff(second,media_time,hangup_time)',$whereSql);
         }
 
-        if (str_contains($whereSql, ' pmd ')) {
-            $whereSql = str_replace('pmd', 'timestampdiff(second,media_time,hangup_time)', $whereSql);
-        }
-
-        if (! empty($request->search)) {
+        if (!empty($request->search)) {
             $search_query = ' and  (';
             $fields = $this->info['module_fields'];
             $search_fields = [];
             foreach ($fields as $f) {
-                if (! in_array($f['field_type'], ['text', 'select_custom'])) {
-                    continue;
+                if(!in_array($f['field_type'],['text','select_custom'])){
+                    continue;    
                 }
                 //aa($f['field'].' '.$f['field_type']);
                 if (str_contains($f['field'], 'conf') || $f['field'] == 'query_data' || $f['field'] == 'sql_query' || $f['field'] == 'sql_where'
@@ -802,14 +814,14 @@ class ErpModelDev extends Model
                 if (\Schema::connection($this->module->connection)->hasColumn($f['alias'], $f['field'])) {
                     $col_type = get_column_type($f['alias'], $f['field'], $this->module->connection);
                     if ($col_type == 'text') {
-                        $search_fields[] = $f['alias'].'.'.$f['field'].' LIKE "%'.$request->search.'%" ';
-                    } elseif ($f['field_type'] == 'select_module') {
-                        $search_fields[] = 'join_'.$f['field'].' LIKE "%'.$request->search.'%" ';
+                        $search_fields[] = $f['alias'].'.'.$f['field']. ' LIKE "%'.$request->search.'%" ';
+                    } elseif ($f["field_type"] == 'select_module') {
+                        $search_fields[] = 'join_'.$f['field']. ' LIKE "%'.$request->search.'%" ';
                     }
                 }
             }
 
-            $search_query .= implode(' || ', $search_fields);
+            $search_query .= implode(" || ", $search_fields);
             $search_query .= ') ';
 
             if (count($search_fields) > 0) {
@@ -829,17 +841,16 @@ class ErpModelDev extends Model
 
     private function createLimitSql($request)
     {
-
-        if (! isset($request->startRow) && ! isset($request->endRow)) {
+        
+        if (!isset($request->startRow) && !isset($request->endRow)) {
             return '';
         }
         $startRow = $request->startRow;
         $endRow = $request->endRow;
         $pageSize = $endRow - $startRow;
-
-        $limitSql = ' limit '.($pageSize + 1).' offset '.$startRow;
+       
+        $limitSql = ' limit ' . ($pageSize + 1) . ' offset ' . $startRow;
         $this->limitSql = $limitSql;
-
         return $limitSql;
     }
 
@@ -849,70 +860,72 @@ class ErpModelDev extends Model
         $rowGroupCols = $request->rowGroupCols;
         $groupKeys = $request->groupKeys;
         $sortModel = $request->sortModel;
-
+        
         $valueCols = $request->valueCols;
-        if (! empty($sortModel)) {
-            foreach ($sortModel as $sort) {
-                $field_selected = false;
-                foreach ($valueCols as $v) {
-                    if ($sort['colId'] == $v['field']) {
-                        $field_selected = true;
-                    }
-                }
-                if (! $field_selected) {
-                    $valueCols[] = [
-                        'id' => $sort['colId'],
-                        'displayName' => ucwords(str_replace('_', ' ', $sort['colId'])),
-                        'field' => $sort['colId'],
-                        'aggFunc' => 'max',
-                    ];
-                }
+        if(!empty($sortModel)){
+        foreach($sortModel as $sort){
+            $field_selected = false;
+            foreach($valueCols as $v){
+                if($sort['colId'] == $v['field']){
+                    $field_selected = true;    
+                }    
+            }
+            if(!$field_selected){
+                $valueCols[] = [
+                  'id' => $sort['colId'],
+                  'displayName' => ucwords(str_replace('_',' ',$sort['colId'])), 
+                  'field' => $sort['colId'], 
+                  'aggFunc' => 'max',
+                ];
             }
         }
+        }
         $grouping = $this->isDoingGrouping($rowGroupCols, $groupKeys);
-        if ($grouping) {
-
+        if($grouping){
+            
+            
+           
             if ($sortModel) {
-                foreach ($sortModel as $key => $item) {
+                foreach ($sortModel as $key=>$item) {
                     $sort_set = false;
-                    foreach ($valueCols as $value) {
-
-                        if ($item['colId'] == $value['field']) {
+                    foreach($valueCols as $value){
+                    
+                        if($item['colId'] == $value['field']){
                             if ($value['aggFunc'] == 'value') {
-                                $sortParts[] = $value['field'].' '.$item['sort'];
+                                $sortParts[] = $value['field'] . ' ' . $item['sort'];
                                 $sort_set = true;
                             } else {
-                                foreach ($this->info['module_fields'] as $mf) {
-
-                                    if ($value['field'] == $mf['field'] && $mf['virtual_field_expression_aggregate'] > '') {
-                                        $sortParts[] = '('.$mf['virtual_field_expression_aggregate'].') '.' '.$item['sort'];
+                                foreach($this->info['module_fields'] as $mf){
+                                
+                                    if($value['field'] == $mf['field'] && $mf['virtual_field_expression_aggregate'] > ''){
+                                        $sortParts[] =  '(' . $mf['virtual_field_expression_aggregate'] . ') ' .  ' ' . $item['sort'];
                                         $sort_set = true;
                                     }
                                 }
-                                if (! $sort_set) {
-                                    $sortParts[] = $value['aggFunc'].'('.$mf['alias'].'.'.$value['field'].')'.' '.$item['sort'];
+                                if(!$sort_set){
+                                    $sortParts[] = $value['aggFunc'] . '(' . $mf['alias'].'.'.$value['field'] . ')'.  ' ' . $item['sort'];
                                     $sort_set = true;
                                 }
                             }
                         }
                     }
-                    if (! $sort_set) {
-                        $sortParts[] = $item['colId'].' '.$item['sort'];
+                    if(!$sort_set){
+                        $sortParts[] = $item['colId'] . ' ' . $item['sort'];    
                     }
                 }
             }
-
-        } else {
+               
+        }else{
             $sortParts = [];
             if ($sortModel) {
-                foreach ($sortModel as $key => $item) {
-                    $sortParts[] = $item['colId'].' '.$item['sort'];
+                foreach ($sortModel as $key=>$item) {
+                    $sortParts[] = $item['colId'] . ' ' . $item['sort'];
                 }
             }
         }
-
+       
         if (is_array($sortParts) && count($sortParts) > 0) {
-            return ' order by '.implode(', ', $sortParts);
+            return ' order by ' . join(', ', $sortParts);
         } else {
             return '';
         }
@@ -929,7 +942,7 @@ class ErpModelDev extends Model
             $rowGroupCol = $rowGroupCols[count($groupKeys)];
             $colsToGroupBy[] = $rowGroupCol['field'];
 
-            return ' group by '.implode(', ', $colsToGroupBy);
+            return ' group by ' . join(', ', $colsToGroupBy);
         } else {
             // select all columns
             return '';
@@ -938,18 +951,18 @@ class ErpModelDev extends Model
 
     private function createFilterSql($key, $item)
     {
-
+       
         switch ($item['filterType']) {
             case 'text':
                 if (isset($item['type']) and $item['type'] == 'domainsFilter') {
                     return $this->createDomainsFilterSql($key, $item['filter']);
                 } else {
-
+                    
                     if ($item['type'] === 'blank') {
                         return $this->createBlankFilterSql($key);
                     } elseif ($item['type'] === 'notBlank') {
                         return $this->createNotBlankFilterSql($key);
-                    } elseif ($item['filter'] === 'isnull') {
+                    }elseif ($item['filter'] === 'isnull') {
                         return $this->createNullFilterSql($key);
                     } elseif ($item['filter'] === 'isnotnull') {
                         return $this->createNotNullFilterSql($key);
@@ -973,33 +986,32 @@ class ErpModelDev extends Model
     public function createDomainsFilterSql($key, $item)
     {
         $domains = array_map('trim', explode(',', $item));
-
-        return $key.' in ('."'".implode("', '", $domains)."'".')';
+        return $key .' in ('."'" . implode("', '", $domains) . "'".')';
     }
 
     public function createBlankFilterSql($key)
     {
-        return $key.' is NULL or '.$key.' =""';
+        return $key . ' is NULL or '.$key . ' =""';
     }
 
     public function createNotBlankFilterSql($key)
     {
-        return $key.' > ""';
+        return $key . ' > ""';
     }
 
     public function createNullFilterSql($key)
     {
-        return $key.' is NULL';
+        return $key . ' is NULL';
     }
 
     public function createNotNullFilterSql($key)
     {
-        return $key.' is NOT NULL';
+        return $key . ' is NOT NULL';
     }
 
     private function createSetFilter($key, $item)
     {
-        if ($key == 'join_module_id' && ! empty($item['values']) && count($item['values']) > 0) {
+        if ($key == 'join_module_id' && !empty($item['values']) && count($item['values']) > 0) {
             $l = [];
             foreach ($item['values'] as $v) {
                 $l[] = str_replace(' ', '_', $v);
@@ -1008,177 +1020,171 @@ class ErpModelDev extends Model
         }
 
         $list = implode("', '", array_map('addslashes', $item['values']));
-        $where = $key.' in ('."'".$list."'".')';
+        $where = $key .' in ('."'" .$list . "'".')';
 
         return $where;
     }
 
     private function createDateFilterSql($key, $item)
     {
-
-        if ($this->use_pg) {
+       
+        if($this->use_pg){
             $curdate_fn = 'CURRENT_DATE';
             switch ($item['type']) {
                 case 'equals':
-                    return $key.' LIKE "'.date('Y-m-d', strtotime($item['dateFrom'])).'%"';
+                    return $key . ' LIKE "' . date('Y-m-d', strtotime($item['dateFrom'])) . '%"';
                 case 'notEqual':
-                    return $key.' NOT LIKE "'.date('Y-m-d', strtotime($item['dateFrom'])).'%"';
+                    return $key . ' NOT LIKE "' . date('Y-m-d', strtotime($item['dateFrom'])) . '%"';
                 case 'greaterThan':
-                    return $key.' > "'.date('Y-m-d', strtotime($item['dateFrom'])).'"';
+                    return $key . ' > "' . date('Y-m-d', strtotime($item['dateFrom'])) . '"';
                 case 'lessThan':
-                    return $key.' < "'.date('Y-m-d', strtotime($item['dateFrom'])).'"';
+                    return $key . ' < "' . date('Y-m-d', strtotime($item['dateFrom'])) . '"';
                 case 'inRange':
-                    $toDate = $item['dateTo'];
+                    $toDate= $item['dateTo'];
                     $fromDate = $item['dateFrom'];
-
                     return " ( $key >= Date('$fromDate') AND $key <= Date('$toDate') ) ";
                     break;
                 case 'notInRange':
-                    $toDate = $item['dateTo'];
+                    $toDate= $item['dateTo'];
                     $fromDate = $item['dateFrom'];
-
                     return " ( $key < Date('$fromDate') or $key > Date('$toDate') ) ";
                     break;
                 case 'notCurrentMonth':
-                    return ' ('.$key." < date_trunc('month', current_date) )";
+                    return " (".$key." < date_trunc('month', current_date) )";
                     break;
                 case 'currentMonth':
-                    return ' ('.$key." >= date_trunc('month', current_date) )";
+                    return " (".$key." >= date_trunc('month', current_date) )";
                     break;
                 case 'lastMonth':
-                    return ' ('.$key." >= date_trunc('month', current_date - interval '1' month) AND ".$key." < date_trunc('month', current_date)) ";
+                    return " (".$key." >= date_trunc('month', current_date - interval '1' month) AND ".$key." < date_trunc('month', current_date)) ";
                     break;
                 case 'currentWeek':
-                    return " extract('week' from ".$key.") = extract('week' from current_date)";
+                    return  " extract('week' from ".$key.") = extract('week' from current_date)";
                     break;
                 case 'currentDay':
-                    return ' DATE('.$key.') = '.$curdate_fn.' ';
+                    return " DATE(".$key.") = ".$curdate_fn." ";
                     break;
                 case 'lastThreeDays':
-                    return $key.' >= ( '.$curdate_fn." - INTERVAL '3 DAY') ";
+                    return $key." >= ( ".$curdate_fn." - INTERVAL '3 DAY') ";
                     break;
                 case 'lessEqualToday':
-                    return $key.' <= ( '.$curdate_fn.') ';
+                    return $key." <= ( ".$curdate_fn.") ";
                     break;
                 case 'notlastThreeDays':
-                    return $key.' < ( '.$curdate_fn." - INTERVAL '3 DAY') ";
+                    return $key." < ( ".$curdate_fn." - INTERVAL '3 DAY') ";
                     break;
                 case 'notlastSevenDays':
-                    return $key.' < ( '.$curdate_fn." - INTERVAL '7 DAY') ";
+                    return $key." < ( ".$curdate_fn." - INTERVAL '7 DAY') ";
                     break;
                 case 'notlastThirtyDays':
-                    return $key.' < ( '.$curdate_fn." - INTERVAL '30 DAY') ";
+                    return $key." < ( ".$curdate_fn." - INTERVAL '30 DAY') ";
                     break;
                 default:
                     //logger('unknown text filter type: ' . $item['dateFrom']);
                     return 'true';
             }
-        } else {
+        }else{
             $curdate_fn = 'CURDATE()';
             switch ($item['type']) {
-                case 'equals':
-                    return $key.' LIKE "'.date('Y-m-d', strtotime($item['dateFrom'])).'%"';
-                case 'notEqual':
-                    return $key.' NOT LIKE "'.date('Y-m-d', strtotime($item['dateFrom'])).'%"';
-                case 'greaterThan':
-                    return $key.' > "'.date('Y-m-d', strtotime($item['dateFrom'])).'"';
-                case 'lessThan':
-                    return $key.' < "'.date('Y-m-d', strtotime($item['dateFrom'])).'"';
-                case 'inRange':
-                    $toDate = $item['dateTo'];
-                    $fromDate = $item['dateFrom'];
-
-                    return " ( $key >= Date('$fromDate') AND $key <= Date('$toDate') ) ";
-                    break;
-                case 'notInRange':
-                    $toDate = $item['dateTo'];
-                    $fromDate = $item['dateFrom'];
-
-                    return " ( $key < Date('$fromDate') or $key > Date('$toDate') ) ";
-                    break;
-                case 'notCurrentMonth':
-                    return ' (DATE('.$key.") <  DATE_FORMAT(NOW() ,'%Y-%m-01') ) ";
-                    break;
-                case 'currentMonth':
-                    return ' (DATE('.$key.") between  DATE_FORMAT(NOW() ,'%Y-%m-01') AND LAST_DAY(".$curdate_fn.')) ';
-                    break;
-                case 'lastMonth':
-                    return ' (DATE('.$key.") >= DATE_FORMAT( CURRENT_DATE - INTERVAL 1 MONTH, '%Y/%m/01' ) AND DATE(".$key.") < DATE_FORMAT( CURRENT_DATE, '%Y/%m/01' )) ";
-                    break;
-                case 'currentWeek':
-                    return ' YEARWEEK('.$key.') = YEARWEEK(NOW())';
-                    break;
-                case 'currentDay':
-                    return ' DATE('.$key.') = '.$curdate_fn.' ';
-                    break;
-                case 'lastThreeDays':
-                    return $key.' >= ( '.$curdate_fn.' - INTERVAL 3 DAY) ';
-                    break;
-                case 'lessEqualToday':
-                    return $key.' <= ( '.$curdate_fn.') ';
-                    break;
-                case 'notlastThreeDays':
-                    return $key.' < ( '.$curdate_fn.' - INTERVAL 3 DAY) ';
-                    break;
-                case 'notlastSevenDays':
-                    return $key.' < ( '.$curdate_fn.' - INTERVAL 7 DAY) ';
-                    break;
-                case 'notlastThirtyDays':
-                    return $key.' < ( '.$curdate_fn.' - INTERVAL 30 DAY) ';
-                    break;
-                default:
-                    //logger('unknown text filter type: ' . $item['dateFrom']);
-                    return 'true';
-            }
+                    case 'equals':
+                        return $key . ' LIKE "' . date('Y-m-d', strtotime($item['dateFrom'])) . '%"';
+                    case 'notEqual':
+                        return $key . ' NOT LIKE "' . date('Y-m-d', strtotime($item['dateFrom'])) . '%"';
+                    case 'greaterThan':
+                        return $key . ' > "' . date('Y-m-d', strtotime($item['dateFrom'])) . '"';
+                    case 'lessThan':
+                        return $key . ' < "' . date('Y-m-d', strtotime($item['dateFrom'])) . '"';
+                    case 'inRange':
+                        $toDate= $item['dateTo'];
+                        $fromDate = $item['dateFrom'];
+                        return " ( $key >= Date('$fromDate') AND $key <= Date('$toDate') ) ";
+                        break;
+                    case 'notInRange':
+                        $toDate= $item['dateTo'];
+                        $fromDate = $item['dateFrom'];
+                        return " ( $key < Date('$fromDate') or $key > Date('$toDate') ) ";
+                        break;
+                    case 'notCurrentMonth':
+                        return " (DATE(".$key.") <  DATE_FORMAT(NOW() ,'%Y-%m-01') ) ";
+                        break;
+                    case 'currentMonth':
+                        return " (DATE(".$key.") between  DATE_FORMAT(NOW() ,'%Y-%m-01') AND LAST_DAY(".$curdate_fn.")) ";
+                        break;
+                    case 'lastMonth':
+                        return " (DATE(".$key.") >= DATE_FORMAT( CURRENT_DATE - INTERVAL 1 MONTH, '%Y/%m/01' ) AND DATE(".$key.") < DATE_FORMAT( CURRENT_DATE, '%Y/%m/01' )) ";
+                        break;
+                    case 'currentWeek':
+                        return  " YEARWEEK(".$key.") = YEARWEEK(NOW())";
+                        break;
+                    case 'currentDay':
+                        return " DATE(".$key.") = ".$curdate_fn." ";
+                        break;
+                    case 'lastThreeDays':
+                        return $key." >= ( ".$curdate_fn." - INTERVAL 3 DAY) ";
+                        break;
+                    case 'lessEqualToday':
+                        return $key." <= ( ".$curdate_fn.") ";
+                        break;
+                    case 'notlastThreeDays':
+                        return $key." < ( ".$curdate_fn." - INTERVAL 3 DAY) ";
+                        break;
+                    case 'notlastSevenDays':
+                        return $key." < ( ".$curdate_fn." - INTERVAL 7 DAY) ";
+                        break;
+                    case 'notlastThirtyDays':
+                        return $key." < ( ".$curdate_fn." - INTERVAL 30 DAY) ";
+                        break;
+                    default:
+                        //logger('unknown text filter type: ' . $item['dateFrom']);
+                        return 'true';
+                }
         }
-
+        
         switch ($item['type']) {
             case 'equals':
-                return $key.' LIKE "'.date('Y-m-d', strtotime($item['dateFrom'])).'%"';
+                return $key . ' LIKE "' . date('Y-m-d', strtotime($item['dateFrom'])) . '%"';
             case 'notEqual':
-                return $key.' NOT LIKE "'.date('Y-m-d', strtotime($item['dateFrom'])).'%"';
+                return $key . ' NOT LIKE "' . date('Y-m-d', strtotime($item['dateFrom'])) . '%"';
             case 'greaterThan':
-                return $key.' > "'.date('Y-m-d', strtotime($item['dateFrom'])).'"';
+                return $key . ' > "' . date('Y-m-d', strtotime($item['dateFrom'])) . '"';
             case 'lessThan':
-                return $key.' < "'.date('Y-m-d', strtotime($item['dateFrom'])).'"';
+                return $key . ' < "' . date('Y-m-d', strtotime($item['dateFrom'])) . '"';
             case 'inRange':
-                $toDate = $item['dateTo'];
+                $toDate= $item['dateTo'];
                 $fromDate = $item['dateFrom'];
-
                 return " ( $key >= Date('$fromDate') AND $key <= Date('$toDate') ) ";
                 break;
             case 'notInRange':
-                $toDate = $item['dateTo'];
+                $toDate= $item['dateTo'];
                 $fromDate = $item['dateFrom'];
-
                 return " ( $key < Date('$fromDate') or $key > Date('$toDate') ) ";
                 break;
             case 'currentMonth':
-                return ' (DATE('.$key.") between  DATE_FORMAT(NOW() ,'%Y-%m-01') AND LAST_DAY(".$curdate_fn.')) ';
+                return " (DATE(".$key.") between  DATE_FORMAT(NOW() ,'%Y-%m-01') AND LAST_DAY(".$curdate_fn.")) ";
                 break;
             case 'lastMonth':
-                return ' (DATE('.$key.") >= DATE_FORMAT( CURRENT_DATE - INTERVAL 1 MONTH, '%Y/%m/01' ) AND DATE(".$key.") < DATE_FORMAT( CURRENT_DATE, '%Y/%m/01' )) ";
+                return " (DATE(".$key.") >= DATE_FORMAT( CURRENT_DATE - INTERVAL 1 MONTH, '%Y/%m/01' ) AND DATE(".$key.") < DATE_FORMAT( CURRENT_DATE, '%Y/%m/01' )) ";
                 break;
             case 'currentWeek':
-                return ' YEARWEEK('.$key.') = YEARWEEK(NOW())';
+                return  " YEARWEEK(".$key.") = YEARWEEK(NOW())";
                 break;
             case 'currentDay':
-                return ' DATE('.$key.') = '.$curdate_fn.' ';
+                return " DATE(".$key.") = ".$curdate_fn." ";
                 break;
             case 'lastThreeDays':
-                return $key.' >= ( '.$curdate_fn.' - INTERVAL 3 DAY) ';
+                return $key." >= ( ".$curdate_fn." - INTERVAL 3 DAY) ";
                 break;
             case 'lessEqualToday':
-                return $key.' <= ( '.$curdate_fn.') ';
+                return $key." <= ( ".$curdate_fn.") ";
                 break;
             case 'notlastThreeDays':
-                return $key.' < ( '.$curdate_fn.' - INTERVAL 3 DAY) ';
+                return $key." < ( ".$curdate_fn." - INTERVAL 3 DAY) ";
                 break;
             case 'notlastSevenDays':
-                return $key.' < ( '.$curdate_fn.' - INTERVAL 7 DAY) ';
+                return $key." < ( ".$curdate_fn." - INTERVAL 7 DAY) ";
                 break;
             case 'notlastThirtyDays':
-                return $key.' < ( '.$curdate_fn.' - INTERVAL 30 DAY) ';
+                return $key." < ( ".$curdate_fn." - INTERVAL 30 DAY) ";
                 break;
             default:
                 //logger('unknown text filter type: ' . $item['dateFrom']);
@@ -1190,17 +1196,17 @@ class ErpModelDev extends Model
     {
         switch ($item['type']) {
             case 'equals':
-                return $key.' = "'.$item['filter'].'"';
+                return $key . ' = "' . $item['filter'] . '"';
             case 'notEqual':
-                return $key.' != "'.$item['filter'].'"';
+                return $key . ' != "' . $item['filter'] . '"';
             case 'contains':
-                return $key.' like "%'.$item['filter'].'%"';
+                return $key . ' like "%' . $item['filter'] . '%"';
             case 'notContains':
-                return $key.' not like "%'.$item['filter'].'%"';
+                return $key . ' not like "%' . $item['filter'] . '%"';
             case 'startsWith':
-                return $key.' like "'.$item['filter'].'%"';
+                return $key . ' like "' . $item['filter'] . '%"';
             case 'endsWith':
-                return $key.' like "%'.$item['filter'].'"';
+                return $key . ' like "%' . $item['filter'] . '"';
             default:
                 //logger('unknown text filter type: ' . $item['type']);
                 return 'true';
@@ -1211,21 +1217,21 @@ class ErpModelDev extends Model
     {
         switch ($item['type']) {
             case 'equals':
-                return $key.' = '.$item['filter'];
+                return $key . ' = ' . $item['filter'];
             case 'notEqual':
-                return $key.' != '.$item['filter'];
+                return $key . ' != ' . $item['filter'];
             case 'greaterThan':
-                return $key.' > '.$item['filter'];
+                return $key . ' > ' . $item['filter'];
             case 'greaterThanOrEqual':
-                return $key.' >= '.$item['filter'];
+                return $key . ' >= ' . $item['filter'];
             case 'lessThan':
-                return $key.' < '.$item['filter'];
+                return $key . ' < ' . $item['filter'];
             case 'lessThanOrEqual':
-                return $key.' <= '.$item['filter'];
+                return $key . ' <= ' . $item['filter'];
             case 'inRange':
-                return '('.$key.' >= '.$item['filter'].' and '.$key.' <= '.$item['filterTo'].')';
+                return '(' . $key . ' >= ' . $item['filter'] . ' and ' . $key . ' <= ' . $item['filterTo'] . ')';
             case 'notInRange':
-                return '('.$key.' < '.$item['filter'].' or '.$key.' > '.$item['filterTo'].')';
+                return '(' . $key . ' < ' . $item['filter'] . ' or ' . $key . ' > ' . $item['filterTo'] . ')';
             default:
                 //logger('unknown number filter type: ' . $item['type']);
                 return 'true';
@@ -1234,10 +1240,10 @@ class ErpModelDev extends Model
 
     private function isDoingGrouping($rowGroupCols, $groupKeys)
     {
-        if (empty($rowGroupCols)) {
+        if(empty($rowGroupCols)){
             $rowGroupCols = [];
         }
-        if (empty($groupKeys)) {
+        if(empty($groupKeys)){
             $groupKeys = [];
         }
         // we are not doing grouping if at the lowest level. we are at the lowest level
@@ -1245,7 +1251,6 @@ class ErpModelDev extends Model
         // has not expanded a lowest level group, OR we are not grouping at all).
         $grouping = count($rowGroupCols) > count($groupKeys);
         $this->grouping = $grouping;
-
         return $grouping;
     }
 
@@ -1253,7 +1258,7 @@ class ErpModelDev extends Model
     {
         $pageSize = $request['endRow'] - $request['startRow'];
 
-        if ($results && (count($results) > $pageSize)) {
+        if ($results && (sizeof($results) > $pageSize)) {
             return array_splice($results, 0, $pageSize);
         } else {
             return $results;
@@ -1266,7 +1271,7 @@ class ErpModelDev extends Model
     {
         // add local rates to international rates -- grid_add_local_rates
         if (($this->module->id == 557 || $this->module->id == 606) && (session('pbx_domain_level') === true || check_access('21'))) {
-            $rates_count = \DB::connection(session('pbx_server'))->table('p_rates_partner_items')->where('ratesheet_id', session('pbx_ratesheet_id'))->count();
+            $rates_count =  \DB::connection(session('pbx_server'))->table('p_rates_partner_items')->where('ratesheet_id', session('pbx_ratesheet_id'))->count();
             if ($args['fstart'] == 0) {
                 $args['flimit'] -= $rates_count;
             }
@@ -1281,7 +1286,7 @@ class ErpModelDev extends Model
 
         $table = $this->table;
 
-        if (! empty($this->info['sql_function'])) {
+        if (!empty($this->info['sql_function'])) {
             $function = $this->info['sql_function'];
             $select = $function();
         } else {
@@ -1302,20 +1307,20 @@ class ErpModelDev extends Model
         if (empty($fstart)) {
             $fstart = 0;
         }
-        if ($flimit && $flimit != 'All') {
+        if ($flimit && 'All' != $flimit) {
             $limitConditional = "LIMIT $flimit OFFSET $fstart ";
         }
 
-        $rows = [];
+        $rows = array();
 
-        $where = (! empty($this->info['db_where'])) ? $this->info['db_where'] : ' WHERE 1=1 ';
+        $where = (!empty($this->info['db_where'])) ? $this->info['db_where'] : ' WHERE 1=1 ';
 
         // level access
 
         $where .= $this->accountFilter();
         $where .= $this->erpFilter();
         $filter_preview = false;
-        if (! empty($gridfilter)) {
+        if (!empty($gridfilter)) {
             foreach ($gridfilter as $filter) {
                 if (empty($filter['condition'])) {
                     $filter_preview = $filter['field'];
@@ -1325,13 +1330,13 @@ class ErpModelDev extends Model
         }
 
         $hidden_filters = $this->getHiddenGridFilters($gridfilter);
-        if (! empty($hidden_filters)) {
+        if (!empty($hidden_filters)) {
             foreach ($hidden_filters as $filter) {
                 $where .= $this->queryWhereAjax($filter);
             }
         }
 
-        if (! empty($search)) {
+        if (!empty($search)) {
             $where .= $this->querySearch($search);
         }
 
@@ -1343,15 +1348,15 @@ class ErpModelDev extends Model
             usort($tables, '\Erp::_sortorder');
         }
 
-        if (! empty($grid_layout_id)) {
+        if (!empty($grid_layout_id)) {
             $grid_view = \DB::connection('default')->table('erp_grid_views')->where('id', $grid_layout_id)->get()->first();
-            if (! empty($grid_view->settings)) {
+            if (!empty($grid_view->settings)) {
                 $settings = json_decode($grid_view->settings);
 
-                if (! empty($settings->persistData)) {
+                if (!empty($settings->persistData)) {
                     $settings = $settings->persistData;
                     $settings = json_decode($settings);
-                    if (! empty($settings->columns)) {
+                    if (!empty($settings->columns)) {
                         $reordered_fields = [];
                         foreach ($settings->columns as $i => $col) {
                             foreach ($tables as $i => $grid) {
@@ -1366,21 +1371,22 @@ class ErpModelDev extends Model
             }
         }
 
+
         $fields_sorted = [];
         foreach ($tables as $i => $grid) {
-            if (! empty($gridsort)) {
+            if (!empty($gridsort)) {
                 foreach ($gridsort as $sort) {
-                    $direction = ($sort['direction'] == 'descending') ? 'desc' : 'asc';
-                    if ($grid['field_type'] == 'select_module' && $grid['field'] == $sort['name'] && ! empty($grid['opt_db_table'])) {
+                    $direction = ('descending' == $sort['direction']) ? 'desc' : 'asc';
+                    if ('select_module' == $grid['field_type'] && $grid['field'] == $sort['name'] && !empty($grid['opt_db_table'])) {
                         $orderby_fields = explode(',', $grid['opt_db_sortorder']);
 
-                        if (isset($orderby_fields[0]) && $orderby_fields[0] == '') {
+                        if (isset($orderby_fields[0]) && '' == $orderby_fields[0]) {
                             $orderby_fields = null;
                         }
 
-                        if (! empty($orderby_fields)) {
+                        if (!empty($orderby_fields)) {
                             foreach ($orderby_fields as $orderby_join) {
-                                if (! empty($this->join_order_fields[$orderby_join])) {
+                                if (!empty($this->join_order_fields[$orderby_join])) {
                                     $fields_sorted[] = $grid['field'];
                                     $orderConditional .= $this->join_order_fields[$orderby_join].' '.$direction.', ';
                                 }
@@ -1391,13 +1397,13 @@ class ErpModelDev extends Model
                         }
                     } elseif ($grid['field'] == $sort['name']) {
                         $fields_sorted[] = $grid['field'];
-                        $alias = (! empty($grid['alias'])) ? $grid['alias'] : $this->table;
+                        $alias = (!empty($grid['alias'])) ? $grid['alias'] : $this->table;
                         if (in_array($alias, $table_list)) {
                             $alias_field = $alias.'.'.$grid['field'];
                         } else {
                             $alias_field = $alias;
                         }
-                        if ($grid['field'] == 'allocated' || $grid['field'] == 'available') {
+                        if ('allocated' == $grid['field'] || 'available' == $grid['field']) {
                             $orderConditional .= $grid['field'].' '.$direction.', ';
                         } else {
                             $orderConditional .= $alias_field.' '.$direction.', ';
@@ -1406,6 +1412,8 @@ class ErpModelDev extends Model
                 }
             }
         }
+
+
 
         if ($orderConditional > '') {
             if ($this->table == 'sub_services' && (empty($gridsort) || count($gridsort) > 1)) {
@@ -1416,7 +1424,7 @@ class ErpModelDev extends Model
             $orderConditional = rtrim($orderConditional, ', ');
         }
 
-        if ($this->table == 'v_domains' && ! empty(session('debug_domain'))) {
+        if ($this->table == 'v_domains' && !empty(session('debug_domain'))) {
             $orderConditional = 'ORDER BY v_domains.domain_debug desc,'.str_replace('ORDER BY ', '', $orderConditional);
         }
 
@@ -1426,7 +1434,7 @@ class ErpModelDev extends Model
             $orderConditional = 'ORDER BY sort_order';
         }
 
-        if (! empty($joins) && ! empty($joins['join_selects'])) {
+        if (!empty($joins) && !empty($joins['join_selects'])) {
             $select = $select;
             $select = trim(preg_replace('/\s+/', ' ', $select));
             $select = str_replace(' from ', ' FROM ', $select);
@@ -1443,7 +1451,7 @@ class ErpModelDev extends Model
             $select = $select_arr[0].$select_join_fields.' FROM '.$select_arr[1];
         }
 
-        if (! empty($joins) && ! empty($joins['joins'])) {
+        if (!empty($joins) && !empty($joins['joins'])) {
             foreach ($joins['joins'] as $join) {
                 $join_query .= ' '.$join.' ';
             }
@@ -1451,18 +1459,21 @@ class ErpModelDev extends Model
 
         $where = rtrim($where, 'and ');
         $groupby = '';
-        if (! empty($groupby_field)) {
+        if (!empty($groupby_field)) {
             $filter_preview = true;
             $groupby .= ' group by '.$groupby_field.' ';
         }
 
-        if (! empty($is_export) && str_contains($select, 'call_records') && $flimit == 10) {
+        if (!empty($is_export) && str_contains($select, 'call_records') && $flimit == 10) {
             //  $where .= ' and '.$this->table.'.duration > 0 ';
 
-            $limitConditional = 'LIMIT 100000 OFFSET 0 ';
+
+            $limitConditional = "LIMIT 100000 OFFSET 0 ";
         } elseif ($is_export) {
-            $limitConditional = '';
+            $limitConditional = "";
         }
+
+
 
         if ($filter_preview) {
             $query = $select.$join_query.' '.$where." {$params} $groupby";
@@ -1474,7 +1485,7 @@ class ErpModelDev extends Model
         $count_query = str_replace('p_ratesheet_compiled.', '', $count_query);
         $query = str_replace('p_ratesheet_compiled.', '', $query);
 
-        if ($this->table == 'call_records_outbound_lastmonth' && ! empty(session('cdr_archive_table'))) {
+        if ($this->table == 'call_records_outbound_lastmonth' && !empty(session('cdr_archive_table'))) {
             $count_query = str_replace('call_records_outbound_lastmonth', session('cdr_archive_table'), $count_query);
             $query = str_replace('call_records_outbound_lastmonth', session('cdr_archive_table'), $query);
             $crl = get_columns_from_schema('call_records_outbound_lastmonth', null, 'pbx_cdr');
@@ -1484,7 +1495,7 @@ class ErpModelDev extends Model
                 return strlen($b) <=> strlen($a);
             });
             foreach ($crl as $uc) {
-                if (! in_array($uc, $crlv)) {
+                if (!in_array($uc, $crlv)) {
                     $count_query = str_replace(','.session('cdr_archive_table').'.'.$uc, '', $count_query);
                     $query = str_replace(','.session('cdr_archive_table').'.'.$uc, '', $query);
                 }
@@ -1501,20 +1512,20 @@ class ErpModelDev extends Model
 
         $count = \DB::select('SELECT COUNT(*) AS total from ('.$count_query.') as total_count');
 
-        if (! empty($count[0]->total)) {
+        if (!empty($count[0]->total)) {
             $total = $count[0]->total;
         } else {
             $total = 0;
         }
 
-        return $results = ['rows' => $result, 'total' => $total, 'query' => $query];
+        return $results = array('rows' => $result, 'total' => $total, 'query' => $query);
     }
 
     public function querySearch($search)
     {
         $where = '';
         $fields = $this->info['module_fields'];
-
+      
         foreach ($search as $search_filter) {
             $search_filter = (array) $search_filter;
             $predicates = [];
@@ -1523,8 +1534,8 @@ class ErpModelDev extends Model
                     if ($f['field'] == $search_filter_field) {
                         if (\Schema::connection($this->module->connection)->hasColumn($f['alias'], $f['field'])) {
                             $col_type = get_column_type($f['alias'], $f['field'], $this->module->connection);
-
-                            if ($col_type == 'text' || $f['type'] == 'connection') {
+                                       
+                            if ($col_type == 'text' || $f["type"] == "connection") {
                                 $predicates[] = [
                                     'field' => $search_filter_field,
                                     'operator' => $search_filter['operator'],
@@ -1539,7 +1550,7 @@ class ErpModelDev extends Model
             $filter = [
                 'isComplex' => true,
                 'condition' => 'or',
-                'predicates' => $predicates,
+                'predicates' => $predicates
             ];
 
             $where .= $this->queryWhereAjax($filter);
@@ -1558,9 +1569,9 @@ class ErpModelDev extends Model
                 $access = $this->gridAccess();
 
                 if ($access) {
-                    if ($grid['virtual_field_expression'] > '' && $grid['aliased_field']) {
+                    if($grid['virtual_field_expression'] > '' && $grid['aliased_field']){
                         $select_fields[] = $grid['virtual_field_expression'].' as '.$grid['field'];
-                    } elseif (empty($grid['cell_expression'])) {
+                    }elseif(empty($grid['cell_expression'])){
                         $select_fields[] = $grid['alias'].'.'.$grid['field'];
                     }
                 }
@@ -1568,19 +1579,19 @@ class ErpModelDev extends Model
         }
         $id_field = $this->table.'.id';
         $db_columns = $this->getTableFields();
-        if (in_array('id', $db_columns) && ! in_array($id_field, $select_fields)) {
+        if (in_array('id', $db_columns) && !in_array($id_field, $select_fields)) {
             $select_fields[] = $id_field;
         }
-
         return $select_fields;
     }
 
+
     public function queryWhereAjax($filter, $condition = null)
     {
-        if (! empty(request()->query_params)) {
+        if (!empty(request()->query_params)) {
             $query_params = request()->query_params;
         }
-        if (! empty(request()->query_values)) {
+        if (!empty(request()->query_values)) {
             $query_values = request()->query_values;
         }
 
@@ -1592,15 +1603,15 @@ class ErpModelDev extends Model
         $where = '';
         $wheres = [];
 
-        if ($filter['isComplex'] && ! empty($filter['predicates']) && is_array($filter['predicates'])) {
+        if ($filter['isComplex'] && !empty($filter['predicates']) && is_array($filter['predicates'])) {
             foreach ($filter['predicates'] as $subfilter) {
                 $wheres[] = $this->queryWhereAjax($subfilter, $filter['condition']);
             }
 
-            if ($filter['condition'] == 'and') {
+            if ('and' == $filter['condition']) {
                 $where = '('.implode(' and ', $wheres).')';
             }
-            if ($filter['condition'] == 'or') {
+            if ('or' == $filter['condition']) {
                 $where = '('.implode(' or ', $wheres).')';
             }
         }
@@ -1615,10 +1626,10 @@ class ErpModelDev extends Model
         }
 
         foreach ($tables as $i => $grid) {
-            if ($grid['field'] == $filter['field'] && $grid['field_type'] == 'boolean') {
+            if ($grid['field'] == $filter['field'] && 'boolean' == $grid['field_type']) {
                 $filter['operator'] = 'equal';
-                $filter['value'] = ($filter['value'] == 'Yes' || $filter['value'] == 'yes') ? 1 : 0;
-                if ($this->info['connection'] == 'pbx' && str_starts_with($this->table, 'v_')) {
+                $filter['value'] = ('Yes' == $filter['value'] || 'yes' == $filter['value']) ? 1 : 0;
+                if ('pbx' == $this->info['connection'] && str_starts_with($this->table, 'v_')) {
                     if ($filter['value'] == 1) {
                         $filter['value'] = 'true';
                     } else {
@@ -1627,7 +1638,7 @@ class ErpModelDev extends Model
                 }
             }
 
-            if (! empty($grid['opt_db_table']) && $grid['field'] == $filter['field']) {
+            if (!empty($grid['opt_db_table']) && $grid['field'] == $filter['field']) {
                 $join_fields = explode(',', $grid['opt_db_display']);
 
                 $concat_fields = [];
@@ -1636,7 +1647,7 @@ class ErpModelDev extends Model
                     // filter on id not on search value
 
                     if ($filter['value'] == $query_params[$grid['field']]
-                    && ! empty($query_params) && is_numeric($query_params[$grid['field']])
+                    && !empty($query_params) && is_numeric($query_params[$grid['field']])
                     && $grid['field'] == $filter['field'] && str_ends_with($filter['field'], '_id')) {
                         $filter['field'] = 'join'.$i.'.'.$grid['opt_db_key'];
 
@@ -1646,7 +1657,7 @@ class ErpModelDev extends Model
                             $filter['operator'] = 'equal';
                         }
 
-                        if (! empty($query_params[$grid['field']])) {
+                        if (!empty($query_params[$grid['field']])) {
                             $filter['value'] = $query_params[$grid['field']];
                         }
                         break;
@@ -1660,9 +1671,9 @@ class ErpModelDev extends Model
                     }
                 }
 
-                if (count($concat_fields) == 1) {
+                if (1 == count($concat_fields)) {
                     $filter['field'] = $concat_fields[0];
-                    if (! empty($query_values[$grid['field']])) {
+                    if (!empty($query_values[$grid['field']])) {
                         $filter['value'] = $query_values[$grid['field']];
                     }
                 } elseif (count($concat_fields) > 1) {
@@ -1679,12 +1690,12 @@ class ErpModelDev extends Model
                         }
                         $filter['field'] = rtrim($filter['field'], ', " - ",').')';
                     }
-                    if (! empty($query_values[$grid['field']])) {
+                    if (!empty($query_values[$grid['field']])) {
                         $filter['value'] = $query_values[$grid['field']];
                     }
                 }
             } elseif ($grid['field'] == $filter['field']) {
-                $alias = (! empty($grid['alias'])) ? $grid['alias'] : $this->table;
+                $alias = (!empty($grid['alias'])) ? $grid['alias'] : $this->table;
                 if (in_array($alias, $table_list)) {
                     $alias_field = $alias.'.'.$grid['field'];
                 } else {
@@ -1695,49 +1706,49 @@ class ErpModelDev extends Model
         }
         $filter['value'] = addslashes($filter['value']);
 
-        if ($filter['isComplex'] === false || empty($filter['isComplex'])) {
-            if ($filter['operator'] == 'equal') {
+        if (false === $filter['isComplex'] || empty($filter['isComplex'])) {
+            if ('equal' == $filter['operator']) {
                 if ((str_contains($filter['field'], '.id') || str_contains($filter['field'], '_id')) && str_contains($filter['value'], ',')) {
                     ////aa($grid['field']);
-                    $where .= $filter['field'].' IN ('.$filter['value'].') ';
+                    $where .= $filter['field']." IN (".$filter['value'].") ";
                 } elseif (empty($filter['value']) || $filter['value'] == 'null' || $filter['value'] == null) {
-                    $where .= '('.$filter['field']." = '' or ".$filter['field'].' is null )';
+                    $where .= "(".$filter['field']." = '' or ".$filter['field']." is null )";
                 } else {
                     $where .= $filter['field']." = '".$filter['value']."' ";
                 }
             }
 
-            if ($filter['operator'] == 'notequal') {
+            if ('notequal' == $filter['operator']) {
                 if (str_contains($filter['value'], '%')) {
                     $where .= $filter['field']." NOT LIKE '".$filter['value']."' ";
                 } else {
                     $where .= $filter['field']." != '".$filter['value']."' ";
                 }
             }
-            if ($filter['operator'] == 'startswith') {
+            if ('startswith' == $filter['operator']) {
                 $where .= $filter['field']." LIKE '".$filter['value']."%' ";
             }
-            if ($filter['operator'] == 'endswith') {
+            if ('endswith' == $filter['operator']) {
                 $where .= $filter['field']." LIKE '%".$filter['value']."' ";
             }
-            if ($filter['operator'] == 'contains') {
+            if ('contains' == $filter['operator']) {
                 if (empty($filter['value']) || $filter['value'] == 'null' || $filter['value'] == null) {
-                    $where .= '('.$filter['field']." = '' or ".$filter['field'].' is null )';
+                    $where .= "(".$filter['field']." = '' or ".$filter['field']." is null )";
                 } else {
                     if (str_contains($filter['field'], 'join') && $filter['field'] != $request_filter['field'] && empty($filter['value'])) {
-                        $where .= $this->table.'.'.$request_filter['field'].' is null ';
+                        $where .= $this->table.'.'.$request_filter['field']." is null ";
                     }
                     if ($request_filter['field'] == 'account_id' && empty($filter['value'])) {
-                        $where = $this->table.'.'.$request_filter['field'].'=0 ';
+                        $where =  $this->table.'.'.$request_filter['field']."=0 ";
                     } elseif ($filter['field'] != $request_filter['field'] && empty($filter['value'])) {
-                        $where = ' 1=1 ';
+                        $where = " 1=1 ";
                     } else {
                         $where .= $filter['field']." LIKE '%".$filter['value']."%' ";
                     }
                 }
             }
 
-            if ($filter['operator'] == 'notcontains') {
+            if ('notcontains' == $filter['operator']) {
                 if ($filter['field'] == 'join3.code') {
                     $where .= $filter['field']." NOT LIKE '%prepaid%' ";
                 } else {
@@ -1745,35 +1756,35 @@ class ErpModelDev extends Model
                 }
             }
 
-            if ($filter['operator'] == 'lessthan') {
+            if ('lessthan' == $filter['operator']) {
                 $where .= $filter['field']." < '".$filter['value']."' ";
             }
 
-            if ($filter['operator'] == 'greaterthan') {
+            if ('greaterthan' == $filter['operator']) {
                 $where .= $filter['field']." > '".$filter['value']."' ";
             }
 
-            if ($filter['operator'] == 'lessthanorequal') {
+            if ('lessthanorequal' == $filter['operator']) {
                 $where .= $filter['field']." <= '".$filter['value']."' ";
             }
 
-            if ($filter['operator'] == 'greaterthanorequal') {
+            if ('greaterthanorequal' == $filter['operator']) {
                 $where .= $filter['field']." >= '".$filter['value']."' ";
             }
         }
 
-        if ($this->module->connection != 'default') {
+        if ('default' != $this->module->connection) {
             if (str_contains($filter['field'], 'parnter_id') || str_contains($filter['field'], 'account_id')) {
                 $accounts_where = str_replace($filter['field'], 'company', $where);
 
                 $account_ids = \DB::connection('default')->table('crm_accounts')->whereRaw($accounts_where)->pluck('id')->toArray();
 
                 $where = '';
-                if (! empty($account_ids) && is_array($account_ids)) {
-                    if (count($account_ids) == 0) {
+                if (!empty($account_ids) && is_array($account_ids)) {
+                    if (0 == count($account_ids)) {
                         $where = '';
                     }
-                    if (count($account_ids) == 1) {
+                    if (1 == count($account_ids)) {
                         $where = $filter['field'].'='.$account_ids[0];
                     }
                     if (count($account_ids) > 1) {
@@ -1783,7 +1794,7 @@ class ErpModelDev extends Model
             }
         }
 
-        if ($condition === null) {
+        if (null === $condition) {
             return ' and '.$where;
         } else {
             return $where;
@@ -1801,24 +1812,24 @@ class ErpModelDev extends Model
         }
         $join_order_fields = [];
         foreach ($tables as $i => $grid) {
-            if ($this->data['db_table'] == 'sub_services' && $grid['field'] == 'partner_id') {
+            if ('sub_services' == $this->data['db_table'] && 'partner_id' == $grid['field']) {
                 continue;
             }
 
-            if (! empty($grid['opt_db_table'] && $grid['field_type'] == 'select_module')) {
-                if (! empty($grid['opt_db_table'])) {
+            if (!empty($grid['opt_db_table'] && 'select_module' == $grid['field_type'])) {
+                if (!empty($grid['opt_db_table'])) {
                     $join_fields = explode(',', $grid['opt_db_display']);
                     $orderby_fields = explode(',', $grid['opt_db_sortorder']);
 
-                    if (! empty($orderby_fields) && ! empty($orderby_fields[0])) {
+                    if (!empty($orderby_fields) && !empty($orderby_fields[0])) {
                         foreach ($orderby_fields as $orderby) {
                             $join_selects[] = 'join'.$i.'.'.$orderby.' as orderby'.$i.'_'.$orderby;
                             $join_order_fields = [$orderby => 'orderby'.$i.'_'.$orderby];
                         }
                     }
 
-                    if (! empty($join_fields)) {
-                        if (count($join_fields) == 1) {
+                    if (!empty($join_fields)) {
+                        if (1 == count($join_fields)) {
                             $join_selects[] = 'join'.$i.'.'.$join_fields[0].' as join_'.$grid['field'];
                         } elseif (count($join_fields) > 1) {
                             if ($this->module->connection == 'shop') {
@@ -1845,7 +1856,6 @@ class ErpModelDev extends Model
             }
         }
         $this->join_order_fields = $join_order_fields;
-
         return ['join_selects' => $join_selects, 'joins' => $joins];
     }
 
@@ -1853,7 +1863,7 @@ class ErpModelDev extends Model
     {
         $db_columns = $this->getTableFields();
 
-        if (! empty(session('app_id_lookup')) && in_array('module_id', $db_columns)) {
+        if (!empty(session('app_id_lookup')) && in_array('module_id', $db_columns)) {
             $module_ids = \DB::connection('default')->table('erp_cruds')->where('app_id', session('app_id_lookup'))->pluck('id')->toArray();
 
             if (empty($module_ids) || count($module_ids) == 0) {
@@ -1864,7 +1874,6 @@ class ErpModelDev extends Model
             foreach ($module_ids as $module_id) {
                 $app_id_filters[] .= ' '.$this->table.'.module_id="'.$module_id.'" ';
             }
-
             return ' and ('.implode(' or ', $app_id_filters).') ';
         }
 
@@ -1874,22 +1883,25 @@ class ErpModelDev extends Model
     public function accountFilter()
     {
         $db_columns = $this->getTableFields();
-        if ($this->module->app_id == 14 && ! empty(session('sms_account_id')) && session('sms_account_id') != 1) {
+        if (14 == $this->module->app_id && !empty(session('sms_account_id')) && 1 != session('sms_account_id')) {
             if (in_array('account_id', $db_columns)) {
                 return ' and '.$this->table.'.account_id='.session('sms_account_id');
             }
         }
+      
+      
+        
 
         if (empty(session('account_id')) || empty(session('user_id'))) {
-            // return ' and 1=0';
+           // return ' and 1=0';
         }
 
         if ($this->module->app_id == 12 && empty(session('pbx_account_id'))) {
             return ' and 1=0';
         }
 
-        if ($this->module->connection != 'freeswitch' && $this->module->app_id == 12 && (! empty(session('pbx_partner_level')) || (! empty(session('pbx_account_id')) && session('pbx_account_id') != 1))) {
-            if (in_array('partner_id', $db_columns) && session('role_level') == 'Admin' && ! empty(request()->query_params['show_all']) && request()->query_params['show_all'] == 1) {
+        if ($this->module->connection != 'freeswitch' && $this->module->app_id == 12 && (!empty(session('pbx_partner_level')) || (!empty(session('pbx_account_id')) && 1 != session('pbx_account_id')))) {
+            if (in_array('partner_id', $db_columns) && session('role_level') == 'Admin' && !empty(request()->query_params['show_all']) && request()->query_params['show_all'] == 1) {
                 return ' ';
             } elseif (in_array('domain_uuid', $db_columns) && session('role_id') <= 11 && session('pbx_partner_level')) {
                 return ' and '.$this->table.'.domain_uuid IN (select domain_uuid from v_domains where partner_id='.session('account_id').')';
@@ -1904,6 +1916,7 @@ class ErpModelDev extends Model
             }
         }
 
+
         if ($this->module->connection == 'freeswitch' && session('pbx_domain') != '156.0.96.60' && session('pbx_domain') != '156.0.96.69' && session('pbx_domain') != '156.0.96.61') {
             if ($this->table == 'registrations') {
                 return ' and realm="'.session('pbx_domain').'" ';
@@ -1913,17 +1926,17 @@ class ErpModelDev extends Model
             }
         }
 
-        if (session('role_level') == 'Admin' && $this->module->id == 507) {
+        if (session('role_level') == 'Admin' && 507 == $this->module->id) {
             return ' and pricelist_id = 1 ';
         } elseif (session('role_level') == 'Admin') {
             return '';
         }
 
         if (session('role_level') == 'Partner') {
-            if ($this->table == 'crm_accounts' && $this->menu->menu_type == 'module_form') {
+            if ('crm_accounts' == $this->table && $this->menu->menu_type == 'module_form') {
                 return ' and '.$this->table.'.id='.session('account_id');
             }
-            if ($this->table == 'crm_accounts') {
+            if ('crm_accounts' == $this->table) {
                 return ' and '.$this->table.'.partner_id='.session('account_id');
             }
 
@@ -1943,29 +1956,29 @@ class ErpModelDev extends Model
         }
 
         if (session('role_level') == 'Customer') {
-            if ($this->module->id == 588 && (check_access('21') || (! empty(session('grid_role_id')) && session('grid_role_id') == 21))) {
+            if (588 == $this->module->id && (check_access('21') || (!empty(session('grid_role_id')) && session('grid_role_id') == 21))) {
                 return ' and '.$this->table.'.ratesheet_id='.session('pbx_ratesheet_id');
             }
 
-            if ($this->module->id == 507) {
+            if (507 == $this->module->id) {
                 return ' and '.$this->table.'.pricelist_id IN (select pricelist_id from crm_accounts where id='.session('account_id').')';
             }
 
-            if ($this->module->id == 508 || $this->module->id == 524) {
+            if (508 == $this->module->id || 524 == $this->module->id) {
                 return ' and pricelist_id IN (select id from crm_pricelists where partner_id='.session('account_id').')';
             }
 
-            if ($this->table == 'crm_accounts') {
+            if ('crm_accounts' == $this->table) {
                 return ' and '.$this->table.'.id='.session('account_id');
             }
 
-            if (session('parent_id') != 1) {
-                if ($this->table == 'crm_documents') {
+            if (1 != session('parent_id')) {
+                if ('crm_documents' == $this->table) {
                     return ' and '.$this->table.'.reseller_user='.session('account_id');
                 }
             }
 
-            if (in_array('partner_id', $db_columns) && session('role_id') != 21) {
+            if (in_array('partner_id', $db_columns) && 21 != session('role_id')) {
                 return ' and '.$this->table.'.partner_id='.session('account_id');
             }
 
@@ -1997,7 +2010,7 @@ class ErpModelDev extends Model
     private function getHiddenGridFilters($get_filters = [])
     {
         $get_filter_fields = [];
-        if (! empty($get_filters)) {
+        if (!empty($get_filters)) {
             foreach ($get_filters as $get_filter) {
                 $get_filter_fields[] = $get_filter['field'];
             }
@@ -2006,10 +2019,10 @@ class ErpModelDev extends Model
         $filters = [];
         foreach ($this->info['module_fields'] as $i => $field) {
             $field_show = $this->gridAccess();
-            if (! $field_show) {
-                if (! empty($field['filter']) && ! in_array($field['field'], $get_filter_fields)) {
+            if (!$field_show) {
+                if (!empty($field['filter']) && !in_array($field['field'], $get_filter_fields)) {
                     if (str_ends_with($key, 'id') && is_numeric($val)) {
-                        if (! empty($field['opt_db_table'])) {
+                        if (!empty($field['opt_db_table'])) {
                             $display = explode(',', $field['opt_db_display']);
                             $val = \DB::table($field['opt_db_table'])->where($field['opt_db_key'], $val)->pluck($display[0])->first();
                         }
@@ -2047,53 +2060,55 @@ class ErpModelDev extends Model
         $data['module_id'] = $data['id'];
         $module_id = $data['module_id'];
         unset($data['id']);
-        $module_fields = Cache::rememberForever(session('instance')->id.'module_fields'.$module_id, function () use ($module_id) {
+        $module_fields = Cache::rememberForever(session('instance')->id.'module_fields'.$module_id, function() use ($module_id) {
             return \DB::connection('default')->table('erp_module_fields')->where(['module_id' => $module_id])->orderBy('sort_order')->get();
-        });
-
-        $module_styles = Cache::rememberForever(session('instance')->id.'module_styles'.$module_id, function () use ($module_id) {
+        }); 
+        
+        $module_styles = Cache::rememberForever(session('instance')->id.'module_styles'.$module_id, function() use ($module_id) {
             return \DB::connection('default')->table('erp_grid_styles')->where(['module_id' => $module_id])->get();
-        });
-
-        $module_layouts = Cache::rememberForever(session('instance')->id.'module_layouts'.$module_id, function () use ($module_id) {
+        }); 
+        
+        $module_layouts = Cache::rememberForever(session('instance')->id.'module_layouts'.$module_id, function() use ($module_id) {
             return \DB::connection('default')->table('erp_grid_views')->where(['module_id' => $module_id])->orderBy('sort_order')->get();
-        });
-
+        }); 
+   
         $data['db_module_fields'] = $module_fields;
         $data['module_layouts'] = $module_layouts;
         $data['module_styles'] = $module_styles;
         $data['module_fields'] = json_decode(json_encode($module_fields, true), true);
         $data['menu_route'] = $this->module->slug;
-
+        
         $data['menu_name'] = $this->module->name;
-        if (isset($this->menu)) {
+        if(isset($this->menu)){
             $data['menu_location'] = $this->menu->location;
             $data['menu_id'] = $this->menu->id;
             $data['menu_name'] = $this->menu->menu_name;
             $data['menu'] = $this->menu;
         }
-
-        if (! empty($this->is_detail_module)) {
-
+        
+        if(!empty($this->is_detail_module)){
+         
             $data['menu_route'] = 'detailmodule_'.$this->module->id;
-
+      
         }
 
         $query_string = request()->getQueryString();
-        if (! empty($query_string)) {
+        if (!empty($query_string)) {
             $module_filter = \DB::connection('default')->table('erp_menu')->where('module_id', $this->module->id)->where('menu_type', 'module_filter')->where('url', '?'.$query_string)->pluck('menu_name')->first();
             if ($module_filter) {
                 $data['menu_name'] = $module_filter;
             }
         }
-        if (request()->segment(1) == 'reports' && ! empty(request()->role_id)) {
+        if (request()->segment(1) == 'reports' && !empty(request()->role_id)) {
             $role_name = \DB::connection('default')->table('erp_user_roles')->where('id', request()->role_id)->pluck('name')->first();
-            $data['menu_name'] = $role_name.' '.$data['menu_name'];
+            $data['menu_name'] = $role_name .' '. $data['menu_name'];
         }
         // filter module name
-
+    
         $data['title'] = $data['menu_name'];
         $data['access'] = $this->validAccess();
+
+
 
         $this->info = $data;
     }
@@ -2131,11 +2146,11 @@ class ErpModelDev extends Model
         $pdo = \DB::getPdo();
         $res = $pdo->query($result);
         $i = 0;
-        $coll = [];
+        $coll = array();
         while ($i < $res->columnCount()) {
             $info = $res->getColumnMeta($i);
             $coll[] = $info;
-            $i++;
+            ++$i;
         }
 
         return $coll;
@@ -2147,12 +2162,12 @@ class ErpModelDev extends Model
         $key = $this->primary_key;
         $db_columns = $this->getTableFields();
         if (empty($id)) {
-            if (strstr($table, 'crm_account_') && ! empty($data['account_id'])) {
+            if (strstr($table, 'crm_account_') && !empty($data['account_id'])) {
                 $id = $data['account_id'];
             }
         }
 
-        if ($id == null) {
+        if (null == $id) {
             // Insert Here
             if (in_array('created_at', $db_columns)) {
                 $data['created_at'] = date('Y-m-d H:i:s');
@@ -2169,29 +2184,33 @@ class ErpModelDev extends Model
         return $id;
     }
 
+
     public function validAccess()
     {
-
+       
         //aa('validAccess1');
         //aa(generateCallTrace());
         //aa('validAccess2');
-
+       
+       
         session(['pbx_domain_level' => false]);
 
-        if (! session('role_id')) {
+        if (!session('role_id')) {
             return false;
         }
 
-        if (! module_access_subscriptions($this->module_name)) {
+        if (!module_access_subscriptions($this->module_name)) {
             return 'subscription';
         }
+
+
 
         $grid_role_id = false;
 
         if ($this->module->app_id == 12) {
             // reset pbx session for admin modules
             if (empty(session('pbx_account_id')) || $this->menu->location != 'servicesleft') {
-                $pbx = new \FusionPBX;
+                $pbx = new \FusionPBX();
                 $pbx->pbx_login();
             }
         }
@@ -2199,7 +2218,7 @@ class ErpModelDev extends Model
         if ($this->module->app_id == 14 && session('sms_company') != 'SMS Admin') {
             $grid_role_id = 21;
             session(['pbx_domain_level' => true]);
-        } elseif ($this->module->id != 587 && $this->module->app_id == 12 && check_access('1,31') && session('pbx_domain') && session('pbx_domain') != '156.0.96.60' && session('pbx_domain') != '156.0.96.69' && session('pbx_domain') != '156.0.96.61') {
+        } elseif ($this->module->id != 587  && $this->module->app_id == 12 && check_access('1,31') && session('pbx_domain') && session('pbx_domain') != '156.0.96.60' && session('pbx_domain') != '156.0.96.69' && session('pbx_domain') != '156.0.96.61') {
             if (session('pbx_partner_level')) {
                 $grid_role_id = 11;
             } else {
@@ -2212,6 +2231,8 @@ class ErpModelDev extends Model
         }
 
         $access = \DB::connection('default')->table('erp_menu_role_access')->where('role_id', $grid_role_id)->where('menu_id', $this->menu->id)->get()->first();
+
+
 
         $module_access = \DB::connection('default')->table('erp_forms')->where('role_id', $grid_role_id)->where('module_id', $this->module->id)->get()->first();
         $master_module_count = \DB::connection('default')->table('erp_cruds')->where('detail_module_id', $this->module->id)->count();
@@ -2242,27 +2263,32 @@ class ErpModelDev extends Model
             $access->is_view = 0;
             $access->is_menu = 0;
         }
-        if (session('role_level') == 'Admin') {
-            $access->is_approve = $access->is_edit;
+        if(session('role_level') == 'Admin'){
+        $access->is_approve = $access->is_edit;
         }
-        if ($this->module->id == 334 || $this->module->id == 779 || $this->module->id == 554) {
+        if ($this->module->id ==334 || $this->module->id== 779 || $this->module->id== 554) {
             $access->is_view = 1;
         }
 
-        if (check_access('1') && ! empty(request()->form_role_id)) {
+        if (check_access('1') && !empty(request()->form_role_id)) {
             $access->is_view = 1;
             $access->is_add = 1;
         }
 
+
+
         session(['grid_role_id' => $grid_role_id]);
-        if (! $access) {
+        if (!$access) {
             return false;
         }
 
-        if ($this->table == 'crm_documents' && session('enable_client_invoice_creation') == 0) {
+
+        if ('crm_documents' == $this->table && 0 == session('enable_client_invoice_creation')) {
             $access->is_add = 0;
             $access->is_edit = 0;
         }
+
+
 
         return (array) $access;
     }
@@ -2280,7 +2306,7 @@ class ErpModelDev extends Model
 
     public static function getTableList($db)
     {
-        $t = [];
+        $t = array();
         $dbname = 'Tables_in_'.$db;
         foreach (\DB::select("SHOW TABLES FROM {$db}") as $table) {
             $t[$table->$dbname] = $table->$dbname;

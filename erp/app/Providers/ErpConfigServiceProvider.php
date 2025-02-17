@@ -2,14 +2,14 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\DB;
 
 class ErpConfigServiceProvider extends ServiceProvider
 {
     public function register()
     {
-
+        
         $configTables = [
             'modules' => DB::table('erp_cruds')->get(),
             'menus' => DB::table('erp_menu')->get(),
@@ -22,7 +22,7 @@ class ErpConfigServiceProvider extends ServiceProvider
             'grid_styles' => DB::table('erp_grid_styles')->get(),
             // Add more config tables as needed
         ];
-
+        
         $this->app->instance('erp_config', $configTables);
     }
 }

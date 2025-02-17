@@ -5,23 +5,15 @@
 #End borrowed from anacron
 #PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-
-
-# cd /home/erpcloud-live/htdocs
-# git add .
-# git commit -am "automated $(date +"%Y-%m-%d")"
-# git push erpcloud
-
-cd /home/erpcloud-live/htdocs/
-git add .
-git commit -am "automated $(date +"%Y-%m-%d")"
-git push
-
 cd /home/erpcloud-helpdesk/htdocs/
 git add .
 git commit -am "automated $(date +"%Y-%m-%d")"
-git push
+git push --set-upstream origin master
 
+cd /home/erpcloud-live/erpcloud-live/
+git add .
+git commit -am "automated $(date +"%Y-%m-%d")"
+git push --set-upstream origin master
 
 
 

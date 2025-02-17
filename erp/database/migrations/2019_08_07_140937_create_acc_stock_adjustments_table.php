@@ -21,6 +21,7 @@ class CreateAccStockAdjustmentsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

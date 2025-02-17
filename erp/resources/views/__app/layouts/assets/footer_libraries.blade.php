@@ -14,8 +14,8 @@
 <!-- Syncfusion -->
 
 @php
-$sf_version = 20; 
-
+$sf_version = 23; 
+$sf_version = 26; 
 @endphp
 @if($sf_version == 26)
 <script src="https://cdn.syncfusion.com/ej2/26.1.35/dist/ej2.min.js"></script>

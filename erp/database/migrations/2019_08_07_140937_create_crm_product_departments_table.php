@@ -21,6 +21,7 @@ class CreateCrmProductDepartmentsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

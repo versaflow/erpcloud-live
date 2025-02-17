@@ -20,6 +20,7 @@ class CreateErpGroupsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

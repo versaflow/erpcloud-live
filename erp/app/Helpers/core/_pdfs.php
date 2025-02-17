@@ -1,5 +1,7 @@
 <?php
 
+
+
 function savepdf($pdf, $file)
 {
     $filename = attachments_path().$file;
@@ -7,7 +9,7 @@ function savepdf($pdf, $file)
         unlink($filename);
     }
     $pdf->setTemporaryFolder(attachments_path());
-    $pdf->save($filename);
+            $pdf->save($filename);
 }
 
 function document_zar_pdf($id, $is_supplier = false, $return_html = false, $import_invoice = false)
@@ -24,7 +26,7 @@ function document_zar_pdf($id, $is_supplier = false, $return_html = false, $impo
     }
 
     $doc = \DB::table($table)->where('id', $id)->get()->first();
-    if (! $doc || empty($doc)) {
+    if (!$doc || empty($doc)) {
         return false;
     }
 
@@ -70,16 +72,17 @@ function document_zar_pdf($id, $is_supplier = false, $return_html = false, $impo
         'subscription_frequency' => $subscription_frequency,
         'remove_monthly_totals' => get_admin_setting('remove_monthly_totals'),
     ];
-
-    $due_date = date('Y/m/d', strtotime($doc->docdate.' + 7 days'));
-    if (! $is_supplier) {
-        if ($account->payment_type == 'Postpaid30Days' || $account->payment_type == 'Internal') {
-            $due_date = date('Y/m/d', strtotime($doc->docdate.' + 30 days'));
+    
+    $due_date = date('Y/m/d',strtotime($doc->docdate.' + 7 days'));
+    if(!$is_supplier){
+        if($account->payment_type == 'Postpaid30Days'  || $account->payment_type == 'Internal'){
+            $due_date = date('Y/m/d',strtotime($doc->docdate.' + 30 days'));
         }
     }
     $data['due_date'] = $due_date;
+  
 
-    $data['billing_period'] = date('Y-m-d', strtotime($doc->docdate)).' to '.date('Y-m-d', strtotime($doc->docdate.' +'.$doc->bill_frequency.' months'));
+    $data['billing_period'] = date('Y-m-d', strtotime($doc->docdate)).' to '.date('Y-m-d', strtotime($doc->docdate." +".$doc->bill_frequency." months"));
 
     if ($doc->billing_type == 'Monthly') {
         $data['billing_period'] = date('Y-m-01', strtotime($doc->docdate)).' to '.date('Y-m-t', strtotime($doc->docdate));
@@ -87,7 +90,7 @@ function document_zar_pdf($id, $is_supplier = false, $return_html = false, $impo
     if ($doc->billing_type == 'Annually') {
         $data['billing_period'] = date('Y-01-01', strtotime($doc->docdate)).' to '.date('Y-12-t', strtotime($doc->docdate));
     }
-    if (! empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
+    if (!empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
         $data['logo_path'] = uploads_settings_path().$reseller->logo;
         $data['logo'] = settings_url().$reseller->logo;
     }
@@ -111,7 +114,7 @@ function document_zar_pdf($id, $is_supplier = false, $return_html = false, $impo
         $data['currency_symbol'] = '$';
     }
 
-    if ($reseller->id == 1) {
+    if($reseller->id == 1){
         $data['bank_details'] = get_payment_option('Bank Details')->payment_instructions;
         $data['bank_details_usd'] = get_payment_option('Bank Details USD')->payment_instructions;
     }
@@ -126,7 +129,6 @@ function document_zar_pdf($id, $is_supplier = false, $return_html = false, $impo
     ];
     if ($return_html) {
         $data['return_html'] = $return_html;
-
         return view('__app.components.pdfs.doc', $data);
     }
     //Create our PDF with the main view and set the options
@@ -151,7 +153,7 @@ function document_pdf_new($id, $is_supplier = false, $return_html = false, $impo
     }
 
     $doc = \DB::table($table)->where('id', $id)->get()->first();
-    if (! $doc || empty($doc)) {
+    if (!$doc || empty($doc)) {
         return false;
     }
 
@@ -165,52 +167,52 @@ function document_pdf_new($id, $is_supplier = false, $return_html = false, $impo
         ->select('cdl.*', 'cp.code', 'cp.frequency', 'cp.name', 'cp.description as product_description', 'cp.is_subscription', 'cp.website_link', 'cp.product_category_id', 'cp.sort_order')
         ->where('cdl.document_id', $doc->id)
         ->get();
-    if ($doc->doctype == 'Quotation') {
-        foreach ($doclines as $i => $docline) {
-            if (! $docline->subscription_id) {
-                $doclines[$i]->description = $docline->description;
-                $doclines[$i]->product_description = $docline->product_description;
-
-                $doclines[$i]->product_description = str_replace('<ol>', '<ul>', $doclines[$i]->product_description);
-                $doclines[$i]->product_description = str_replace('</ol>', '</ul>', $doclines[$i]->product_description);
-            } else {
-
-            }
+   if($doc->doctype == 'Quotation'){
+    foreach($doclines as $i => $docline){
+        if(!$docline->subscription_id){
+            $doclines[$i]->description = $docline->description;  
+            $doclines[$i]->product_description = $docline->product_description; 
+            
+        $doclines[$i]->product_description = str_replace('<ol>','<ul>',$doclines[$i]->product_description);
+        $doclines[$i]->product_description = str_replace('</ol>','</ul>',$doclines[$i]->product_description);
+        }else{
+            
         }
     }
-
-    $subs = \DB::table('sub_services')->where('status', '!=', 'Deleted')->get();
-    $products = \DB::table('sub_services')->where('status', '!=', 'Deleted')->get();
+   }
+    
+    $subs = \DB::table('sub_services')->where('status','!=','Deleted')->get();  
+    $products = \DB::table('sub_services')->where('status','!=','Deleted')->get();  
     // add contract period to lines
-
-    foreach ($doclines as $i => $docline) {
-        if ($docline->subscription_id) {
-            $sub = $subs->where('id', $docline->subscription_id)->first();
-            if (date('Y', strtotime($sub->date_activated)) == date('Y')) {
-                $start_date = date('Y-m-d', strtotime($sub->date_activated));
-            } else {
-                $start_date = date('Y').'-'.date('m-d', strtotime($sub->date_activated));
+       
+    foreach($doclines as $i => $docline){
+        if($docline->subscription_id){
+            $sub = $subs->where('id',$docline->subscription_id)->first();
+            if(date('Y',strtotime($sub->date_activated)) == date('Y')){
+                $start_date = date('Y-m-d',strtotime($sub->date_activated));
+            }else{
+                $start_date = date('Y').'-'.date('m-d',strtotime($sub->date_activated));
             }
-            if ($start_date > date('Y-m-d')) {
-                $start_date = date('Y-m-d', strtotime($start_date.' -1 year'));
+            if($start_date > date('Y-m-d')){
+                $start_date = date('Y-m-d',strtotime($start_date.' -1 year'));
             }
-            if ($sub->contract_period) {
-                $doclines[$i]->description .= PHP_EOL.'<br><b>Contract Period:<br> '.date('Y-m-d', strtotime($start_date)).' to '.date('Y-m-d', strtotime($start_date.' +'.$sub->contract_period.' months')).'</b>';
+            if($sub->contract_period){
+                $doclines[$i]->description .= PHP_EOL.'<br><b>Contract Period:<br> '.date('Y-m-d',strtotime($start_date)).' to '.date('Y-m-d',strtotime($start_date.' +'.$sub->contract_period.' months')).'</b>';
             }
-        } else {
-            $product = $products->where('id', $docline->product_id)->first();
-
+        }else{
+            $product = $products->where('id',$docline->product_id)->first();
+           
         }
-        $doclines[$i]->description = str_replace('<ol>', '<ul>', $doclines[$i]->description);
-        $doclines[$i]->description = str_replace('</ol>', '</ul>', $doclines[$i]->description);
-        if (! empty($docline->cdr_destination)) {
+        $doclines[$i]->description = str_replace('<ol>','<ul>',$doclines[$i]->description);
+        $doclines[$i]->description = str_replace('</ol>','</ul>',$doclines[$i]->description);
+        if(!empty($docline->cdr_destination)){
             $doclines[$i]->description = PHP_EOL.$docline->cdr_destination;
         }
     }
-
-    $once_off_count = $doclines->where('frequency', 'once off')->count();
+    
+    $once_off_count = $doclines->where('frequency','once off')->count();
     $doclines_count = $doclines->count();
-
+   
     $doclines = sort_document_lines($doclines);
     $from_import = 0;
     if ($is_supplier) {
@@ -242,22 +244,24 @@ function document_pdf_new($id, $is_supplier = false, $return_html = false, $impo
         'subscription_frequency' => $subscription_frequency,
         'remove_monthly_totals' => get_admin_setting('remove_monthly_totals'),
     ];
-
-    $due_date = date('Y/m/d', strtotime($doc->docdate.' + 7 days'));
-    if (! $is_supplier) {
-        if ($account->payment_type == 'Postpaid30Days' || $account->payment_type == 'Internal') {
-            $due_date = date('Y/m/d', strtotime($doc->docdate.' + 30 days'));
+    
+   
+    $due_date = date('Y/m/d',strtotime($doc->docdate.' + 7 days'));
+    if(!$is_supplier){
+        if($account->payment_type == 'Postpaid30Days'  || $account->payment_type == 'Internal'){
+            $due_date = date('Y/m/d',strtotime($doc->docdate.' + 30 days'));
         }
     }
     $data['due_date'] = $due_date;
-
-    if ($once_off_count == $doclines_count) {
+   
+    if($once_off_count == $doclines_count){
         $data['once_off'] = 1;
-    } else {
-        $data['once_off'] = 0;
+    }else{
+        $data['once_off'] = 0;    
     }
 
-    $data['billing_period'] = date('Y-m-d', strtotime($doc->docdate)).' to '.date('Y-m-d', strtotime($doc->docdate.' +'.$doc->bill_frequency.' months'));
+    $data['billing_period'] = date('Y-m-d', strtotime($doc->docdate)).' to '.date('Y-m-d', strtotime($doc->docdate." +".$doc->bill_frequency." months"));
+
 
     if ($doc->billing_type == 'Monthly') {
         $data['billing_period'] = date('Y-m-01', strtotime($doc->docdate)).' to '.date('Y-m-t', strtotime($doc->docdate));
@@ -266,8 +270,8 @@ function document_pdf_new($id, $is_supplier = false, $return_html = false, $impo
     if ($doc->billing_type == 'Annually') {
         $data['billing_period'] = date('Y-01-01', strtotime($doc->docdate)).' to '.date('Y-12-t', strtotime($doc->docdate));
     }
-
-    if (! empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
+ 
+    if (!empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
         $data['logo_path'] = uploads_settings_path().$reseller->logo;
         $data['logo'] = settings_url().$reseller->logo;
     }
@@ -282,10 +286,11 @@ function document_pdf_new($id, $is_supplier = false, $return_html = false, $impo
 
     $data['document_currency'] = $currency;
 
+
     $fmt = new NumberFormatter("en-us@currency=$currency", NumberFormatter::CURRENCY);
     $data['currency_symbol'] = $fmt->getSymbol(NumberFormatter::CURRENCY_SYMBOL);
 
-    if ($data['currency_symbol'] == 'ZAR') {
+    if ('ZAR' == $data['currency_symbol']) {
         $data['currency_symbol'] = 'R';
     }
     $data['import_invoice'] = $import_invoice;
@@ -294,7 +299,7 @@ function document_pdf_new($id, $is_supplier = false, $return_html = false, $impo
     }
 
     $data['remove_tax_fields'] = get_admin_setting('remove_tax_fields');
-
+    
     //Set up our options to include our header and footer
     //The PDF doesn't render correctly without some of these
     $options = [
@@ -304,12 +309,12 @@ function document_pdf_new($id, $is_supplier = false, $return_html = false, $impo
         'footer-right' => $doc->docdate.' | Page [page] of [topage]',
         'footer-font-size' => 8,
     ];
-
+   
     if ($return_html) {
         $data['return_html'] = $return_html;
-
         return view('__app.components.pdfs.invoices.invoice', $data);
     }
+
 
     //Create our PDF with the main view and set the options
     $pdf = PDF::loadView('__app.components.pdfs.invoices.invoice', $data);
@@ -332,7 +337,7 @@ function document_pdf($id, $is_supplier = false, $return_html = false, $import_i
     }
 
     $doc = \DB::table($table)->where('id', $id)->get()->first();
-    if (! $doc || empty($doc)) {
+    if (!$doc || empty($doc)) {
         return false;
     }
 
@@ -346,68 +351,70 @@ function document_pdf($id, $is_supplier = false, $return_html = false, $import_i
         ->select('cdl.*', 'cp.code', 'cp.frequency', 'cp.name', 'cp.description as product_description', 'cp.is_subscription', 'cp.website_link', 'cp.product_category_id', 'cp.sort_order')
         ->where('cdl.document_id', $doc->id)
         ->get();
-
+   
     if ($is_supplier) {
         $ledger_accounts = \DB::table('acc_ledger_accounts')->get();
     }
-
-    foreach ($doclines as $i => $docline) {
-        if (! $docline->subscription_id) {
-            $doclines[$i]->description = $docline->description;
-            $doclines[$i]->product_description = $docline->product_description;
-
-            $doclines[$i]->product_description = str_replace('<ol>', '<ul>', $doclines[$i]->product_description);
-            $doclines[$i]->product_description = str_replace('</ol>', '</ul>', $doclines[$i]->product_description);
-            $doclines[$i]->product_description = preg_replace("/\r|\n/", '', $doclines[$i]->product_description);
+    
+    foreach($doclines as $i => $docline){
+        if(!$docline->subscription_id){
+            $doclines[$i]->description = $docline->description;  
+            $doclines[$i]->product_description = $docline->product_description; 
+            
+            $doclines[$i]->product_description = str_replace('<ol>','<ul>',$doclines[$i]->product_description);
+            $doclines[$i]->product_description = str_replace('</ol>','</ul>',$doclines[$i]->product_description);
+            $doclines[$i]->product_description = preg_replace("/\r|\n/", "",$doclines[$i]->product_description);
         }
-        if (! in_array($doc->doctype, ['Quotation', 'Order'])) {
+        if(!in_array($doc->doctype,['Quotation','Order'])){
             $doclines[$i]->product_description = '';
         }
-        if ($doc->billing_type > '') {
+        if($doc->billing_type > ''){
             $doclines[$i]->product_description = '';
         }
-
-        if ($is_supplier && ! empty($docline->ledger_account_id)) {
-            $doclines[$i]->description .= '<br>Ledger account: '.$ledger_accounts->where('id', $docline->ledger_account_id)->pluck('name')->first();
+        
+        
+        if($is_supplier && !empty($docline->ledger_account_id)){
+            $doclines[$i]->description .= '<br>Ledger account: '.$ledger_accounts->where('id',$docline->ledger_account_id)->pluck('name')->first();
         }
-
+        
     }
-
-    $subs = \DB::table('sub_services')->where('status', '!=', 'Deleted')->get();
-    $products = \DB::table('sub_services')->where('status', '!=', 'Deleted')->get();
+    
+    
+    $subs = \DB::table('sub_services')->where('status','!=','Deleted')->get();  
+    $products = \DB::table('sub_services')->where('status','!=','Deleted')->get();  
     // add contract period to lines
-
-    foreach ($doclines as $i => $docline) {
-
-        if ($docline->subscription_id) {
+       
+    foreach($doclines as $i => $docline){
+        
+        if($docline->subscription_id){
             $doclines[$i]->description = nl2br($doclines[$i]->description);
-            // $doclines[$i]->description = str_replace(' - ','<br>',$doclines[$i]->description);
-            $sub = $subs->where('id', $docline->subscription_id)->first();
-            if (date('Y', strtotime($sub->date_activated)) == date('Y')) {
-                $start_date = date('Y-m-d', strtotime($sub->date_activated));
-            } else {
-                $start_date = date('Y').'-'.date('m-d', strtotime($sub->date_activated));
+           // $doclines[$i]->description = str_replace(' - ','<br>',$doclines[$i]->description);
+            $sub = $subs->where('id',$docline->subscription_id)->first();
+            if(date('Y',strtotime($sub->date_activated)) == date('Y')){
+                $start_date = date('Y-m-d',strtotime($sub->date_activated));
+            }else{
+                $start_date = date('Y').'-'.date('m-d',strtotime($sub->date_activated));
             }
-            if ($start_date > date('Y-m-d')) {
-                $start_date = date('Y-m-d', strtotime($start_date.' -1 year'));
+            if($start_date > date('Y-m-d')){
+                $start_date = date('Y-m-d',strtotime($start_date.' -1 year'));
             }
-            if ($sub->contract_period > 1) {
-                $doclines[$i]->description .= PHP_EOL.'<br><b>Contract Period:<br> '.date('Y-m-d', strtotime($start_date)).' to '.date('Y-m-d', strtotime($start_date.' +'.$sub->contract_period.' months')).'</b>';
+            if($sub->contract_period > 1){
+                $doclines[$i]->description .= PHP_EOL.'<br><b>Contract Period:<br> '.date('Y-m-d',strtotime($start_date)).' to '.date('Y-m-d',strtotime($start_date.' +'.$sub->contract_period.' months')).'</b>';
             }
-        } else {
-            $product = $products->where('id', $docline->product_id)->first();
+        }else{
+            $product = $products->where('id',$docline->product_id)->first();
         }
-        $doclines[$i]->description = str_replace('<ol>', '<ul>', $doclines[$i]->description);
-        $doclines[$i]->description = str_replace('</ol>', '</ul>', $doclines[$i]->description);
-        $doclines[$i]->description = preg_replace("/\r|\n/", '', $doclines[$i]->description);
-        if (! empty($docline->cdr_destination)) {
+        $doclines[$i]->description = str_replace('<ol>','<ul>',$doclines[$i]->description);
+        $doclines[$i]->description = str_replace('</ol>','</ul>',$doclines[$i]->description);
+        $doclines[$i]->description = preg_replace("/\r|\n/", "",$doclines[$i]->description);
+        if(!empty($docline->cdr_destination)){
             $doclines[$i]->description = PHP_EOL.$docline->cdr_destination;
         }
     }
-
-    $once_off_count = $doclines->where('frequency', 'once off')->count();
+    
+    $once_off_count = $doclines->where('frequency','once off')->count();
     $doclines_count = $doclines->count();
-
+   
     $doclines = sort_document_lines($doclines);
     $from_import = 0;
     if ($is_supplier) {
@@ -428,6 +435,7 @@ function document_pdf($id, $is_supplier = false, $return_html = false, $import_i
     if ($doc->billing_type == 'Annually') {
         $subscription_frequency = 'ANNUAL';
     }
+   
 
     $data = [
         'doctype_label' => $doctype_label,
@@ -439,27 +447,29 @@ function document_pdf($id, $is_supplier = false, $return_html = false, $import_i
         'subscription_frequency' => $subscription_frequency,
         'remove_monthly_totals' => get_admin_setting('remove_monthly_totals'),
     ];
-
+   
     $data['requires_debit_order'] = false;
-    if ($reseller->id == 1) {
-        $data['requires_debit_order'] = invoice_requires_debit_order($id);
+    if($reseller->id == 1){
+       $data['requires_debit_order'] = invoice_requires_debit_order($id);
     }
-
-    $due_date = date('Y/m/d', strtotime($doc->docdate.' + 7 days'));
-    if (! $is_supplier) {
-        if ($account->payment_type == 'Postpaid30Days' || $account->payment_type == 'Internal') {
-            $due_date = date('Y/m/d', strtotime($doc->docdate.' + 30 days'));
+      
+      
+    $due_date = date('Y/m/d',strtotime($doc->docdate.' + 7 days'));
+    if(!$is_supplier){
+        if($account->payment_type == 'Postpaid30Days'  || $account->payment_type == 'Internal'){
+            $due_date = date('Y/m/d',strtotime($doc->docdate.' + 30 days'));
         }
     }
     $data['due_date'] = $due_date;
-
-    if ($once_off_count == $doclines_count) {
+     
+    if($once_off_count == $doclines_count){
         $data['once_off'] = 1;
-    } else {
-        $data['once_off'] = 0;
+    }else{
+        $data['once_off'] = 0;    
     }
 
-    $data['billing_period'] = date('Y-m-d', strtotime($doc->docdate)).' to '.date('Y-m-d', strtotime($doc->docdate.' +'.$doc->bill_frequency.' months'));
+    $data['billing_period'] = date('Y-m-d', strtotime($doc->docdate)).' to '.date('Y-m-d', strtotime($doc->docdate." +".$doc->bill_frequency." months"));
+
 
     if ($doc->billing_type == 'Monthly') {
         $data['billing_period'] = date('Y-m-01', strtotime($doc->docdate)).' to '.date('Y-m-t', strtotime($doc->docdate));
@@ -468,8 +478,8 @@ function document_pdf($id, $is_supplier = false, $return_html = false, $import_i
     if ($doc->billing_type == 'Annually') {
         $data['billing_period'] = date('Y-01-01', strtotime($doc->docdate)).' to '.date('Y-12-t', strtotime($doc->docdate));
     }
-
-    if (! empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
+ 
+    if (!empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
         $data['logo_path'] = uploads_settings_path().$reseller->logo;
         $data['logo'] = settings_url().$reseller->logo;
     }
@@ -483,10 +493,11 @@ function document_pdf($id, $is_supplier = false, $return_html = false, $import_i
 
     $data['document_currency'] = $currency;
 
+
     $fmt = new NumberFormatter("en-us@currency=$currency", NumberFormatter::CURRENCY);
     $data['currency_symbol'] = $fmt->getSymbol(NumberFormatter::CURRENCY_SYMBOL);
 
-    if ($data['currency_symbol'] == 'ZAR') {
+    if ('ZAR' == $data['currency_symbol']) {
         $data['currency_symbol'] = 'R';
     }
     $data['import_invoice'] = $import_invoice;
@@ -495,7 +506,7 @@ function document_pdf($id, $is_supplier = false, $return_html = false, $import_i
     }
 
     $data['remove_tax_fields'] = get_admin_setting('remove_tax_fields');
-    if ($reseller->id == 1) {
+    if($reseller->id == 1){
         $data['bank_details'] = get_payment_option('Bank Details')->payment_instructions;
         $data['bank_details_usd'] = get_payment_option('Bank Details USD')->payment_instructions;
     }
@@ -511,16 +522,15 @@ function document_pdf($id, $is_supplier = false, $return_html = false, $import_i
 
     if ($return_html) {
         $data['return_html'] = $return_html;
-
         return view('__app.components.pdfs.doc', $data);
     }
+
 
     //Create our PDF with the main view and set the options
     $pdf = PDF::loadView('__app.components.pdfs.doc', $data);
     // $pdf->setLogger(Log::channel('default'));
     $pdf->setTemporaryFolder(attachments_path());
     $pdf->setOptions($options);
-
     return $pdf;
 }
 
@@ -530,7 +540,7 @@ function servicedocument_pdf($id)
     $lines_table = 'crm_document_lines';
 
     $doc = \DB::table($table)->where('id', $id)->get()->first();
-    if (! $doc || empty($doc)) {
+    if (!$doc || empty($doc)) {
         return false;
     }
 
@@ -557,7 +567,7 @@ function servicedocument_pdf($id)
         'reseller' => $reseller,
     ];
 
-    if (! empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
+    if (!empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
         $data['logo_path'] = uploads_settings_path().$reseller->logo;
         $data['logo'] = settings_url().$reseller->logo;
     }
@@ -567,15 +577,18 @@ function servicedocument_pdf($id)
         ->where('cp.type', 'Stock')
         ->count();
 
+
     $data['currency_symbol'] = get_account_currency_symbol($account->id);
 
-    $due_date = date('Y/m/d', strtotime($doc->docdate.' + 7 days'));
 
-    if ($account->payment_type == 'Postpaid30Days' || $account->payment_type == 'Internal') {
-        $due_date = date('Y/m/d', strtotime($doc->docdate.' + 30 days'));
+    $due_date = date('Y/m/d',strtotime($doc->docdate.' + 7 days'));
+   
+    if($account->payment_type == 'Postpaid30Days'  || $account->payment_type == 'Internal'){
+        $due_date = date('Y/m/d',strtotime($doc->docdate.' + 30 days'));
     }
-
+    
     $data['due_date'] = $due_date;
+    
 
     //Set up our options to include our header and footer
     //The PDF doesn't render correctly without some of these
@@ -625,8 +638,9 @@ function statement_zar_pdf($account_id, $full_statement = false, $is_supplier = 
             $doctype_label = $line->doctype;
         }
         $line->doctype_label = $doctype_label;
-
-        if (! $is_supplier && $account->type == 'reseller') {
+       
+       
+        if (!$is_supplier && 'reseller' == $account->type) {
             $reseller_user = \DB::table('crm_accounts')
                 ->join('crm_documents', 'crm_documents.reseller_user', '=', 'crm_accounts.id')
                 ->where('crm_documents.id', $line->id)
@@ -650,9 +664,9 @@ function statement_zar_pdf($account_id, $full_statement = false, $is_supplier = 
         }
         */
         //add statement lines
-        if ($full_statement || (! $full_statement && date('Y-m-d', strtotime($line->docdate)) >= date('Y-m-d', strtotime('-90 days')))) {
+        if ($full_statement || (!$full_statement && date('Y-m-d', strtotime($line->docdate)) >= date('Y-m-d', strtotime('-90 days')))) {
             $doclines[] = $line;
-        } elseif (! $full_statement) {
+        } elseif (!$full_statement) {
             $opening_balance += $line->total;
         }
     }
@@ -678,9 +692,11 @@ function statement_zar_pdf($account_id, $full_statement = false, $is_supplier = 
         'is_supplier' => $is_supplier,
     ];
 
+
     $data['currency_symbol'] = 'R';
 
-    if (! empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
+
+    if (!empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
         $data['logo_path'] = uploads_settings_path().$reseller->logo;
         $data['logo'] = settings_url().$reseller->logo;
     }
@@ -694,20 +710,19 @@ function statement_zar_pdf($account_id, $full_statement = false, $is_supplier = 
         'footer-right' => date('Y-m-d').' | Page [page] of [topage]',
         'footer-font-size' => 8,
     ];
-    if (! $is_supplier) {
-        if ($account->partner_id == 1) {
+    if (!$is_supplier) {
+        if (1 == $account->partner_id) {
             $balance = $account->balance;
             $amount = ($balance < 200) ? 200 : $balance;
-        }
+        } 
     }
 
-    if ($reseller->id == 1) {
+    if($reseller->id == 1){
         $data['bank_details'] = get_payment_option('Bank Details')->payment_instructions;
         $data['bank_details_usd'] = get_payment_option('Bank Details USD')->payment_instructions;
     }
     if ($return_html) {
         $data['return_html'] = $return_html;
-
         return view('__app.components.pdfs.statement', $data);
     }
     //Create our PDF with the main view and set the options
@@ -715,15 +730,16 @@ function statement_zar_pdf($account_id, $full_statement = false, $is_supplier = 
     $pdf->setTemporaryFolder(attachments_path());
     $pdf->setOptions($options);
 
+
     if ($conn) {
         set_db_connection($current_conn);
     }
-
     return $pdf;
 }
 
 function statement_pdf($account_id, $full_statement = false, $is_supplier = false, $include_reversals = true)
 {
+   
 
     if ($is_supplier) {
         $account = dbgetsupplier($account_id);
@@ -732,7 +748,7 @@ function statement_pdf($account_id, $full_statement = false, $is_supplier = fals
     }
 
     if (empty($account)) {
-
+       
         return false;
     }
 
@@ -742,37 +758,39 @@ function statement_pdf($account_id, $full_statement = false, $is_supplier = fals
         $lines = get_debtor_transactions($account_id);
     }
 
+
     $doclines = [];
     $opening_balnce = 0;
-    if (! $include_reversals) {
+    if(!$include_reversals){
         $lines = collect($lines);
         $skip_line_ids = [];
-        foreach ($lines as $l) {
-            if ($l->reversal_id && ! in_array($l->reversal_id, $skip_line_ids)) {
-                $reversal = $lines->where('id', $l->reversal_id)->first();
-                if ($reversal && abs(intval($reversal->total)) == abs(intval($l->total))) {
+        foreach($lines as $l){
+            if($l->reversal_id && !in_array($l->reversal_id,$skip_line_ids)){
+                $reversal = $lines->where('id',$l->reversal_id)->first();
+                if($reversal && abs(intval($reversal->total))==abs(intval($l->total))){
                     $skip_line_ids[] = $l->id;
                     $skip_line_ids[] = $l->reversal_id;
                 }
-            }
+            }    
         }
     }
-
+   
     foreach ($lines as $line) {
-
-        if (! $include_reversals && count($skip_line_ids) > 0) {
-            if (in_array($line->id, $skip_line_ids)) {
+        
+        if(!$include_reversals && count($skip_line_ids) > 0){
+            if(in_array($line->id,$skip_line_ids)){
                 continue;
             }
         }
-
+        
         $doctype_label = \DB::connection('default')->table('acc_doctypes')->where('doctype', $line->doctype)->pluck('doctype_label')->first();
         if (empty($doctype_label)) {
             $doctype_label = $line->doctype;
         }
         $line->doctype_label = $doctype_label;
-
-        if (! $is_supplier && $account->type == 'reseller') {
+      
+      
+        if (!$is_supplier && 'reseller' == $account->type) {
             $reseller_user = \DB::table('crm_accounts')
                 ->join('crm_documents', 'crm_documents.reseller_user', '=', 'crm_accounts.id')
                 ->where('crm_documents.id', $line->id)
@@ -780,18 +798,20 @@ function statement_pdf($account_id, $full_statement = false, $is_supplier = fals
             if ($reseller_user) {
                 $line->reseller_user = $reseller_user;
             }
-        }
-
+        }  
+     
+        
         if ($line->doctype == 'Payment' || $line->doctype == 'Cashbook Supplier Payment' || $line->doctype == 'Cashbook Customer Receipt') {
             $cashbook_name = \DB::table('acc_cashbook_transactions')
-                ->join('acc_cashbook', 'acc_cashbook_transactions.cashbook_id', '=', 'acc_cashbook.id')
-                ->where('acc_cashbook_transactions.id', $line->id)
-                ->pluck('acc_cashbook.name')->first();
-
-            if (! empty($cashbook_name)) {
+            ->join('acc_cashbook','acc_cashbook_transactions.cashbook_id','=','acc_cashbook.id')
+            ->where('acc_cashbook_transactions.id',$line->id)
+            ->pluck('acc_cashbook.name')->first();
+           
+            if (!empty($cashbook_name)) {
                 $line->reference .= ' - '.$cashbook_name;
             }
         }
+      
 
         // remove exact credit notes
         /*
@@ -807,9 +827,9 @@ function statement_pdf($account_id, $full_statement = false, $is_supplier = fals
         }
         */
         //add statement lines
-        if ($full_statement || (! $full_statement && date('Y-m-d', strtotime($line->docdate)) >= date('Y-m-d', strtotime('-90 days')))) {
+        if ($full_statement || (!$full_statement && date('Y-m-d', strtotime($line->docdate)) >= date('Y-m-d', strtotime('-90 days')))) {
             $doclines[] = $line;
-        } elseif (! $full_statement) {
+        } elseif (!$full_statement) {
             $opening_balance += $line->total;
         }
     }
@@ -827,7 +847,8 @@ function statement_pdf($account_id, $full_statement = false, $is_supplier = fals
     } else {
         $reseller = dbgetaccount($account->partner_id);
     }
-
+  
+    
     $data = [
         'include_reversals' => $include_reversals,
         'account' => $account,
@@ -839,24 +860,26 @@ function statement_pdf($account_id, $full_statement = false, $is_supplier = fals
         'full_statement' => $full_statement,
         'is_supplier' => $is_supplier,
     ];
-
+    
     $due_date = date('Y-m-d', strtotime('-'.$account->aging.' days'));
-    if ($account->payment_type == 'Prepaid') {
+    if($account->payment_type == 'Prepaid'){
         $num_due_days = 10 - $account->aging;
     }
-    if ($account->payment_type == 'Postpaid30Days') {
+    if($account->payment_type == 'Postpaid30Days'){
         $num_due_days = 30 - $account->aging;
     }
-
-    if ($account->payment_type == 'Internal') {
+  
+    if($account->payment_type == 'Internal'){
         $num_due_days = 0 - $account->aging;
     }
-    if ($num_due_days > 0) {
-        $due_date = date('Y-m-d', strtotime('+ '.$num_due_days.' days'));
-    } elseif ($num_due_days < 0) {
+    if($num_due_days > 0){
+        $due_date = date('Y-m-d',strtotime('+ '.$num_due_days.' days'));
+    }elseif($num_due_days < 0){
         $due_date = date('Y-m-d');
     }
-
+    
+   
+   
     $data['due_date'] = $due_date;
     if ($is_supplier) {
         $data['currency_symbol'] = get_supplier_currency_symbol($account->id);
@@ -866,16 +889,20 @@ function statement_pdf($account_id, $full_statement = false, $is_supplier = fals
         $currency = get_account_currency($account->id);
     }
 
+
     $fmt = new NumberFormatter("en-us@currency=$currency", NumberFormatter::CURRENCY);
     $data['currency_symbol'] = $fmt->getSymbol(NumberFormatter::CURRENCY_SYMBOL);
 
-    if ($data['currency_symbol'] == 'ZAR') {
+    if ('ZAR' == $data['currency_symbol']) {
         $data['currency_symbol'] = 'R';
     }
 
+
+
     $data['currency_decimals'] = 2;
 
-    if (! empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
+
+    if (!empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
         $data['logo_path'] = uploads_settings_path().$reseller->logo;
         $data['logo'] = settings_url().$reseller->logo;
     }
@@ -890,14 +917,14 @@ function statement_pdf($account_id, $full_statement = false, $is_supplier = fals
         'footer-font-size' => 8,
     ];
 
-    if (! $is_supplier) {
-        if ($account->partner_id == 1) {
+    if (!$is_supplier) {
+        if (1 == $account->partner_id) {
             $balance = $account->balance;
             $amount = ($balance < 200) ? 200 : $balance;
-        }
+        } 
     }
-
-    if ($reseller->id == 1) {
+    
+    if($reseller->id == 1){
         $data['bank_details'] = get_payment_option('Bank Details')->payment_instructions;
         $data['bank_details_usd'] = get_payment_option('Bank Details USD')->payment_instructions;
     }
@@ -905,7 +932,6 @@ function statement_pdf($account_id, $full_statement = false, $is_supplier = fals
     // aa($data);
     if ($return_html) {
         $data['return_html'] = $return_html;
-
         return view('__app.components.pdfs.statement', $data);
     }
     //Create our PDF with the main view and set the options
@@ -916,6 +942,7 @@ function statement_pdf($account_id, $full_statement = false, $is_supplier = fals
 
     return $pdf;
 }
+
 
 function statement_pdfhtml($account_id)
 {
@@ -948,8 +975,9 @@ function statement_pdfhtml($account_id)
             $doctype_label = $line->doctype;
         }
         $line->doctype_label = $doctype_label;
-
-        if (! $is_supplier && $account->type == 'reseller') {
+       
+      
+        if (!$is_supplier && 'reseller' == $account->type) {
             $reseller_user = \DB::table('crm_accounts')
                 ->join('crm_documents', 'crm_documents.reseller_user', '=', 'crm_accounts.id')
                 ->where('crm_documents.id', $line->id)
@@ -973,9 +1001,9 @@ function statement_pdfhtml($account_id)
         }
         */
         //add statement lines
-        if ($full_statement || (! $full_statement && date('Y-m-d', strtotime($line->docdate)) >= date('Y-m-d', strtotime('-90 days')))) {
+        if ($full_statement || (!$full_statement && date('Y-m-d', strtotime($line->docdate)) >= date('Y-m-d', strtotime('-90 days')))) {
             $doclines[] = $line;
-        } elseif (! $full_statement) {
+        } elseif (!$full_statement) {
             $opening_balance += $line->total;
         }
     }
@@ -1006,7 +1034,7 @@ function statement_pdfhtml($account_id)
         $data['currency_symbol'] = get_account_currency_symbol($account->id);
     }
 
-    if (! empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
+    if (!empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
         $data['logo_path'] = uploads_settings_path().$reseller->logo;
         $data['logo'] = settings_url().$reseller->logo;
     }
@@ -1021,12 +1049,12 @@ function statement_pdfhtml($account_id)
         'footer-font-size' => 8,
     ];
 
-    if ($account->partner_id == 1) {
+    if (1 == $account->partner_id) {
         $balance = $account->balance;
         $amount = ($balance < 200) ? 200 : $balance;
-    }
-
-    if ($reseller->id == 1) {
+    } 
+    
+    if($reseller->id == 1){
         $data['bank_details'] = get_payment_option('Bank Details')->payment_instructions;
         $data['bank_details_usd'] = get_payment_option('Bank Details USD')->payment_instructions;
     }
@@ -1043,6 +1071,7 @@ function collectionspdf($account_id, $email_id)
         return false;
     }
 
+
     $data = [
         'account' => $account,
         'reseller' => $reseller,
@@ -1056,7 +1085,7 @@ function collectionspdf($account_id, $email_id)
     $data['pdf_text'] = erp_email_blend($text, $data);
     $data['pdf_title'] = $email->name;
 
-    if (! empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
+    if (!empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
         $data['logo_path'] = uploads_settings_path().$reseller->logo;
         $data['logo'] = settings_url().$reseller->logo;
     }
@@ -1104,7 +1133,7 @@ function suspension_warning_pdf($account_id, $email_id)
     $data['pdf_text'] = erp_email_blend($text, $data);
     $data['pdf_title'] = $email->name;
 
-    if (! empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
+    if (!empty($reseller->logo) && file_exists(uploads_settings_path().$reseller->logo)) {
         $data['logo_path'] = uploads_settings_path().$reseller->logo;
         $data['logo'] = settings_url().$reseller->logo;
     }
@@ -1127,3 +1156,4 @@ function suspension_warning_pdf($account_id, $email_id)
 
     return $pdf;
 }
+

@@ -18,8 +18,8 @@ function opencart_import_customers_2()
 
     if ($portal_leads) {
         foreach ($portal_leads as $cc) {
-            if ($cc->email > '') {
-                $insert_data = [
+            if ($cc->email>'') {
+                $insert_data = array(
                     'firstname' => $cc->company,
                     'lastname' => $cc->contact,
                     'email' => $cc->email,
@@ -29,21 +29,22 @@ function opencart_import_customers_2()
                     'language_id' => 1,
                     'portal_id' => $cc->id,
                     'portal_level' => 'Lead',
-                ];
+                );
 
                 $subscriber_id = \DB::connection('opencart')->table('ocit_d_newsletter_subscriber')
                     ->insertGetId($insert_data);
 
-                $link_data = ['subscriber_id' => $subscriber_id, 'subscriber_group_id' => 3];
+                $link_data = array('subscriber_id'=>$subscriber_id,'subscriber_group_id'=>3);
                 \DB::connection('opencart')->table('ocit_d_newsletter_subscriber_to_subscriber_group')->insertGetId($link_data);
             }
         }
     }
 
+
     /// CUSTOMERS
 
     $portal_customers = false;
-    $sql = 'SELECT * FROM crm_accounts WHERE id != 1 and id != 11 and id != 12 and (partner_id=1 or partner_id=11)';
+    $sql = "SELECT * FROM crm_accounts WHERE id != 1 and id != 11 and id != 12 and (partner_id=1 or partner_id=11)";
     $rows = \DB::select($sql);
 
     if ($rows && count($rows) > 0) {
@@ -52,8 +53,8 @@ function opencart_import_customers_2()
 
     if ($portal_customers) {
         foreach ($portal_customers as $cc) {
-            if ($cc->email > '') {
-                $insert_data = [
+            if ($cc->email>'') {
+                $insert_data = array(
                     'firstname' => $cc->company,
                     'lastname' => $cc->contact,
                     'email' => $cc->email,
@@ -63,15 +64,15 @@ function opencart_import_customers_2()
                     'language_id' => 1,
                     'portal_id' => $cc->id,
                     'portal_level' => 'Customer',
-                ];
+                );
 
                 $subscriber_id = \DB::connection('opencart')->table('ocit_d_newsletter_subscriber')
                     ->insertGetId($insert_data);
 
-                $link_data = ['subscriber_id' => $subscriber_id, 'subscriber_group_id' => 4];
+                $link_data = array('subscriber_id'=>$subscriber_id,'subscriber_group_id'=>4);
                 \DB::connection('opencart')->table('ocit_d_newsletter_subscriber_to_subscriber_group')
                     ->insertGetId($link_data);
-                $link_data = ['subscriber_id' => $subscriber_id, 'subscriber_group_id' => 8];
+                $link_data = array('subscriber_id'=>$subscriber_id,'subscriber_group_id'=>8);
                 \DB::connection('opencart')->table('ocit_d_newsletter_subscriber_to_subscriber_group')
                     ->insertGetId($link_data);
             }
@@ -81,7 +82,7 @@ function opencart_import_customers_2()
     /// RESELLERS
 
     $portal_partners = false;
-    $sql = 'SELECT * FROM crm_accounts WHERE id != 1 and id != 11 and id != 12';
+    $sql = "SELECT * FROM crm_accounts WHERE id != 1 and id != 11 and id != 12";
     $rows = \DB::select($sql);
 
     if ($rows && count($rows) > 0) {
@@ -90,8 +91,8 @@ function opencart_import_customers_2()
 
     if ($portal_partners) {
         foreach ($portal_partners as $cc) {
-            if ($cc->email > '') {
-                $insert_data = [
+            if ($cc->email>'') {
+                $insert_data = array(
                     'firstname' => $cc->company,
                     'lastname' => $cc->contact,
                     'email' => $cc->email,
@@ -101,15 +102,15 @@ function opencart_import_customers_2()
                     'language_id' => 1,
                     'portal_id' => $cc->id,
                     'portal_level' => 'Partner',
-                ];
+                );
 
                 $subscriber_id = \DB::connection('opencart')->table('ocit_d_newsletter_subscriber')
                     ->insertGetId($insert_data);
 
-                $link_data = ['subscriber_id' => $subscriber_id, 'subscriber_group_id' => 5];
+                $link_data = array('subscriber_id'=>$subscriber_id,'subscriber_group_id'=>5);
                 \DB::connection('opencart')->table('ocit_d_newsletter_subscriber_to_subscriber_group')
                     ->insertGetId($link_data);
-                $link_data = ['subscriber_id' => $subscriber_id, 'subscriber_group_id' => 8];
+                $link_data = array('subscriber_id'=>$subscriber_id,'subscriber_group_id'=>8);
                 \DB::connection('opencart')->table('ocit_d_newsletter_subscriber_to_subscriber_group')
                     ->insertGetId($link_data);
             }
@@ -128,11 +129,11 @@ function opencart_import_customers_2()
 
     if ($pabx_customers) {
         foreach ($pabx_customers as $cc) {
-            $group = ($cc->pabx_type == 'PBX') ? '6' : '7';
-            $where = ['portal_id' => $cc->id, 'portal_level' => 'Customer'];
+            $group = ($cc->pabx_type=='PBX') ? '6' : '7';
+            $where = array('portal_id'=>$cc->id,'portal_level'=>'Customer');
             $subscriber_id = \DB::connection('opencart')->table('ocit_d_newsletter_subscriber')->where($where)->pluck('subscriber_id')->first();
 
-            $link_data = ['subscriber_id' => $subscriber_id, 'subscriber_group_id' => $group];
+            $link_data = array('subscriber_id'=>$subscriber_id,'subscriber_group_id'=>$group);
             \DB::connection('opencart')->table('ocit_d_newsletter_subscriber_to_subscriber_group')
                 ->insertGetId($link_data);
         }
@@ -148,6 +149,7 @@ function opencart_import_customers_2()
         ->groupBy('isp_host_websites.account_id')
         ->get();
 
+
     if ($rows && count($rows) > 0) {
         $hosting_customers = $rows;
     }
@@ -155,10 +157,10 @@ function opencart_import_customers_2()
     if ($hosting_customers) {
         foreach ($hosting_customers as $cc) {
             $group = 9;
-            $where = ['portal_id' => $cc->id, 'portal_level' => 'Customer'];
+            $where = array('portal_id'=>$cc->id,'portal_level'=>'Customer');
             $subscriber_id = \DB::connection('opencart')->table('ocit_d_newsletter_subscriber')->where($where)->pluck('subscriber_id')->first();
 
-            $link_data = ['subscriber_id' => $subscriber_id, 'subscriber_group_id' => $group];
+            $link_data = array('subscriber_id'=>$subscriber_id,'subscriber_group_id'=>$group);
             \DB::connection('opencart')->table('ocit_d_newsletter_subscriber_to_subscriber_group')
                 ->insertGetId($link_data);
         }

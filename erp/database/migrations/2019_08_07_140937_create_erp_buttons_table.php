@@ -33,6 +33,7 @@ class CreateErpButtonsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

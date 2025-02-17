@@ -28,6 +28,7 @@ class CreateOpsProvisionPlanTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

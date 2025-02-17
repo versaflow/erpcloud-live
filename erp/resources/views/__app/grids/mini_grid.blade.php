@@ -1,9 +1,6 @@
 @extends('__app.layouts.panel' )
 
 @php
-
-
-
 if(empty(request()->all()) ||count(request()->all()) == 0){
     $request_get = '';
 }else{
@@ -2519,6 +2516,27 @@ function  getContextMenuItems{{$grid_id}}(params) {
 }
 
 
+function hide_value_column(colId){
+    const columnApi = window['grid_{{ $grid_id }}'].gridOptions.columnApi;
+    const columnState = columnApi.getColumnState();
+    const valueColumnDef = columnState.find(column => column.colId === colId);
+    
+    //////console.log(columnState);
+    //////console.log(valueColumnDef);
+    if (valueColumnDef) {
+      valueColumnDef.hide = true;
+      valueColumnDef.aggFunc = null;
+    }
+    //////console.log(valueColumnDef);
+    //////console.log(columnState);
+    colstate_arr = columnState;
+    if(!Array.isArray(colstate_arr)){
+    colstate_arr = Object.values(columnState)
+    }
+    
+    window['grid_{{ $grid_id }}'].gridOptions.columnApi.applyColumnState({state:colstate_arr,applyOrder: true});
+}
+
 
 @if($has_cell_editing)
 syncfusion_data = {};
@@ -2640,7 +2658,7 @@ class SyncFusionCellEditor{{ $grid_id }} {
 window['selectedrow_{{ $grid_id }}'] = null;
 groupIncludeFooter{{ $grid_id }} = false;
 groupIncludeTotalFooter{{ $grid_id }} = false;
-showOpenedGroup{{ $grid_id }} = false;
+showOpenedGroup{{ $grid_id }} = true;
 
 var gridOptions = {
     suppressAggFuncInHeader: true,
@@ -2704,7 +2722,7 @@ var gridOptions = {
     
     //suppressDragLeaveHidesColumns: true,
     //suppressGroupRowsSticky:true,
-    groupDisplayType: 'groupRows',
+    groupDisplayType: 'singleColumn',
     @if(!is_dev() && !is_superadmin())
     pivotPanelShow: 'never',
     @endif
@@ -2715,7 +2733,7 @@ var gridOptions = {
     //groupMaintainOrder: true,
     //rowGroupPanelShow: 'never',
   
-    //showOpenedGroup:false,
+    showOpenedGroup:false,
     groupIncludeFooter: false,
     groupIncludeTotalFooter: false,
     
@@ -3060,8 +3078,8 @@ var gridOptions = {
                             }
                             var celldate = new Date(cellValue);
                           
-                            if( celldate <= date_today){
-                              
+                            var dateParts = cellValue.split(/[- :]/);
+                            if((dateParts[2] == cur_day && dateParts[1] == cur_month && dateParts[0] == cur_year) || (celldate < date_today)){
                                 return true;    
                             }else{
                                 
@@ -3079,7 +3097,8 @@ var gridOptions = {
                            
                            var celldate = new Date(cellValue);
                          
-                            if(celldate >= date_today){
+                           var dateParts = cellValue.split(/[- :]/);
+                           if((dateParts[2] == cur_day && dateParts[1] == cur_month && dateParts[0] == cur_year) || (celldate > date_today)){
                               
                                 return true;    
                             }else{
@@ -4691,7 +4710,7 @@ function report_toolpanel_enable{{$grid_id}}() {
         
         if(showOpenedGroup{{ $grid_id }} && !groupIncludeFooter{{ $grid_id }} && !groupIncludeTotalFooter{{ $grid_id }}){
             // adds inline totals
-            window['grid_{{ $grid_id }}'].gridOptions.showOpenedGroup = true;
+            // window['grid_{{ $grid_id }}'].gridOptions.showOpenedGroup = true;
         }
         
         
@@ -4743,7 +4762,7 @@ function report_toolpanel_disable{{$grid_id}}() {
    
     // adds inline totals
    
-    window['grid_{{ $grid_id }}'].gridOptions.showOpenedGroup = false;
+    // window['grid_{{ $grid_id }}'].gridOptions.showOpenedGroup = true;
     // adds subtotals
     window['grid_{{ $grid_id }}'].gridOptions.groupIncludeFooter = false;
    

@@ -1,5 +1,8 @@
 <?php
 
+
+
+
 function button_statement_make_payment($request)
 {
     $data['customer'] = dbgetaccount(session('account_id'));
@@ -32,7 +35,7 @@ function button_payments_make_payment($request)
 
 function button_payments_instant_payment($request)
 {
-    if (session('parent_id') != 1) {
+    if (1 != session('parent_id')) {
         return json_alert('No Access', 'warning');
     }
 
@@ -45,7 +48,7 @@ function generate_paynow_app_link($account_id, $amount, $app_key, $api_token)
 {
     $account = dbgetaccount($account_id);
 
-    if (empty($account) || $account->partner_id != 1 || ($account->type != 'customer' && $account->type != 'reseller') || $account->status == 'Deleted') {
+    if (empty($account) || 1 != $account->partner_id || ('customer' != $account->type && 'reseller' != $account->type) || 'Deleted' == $account->status) {
         return false;
     }
 
@@ -54,7 +57,7 @@ function generate_paynow_app_link($account_id, $amount, $app_key, $api_token)
         return false;
     }
 
-    if (! $amount) {
+    if (!$amount) {
         $balance = get_debtor_balance($account_id);
         if ($balance > 0) {
             $amount = abs($balance);
@@ -73,7 +76,7 @@ function generate_paynow_link($account_id, $amount = null, $code_only = false, $
 {
     $account = dbgetaccount($account_id);
 
-    if (empty($account) || $account->partner_id != 1 || ($account->type != 'customer' && $account->type != 'reseller') || $account->status == 'Deleted') {
+    if (empty($account) || 1 != $account->partner_id || ('customer' != $account->type && 'reseller' != $account->type) || 'Deleted' == $account->status) {
         //    return false;
     }
 
@@ -82,7 +85,7 @@ function generate_paynow_link($account_id, $amount = null, $code_only = false, $
         //   return false;
     }
 
-    if (! $amount) {
+    if (!$amount) {
         $balance = get_debtor_balance($account_id);
         if ($balance > 0) {
             $amount = (abs($balance) < 200) ? 200 : abs($balance);
@@ -100,27 +103,25 @@ function generate_paynow_link($account_id, $amount = null, $code_only = false, $
         $encoded_link = url('/payment_options').'/'.\Erp::encode($data);
     }
 
-    $encoded_link = str_replace('https://portal.telecloud.co.za', \Config::get('app.url'), $encoded_link);
-
+    $encoded_link = str_replace('https://portal.telecloud.co.za',\Config::get('app.url'),$encoded_link);
+    
     return $encoded_link;
 }
 
-function generate_paynow_button($account_id, $amount = null, $code_only = false, $app_payment = false)
-{
+function generate_paynow_button($account_id, $amount = null, $code_only = false, $app_payment = false){
     $paynow_link = generate_paynow_link($account_id, $amount, $code_only, $app_payment);
     $paynow_button = '';
-
+    
     $remove_payment_options = \DB::table('erp_admin_settings')->where('id', 1)->pluck('remove_payment_options')->first();
-    if ($paynow_link && ! $remove_payment_options) {
-        if (session('instance')->directory == 'moviemagic') {
-            $paynow_text = 'Subscribe Now';
+    if ($paynow_link && !$remove_payment_options) {
+        if(session('instance')->directory == 'moviemagic'){
+            $paynow_text = 'Subscribe Now'; 
             $paynow_button .= 'If you are happy with our service, click here to subscribe.';
-        } else {
-            $paynow_text = 'Pay Now';
+        }else{
+            $paynow_text = 'Pay Now';    
         }
         $paynow_button .= '<br><br><a style="padding: 6px !important;background: #2196f3 !important;color: #ffffff !important;font-family: Tahoma, sans-serif !important;font-size: 12px !important;font-weight: 600 !important;line-height: 120% !important;margin: 0 !important;text-decoration: none !important;text-transform: none !important;" href="'.$paynow_link.'">'.$paynow_text.'</a><br><br>';
     }
-
     return $paynow_button;
 }
 
@@ -128,7 +129,6 @@ function generate_payfast_email_link($account_id, $amount = null, $code_only = f
 {
     $m_payment_id = $account_id.'_'.date('U');
     $btn = '<a href="https://www.payfast.co.za/eng/process?cmd=_paynow&receiver=10000100&item_name=Cloud+Telecoms+Services&m_payment_id='.$m_payment_id.'&custom_int1='.$account_id.'&email_confirmation=1&confirmation_address=accounts@telecloud.co.za&return_url=https://portal.telecloud.co.za/payfast_return&cancel_url=https://portal.telecloud.co.za/payfast_cancel&notify_url=https://portal.telecloud.co.za/payfast_notify&amount='.currency($amount).'">Pay Now</a>';
-
     return $btn;
 }
 
@@ -136,7 +136,6 @@ function generate_sandboxpayfast_email_link($account_id, $amount = null, $code_o
 {
     $m_payment_id = $account_id.'_'.date('U');
     $btn = '<a href="https://sandbox.payfast.co.za/eng/process?cmd=_paynow&receiver=10000100&item_name=Cloud+Telecoms+Services&m_payment_id='.$m_payment_id.'&custom_int1='.$account_id.'&email_confirmation=1&confirmation_address=accounts@telecloud.co.za&return_url=https://portal.telecloud.co.za/payfast_return&cancel_url=https://portal.telecloud.co.za/payfast_cancel&notify_url=https://portal.telecloud.co.za/payfast_notify&amount='.currency($amount).'">Pay Now</a>';
-
     return $btn;
 }
 
@@ -144,7 +143,7 @@ function decode_paynow_link($encoded_link)
 {
     $data = \Erp::decode($encoded_link);
 
-    if (! is_array($data) || count($data) != 2) {
+    if (!is_array($data) || 2 != count($data)) {
         return false;
     }
 
@@ -156,9 +155,9 @@ function decode_paynow_link($encoded_link)
     return $data;
 }
 
+
 function get_orders_total($account_id)
 {
     $order_total = \DB::table('crm_documents')->where('doctype', 'Order')->where('account_id', $account_id)->sum('total');
-
     return $order_total;
 }

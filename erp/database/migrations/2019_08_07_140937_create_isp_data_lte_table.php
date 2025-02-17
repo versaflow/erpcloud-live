@@ -30,6 +30,7 @@ class CreateIspDataLteTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

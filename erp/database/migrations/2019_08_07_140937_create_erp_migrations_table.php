@@ -19,6 +19,7 @@ class CreateErpMigrationsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

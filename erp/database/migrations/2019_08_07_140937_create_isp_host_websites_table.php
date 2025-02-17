@@ -47,6 +47,7 @@ class CreateIspHostWebsitesTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

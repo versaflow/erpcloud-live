@@ -26,7 +26,7 @@ function stripslashesFull($input)
 
 function get_previous_workday($dateString = false)
 {
-    if (! $dateString) {
+    if (!$dateString) {
         $dateString = date('Y-m-d');
     }
     $date = new DateTime($dateString);
@@ -42,13 +42,14 @@ function get_previous_workday($dateString = false)
     return $date->format('Y-m-d');
 }
 
-if (! function_exists('str_ireplace_first')) {
+if (!function_exists('str_ireplace_first')) {
     /**
      * Replace the first occurrence of a given value in the string.
      *
-     * @param  string  $search
-     * @param  string  $replace
-     * @param  string  $subject
+     * @param string $search
+     * @param string $replace
+     * @param string $subject
+     *
      * @return string
      */
     function str_ireplace_first($search, $replace, $subject)
@@ -67,13 +68,14 @@ if (! function_exists('str_ireplace_first')) {
     }
 }
 
-if (! function_exists('str_ireplace_last')) {
+if (!function_exists('str_ireplace_last')) {
     /**
      * Replace the last occurrence of a given value in the string.
      *
-     * @param  string  $search
-     * @param  string  $replace
-     * @param  string  $subject
+     * @param string $search
+     * @param string $replace
+     * @param string $subject
+     *
      * @return string
      */
     function str_ireplace_last($search, $replace, $subject)
@@ -84,22 +86,22 @@ if (! function_exists('str_ireplace_last')) {
 
 function db_conns()
 {
-    return $conns = \DB::connection('system')->table('erp_instances')->where('installed', 1)->pluck('db_connection')->toArray();
+    return  $conns = \DB::connection('system')->table('erp_instances')->where('installed', 1)->pluck('db_connection')->toArray();
 }
 
 function db_conns_sync()
 {
-    return $conns = \DB::connection('system')->table('erp_instances')->where('installed', 1)->where('sync_erp', 1)->orWhere('id', 1)->pluck('db_connection')->toArray();
+    return  $conns = \DB::connection('system')->table('erp_instances')->where('installed', 1)->where('sync_erp', 1)->orWhere('id', 1)->pluck('db_connection')->toArray();
 }
 
 function db_conns_excluding_current()
 {
-    return $conns = \DB::connection('system')->table('erp_instances')->where('installed', 1)->where('id', session('instance')->id)->pluck('db_connection')->toArray();
+    return  $conns = \DB::connection('system')->table('erp_instances')->where('installed', 1)->where('id', session('instance')->id)->pluck('db_connection')->toArray();
 }
 
 function db_conns_excluding_main()
 {
-    return $conns = \DB::connection('system')->table('erp_instances')->where('installed', 1)->where('id', '!=', 1)->pluck('db_connection')->toArray();
+    return  $conns = \DB::connection('system')->table('erp_instances')->where('installed', 1)->where('id', '!=', 1)->pluck('db_connection')->toArray();
 }
 
 function get_string_between($str, $from, $to)
@@ -112,10 +114,10 @@ function get_string_between($str, $from, $to)
 function file_to_array($file_path, $delimiter = false)
 {
     if ($delimiter) {
-        return (new Rap2hpoutre\FastExcel\FastExcel)->configureCsv($delimiter)->import($file_path);
+        return (new Rap2hpoutre\FastExcel\FastExcel())->configureCsv($delimiter)->import($file_path);
     }
 
-    return (new Rap2hpoutre\FastExcel\FastExcel)->import($file_path);
+    return (new Rap2hpoutre\FastExcel\FastExcel())->import($file_path);
 }
 
 function check_instance_session()
@@ -222,7 +224,7 @@ function verify_za_id_number($id_number, $gender = '', $foreigner = 0)
         }
 
         // if errors haven't been set to true by any one of the checks, we can change verified to true;
-        if (! $errors) {
+        if (!$errors) {
             $validated = true;
         }
     }
@@ -250,7 +252,7 @@ function get_select_menu_by_role($row)
 
 function get_user_id_default()
 {
-    if (! empty(session('user_id'))) {
+    if (!empty(session('user_id'))) {
         return session('user_id');
     } else {
         return get_system_user_id();
@@ -259,17 +261,17 @@ function get_user_id_default()
 
 function get_menu_url_from_table($table)
 {
-    if (! empty(session('role_id'))) {
+    if (!empty(session('role_id'))) {
         $form_ids = app('erp_config')['forms']->where('role_id', session('role_id'))->where('is_view', 1)->pluck('module_id')->toArray();
 
         return app('erp_config')['modules']
-            ->whereIn('id', $form_ids)
-            ->where('db_table', $table)
-            ->pluck('slug')->first();
+        ->whereIn('id', $form_ids)
+        ->where('db_table', $table)
+        ->pluck('slug')->first();
     } else {
         return app('erp_config')['modules']
-            ->where('db_table', $table)
-            ->pluck('slug')->first();
+        ->where('db_table', $table)
+        ->pluck('slug')->first();
     }
 }
 
@@ -303,10 +305,9 @@ function get_system_user_id($conn = 'default')
     //    return session('system_user_id');
     //}
     $system_user_id = \DB::connection($conn)->table('erp_users')->where('username', 'system')->where('account_id', 0)->pluck('id')->first();
-    if (! $system_user_id) {
+    if (!$system_user_id) {
         $system_user_id = \DB::connection($conn)->table('erp_users')->insertGetId(['username' => 'system', 'full_name' => 'system', 'account_id' => 0, 'role_id' => 0, 'active' => 0]);
     }
-
     //if ($conn == 'default') {
     //    session(['system_user_id' => $system_user_id]);
     //}
@@ -315,7 +316,7 @@ function get_system_user_id($conn = 'default')
 
 function add_rollback_connection($conn)
 {
-    if (! empty(session('rollback_connections'))) {
+    if (!empty(session('rollback_connections'))) {
         $rollback_connections = session('rollback_connections');
         $rollback_connections[] = $conn;
         \DB::connection($conn)->beginTransaction();
@@ -323,8 +324,9 @@ function add_rollback_connection($conn)
     }
 }
 
-function uploads_path($module_id = false) {
-    $instance_dir = isset(session('instance')->directory) ? session('instance')->directory : '';
+function uploads_path($module_id = false)
+{
+    $instance_dir = session('instance')->directory;
     $path = public_path().'/uploads/'.$instance_dir.'/';
     if ($module_id) {
         $dir = $module_id;
@@ -420,12 +422,13 @@ function attachments_url()
     return url($path).'/';
 }
 
-if (! function_exists('str_replace_array')) {
+if (!function_exists('str_replace_array')) {
     /**
      * Replace a given value in the string sequentially with an array.
      *
-     * @param  string  $search
-     * @param  string  $subject
+     * @param string $search
+     * @param string $subject
+     *
      * @return string
      */
     function str_replace_array($search, array $replace, $subject)
@@ -484,7 +487,7 @@ function querybuilder_to_sql($builder)
 
 function get_lat_long($address)
 {
-    $apikey = 'AIzaSyCawb03PpphlubO_eoErjoX3eOOavHO3Qs';
+    $apikey = 'AIzaSyCPKVDAAN0qhtiPJAzksKcK7njtRSo03Po';
     $address = str_replace(' ', '+', $address);
     $region = 'ZA';
     $url = "https://maps.google.com/maps/api/geocode/json?address=$address&sensor=false&region=$region&key=$apikey";
@@ -519,7 +522,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         $template = \DB::connection('default')->table('crm_email_manager')->where('id', $email_id)->get()->first();
     }
     $admin = dbgetaccount(1);
-    if (! empty($email_data['customer_type']) && $email_data['customer_type'] == 'supplier') {
+    if (!empty($email_data['customer_type']) && $email_data['customer_type'] == 'supplier') {
         $account = \DB::connection('default')->table('crm_suppliers')->where('id', $account_id)->get()->first();
         $reseller = dbgetaccount(1);
     } else {
@@ -553,7 +556,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         \DB::table('erp_users')->where('id', $user->id)->update(['password' => $hashed_password]);
         $user_email = $user->email;
         $account = dbgetaccount($user->account_id);
-        if ($account->partner_id == 1) {
+        if (1 == $account->partner_id) {
             $portal = 'http://'.$_SERVER['HTTP_HOST'];
         } else {
             $portal = 'http://'.session('instance')->alias;
@@ -564,7 +567,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         $data['username'] = $user->username;
         $data['password'] = $pass;
         $data['login_url'] = $portal;
-        if ($account->partner_id == 1) {
+        if (1 == $account->partner_id) {
             $data['portal_name'] = 'Cloud Telecoms';
         } else {
             $reseller = dbgetaccount($account->partner_id);
@@ -596,10 +599,10 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         $webform_data = [];
         $webform_data['module_id'] = $template->webform_module_id;
         $webform_data['account_id'] = $account_id;
-        if (! empty($data['record_id'])) {
+        if (!empty($data['record_id'])) {
             $webform_data['id'] = $data['record_id'];
         }
-        if (! empty($data['subscription_id'])) {
+        if (!empty($data['subscription_id'])) {
             $webform_data['subscription_id'] = $data['subscription_id'];
         }
         $link_data = \Erp::encode($webform_data);
@@ -611,7 +614,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
     }
 
     $data['paynow_button'] = '';
-    if ($template->add_payment_options && $account->partner_id == 1 && $data['customer_type'] = 'account') {
+    if ($template->add_payment_options && 1 == $account->partner_id && $data['customer_type'] = 'account') {
         if ($data['show_debit_order_link']) {
             $data['paynow_button'] = '<br><br>Debit order required, click the link to submit your debit order and complete your order.<br> <b>'.$data['webform_link'].'</b>';
         } else {
@@ -619,7 +622,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         }
     }
 
-    if (! empty($template) && ! empty($template->message)) {
+    if (!empty($template) && !empty($template->message)) {
         $data['msg'] = erp_email_blend($template->message, $data);
     }
     $data['html'] = get_email_html($account_id, $reseller->id, $data, $template);
@@ -643,7 +646,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         $templates = \DB::connection('default')->table('crm_newsletters')->select('id', 'name', 'type')->where('is_deleted', 0)->orderBy('id', 'desc')->get();
     }
 
-    if (! empty($templates) && count($templates) > 0) {
+    if (!empty($templates) && count($templates) > 0) {
         foreach ($templates as $t) {
             $t->category = $t->type;
             $t->type = 'newsletter';
@@ -656,7 +659,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         $templates = \DB::connection('default')->table('crm_email_manager')->select('id', 'name', 'from_email', 'module_id')->where('is_deleted', 0)->where('email_form', 1)->orderBy('module_id')->orderBy('name')->get();
     }
 
-    if (! empty($templates) && count($templates) > 0) {
+    if (!empty($templates) && count($templates) > 0) {
         foreach ($templates as $t) {
             $module_name = \DB::connection('default')->table('erp_cruds')->where('id', $t->module_id)->pluck('name')->first();
             $t->category = 'System';
@@ -670,7 +673,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         $templates = \DB::connection('default')->table('crm_email_manager')->select('id', 'name', 'from_email', 'module_id')->where('is_deleted', 0)->where('ad_email', 1)->orderBy('module_id')->orderBy('name')->get();
     }
 
-    if (! empty($templates) && count($templates) > 0) {
+    if (!empty($templates) && count($templates) > 0) {
         foreach ($templates as $t) {
             $module_name = \DB::connection('default')->table('erp_cruds')->where('id', $t->module_id)->pluck('name')->first();
             $t->category = 'Ad Emails';
@@ -684,7 +687,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         $templates = \DB::connection('default')->table('crm_email_manager')->select('id', 'name', 'from_email', 'module_id')->where('is_deleted', 0)->where('debtor_email', 1)->orderBy('module_id')->orderBy('name')->get();
     }
 
-    if (! empty($templates) && count($templates) > 0) {
+    if (!empty($templates) && count($templates) > 0) {
         foreach ($templates as $t) {
             $module_name = \DB::connection('default')->table('erp_cruds')->where('id', $t->module_id)->pluck('name')->first();
             $t->category = 'Debtor Emails';
@@ -713,7 +716,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
 
     $admin = dbgetaccount(1);
 
-    if (! empty($data['to_email'])) {
+    if (!empty($data['to_email'])) {
         $log_address = $data['to_email'];
     } elseif (erp_email_valid($template->to_email)) {
         $log_address = $template->to_email;
@@ -723,7 +726,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         $data['to_email'] = $account->email;
     }
 
-    if (! empty($data['user_email']) && erp_email_valid($data['user_email'])) {
+    if (!empty($data['user_email']) && erp_email_valid($data['user_email'])) {
         $data['user_email'] = erp_email_valid($data['user_email']);
         $data['to_email'] = $data['user_email'];
     }
@@ -734,50 +737,50 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         $data[$key] = $val;
     }
 
-    if ($template->from_email == 'No Reply') {
+    if ('No Reply' == $template->from_email) {
         $from_email_arr = explode('@', $admin_settings->notification_support);
         $data['from_email'] = 'no-reply@'.$from_email_arr[1];
     }
 
-    if ($template->from_email == 'Accounts') {
+    if ('Accounts' == $template->from_email) {
         $data['from_email'] = $admin_settings->notification_account;
     }
 
-    if ($template->from_email == 'Sales') {
+    if ('Sales' == $template->from_email) {
         $data['from_email'] = $admin_settings->notification_sales;
     }
 
-    if ($template->from_email == 'Marketing') {
+    if ('Marketing' == $template->from_email) {
         $data['from_email'] = $admin_settings->notification_marketing;
     }
 
-    if ($template->from_email == 'Helpdesk') {
+    if ('Helpdesk' == $template->from_email) {
         $data['from_email'] = $admin_settings->notification_support;
     }
 
-    if (! empty($data['force_to_email'])) {
+    if (!empty($data['force_to_email'])) {
         $data['to_email'] = $data['force_to_email'];
     }
 
-    if (erp_email_valid($data['from_email']) && $account->partner_id == 1) {
+    if (erp_email_valid($data['from_email']) && 1 == $account->partner_id) {
         $data['from_email'] = $data['from_email'];
-    } elseif (erp_email_valid($message_template->from_email) && $account->partner_id == 1) {
+    } elseif (erp_email_valid($message_template->from_email) && 1 == $account->partner_id) {
         $data['from_email'] = $message_template->from_email;
-    } elseif ($account->partner_id != 1) {
+    } elseif (1 != $account->partner_id) {
         $data['from_email'] = 'helpdesk@erpcloud.co.za';
     }
     if (empty($data['attachments'])) {
         $data['attachments'] = [];
     }
 
-    if (! empty($email_data['attachments']) && is_array($email_data['attachments']) && count($email_data['attachments']) > 0) {
+    if (!empty($email_data['attachments']) && is_array($email_data['attachments']) && count($email_data['attachments']) > 0) {
         $data['attachments'] = $email_data['attachments'];
     }
 
-    if (! empty($email_data['attachment'])) {
+    if (!empty($email_data['attachment'])) {
         $data['attachments'][] = $email_data['attachment'];
     }
-    if (! empty($template->attachment_file)) {
+    if (!empty($template->attachment_file)) {
         $attachments = explode(',', $template->attachment_file);
         foreach ($attachments as $file) {
             if (file_exists(uploads_emailbuilder_path().$file)) {
@@ -795,7 +798,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         $data['attachments'][] = 'Available Phone Numbers.xlsx';
     }
 
-    if (! empty($template->attach_statement)) {
+    if (!empty($template->attach_statement)) {
         $pdf = statement_pdf($account->id);
         $file = 'Statement_'.$account->id.'_'.date('Y_m_d').'.pdf';
         $filename = attachments_path().$file;
@@ -806,7 +809,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         $pdf->save($filename);
         $data['attachments'][] = $file;
     }
-    if (! empty($template->attach_full_statement)) {
+    if (!empty($template->attach_full_statement)) {
         $pdf = statement_pdf($account->id, true);
         $file = 'Complete_Statement_'.$account->id.'_'.date('Y_m_d').'.pdf';
         $filename = attachments_path().$file;
@@ -817,7 +820,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         $pdf->save($filename);
         $data['attachments'][] = $file;
     }
-    if (session('instance')->id != 11 && ! empty($template->attach_letter_of_demand)) {
+    if (session('instance')->id != 11 && !empty($template->attach_letter_of_demand)) {
         $pdf = collectionspdf($account->id, $template->id);
         $name = ucfirst(str_replace(' ', '_', $template->name));
         $file = $name.'_'.$account->id.'_'.date('Y_m_d').'.pdf';
@@ -829,11 +832,11 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         $pdf->save($filename);
         $data['attachments'][] = $file;
 
-        if (! str_contains($data['subject'], 'Letter of demand')) {
+        if (!str_contains($data['subject'], 'Letter of demand')) {
             $data['subject'] .= ' (Letter of demand)';
         }
     }
-    if (! empty($template->attach_cancellation_letter)) {
+    if (!empty($template->attach_cancellation_letter)) {
         $pdf = cancellationpdf($account->id);
         $file = 'Cancellation_letter_'.$account->id.'_'.date('Y_m_d').'.pdf';
         $filename = attachments_path().$file;
@@ -853,7 +856,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         $data['cc_emails'][] = $account->email;
     }
 
-    if (! empty($data['cc_email']) && $data['cc_email'] != $data['to_email']) {
+    if (!empty($data['cc_email']) && $data['cc_email'] != $data['to_email']) {
         $data['cc_emails'][] = $data['cc_email'];
     }
 
@@ -862,7 +865,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         $data['cc_email'] = $data['cc_emails'][0];
     }
 
-    if (! empty($data['cc_emails']) && count($data['cc_emails']) > 0) {
+    if (!empty($data['cc_emails']) && count($data['cc_emails']) > 0) {
         foreach ($data['cc_emails'] as $i => $cc_email) {
             if ($cc_email == $data['to_email']) {
                 unset($data['cc_emails'][$i]);
@@ -875,7 +878,7 @@ function email_form($email_id, $account_id = 1, $email_data = [])
         unset($data['bcc_email']);
     }
     $accounting_email = get_account_contact_email($account->id, 'Accounting');
-    if ($template->add_payment_options && ! empty($accounting_email)) {
+    if ($template->add_payment_options && !empty($accounting_email)) {
         $data['cc_email'] = $accounting_email;
     }
 
@@ -888,11 +891,11 @@ function email_form($email_id, $account_id = 1, $email_data = [])
     if ($data['bccemailaddress']) {
         $data['bcc_email'] = $data['bccemailaddress'];
     }
-    if (! empty($data['provision_id'])) {
+    if (!empty($data['provision_id'])) {
         $data['hide_form_tags'] = 1;
     }
 
-    if (! empty($data['account_id'])) {
+    if (!empty($data['account_id'])) {
         if ($data['account_id'] == 1) {
             $data['to_email'] = '';
         }
@@ -908,13 +911,13 @@ function email_form($email_id, $account_id = 1, $email_data = [])
 
 function get_submenu_ids($menu_id, $menu_collection = false)
 {
-    if (! $menu_collection) {
+    if (!$menu_collection) {
         $menu_collection = \DB::connection('default')->table('erp_menu')->get();
     }
     $menu_ids = $menu_collection->where('parent_id', $menu_id)->pluck('id')->toArray();
     $menu_ids = collect($menu_ids);
     $sub_menus = $menu_collection->where('parent_id', $menu_id);
-    if (! empty($sub_menus) && count($sub_menus) > 0) {
+    if (!empty($sub_menus) && count($sub_menus) > 0) {
         foreach ($sub_menus as $menu) {
             $sub_menu_ids = get_submenu_ids($menu->id, $menu_collection);
             $sub_menu_ids = collect($sub_menu_ids);
@@ -934,7 +937,7 @@ function get_toplevel_menu_id($menu_id, $conn = 'default')
         return $menu_id;
     } else {
         $exists = \DB::connection($conn)->table('erp_menu')->where('id', $parent_id)->count();
-        if (! $exists) {
+        if (!$exists) {
             return $menu_id;
         }
 
@@ -982,12 +985,12 @@ function user_and_role_select($row)
     $row = (array) $row;
     $select = [];
     $users = \DB::connection('default')->table('erp_users')
-        ->select('erp_users.id', 'erp_user_roles.name', 'erp_users.full_name')
-        ->join('erp_user_roles', 'erp_user_roles.id', '=', 'erp_users.role_id')
-        ->where('account_id', 1)
-        ->orderBy('erp_user_roles.sort_order')
-        ->orderBy('erp_users.full_name')
-        ->get();
+    ->select('erp_users.id', 'erp_user_roles.name', 'erp_users.full_name')
+    ->join('erp_user_roles', 'erp_user_roles.id', '=', 'erp_users.role_id')
+    ->where('account_id', 1)
+    ->orderBy('erp_user_roles.sort_order')
+    ->orderBy('erp_users.full_name')
+    ->get();
     foreach ($users as $user) {
         $select[$user->id] = $user->full_name.' - '.$user->name;
     }
@@ -2006,15 +2009,15 @@ function phonenumber_format($number = false)
     if ($number) {
         $formatted_number = phonenumber_valid($number);
         if ($formatted_number) {
-            if (substr($formatted_number, 0, 2) == '27') {
+            if ('27' == substr($formatted_number, 0, 2)) {
                 $formatted_number = substr($formatted_number, 2);
             }
-            if (substr($formatted_number, 0, 1) == '0') {
+            if ('0' == substr($formatted_number, 0, 1)) {
                 $formatted_number = substr($formatted_number, 1);
             }
-            if (strlen($formatted_number) == 11) {
+            if (11 == strlen($formatted_number)) {
                 return $formatted_number;
-            } elseif (strlen($formatted_number) == 9) {
+            } elseif (9 == strlen($formatted_number)) {
                 return '27'.$formatted_number;
             }
         }
@@ -2063,20 +2066,15 @@ function isDateTime($string)
     }
 }
 
-function get_installed_app_ids($instance = null)
+function get_installed_app_ids()
 {
     if (is_main_instance()) {
         $conn = 'default';
     } else {
         $conn = 'system';
     }
-    
-    // dd($instance->id);
-    if ($instance == null) {
-        return false;
-    } else {    
-        return \DB::connection($conn)->table('erp_instance_apps')->where('instance_id', $instance->id)->pluck('app_id')->toArray();
-    }
+
+    return \DB::connection($conn)->table('erp_instance_apps')->where('instance_id', session('instance')->id)->pluck('app_id')->toArray();
 }
 
 function get_app_ids($instance_id)
@@ -2093,13 +2091,6 @@ function round_up_to_nearest_n_float($int, $n)
     return floatval(ceil($int / $n) * $n);
 }
 
-function vd($var)
-{
-    echo '<pre>';
-    var_dump($var);
-    echo '</pre>';
-}
-
 function str_replace_json($search, $replace, $subject)
 {
     return json_decode(str_replace($search, $replace, json_encode($subject)));
@@ -2109,7 +2100,7 @@ function str_replace_json($search, $replace, $subject)
 function human_filesize($bytes, $decimals = 2, $type = null)
 {
     $size = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-    if (! $type) {
+    if (!$type) {
         $factor = floor((strlen($bytes) - 1) / 3);
     } else {
         $factor = array_search($type, $size);
@@ -2120,7 +2111,7 @@ function human_filesize($bytes, $decimals = 2, $type = null)
 
 function session_test()
 {
-    return (session('user_id') == 3696 || session('user_id') == 1) ? 1 : 0;
+    return (3696 == session('user_id') || 1 == session('user_id')) ? 1 : 0;
 }
 
 function is_superadmin()
@@ -2182,7 +2173,7 @@ function is_test()
 function gg_time($var, $reset = false)
 {
     try {
-        if (! is_array($var) && ! is_string($var)) {
+        if (!is_array($var) && !is_string($var)) {
             $var = print_r($var, true);
         }
         $session_filter = false;
@@ -2207,7 +2198,7 @@ function gg_time($var, $reset = false)
 
 function put_permanent_env($key, $value, $path = false)
 {
-    if (! $path) {
+    if (!$path) {
         $path = app()->environmentFilePath();
     }
 
@@ -2232,7 +2223,7 @@ function setEnv($name, $value)
 
 function is_main_instance()
 {
-    if (! empty(session('instance')) && session('instance')->id == 1) {
+    if (!empty(session('instance')) && session('instance')->id == 1) {
         return 1;
     }
 
@@ -2254,7 +2245,7 @@ function move_element_in_array(&$array, $a, $b)
 function insert_element_in_array($array, $index, $val)
 {
     $size = count($array); //because I am going to use this more than one time
-    if (! is_int($index) || $index < 0 || $index > $size) {
+    if (!is_int($index) || $index < 0 || $index > $size) {
         return -1;
     } else {
         $temp = array_slice($array, 0, $index);
@@ -2292,7 +2283,7 @@ function random($length = 6)
 {
     $char = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     $char = str_shuffle($char);
-    for ($i = 0, $rand = '', $l = strlen($char) - 1; $i < $length; $i++) {
+    for ($i = 0, $rand = '', $l = strlen($char) - 1; $i < $length; ++$i) {
         $rand .= $char[mt_rand(0, $l)];
     }
 
@@ -2301,7 +2292,7 @@ function random($length = 6)
 
 function formatNumber($number, $currency = 'ZAR')
 {
-    if ($currency == 'USD') {
+    if ('USD' == $currency) {
         return number_format($number, 2, '.', ',');
     }
 
@@ -2310,7 +2301,7 @@ function formatNumber($number, $currency = 'ZAR')
 
 function parent_of($account_id, $partner_id = null)
 {
-    if (! $partner_id) {
+    if (!$partner_id) {
         $partner_id = session('account_id');
     }
 
@@ -2322,7 +2313,7 @@ function is_parent_of($account_id)
     $user_account_id = session('original_account_id');
     $parent_account_id = dbgetaccountcell($account_id, 'partner_id');
 
-    if ($user_account_id == 1 || $user_account_id == $parent_account_id) {
+    if (1 == $user_account_id || $user_account_id == $parent_account_id) {
         return true;
     } else {
         return false;
@@ -2331,7 +2322,7 @@ function is_parent_of($account_id)
 
 function is_child_of($parent_id = 0)
 {
-    if ($parent_id == 0) {
+    if (0 == $parent_id) {
         $parent_id = session('parent_id');
     }
     $current_account_id = session('account_id');
@@ -2350,11 +2341,11 @@ function is_child_of($parent_id = 0)
 function level($account_id)
 {
     $level_id = dbgetcell('erp_users', 'account_id', $account_id, 'group_id');
-    if ($level_id == 1 || $level_id == 2 || $level_id == 3) {
+    if (1 == $level_id || 2 == $level_id || 3 == $level_id) {
         return 'Admin';
-    } elseif ($level_id == 11) {
+    } elseif (11 == $level_id) {
         return 'Partner';
-    } elseif ($level_id == 21) {
+    } elseif (21 == $level_id) {
         return 'Customer';
     }
 }
@@ -2392,9 +2383,9 @@ function get_descendant_groups()
 {
     if (session('gid') < 5) {
         $descendants = [1, 2, 3, 4, 10, 11, 12];
-    } elseif (session('gid') == 10) {
+    } elseif (10 == session('gid')) {
         $descendants = [11, 12];
-    } elseif (session('gid') == 11) {
+    } elseif (11 == session('gid')) {
         $descendants = [12];
     } else {
         $descendants = 0;
@@ -2447,9 +2438,9 @@ function array2json($arr)
     //Find out if the given array is a numerical array
     $keys = array_keys($arr);
     $max_length = count($arr) - 1;
-    if (($keys[0] == 0) and ($keys[$max_length] == $max_length)) {//See if the first key is 0 and last key is length - 1
+    if ((0 == $keys[0]) and ($keys[$max_length] == $max_length)) {//See if the first key is 0 and last key is length - 1
         $is_view = true;
-        for ($i = 0; $i < count($keys); $i++) { //See if each key correspondes to its position
+        for ($i = 0; $i < count($keys); ++$i) { //See if each key correspondes to its position
             if ($i != $keys[$i]) { //A key fails at position check.
                 $is_view = false; //It is an associative array.
                 break;
@@ -2467,7 +2458,7 @@ function array2json($arr)
             } /* :RECURSION: */
         } else {
             $str = '';
-            if (! $is_view) {
+            if (!$is_view) {
                 $str = '"'.$key.'":';
             }
 
@@ -2475,10 +2466,10 @@ function array2json($arr)
             if (is_numeric($value)) {
                 $str .= $value;
             } //Numbers
-            elseif ($value === false) {
+            elseif (false === $value) {
                 $str .= 'false';
             } //The booleans
-            elseif ($value === true) {
+            elseif (true === $value) {
                 $str .= 'true';
             } else {
                 $str .= '"'.addslashes($value).'"';
@@ -2507,25 +2498,25 @@ function gen_uuid()
     return sprintf(
         '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
         // 32 bits for "time_low"
-        mt_rand(0, 0xFFFF),
-        mt_rand(0, 0xFFFF),
+        mt_rand(0, 0xffff),
+        mt_rand(0, 0xffff),
 
         // 16 bits for "time_mid"
-        mt_rand(0, 0xFFFF),
+        mt_rand(0, 0xffff),
 
         // 16 bits for "time_hi_and_version",
         // four most significant bits holds version number 4
-        mt_rand(0, 0x0FFF) | 0x4000,
+        mt_rand(0, 0x0fff) | 0x4000,
 
         // 16 bits, 8 bits for "clk_seq_hi_res",
         // 8 bits for "clk_seq_low",
         // two most significant bits holds zero and one for variant DCE1.1
-        mt_rand(0, 0x3FFF) | 0x8000,
+        mt_rand(0, 0x3fff) | 0x8000,
 
         // 48 bits for "node"
-        mt_rand(0, 0xFFFF),
-        mt_rand(0, 0xFFFF),
-        mt_rand(0, 0xFFFF)
+        mt_rand(0, 0xffff),
+        mt_rand(0, 0xffff),
+        mt_rand(0, 0xffff)
     );
 }
 
@@ -2539,15 +2530,15 @@ function input_field($label, $id, $value = '', $required = 0, $type = 'text', $c
     $required = ($required) ? 'required' : '';
     $date_picker = '';
 
-    if ($type == 'date') {
+    if ('date' == $type) {
         $date_picker = 'date-picker';
         $type = 'text';
     }
-    if ($type == 'number') {
+    if ('number' == $type) {
         $type = 'float';
     }
 
-    if ($columns == 'two') {
+    if ('two' == $columns) {
         echo '<div class="col-md-4">';
     }
 
@@ -2559,10 +2550,10 @@ function input_field($label, $id, $value = '', $required = 0, $type = 'text', $c
     echo '</label>';
     echo '<div class="col-md-4">';
 
-    if ($type == 'switch') {
+    if ('switch' == $type) {
         $checked = ($value) ? 'checked' : '';
         echo '<input type="checkbox" class="make-switch '.$dynamic_field.'" data-size="small" name='.$id.' id='.$id.' '.$checked.' '.$dependancy1.' '.$dependancy2.'>';
-    } elseif ($type == 'textarea') {
+    } elseif ('textarea' == $type) {
         echo '<textarea class="form-control" '.$placeholder.' name="'.$id.'" id="'.$id.'" rows="10" '.$required.'>'.$value.'</textarea>';
     } else {
         if ($help_text) {
@@ -2578,7 +2569,7 @@ function input_field($label, $id, $value = '', $required = 0, $type = 'text', $c
     echo '</div>';
     echo '</div>';
 
-    if ($columns == 'two') {
+    if ('two' == $columns) {
         echo '</div>';
     }
 }
@@ -2646,7 +2637,7 @@ function generate_password()
 function getModule()
 {
     $currentAction = \Route::currentRouteAction();
-    [$controller, $method] = explode('@', $currentAction);
+    list($controller, $method) = explode('@', $currentAction);
     // $controller now is "App\Http\Controllers\FooBarController"
 
     $controller = preg_replace('/.*\\\/', '', $controller);
@@ -2658,7 +2649,7 @@ function getModule()
 function getController()
 {
     $currentAction = \Route::currentRouteAction();
-    [$controller, $method] = explode('@', $currentAction);
+    list($controller, $method) = explode('@', $currentAction);
     $controller = preg_replace('/.*\\\/', '', $controller);
 
     return $controller;
@@ -2667,7 +2658,7 @@ function getController()
 function getMethod()
 {
     $currentAction = \Route::currentRouteAction();
-    [$controller, $method] = explode('@', $currentAction);
+    list($controller, $method) = explode('@', $currentAction);
 
     return $method;
 }
@@ -2675,16 +2666,16 @@ function getMethod()
 function generate_strong_password($length = 6, $add_dashes = false, $available_sets = 'lud')
 {
     $sets = [];
-    if (strpos($available_sets, 'l') !== false) {
+    if (false !== strpos($available_sets, 'l')) {
         $sets[] = 'abcdefghjkmnpqrstuvwxyz';
     }
-    if (strpos($available_sets, 'u') !== false) {
+    if (false !== strpos($available_sets, 'u')) {
         $sets[] = 'ABCDEFGHJKMNPQRSTUVWXYZ';
     }
-    if (strpos($available_sets, 'd') !== false) {
+    if (false !== strpos($available_sets, 'd')) {
         $sets[] = '23456789';
     }
-    if (strpos($available_sets, 's') !== false) {
+    if (false !== strpos($available_sets, 's')) {
         $sets[] = '!@#$%&*?';
     }
     $all = '';
@@ -2694,11 +2685,11 @@ function generate_strong_password($length = 6, $add_dashes = false, $available_s
         $all .= $set;
     }
     $all = str_split($all);
-    for ($i = 0; $i < $length - count($sets); $i++) {
+    for ($i = 0; $i < $length - count($sets); ++$i) {
         $password .= $all[array_rand($all)];
     }
     $password = str_shuffle($password);
-    if (! $add_dashes) {
+    if (!$add_dashes) {
         return $password;
     }
     $dash_len = floor(sqrt($length));
@@ -2741,14 +2732,14 @@ function curlPost($url, $params = null, $post = true, $headers = null)
     curl_setopt($ch, CURLOPT_VERBOSE, 1);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-    if ($params != null) {
+    if (null != $params) {
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($params));
     } // Your array field
     curl_setopt($ch, CURLOPT_POST, $post);
 
     $result = curl_exec($ch);
 
-    if ($result === false) {
+    if (false === $result) {
         printf(
             "cUrl error (#%d): %s<br>\n",
             curl_errno($handle),
@@ -2831,7 +2822,7 @@ function api_success($msg, $extra = [])
 {
     $json = ['message' => $msg];
     $json['status'] = 'SUCCESS';
-    if (! empty($extra)) {
+    if (!empty($extra)) {
         $json = array_merge($json, $extra);
     }
     header('Access-Control-Allow-Origin: *');
@@ -2843,7 +2834,7 @@ function api_error($msg, $extra = [])
 {
     $json = ['message' => $msg];
     $json['status'] = 'FAILURE';
-    if (! empty($extra)) {
+    if (!empty($extra)) {
         $json = array_merge($json, $extra);
     }
     header('Access-Control-Allow-Origin: *');
@@ -2855,7 +2846,7 @@ function api_abort($msg, $extra = [])
 {
     $json = ['message' => $msg];
     $json['status'] = 'FAILURE';
-    if (! empty($extra)) {
+    if (!empty($extra)) {
         $json = array_merge($json, $extra);
     }
     header('Access-Control-Allow-Origin: *');
@@ -2866,11 +2857,11 @@ function api_abort($msg, $extra = [])
 function json_alert($msg, $status = 'success', $extra = [])
 {
     $json = ['status' => $status, 'message' => $msg];
-    if (! empty($extra)) {
+    if (!empty($extra)) {
         $json = array_merge($json, $extra);
     }
 
-    if (! headers_sent()) {
+    if (!headers_sent()) {
         header('Access-Control-Allow-Origin: *');
     }
 
@@ -2880,7 +2871,7 @@ function json_alert($msg, $status = 'success', $extra = [])
 function cors_json_alert($msg, $status = 'success', $extra = [])
 {
     $json = ['status' => $status, 'message' => $msg];
-    if (! empty($extra)) {
+    if (!empty($extra)) {
         $json = array_merge($json, $extra);
     }
     //header("Access-Control-Allow-Origin: *");
@@ -2895,7 +2886,7 @@ function json_msg($msg, $status = 'success')
 
 function format_button_text($button_title = '')
 {
-    if (! empty($button_title)) {
+    if (!empty($button_title)) {
         $button_title = ltrim(preg_replace('/[A-Z]/', ' $0', $button_title));
     }
 
@@ -2911,7 +2902,7 @@ function nltextformat($var)
 
 function time_elapsed_string($datetime, $full = false)
 {
-    $now = new DateTime;
+    $now = new DateTime();
     $ago = new DateTime($datetime);
     $diff = $now->diff($ago);
 
@@ -2935,7 +2926,7 @@ function time_elapsed_string($datetime, $full = false)
         }
     }
 
-    if (! $full) {
+    if (!$full) {
         $string = array_slice($string, 0, 1);
     }
 
@@ -2956,7 +2947,7 @@ function delTree($dir)
 function array_search_partial($arr, $keyword)
 {
     foreach ($arr as $index => $string) {
-        if (strpos($string, $keyword) !== false) {
+        if (false !== strpos($string, $keyword)) {
             return $index;
         }
     }
@@ -2973,7 +2964,7 @@ function png2jpg($originalFile, $outputFile, $quality = 100)
 
 function is_alpha_png($fn)
 {
-    return ord(@file_get_contents($fn, null, null, 25, 1)) == 6;
+    return 6 == ord(@file_get_contents($fn, null, null, 25, 1));
 }
 
 function multiply($qty, $val)
@@ -2983,7 +2974,7 @@ function multiply($qty, $val)
 
 function isTodayWeekend()
 {
-    return date('l') == 'Saturday' or date('l') == 'Sunday';
+    return 'Saturday' == date('l') or 'Sunday' == date('l');
 }
 
 function array_insert(&$array, $position, $insert)
@@ -3009,7 +3000,7 @@ function mypricelist_url()
 {
     $account = dbgetaccount(session('account_id'));
     if ($account->type == 'reseller') {
-        if (! empty($account->pricelist_id)) {
+        if (!empty($account->pricelist_id)) {
             return module_url(507);
         } else {
             return module_url(582);
@@ -3032,18 +3023,20 @@ function multi_array_key_search($array, $keySearch, $value)
     return false;
 }
 
-function schedule_cron_test_check() {}
+function schedule_cron_test_check()
+{
+}
 
 function get_partner_logo($partner_id = false)
 {
-    if (! $partner_id) {
+    if (!$partner_id) {
         return '';
     }
     $partner_settings = \DB::connection('default')->table('crm_account_partner_settings')->where('account_id', $partner_id)->get()->first();
 
     $settings_path = uploads_settings_path();
 
-    if (! empty($partner_settings->logo) && file_exists($settings_path.$partner_settings->logo)) {
+    if (!empty($partner_settings->logo) && file_exists($settings_path.$partner_settings->logo)) {
         return $partner_settings->logo;
     } else {
         return '';
@@ -3099,7 +3092,7 @@ function is_weekend()
 function is_working_hours()
 {
     $weekend = is_weekend();
-    if (! $weekend) {
+    if (!$weekend) {
         $time_start = date('Y-m-d 08:00');
 
         $time_end = date('Y-m-d 17:00');
@@ -3116,7 +3109,7 @@ function is_working_hours()
 function get_builder_menu_id($module_id, $menu_id)
 {
     $query_sting = request()->getQueryString();
-    if (! empty($query_sting)) {
+    if (!empty($query_sting)) {
         $menu_id = \DB::connection('default')->table('erp_menu')->where('menu_type', 'module_filter')->where('module_id', $module_id)->where('url', 'LIKE', '%'.$query_string.'%')->pluck('id')->first();
     }
 
@@ -3151,14 +3144,13 @@ function get_admin_instance_access_session()
 
 function get_admin_instance_access($username = false)
 {
-    if (! $username) {
+    if (!$username) {
         $username = session('username');
     }
 
     $admin_user_id = \DB::connection('system')->table('erp_users')->where('username', $username)->pluck('id')->first();
 
     $instance_ids = \DB::connection('system')->table('erp_instance_user_access')->where('user_id', $admin_user_id)->pluck('instance_id')->toArray();
-
     /*
     $instance_ids = [];
     $instances = \DB::connection('system')->table('erp_instances')->where('installed',1)->get();
@@ -3182,7 +3174,7 @@ function get_instances_list()
         $dir = get_menu_url_from_table('crm_account_partner_settings');
         $path = public_path().'/uploads/'.$erp_instance->db_connection.'/'.$dir.'/';
 
-        if (! empty($logo) && file_exists($path.$logo)) {
+        if (!empty($logo) && file_exists($path.$logo)) {
             $logo_link = $path.$logo;
         }
 
@@ -3246,12 +3238,12 @@ function roundToDigits($num, $suffix, $type = 'round')
 
 function weekOfMonth($dateString)
 {
-    [$year, $month, $mday] = explode('-', $dateString);
+    list($year, $month, $mday) = explode('-', $dateString);
     $firstWday = date('w', strtotime("$year-$month-1"));
 
     return (int) floor(($mday + $firstWday - 1) / 7) + 1;
 }
-if (! function_exists('escape')) {
+if (!function_exists('escape')) {
     function escape($string)
     {
         return htmlentities($string, ENT_QUOTES | ENT_HTML5, 'UTF-8');

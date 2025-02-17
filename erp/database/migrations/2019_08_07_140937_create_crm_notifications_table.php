@@ -24,6 +24,7 @@ class CreateCrmNotificationsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

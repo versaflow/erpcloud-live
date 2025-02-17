@@ -27,6 +27,7 @@ class CreateCrmPricelistItemsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

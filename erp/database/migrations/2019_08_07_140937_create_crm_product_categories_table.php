@@ -35,6 +35,7 @@ class CreateCrmProductCategoriesTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

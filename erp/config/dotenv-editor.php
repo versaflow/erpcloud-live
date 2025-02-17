@@ -1,6 +1,6 @@
 <?php
 
-return [
+return array(
 
     /*
     |----------------------------------------------------------------------
@@ -34,6 +34,6 @@ return [
     | backup is performed or not.
     */
 
-    'alwaysCreateBackupFolder' => false,
+    'alwaysCreateBackupFolder' => false
 
-];
+);

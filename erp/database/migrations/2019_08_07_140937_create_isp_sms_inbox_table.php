@@ -21,6 +21,7 @@ class CreateIspSmsInboxTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

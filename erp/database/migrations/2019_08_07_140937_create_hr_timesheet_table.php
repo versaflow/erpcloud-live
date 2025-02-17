@@ -22,6 +22,7 @@ class CreateHrTimesheetTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

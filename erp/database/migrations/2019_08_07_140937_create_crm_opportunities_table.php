@@ -35,6 +35,7 @@ class CreateCrmOpportunitiesTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

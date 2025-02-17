@@ -28,6 +28,7 @@ class CreateAccBankTransactionsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

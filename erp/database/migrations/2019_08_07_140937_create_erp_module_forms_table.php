@@ -34,6 +34,7 @@ class CreateErpModuleFormsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

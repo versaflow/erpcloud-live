@@ -37,7 +37,7 @@ class ErpBackups
 
     public function getBackupDatabases()
     {
-        if (! $this->source_db) {
+        if (!$this->source_db) {
             return false;
         }
         $db_backups = [];
@@ -80,7 +80,7 @@ class ErpBackups
 
     public function backup($database, $tables = false, $monthly_only = false, $archive_cdr = false)
     {
-        if (! $monthly_only || ($monthly_only && date('Y-m-d') == date('Y-m-01'))) {
+        if (!$monthly_only || ($monthly_only && date('Y-m-d') == date('Y-m-01'))) {
             $this->setSourceDB($database);
             $backup_name = $this->source_db.'_'.date('Ymd');
             if ($archive_cdr) {
@@ -133,7 +133,7 @@ class ErpBackups
 
     public function getBackupList()
     {
-        if (! $this->source_db) {
+        if (!$this->source_db) {
             return false;
         }
         $backup_list = [];
@@ -148,18 +148,18 @@ class ErpBackups
             $daily_backups = 1;
         }
 
-        for ($i = 0; $i < $daily_backups; $i++) {
+        for ($i = 0; $i < $daily_backups; ++$i) {
             $backup_list[] = $this->source_db.'_'.date('Ymd', strtotime($backup_date));
             $backup_date = date('Ymd', strtotime($backup_date.' - 1 day'));
         }
 
         $backup_date = date('Y-m-d', strtotime('monday'));
-        for ($i = 0; $i < $weekly_backups; $i++) {
+        for ($i = 0; $i < $weekly_backups; ++$i) {
             $backup_list[] = $this->source_db.'_'.date('Ymd', strtotime($backup_date));
             $backup_date = date('Ymd', strtotime($backup_date.' - 1 week'));
         }
         $backup_date = date('Y-m-01');
-        for ($i = 0; $i < $monthly_backups; $i++) {
+        for ($i = 0; $i < $monthly_backups; ++$i) {
             $backup_list[] = $this->source_db.'_'.date('Ymd', strtotime($backup_date));
             $backup_date = date('Ymd', strtotime($backup_date.' - 1 month'));
         }
@@ -178,7 +178,7 @@ class ErpBackups
             if ($backup == 'cdr_archives') {
                 continue;
             }
-            if (! in_array($backup, $backup_list)) {
+            if (!in_array($backup, $backup_list)) {
                 $this->queryBackupMySQL('drop database '.$backup);
             }
         }

@@ -29,6 +29,7 @@ class CreateAccCashTransactionsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

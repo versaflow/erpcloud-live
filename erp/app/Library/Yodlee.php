@@ -23,7 +23,7 @@ class Yodlee extends ApiCurl
         if ($mode == 'development') {
             $this->service_url = 'https://development.api.yodlee.com/ysl/';
             $this->fastlink_url = 'https://fl4.preprod.yodlee.com/authenticate/USDevexPreProd4-1/fastlink?channelAppName=usdevexpreprod4';
-
+            
             $this->adminName = '86decd7c-c822-4f2d-a49a-adc0b2479654_ADMIN';
             $this->client_id = 'JyttoJBKl9pOtB7N75ulvpAQVOje9kQd';
             $this->client_secret = 'kKKlfXgE9clFrjZr';
@@ -31,7 +31,7 @@ class Yodlee extends ApiCurl
         if ($mode == 'production') {
             $this->service_url = 'https://production.api.yodlee.com/ysl/';
             $this->fastlink_url = 'https://fl4.prod.yodlee.com/authenticate/USDevexProd4-83/fastlink?channelAppName=usdevexprod4';
-
+            
             $this->adminName = '32b70a52-c3cd-4f4b-8bc0-b4130aa9d1fb_ADMIN';
             $this->client_id = 'Ahh8RI7HAMXoz2pCHAZxG6HqoBwORjDU';
             $this->client_secret = 'UEGxZqwtgcgnGUxw';
@@ -53,7 +53,7 @@ class Yodlee extends ApiCurl
         $data = [
             'user' => [
                 'loginName' => $login_name,
-            ],
+            ]
         ];
 
         if ($email) {
@@ -82,26 +82,26 @@ class Yodlee extends ApiCurl
     public function getUser($loginName)
     {
         $this->setLoginName($loginName);
-
         return $this->curl('user');
     }
 
     public function deleteUser($loginName)
     {
         $this->setLoginName($loginName);
-
         return $this->curl('user/unregister', false, 'delete');
     }
+
 
     public function getAccounts()
     {
         return $this->curl('accounts');
     }
-
+    
     public function getAccount()
     {
         return $this->curl('accounts/'.$id);
     }
+
 
     public function updateAccount($id)
     {
@@ -130,6 +130,7 @@ class Yodlee extends ApiCurl
             'toDate' => $date,
         ];
 
+
         return $this->curl('transactions', $transaction_params);
     }
 
@@ -139,9 +140,10 @@ class Yodlee extends ApiCurl
             'container' => 'bank',
             'fromDate' => $date,
         ];
-        if ($yodlee_account_id) {
-            $transaction_params['accountId'] = $yodlee_account_id;
+        if($yodlee_account_id){
+            $transaction_params['accountId'] = $yodlee_account_id;    
         }
+
 
         return $this->curl('transactions', $transaction_params);
     }
@@ -153,9 +155,10 @@ class Yodlee extends ApiCurl
             'fromDate' => $date,
             'toDate' => $todate,
         ];
-        if ($yodlee_account_id) {
-            $transaction_params['accountId'] = $yodlee_account_id;
+        if($yodlee_account_id){
+            $transaction_params['accountId'] = $yodlee_account_id;    
         }
+
 
         return $this->curl('transactions', $transaction_params);
     }
@@ -175,10 +178,11 @@ class Yodlee extends ApiCurl
         return $this->curl('providerAccounts', ['include' => 'preferences']);
     }
 
+
     public function updateProviderAccounts($providerAccountId)
     {
         $provider_params = [
-            'preferences' => ['isAutoRefreshEnabled' => 'true'],
+            'preferences' => ['isAutoRefreshEnabled' => 'true']
         ];
 
         return $this->curl('providerAccounts?providerAccountIds='.$providerAccountId, false, 'put');
@@ -189,18 +193,19 @@ class Yodlee extends ApiCurl
         return $this->curl('providerAccounts/'.$providerAccountId, false, 'delete');
     }
 
+
     protected function setCurlAuth($api_request)
     {
         $valid_token = false;
 
-        if (! empty($this->token)) {
-            $expires_at = date('Y-m-d H:i', strtotime($this->token->issuedAt) + $this->token->expiresIn);
+        if (!empty($this->token)) {
+            $expires_at = date("Y-m-d H:i", strtotime($this->token->issuedAt) + $this->token->expiresIn);
             if (date('Y-m-d H:i') < $expires_at) {
                 $valid_token = true;
             }
         }
 
-        if (! $valid_token) {
+        if (!$valid_token) {
             $token_body = [
                 'clientId' => $this->client_id,
                 'secret' => $this->client_secret,
@@ -211,6 +216,7 @@ class Yodlee extends ApiCurl
             } else {
                 $token_headers = ['Api-Version' => 1.1, 'loginName' => $this->loginName];
             }
+            
 
             $token_request = \Httpful\Request::post($this->service_url.'auth/token');
 
@@ -220,12 +226,12 @@ class Yodlee extends ApiCurl
                 ->withoutStrictSsl()
                 ->send();
             //dd($token_response);
-            if (! empty($token_response->body->errorCode)) {
-
-                //dd($token_body,$token_headers,$token_response);
+            if (!empty($token_response->body->errorCode)) {
+                
+//dd($token_body,$token_headers,$token_response);
                 throw new \ErrorException('Error code: '.$token_response->body->errorCode);
             }
-            if (! empty($token_response->body->errorMessage)) {
+            if (!empty($token_response->body->errorMessage)) {
                 throw new \ErrorException('Error message: '.$token_response->body->errorMessage);
             }
             if (empty($token_response->body->token)) {
@@ -234,14 +240,14 @@ class Yodlee extends ApiCurl
                 $this->token = $token_response->body->token;
             }
 
-            $api_request->addHeaders(['Api-Version' => 1.1]);
-            $api_request->withAuthorization('Bearer '.$this->token->accessToken);
+            $api_request->addHeaders(['Api-Version' =>  1.1]);
+            $api_request->withAuthorization("Bearer ".$this->token->accessToken);
         } else {
-            $api_request->addHeaders(['Api-Version' => 1.1]);
-            $api_request->withAuthorization('Bearer '.$this->token->accessToken);
+            $api_request->addHeaders(['Api-Version' =>  1.1]);
+            $api_request->withAuthorization("Bearer ".$this->token->accessToken);
         }
 
-        if (! empty($this->locale)) {
+        if (!empty($this->locale)) {
             $api_request->addHeaders(['locale' => $this->locale]);
         }
 
@@ -275,6 +281,7 @@ class Yodlee extends ApiCurl
                     $transaction_params['toDate'] = $to_date;
                 }
 
+
                 $transaction_params['accountId'] = $yodlee_account->id;
 
                 $yodlee_count = \DB::connection('default')->table($register_table)->where('cashbook_id', $cashbook->id)->where('api_id', '!=', 0)->count();
@@ -285,7 +292,7 @@ class Yodlee extends ApiCurl
                 $transactions = $this->getTransactions($transaction_params);
 
                 $transactions_processed = collect([]);
-                if (! empty($transactions) && ! empty($transactions->transaction)) {
+                if (!empty($transactions) && !empty($transactions->transaction)) {
                     $transactions = $transactions->transaction;
 
                     $transactions = array_reverse($transactions);
@@ -333,10 +340,10 @@ class Yodlee extends ApiCurl
 
                         if ($transactions_collection->count() > 0) {
                             $duplicate = $transactions_collection
-                                ->where('docdate', $data['docdate'])
-                                ->where('reference', $data['reference'])
-                                ->where('total', $data['total'])
-                                ->count();
+                            ->where('docdate', $data['docdate'])
+                            ->where('reference', $data['reference'])
+                            ->where('total', $data['total'])
+                            ->count();
 
                             if ($duplicate) {
                                 $unique_duplicate = true;
@@ -348,54 +355,56 @@ class Yodlee extends ApiCurl
                         }
                         $transactions_collection->push($data);
 
+
                         if (empty($data['api_balance'])) {
                             $data['api_balance'] = 0;
                         }
 
-                        if ($trx->baseType == 'DEBIT') {
-                            $data['total'] = $data['total'] * -1;
+                        if ($trx->baseType == "DEBIT") {
+                            $data['total'] = $data['total'] *-1;
                         }
 
                         $ofx_exists = \DB::connection('default')->table($register_table)
-                            ->where('cashbook_id', $cashbook->id)
-                            ->where('docdate', $trx->transactionDate)
-                            ->where('reference', $trx->description->original)
-                            ->where('api_status', '')
-                            ->where('total', currency($data['total']))->count();
+                        ->where('cashbook_id', $cashbook->id)
+                        ->where('docdate', $trx->transactionDate)
+                        ->where('reference', $trx->description->original)
+                        ->where('api_status', '')
+                        ->where('total', currency($data['total']))->count();
                         $exists = \DB::connection('default')->table($register_table)
-                            ->where('cashbook_id', $cashbook->id)
-                            ->where('docdate', $trx->transactionDate)
-                            ->where('reference', $trx->description->original)
-                            ->whereIn('api_status', ['PENDING', 'POSTED'])
-                            ->where('total', currency($data['total']))->count();
+                        ->where('cashbook_id', $cashbook->id)
+                        ->where('docdate', $trx->transactionDate)
+                        ->where('reference', $trx->description->original)
+                        ->whereIn('api_status', ['PENDING','POSTED'])
+                        ->where('total', currency($data['total']))->count();
                         $api_id_exists = \DB::connection('default')->table($register_table)
-                            ->where('cashbook_id', $cashbook->id)
-                            ->where('api_id', $trx->id)->count();
+                        ->where('cashbook_id', $cashbook->id)
+                        ->where('api_id', $trx->id)->count();
                         $bank_id = \DB::connection('default')->table($register_table)
-                            ->where('cashbook_id', $cashbook->id)
-                            ->where('docdate', $trx->transactionDate)
-                            ->where('reference', $trx->description->original)
-                            ->whereIn('api_status', ['PENDING', 'POSTED'])
-                            ->where('total', currency($data['total']))->pluck('id')->first();
+                        ->where('cashbook_id', $cashbook->id)
+                        ->where('docdate', $trx->transactionDate)
+                        ->where('reference', $trx->description->original)
+                        ->whereIn('api_status', ['PENDING','POSTED'])
+                        ->where('total', currency($data['total']))->pluck('id')->first();
                         $prepayment_id = \DB::connection('default')->table($register_table)
-                            ->where('cashbook_id', $cashbook->id)
-                            ->where('docdate', $trx->transactionDate)
-                            ->where('prepayment', 1)
-                            ->where('total', currency($data['total']))->pluck('id')->first();
+                        ->where('cashbook_id', $cashbook->id)
+                        ->where('docdate', $trx->transactionDate)
+                        ->where('prepayment', 1)
+                        ->where('total', currency($data['total']))->pluck('id')->first();
                         $trx_exists = \DB::connection('default')->table($register_table)
-                            ->where('cashbook_id', $cashbook->id)
-                            ->where('docdate', $trx->transactionDate)
-                            ->where('reference', $trx->description->original)
-                            ->where('total', currency($data['total']))->count();
-
+                        ->where('cashbook_id', $cashbook->id)
+                        ->where('docdate', $trx->transactionDate)
+                        ->where('reference', $trx->description->original)
+                        ->where('total', currency($data['total']))->count();
+                        
+                       
                         if ($prepayment_id) {
-
+                            
                             $data['prepayment'] = 0;
                             \DB::connection('default')->table($register_table)
                                 ->where('cashbook_id', $cashbook->id)
                                 ->where('id', $prepayment_id)
                                 ->update($data);
-                        } elseif ($bank_id) {
+                        }elseif ($bank_id) {
                             unset($data['reference']);
                             \DB::connection('default')->table($register_table)
                                 ->where('cashbook_id', $cashbook->id)
@@ -407,23 +416,23 @@ class Yodlee extends ApiCurl
                                 ->where('cashbook_id', $cashbook->id)
                                 ->where('api_id', $trx->id)
                                 ->update($data);
-                        } elseif (! $bank_id && ! $ofx_exists && ! $api_id_exists) {
+                        } elseif (!$bank_id && !$ofx_exists && !$api_id_exists) {
                             $exists = \DB::connection('default')->table($register_table)
                                 ->where('docdate', $trx->transactionDate)
                                 ->where('cashbook_id', $cashbook->id)
                                 ->where('api_id', $trx->id)
                                 ->where('total', currency($data['total']))->count();
 
-                            if (! $trx_exists && ! $exists) {
+                            if (!$trx_exists && !$exists) {
                                 \DB::connection('default')
-                                    ->table($register_table)
-                                    ->insert($data);
+                                ->table($register_table)
+                                ->insert($data);
                             }
 
-                            if ($trx_exists && $unique_duplicate && ! $exists) {
+                            if ($trx_exists && $unique_duplicate && !$exists) {
                                 \DB::connection('default')
-                                    ->table($register_table)
-                                    ->insert($data);
+                                ->table($register_table)
+                                ->insert($data);
                             }
                         }
                     }
@@ -433,28 +442,26 @@ class Yodlee extends ApiCurl
                 $processed_ids = [];
                 foreach ($bank_trxs as $trx) {
                     $c = \DB::table('acc_cashbook_transactions')->where('cashbook_id', $cashbook->id)->where('id', '!=', $trx->id)->where('api_id', $trx->api_id)->count();
-                    if ($c && ! in_array($trx->api_id, $processed_ids)) {
+                    if ($c && !in_array($trx->api_id, $processed_ids)) {
                         $processed_ids[] = $trx->api_id;
-                        if ($trx->api_id > '') {
+                        if( $trx->api_id > '' ){
                             $duplicates = \DB::table('acc_cashbook_transactions')->where('cashbook_id', $cashbook->id)->where('id', '!=', $trx->id)->where('api_id', $trx->api_id)->get();
                             foreach ($duplicates as $duplicate) {
-                                \DB::table('acc_cashbook_transactions')->where('api_id', '!=', 0)->where('api_id', '>', '')->where('id', $duplicate->id)->delete();
+                                \DB::table('acc_cashbook_transactions')->where('api_id', '!=', 0)->where('api_id', '>','')->where('id', $duplicate->id)->delete();
                                 \DB::table('acc_cashbook_transactions')->where('cashbook_transaction_id', $duplicate->id)->delete();
                             }
                         }
                     }
                 }
             }
-
+            
             $cashbooks = \DB::table('acc_cashbook')->where('yodlee_account_id', '>', '')->get();
             foreach ($cashbooks as $cashbook) {
                 cashbook_reconcile($cashbook->id);
             }
 
             return true;
-        } catch (\Throwable $ex) {
-            exception_log($ex);
-
+        } catch (\Throwable $ex) {  exception_log($ex);
             return false;
         }
     }

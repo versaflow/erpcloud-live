@@ -27,6 +27,7 @@ class CreateOpsProvisionStepsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

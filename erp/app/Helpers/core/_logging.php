@@ -1,12 +1,21 @@
 <?php
 
+function vd($var)
+{
+    echo '<pre>';
+    var_dump($var);
+    echo '</pre>';
+}
+
 function exception_log($ex)
 {
     try {
+        $error = '';
         // $debug_backtrace = debug_backtrace();
-        if (! is_string($ex)) {
-            $error = $ex->getMessage().' '.$ex->getFile().':'.$ex->getLine().PHP_EOL.$ex->getTraceAsString();
-            $error .= PHP_EOL.'>>> ALL_VARS: '.json_encode(get_defined_vars());
+        if (!is_string($ex)) {
+            if (!is_array($ex))
+                $error .= $ex->getMessage().' '.$ex->getFile().':'.$ex->getLine().PHP_EOL.$ex->getTraceAsString();
+            $error .= PHP_EOL.'>>> ALL_VARS: '. json_encode(get_defined_vars());
             \Log::debug($error);
         }
     } catch (\Throwable $ex) {
@@ -17,28 +26,28 @@ function exception_log($ex)
 
 function module_log($module_id, $row_id, $action, $note = '')
 {
-
+    
     $current_conn = \DB::getDefaultConnection();
     set_db_connection($conn);
-    if ($module_id && $row_id && $action) {
+    if($module_id && $row_id && $action){
         if (Schema::hasTable('erp_module_log')) {
             $user_id = session('user_id');
             if (empty($user_id)) {
                 $user_id = get_system_user_id();
             }
             $data = [
-                'module_id' => $module_id,
-                'row_id' => $row_id,
-                'action' => $action,
+                'module_id'=>$module_id,
+                'row_id'=>$row_id,
+                'action'=>$action,
                 'created_at' => date('Y-m-d H:i:s'),
                 'created_by' => $user_id,
             ];
             if ($note) {
                 $data['note'] = $note;
             }
-            if ($action == 'update' && ! empty($note)) {
+            if($action == 'update' && !empty($note)){
                 \DB::table('erp_module_log')->insert($data);
-            } elseif ($action != 'update') {
+            }elseif($action != 'update'){
                 //\DB::table('erp_module_log')->updateOrInsert(['module_id'=>$module_id,'row_id'=>$row_id], $data);
                 \DB::table('erp_module_log')->insert($data);
             }
@@ -47,31 +56,33 @@ function module_log($module_id, $row_id, $action, $note = '')
     set_db_connection($current_conn);
 }
 
+
+
 function aa($var, $session_filter = true)
 {
     $trace = '';
     try {
         $debug_backtrace = debug_backtrace();
-        if (! empty($debug_backtrace) && $debug_backtrace[0] && $debug_backtrace[0]['file']) {
-            $trace .= basename($debug_backtrace[0]['file']).': '.$debug_backtrace[0]['line'].' --> '.$debug_backtrace[0].' --> ';
+        if (!empty($debug_backtrace) && $debug_backtrace[0] && $debug_backtrace[0]['file']) {
+            $trace .= basename($debug_backtrace[0]['file']) .': '. $debug_backtrace[0]['line'] . ' --> ' . $debug_backtrace[0]  . ' --> ';
         }
         $trace .= json_encode($var);
         \Log::debug($trace);
 
-        if (str_contains(request()->header('User-Agent'), 'Edg/')) {
+        if(str_contains(request()->header('User-Agent'),'Edg/')){
             if (php_sapi_name() !== 'cli') {
-                if (! is_array($var) && ! is_string($var)) {
+                if (!is_array($var) && !is_string($var)) {
                     $var = print_r($var, true);
                 }
                 $log_var = false;
                 if (empty(session()) || empty(session('user_id')) || empty(session('instance')->directory)) {
                     $log_var = true;
                 } else {
-                    if ($session_filter && session('user_id') == 3696 && session('instance')->directory == 'telecloud') {
+                    if ($session_filter && 3696 == session('user_id') && session('instance')->directory == 'telecloud') {
                         $log_var = true;
                     } elseif ($session_filter && session('user_id') && session('instance')->directory != 'telecloud') {
                         $log_var = true;
-                    } elseif (! $session_filter) {
+                    } elseif (!$session_filter) {
                         $log_var = true;
                     }
                 }
@@ -79,7 +90,7 @@ function aa($var, $session_filter = true)
                     \Log::debug($var);
                     $trace = false;
                     $debug_backtrace = debug_backtrace();
-                    if (! empty($debug_backtrace) && $debug_backtrace[0] && $debug_backtrace[0]['file']) {
+                    if (!empty($debug_backtrace) && $debug_backtrace[0] && $debug_backtrace[0]['file']) {
                         $trace = $debug_backtrace[0]['file'].':'.$debug_backtrace[0]['line'];
                     }
                     if ($trace) {
@@ -98,7 +109,7 @@ function system_log($type, $action, $result, $backup_type, $frequency, $success 
     $result = strtolower($result);
     if ($success === null) {
         $success = 1;
-        if ((str_contains($action, 'git') && ! str_contains($result, 'insertions') && ! str_contains($result, 'files changed') && ! str_contains($result, 'Everything up-to-date')) || ! str_contains($action, 'git')) {
+        if ((str_contains($action, 'git') && !str_contains($result, 'insertions') && !str_contains($result, 'files changed') && !str_contains($result, 'Everything up-to-date')) || !str_contains($action, 'git')) {
             if (str_contains($result, 'fail') || str_contains($result, 'denied') || str_contains($result, 'error') || str_contains($result, 'exception') || str_contains($result, 'No such file')) {
                 $success = 0;
             }
@@ -108,10 +119,10 @@ function system_log($type, $action, $result, $backup_type, $frequency, $success 
     if (empty($frequency)) {
         $frequency = '';
     }
-    if (! $action) {
+    if (!$action) {
         return false;
     }
-    $insert_data = [
+    $insert_data =[
         'created_date' => date('Y-m-d H:i:s'),
         'type' => $type,
         'backup_type' => $backup_type,
@@ -122,34 +133,36 @@ function system_log($type, $action, $result, $backup_type, $frequency, $success 
         'event_id' => $event_id,
     ];
     // aa($insert_data);
-
+    
     //if($event_id){
     //    $insert_data['module_id'] = \DB::connection('default')->table('erp_form_events')->where('id',$event_id)->pluck('module_id')->first();
     //}
 
     \DB::connection('default')->table('erp_system_log')->insert($insert_data);
-    if (is_main_instance()) {
-        if ($type == 'backup' && $backup_type == 'database' && $success == 0) {
+    if(is_main_instance()){
+        if ($type == 'backup' && $backup_type=='database' && $success == 0) {
             //debug_email('Backup failed - '.$action);
             admin_email('Backup failed - '.$action);
         }
     }
 }
 
+
 function generateCallTrace()
 {
-    $e = new Exception;
+    $e = new Exception();
     $trace = explode("\n", $e->getTraceAsString());
     // reverse array to make steps line up chronologically
     $trace = array_reverse($trace);
     array_shift($trace); // remove {main}
     array_pop($trace); // remove call to this method
     $length = count($trace);
-    $result = [];
-
-    for ($i = 0; $i < $length; $i++) {
-        $result[] = ($i + 1).')'.substr($trace[$i], strpos($trace[$i], ' ')); // replace '#someNum' with '$i)', set the right ordering
+    $result = array();
+    
+    for ($i = 0; $i < $length; $i++)
+    {
+        $result[] = ($i + 1)  . ')' . substr($trace[$i], strpos($trace[$i], ' ')); // replace '#someNum' with '$i)', set the right ordering
     }
-
-    return "\t".implode("\n\t", $result);
+    
+    return "\t" . implode("\n\t", $result);
 }

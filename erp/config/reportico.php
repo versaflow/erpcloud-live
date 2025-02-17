@@ -1,10 +1,10 @@
 <?php
 
-return [
-    'routing' => [
+return array(
+    'routing' => array(
         'prefix' => 'reportico',
         // 'subdomain' => 'faq.site.com',
-    ],
+    ),
 
     'framework_type' => 'laravel',
 
@@ -12,7 +12,7 @@ return [
     'path_to_assets' => 'vendor/reportico',
 
     // Path relative to laravel pase or fully where projects will be created
-    'path_to_projects' => storage_path().'/reportico/projects',
+    'path_to_projects' => storage_path()."/reportico/projects",
 
     // Path relative to laravel pase or fully where admin project will be stored
     'path_to_admin' => 'projects',
@@ -21,7 +21,7 @@ return [
     // Set bootstrap_styles to false for reportico classic styles, or "3" for bootstrap 3 look and feel and 2 for bootstrap 2
     // If you are embedding reportico and you have already loaded bootstrap then set bootstrap_preloaded equals true so reportico
     // doestnt load it again.
-    'bootstrap_styles' => '3',
+    'bootstrap_styles' => "3",
     'bootstrap_preloaded' => false,
 
     // In bootstrap enable pages, the bootstrap modal is by default used for the quick edit buttons
@@ -34,17 +34,17 @@ return [
     // Jquery already included?
     'jquery_preloaded' => false,
 
-    'bootstrap_styles' => '3',
+    'bootstrap_styles' => "3",
     'bootstrap_preloaded' => false,
 
     // Engine to use for charts ..
     // HTML reports can use javascript charting, PDF reports must use PCHART
-    'charting_engine' => 'PCHART',
-    'charting_engine_html' => 'NVD3',
+    'charting_engine' => "PCHART",
+    'charting_engine_html' => "NVD3",
 
     // Engine to use for pdf ..
     // fpdf is faster but tcpdf offers borders, backgorunds, images, headers footers etc
-    'pdf_engine' => 'tcpdf',
+    'pdf_engine' => "tcpdf",
 
     // Whether to turn on dynamic grids to provide searchable/sortable reports
     'dynamic_grids' => false,
@@ -54,15 +54,15 @@ return [
     'dynamic_grids_page_size' => 10,
 
     // Show or hide various report elements ( Use show or hide )
-    'show_hide_navigation_menu' => 'show',
-    'show_hide_dropdown_menu' => 'show',
-    'show_hide_report_output_title' => 'show',
-    'show_hide_prepare_section_boxes' => 'show',
-    'show_hide_prepare_pdf_button' => 'show',
-    'show_hide_prepare_html_button' => 'show',
-    'show_hide_prepare_print_html_button' => 'show',
-    'show_hide_prepare_csv_button' => 'show',
-    'show_hide_prepare_page_style' => 'show',
+    'show_hide_navigation_menu' => "show",
+    'show_hide_dropdown_menu' => "show",
+    'show_hide_report_output_title' => "show",
+    'show_hide_prepare_section_boxes' => "show",
+    'show_hide_prepare_pdf_button' => "show",
+    'show_hide_prepare_html_button' => "show",
+    'show_hide_prepare_print_html_button' => "show",
+    'show_hide_prepare_csv_button' => "show",
+    'show_hide_prepare_page_style' => "show",
 
     // Static Menu definition
     // ======================
@@ -117,4 +117,4 @@ return [
     //                    ),
     //            ),
     'dropdown_menu' => false,
-];
+);

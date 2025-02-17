@@ -13,12 +13,11 @@ Staging Portal PW: Cloudtele1
 class srsplus
 {
     public $api_guid;
-
     public $api_url;
 
     public function __construct($production = true)
     {
-        if (! $production) {
+        if (!$production) {
             $this->api_guid = 'fe47191b-3c96-4157-8804-deafe909b453';
             $this->api_url = 'https://staging-services.rxportalexpress.com/V1.0/';
         } else {
@@ -31,7 +30,7 @@ class srsplus
     {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_POST, $post);
-        if (! empty($xml_data)) {
+        if (!empty($xml_data)) {
             curl_setopt($ch, CURLOPT_POSTFIELDS, $xml_data);
         } // Your array field
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -41,7 +40,7 @@ class srsplus
         curl_setopt($ch, CURLOPT_VERBOSE, 1);
 
         $result = curl_exec($ch);
-        if ($result === false) {
+        if (false === $result) {
             return false;
         }
         curl_close($ch);
@@ -70,7 +69,7 @@ class srsplus
         $xml = $this->array_to_xml($request_array, $xml_node);
         $xml = substr($xml, strpos($xml, '?'.'>') + 2);
 
-        $dom = new DomDocument;
+        $dom = new DomDocument();
         $dom->formatOutput = true;
         $dom->preserveWhiteSpace = false;
 
@@ -85,7 +84,7 @@ class srsplus
         foreach ($data as $key => $value) {
             if (is_array($value)) {
                 if (is_string($key)) {
-                    if (strpos($key, '_') !== false) {
+                    if (false !== strpos($key, '_')) {
                         $key_arr = explode('_', $key);
                         $key = $key_arr[0];
                     }
@@ -93,7 +92,7 @@ class srsplus
                     $this->array_to_xml($value, $subnode);
                 } else {
                     foreach ($value as $k => $v) {
-                        if (strpos($k, '_') !== false) {
+                        if (false !== strpos($k, '_')) {
                             $k_arr = explode('_', $k);
                             $k = $k_arr[0];
                         }
@@ -110,7 +109,7 @@ class srsplus
 
     protected function parse_xml($response)
     {
-        if ($response != '') {
+        if ('' != $response) {
             libxml_clear_errors();
             libxml_use_internal_errors(true);
             $xml = simplexml_load_string($response, 'SimpleXMLElement', LIBXML_NOCDATA);
@@ -143,12 +142,12 @@ class srsplus
 
             $sub_els = $xsd->xpath("/xs:schema//xs:element[@name='".$el."']//xs:element");
 
-            if (! empty($sub_els)) { // get sub elements
+            if (!empty($sub_els)) { // get sub elements
                 foreach ($sub_els as $sub_el) {
-                    if (! empty($sub_el['ref'])) {
+                    if (!empty($sub_el['ref'])) {
                         $xml_array[$el][strval($sub_el['ref'])] = ['min' => strval($sub_el['minOccurs']), 'max' => strval($sub_el['maxOccurs'])];
                     }
-                    if (! empty($sub_el['name'])) {
+                    if (!empty($sub_el['name'])) {
                         $xml_array[$el][strval($sub_el['name'])] = ['min' => strval($sub_el['minOccurs']), 'max' => strval($sub_el['maxOccurs'])];
                     }
                 }
@@ -175,16 +174,18 @@ class srsplus
     }
 }
 
-class srsplus_exception extends Exception {}
+class srsplus_exception extends Exception
+{
+}
 
 function tel_e164_format($number)
 {
     if (strlen($number) >= 10) {
-        if (substr($number, 0, 1) == '0') {
+        if ('0' == substr($number, 0, 1)) {
             return '+27.'.substr($number, 1);
         }
 
-        if (substr($number, 0, 3) == '+27') {
+        if ('+27' == substr($number, 0, 3)) {
             return '+27.'.substr($number, 3);
         }
     }
@@ -194,18 +195,17 @@ function tel_e164_format($number)
 
 function srs_getschema()
 {
-    $srsapi = new srsplus;
-
+    $srsapi = new srsplus();
     return $srsapi->get_schema('userAdd');
 }
 
 function srs_user_get($user = '', $domain = '')
 {
-    if (! empty($user) && ! empty($user->id)) {
+    if (!empty($user) && !empty($user->id)) {
         $data = [
             'userId' => 'customer'.$user->id,
         ];
-    } elseif (! empty($domain)) {
+    } elseif (!empty($domain)) {
         $data = [
             'domainName' => $domain,
         ];
@@ -213,9 +213,9 @@ function srs_user_get($user = '', $domain = '')
         return false;
     }
 
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('userGet', $data);
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return $result['response']['users']['user']['userId'];
     }
 
@@ -245,7 +245,7 @@ function srs_user_add($user)
         'contactType' => 'Administration',
     ];
     $name = explode(' ', $user->contact);
-    if (count($name) >= 2 && ! is_numeric($name[0]) && ! is_numeric($name[1])) {
+    if (count($name) >= 2 && !is_numeric($name[0]) && !is_numeric($name[1])) {
         $firstname = $name[0];
         $lastname = $name[1];
     } else {
@@ -255,11 +255,11 @@ function srs_user_add($user)
     $contact_user = [
         'firstName' => $firstname,
         'lastName' => $lastname,
-        'emailAddress' => (! empty($user->email)) ? $user->email : $contact_admin['emailAddress'],
-        'telephoneNumber' => (! empty($user->phone) && tel_e164_format($user->phone)) ? tel_e164_format($user->phone) : $contact_admin['telephoneNumber'],
-        'addressLine1' => (! empty($user->address)) ? $user->address : $contact_admin['addressLine1'],
-        'city' => (! empty($user->suburb)) ? $user->suburb : $contact_admin['city'],
-        'province' => (! empty($user->province)) ? $user->province : $contact_admin['province'],
+        'emailAddress' => (!empty($user->email)) ? $user->email : $contact_admin['emailAddress'],
+        'telephoneNumber' => (!empty($user->phone) && tel_e164_format($user->phone)) ? tel_e164_format($user->phone) : $contact_admin['telephoneNumber'],
+        'addressLine1' => (!empty($user->address)) ? $user->address : $contact_admin['addressLine1'],
+        'city' => (!empty($user->suburb)) ? $user->suburb : $contact_admin['city'],
+        'province' => (!empty($user->province)) ? $user->province : $contact_admin['province'],
         'postalCode' => '0182',
         'countryCode' => 'ZA',
         'contactType' => 'Registration',
@@ -270,10 +270,10 @@ function srs_user_add($user)
         'userAccountName' => 'customer'.$user->id,
         'contacts' => ['contact' => $contact_user],
     ];
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('userAdd', $data);
 
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return $result['response']['userId'];
     }
 
@@ -306,11 +306,11 @@ function srs_user_modify($user)
     $contact_user = [
         'firstName' => (count($name) >= 2) ? $name[0] : $contact_admin['firstName'],
         'lastName' => (count($name) >= 2) ? $name[1] : $contact_admin['lastName'],
-        'emailAddress' => (! empty($user->email)) ? $user->email : $contact_admin['emailAddress'],
-        'telephoneNumber' => (! empty($user->phone) && tel_e164_format($user->phone)) ? tel_e164_format($user->phone) : $contact_admin['telephoneNumber'],
-        'addressLine1' => (! empty($user->address)) ? $user->address : $contact_admin['addressLine1'],
-        'city' => (! empty($user->suburb)) ? $user->suburb : $contact_admin['city'],
-        'province' => (! empty($user->province)) ? $user->province : $contact_admin['province'],
+        'emailAddress' => (!empty($user->email)) ? $user->email : $contact_admin['emailAddress'],
+        'telephoneNumber' => (!empty($user->phone) && tel_e164_format($user->phone)) ? tel_e164_format($user->phone) : $contact_admin['telephoneNumber'],
+        'addressLine1' => (!empty($user->address)) ? $user->address : $contact_admin['addressLine1'],
+        'city' => (!empty($user->suburb)) ? $user->suburb : $contact_admin['city'],
+        'province' => (!empty($user->province)) ? $user->province : $contact_admin['province'],
         'postalCode' => '0182',
         'countryCode' => 'ZA',
         'contactType' => 'Registration',
@@ -321,10 +321,10 @@ function srs_user_modify($user)
         'userAccountName' => 'customer'.$user->id,
         'contacts' => ['contact' => $contact_user],
     ];
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('userModify', $data);
 
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return true;
     }
 
@@ -337,9 +337,9 @@ function srs_user_status($user_id, $suspend = 1)
         'userId' => 'customer'.$user_id,
         'suspend' => $suspend,
     ];
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('userSuspend', $data);
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return true;
     }
 
@@ -357,16 +357,16 @@ function srs_domain_autorenew($domain_id, $autorenew = 1)
         'productId' => $domain_id,
         'autoRenew ' => $autorenew,
     ];
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('domainAutoRenew', $data);
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return true;
     }
 
     return 'Error: '.$result['status']['statusCode'].' - '.$result['status']['statusDescription'];
 }
 
-function srs_domain_check($domain_name, $tlds = ['com', 'net', 'org', 'biz', 'io', 'cc'])
+function srs_domain_check($domain_name, $tlds = ['com', 'net', 'org', 'biz', 'io','cc'])
 {
     $data = ['sld' => $domain_name, 'extensions' => []];
     $tld_arr = [];
@@ -375,9 +375,9 @@ function srs_domain_check($domain_name, $tlds = ['com', 'net', 'org', 'biz', 'io
     }
     $data['extensions'] = $tld_arr;
 
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('domainCheck', $data);
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return $result['response']['domain'];
     }
 
@@ -387,7 +387,7 @@ function srs_domain_check($domain_name, $tlds = ['com', 'net', 'org', 'biz', 'io
 function srs_domain_get($domain_name)
 {
     $data = ['domains' => ['domainName' => $domain_name]];
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('domainGet', $data);
 
     /*
@@ -411,14 +411,13 @@ function srs_domain_get($domain_name)
            "whoisAccuracyDomainStatus" => "VerificationSuccess"
          ]
     */
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         if (isset($result['response']['domainGet']['domain']['domainInfo'])) {
             return $result['response']['domainGet']['domain']['domainInfo'];
         } elseif (isset($result['response']['domainGet']['domain']) && is_array($result['response']['domainGet']['domain'])) {
             foreach ($result['response']['domainGet']['domain'] as $d) {
                 $domain_info = $d['domainInfo'];
             }
-
             return $domain_info;
         }
     }
@@ -429,9 +428,9 @@ function srs_domain_get($domain_name)
 function srs_domain_get_status($domain_name)
 {
     $data = ['domains' => ['domainName' => $domain_name]];
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('domainGet', $data);
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return $result['response']['domainGet']['domain']['domainInfo']['domainStatus'];
     }
 
@@ -441,9 +440,9 @@ function srs_domain_get_status($domain_name)
 function srs_domain_get_reference($domain_name)
 {
     $data = ['domains' => ['domainName' => $domain_name]];
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('domainGet', $data);
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return $result['response']['domainGet']['domain']['domainInfo']['productId'];
     }
 
@@ -454,7 +453,7 @@ function srs_domain_register($domain, $user)
 {
     $srs_user_id = srs_user_get($user);
 
-    if (! $srs_user_id) {
+    if (!$srs_user_id) {
         $srs_user_id = srs_user_add($user);
     }
 
@@ -480,9 +479,9 @@ function srs_domain_register($domain, $user)
             'nameserver_2' => $nameserver2,
         ],
     ];
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('domainAdd', $data);
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return $result['response']['productId'];
     }
 
@@ -507,7 +506,7 @@ function srs_domain_transfer($domain, $user)
 
     $srs_user_id = srs_user_get($user);
 
-    if (! $srs_user_id) {
+    if (!$srs_user_id) {
         $srs_user_id = srs_user_add($user);
     }
 
@@ -520,9 +519,9 @@ function srs_domain_transfer($domain, $user)
         'domainName' => $domain,
     ];
 
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('domainTransferIn', $data);
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return $result['response']['productId'];
     }
 
@@ -536,10 +535,10 @@ function srs_transfer_auth($domain_id, $authcode)
         'authCode' => $authcode,
     ];
 
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('domainTransferUpdateAuthCode', $data);
 
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return $result['response']['productId'];
     }
 
@@ -551,10 +550,10 @@ function srs_transfer_cancel($domain_id)
     $data = [
         'productId' => $domain_id,
     ];
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('domainTransferCancel', $data);
 
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return true;
     }
 
@@ -564,7 +563,7 @@ function srs_transfer_cancel($domain_id)
 function srs_domain_edit($domain_id, $user)
 {
     $srs_user_id = srs_user_get($user);
-    if (! $srs_user_id) {
+    if (!$srs_user_id) {
         $srs_user_id = srs_user_add($user);
     }
 
@@ -585,10 +584,10 @@ function srs_domain_edit($domain_id, $user)
         ],
     ];
 
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('domainModify', $data);
 
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return $result['response']['productId'];
     }
 
@@ -607,9 +606,9 @@ function srs_domain_lock($domain_id, $lock = true)
         'registrarLock' => $lock_text,
     ];
 
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('domainLock', $data);
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return $result['response']['productId'];
     }
 
@@ -620,9 +619,9 @@ function srs_domain_cancel($domain_id)
 {
     $data = ['productId' => $domain_id];
 
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('domainCancel', $data);
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return true;
     }
 
@@ -635,9 +634,9 @@ function srs_domain_restore($srs_user_id, $domain_id)
         'userId' => $srs_user_id,
         'productId' => $domain_id,
     ];
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('domainRestore', $data);
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return true;
     }
 
@@ -648,9 +647,9 @@ function srs_domain_renew($domain_id)
     $data = [
         'productId' => $domain_id,
     ];
-    $srsapi = new srsplus;
+    $srsapi = new srsplus();
     $result = $srsapi->post_command('domainRestore', $data);
-    if ($result['status']['statusCode'] == '1000') {
+    if ('1000' == $result['status']['statusCode']) {
         return true;
     }
 

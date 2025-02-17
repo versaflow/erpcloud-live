@@ -32,7 +32,7 @@ function provision_virtual_server($provision, $input, $customer, $product)
 
     $sub_data = ['detail' => $input['ip_addr'], 'table_data' => ['isp_virtual_servers' => $table_data]];
 
-    if (! empty($input['date_activated'])) {
+    if (!empty($input['date_activated'])) {
         $info['date_activated'] = $input['date_activated'];
         $info['renews_at'] = date('Y-m-d H:i:s', strtotime($info['date_activated'].' +1 month'));
         $sub_data['info'] = $info;
@@ -75,10 +75,10 @@ function beforesave_provision_function_check($request)
     if (empty($request->name)) {
         return 'Name required';
     }
-    if (! str_contains($request->name, '_copy')) {
-        if ($request->type == 'Function') {
+    if (!str_contains($request->name, '_copy')) {
+        if ('Function' == $request->type) {
             $function_name = function_format('provision_'.$request->name);
-            if (! function_exists($function_name) || ! function_exists($function_name.'_form')) {
+            if (!function_exists($function_name) || !function_exists($function_name.'_form')) {
                 return 'Function definition Invalid.';
             }
         }
@@ -89,7 +89,7 @@ function provision_number_porting($provision, $input, $customer, $product)
 {
     if (empty($customer->pabx_domain)) {
         $pbx_domain = pbx_create_domain_company_name($customer);
-        if (! $pbx_domain) {
+        if (!$pbx_domain) {
             'PBX add failed. DNS create failed on '.__FUNCTION__;
         }
 
@@ -97,13 +97,13 @@ function provision_number_porting($provision, $input, $customer, $product)
         provision_pbx_extension_default($customer, $provision->invoice_id);
     }
     $customer = dbgetaccount($customer->id);
-    $phone_number = (! empty($input['phone_number'])) ? $input['phone_number'] : '';
-    $number_routing = (! empty($input['number_routing'])) ? $input['number_routing'] : '';
+    $phone_number = (!empty($input['phone_number'])) ? $input['phone_number'] : '';
+    $number_routing = (!empty($input['number_routing'])) ? $input['number_routing'] : '';
     if (empty($phone_number)) {
         return 'Empty phone number';
     }
 
-    if (! str_starts_with($phone_number, 27)) {
+    if (!str_starts_with($phone_number, 27)) {
         return 'Number has to start with 27';
     }
 
@@ -126,7 +126,7 @@ function provision_number_porting($provision, $input, $customer, $product)
         return 'The requested number already exists.';
     }
 
-    if (substr($phone_number, 0, 4) == '2787' || substr($phone_number, 0, 3) == '087') {
+    if ('2787' == substr($phone_number, 0, 4) || '087' == substr($phone_number, 0, 3)) {
         $subscription_product = 127; // 087
     } else {
         if (str_starts_with($phone_number, '2712786')) { // 012786
@@ -143,7 +143,7 @@ function provision_number_porting($provision, $input, $customer, $product)
 
     $routing_type = null;
     $customer = dbgetaccount($customer->id);
-    if (! empty($customer->domain_uuid) && ! empty($number_routing)) {
+    if (!empty($customer->domain_uuid) && !empty($number_routing)) {
         $routing_type = get_routing_type($customer->domain_uuid, $number_routing);
     }
     $gateway_uuid = \DB::connection('pbx')->table('v_gateways')->where('number_porting', 1)->pluck('gateway_uuid')->first();
@@ -160,7 +160,7 @@ function provision_number_porting($provision, $input, $customer, $product)
     update_caller_id($customer->domain_uuid, $provision->invoice_id);
 
     $info_data = ['invoice_id' => $provision->invoice_id, 'provision_type' => 'phone_number', 'product_id' => $subscription_product];
-    if (! empty(session('user_id'))) {
+    if (!empty(session('user_id'))) {
         $info_data['created_by'] = session('user_id');
     }
 
@@ -171,7 +171,7 @@ function provision_phone_number($provision, $input, $customer, $product)
 {
     if (empty($customer->pabx_domain)) {
         $pbx_domain = pbx_create_domain_company_name($customer);
-        if (! $pbx_domain) {
+        if (!$pbx_domain) {
             'PBX add failed. DNS create failed on '.__FUNCTION__;
         }
 
@@ -180,8 +180,8 @@ function provision_phone_number($provision, $input, $customer, $product)
     }
 
     $customer = dbgetaccount($customer->id);
-    $phone_number = (! empty($input['phone_number'])) ? $input['phone_number'] : '';
-    $number_routing = (! empty($input['number_routing'])) ? $input['number_routing'] : '';
+    $phone_number = (!empty($input['phone_number'])) ? $input['phone_number'] : '';
+    $number_routing = (!empty($input['number_routing'])) ? $input['number_routing'] : '';
 
     if (empty($phone_number)) {
         return 'Select a phone number';
@@ -201,12 +201,12 @@ function provision_pbx_domain($provision, $input, $customer, $product)
 {
     /// CREATE VOIP DOMAIN
     try {
-        if (! empty($customer->pabx_domain)) {
+        if (!empty($customer->pabx_domain)) {
             return 'PBX already exists';
         }
 
         $pbx_domain = pbx_create_domain_company_name($customer);
-        if (! $pbx_domain) {
+        if (!$pbx_domain) {
             return 'DNS create failed';
         }
 
@@ -228,7 +228,7 @@ function provision_pbx_extension_default($account, $invoice_id = 0)
     $extension_subscription = \DB::table('sub_services')->whereIn('provision_type', ['pbx_extension', 'sip_trunk'])->where('status', '!=', 'Deleted')->where('account_id', $account->id)->count();
     //check if invoice includes extensions
     $invoice_includes_extensions = false;
-    if (! $extension_subscription && $invoice_id > 0) {
+    if (!$extension_subscription && $invoice_id > 0) {
         $pbx_extension_product_ids = get_activation_type_product_ids('pbx_extension');
         $lines = \DB::table('sub_activations')->where('invoice_id', $invoice_id)->get();
         foreach ($lines as $l) {
@@ -238,8 +238,8 @@ function provision_pbx_extension_default($account, $invoice_id = 0)
         }
     }
 
-    if (! $extension_subscription && ! $invoice_includes_extensions) {
-        $sub = new ErpSubs;
+    if (!$extension_subscription && !$invoice_includes_extensions) {
+        $sub = new ErpSubs();
         //CREATE DEFAULT EXTENSION
         $extension_info = pbx_add_extension($account);
 
@@ -262,15 +262,15 @@ function provision_pbx_extension_default($account, $invoice_id = 0)
 
 function provision_pbx_extension($provision, $input, $customer, $product)
 {
-    if (! empty($input['mobile_app_number'])) {
+    if (!empty($input['mobile_app_number'])) {
         $check = check_mobile_app_number_extension($input['mobile_app_number']);
-        if (! empty($check)) {
+        if (!empty($check)) {
             return $check;
         }
     }
     if (empty($customer->pabx_domain)) {
         $pbx_domain = pbx_create_domain_company_name($customer);
-        if (! $pbx_domain) {
+        if (!$pbx_domain) {
             return 'PBX add failed. DNS create failed on '.__FUNCTION__;
         }
 
@@ -287,7 +287,7 @@ function provision_pbx_extension($provision, $input, $customer, $product)
     }
     update_caller_id($customer->domain_uuid, $provision->invoice_id);
     $ext = \DB::connection('pbx')->table('v_extensions')->where('extension', $extension_info['extension'])->where('domain_uuid', $customer->domain_uuid)->get()->first();
-    if (! empty($input['mobile_app_number'])) {
+    if (!empty($input['mobile_app_number'])) {
         set_mobile_app_number_extension($customer->id, $input['mobile_app_number'], $extension_info['extension']);
     }
 
@@ -299,9 +299,9 @@ function provision_pbx_extension($provision, $input, $customer, $product)
 
 function provision_sip_trunk($provision, $input, $customer, $product)
 {
-    if (! empty($input['mobile_app_number'])) {
+    if (!empty($input['mobile_app_number'])) {
         $check = check_mobile_app_number_extension($input['mobile_app_number']);
-        if (! empty($check)) {
+        if (!empty($check)) {
             return $check;
         }
     }
@@ -309,7 +309,7 @@ function provision_sip_trunk($provision, $input, $customer, $product)
 
     if (empty($pbx_domain)) {
         $pbx_domain = pbx_create_domain_company_name($customer);
-        if (! $pbx_domain) {
+        if (!$pbx_domain) {
             'PBX add failed. DNS create failed on '.__FUNCTION__;
         }
 
@@ -326,11 +326,11 @@ function provision_sip_trunk($provision, $input, $customer, $product)
     }
     update_caller_id($customer->domain_uuid, $provision->invoice_id);
     $ext = \DB::connection('pbx')->table('v_extensions')->where('extension', $extension_info['extension'])->where('domain_uuid', $customer->domain_uuid)->get()->first();
-    if (! empty($input['mobile_app_number'])) {
+    if (!empty($input['mobile_app_number'])) {
         set_mobile_app_number_extension($customer->id, $input['mobile_app_number'], $extension_info['extension']);
     }
 
-    if (! empty($input['cidr'])) {
+    if (!empty($input['cidr'])) {
         pbx_add_cidr_extension($customer->id, $pbx_domain, $extension_info['extension'], $input['cidr']);
     }
 
@@ -345,7 +345,7 @@ function provision_pbx_extension_recording($provision, $input, $customer, $produ
 {
     if (empty($customer->pabx_domain)) {
         $pbx_domain = pbx_create_domain_company_name($customer);
-        if (! $pbx_domain) {
+        if (!$pbx_domain) {
             'PBX add failed. DNS create failed on '.__FUNCTION__;
         }
 
@@ -372,7 +372,7 @@ function provision_airtime_contract($provision, $input, $customer, $product)
 
     if (empty($customer->pabx_domain)) {
         $pbx_domain = pbx_create_domain_company_name($customer);
-        if (! $pbx_domain) {
+        if (!$pbx_domain) {
             'PBX add failed. DNS create failed on '.__FUNCTION__;
         }
 
@@ -415,7 +415,7 @@ function provision_airtime_contract($provision, $input, $customer, $product)
         ->where('account_id', $customer->id)->where('product_id', $product->id)
         ->where('status', '!=', 'Deleted')->pluck('id')->first();
 
-    if (! empty($subscription_id)) {
+    if (!empty($subscription_id)) {
         $current_usage_allocation = \DB::table('sub_services')
             ->where('account_id', $customer->id)->where('product_id', $product->id)
             ->where('status', '!=', 'Deleted')->pluck('usage_allocation')->first();
@@ -438,7 +438,7 @@ function provision_unlimited_channel($provision, $input, $customer, $product)
     // return 'Unavailable';
     if (empty($customer->pabx_domain)) {
         $pbx_domain = pbx_create_domain_company_name($customer);
-        if (! $pbx_domain) {
+        if (!$pbx_domain) {
             'PBX add failed. DNS create failed on '.__FUNCTION__;
         }
 
@@ -462,7 +462,7 @@ function provision_airtime_unlimited($provision, $input, $customer, $product)
     // return 'Unavailable';
     if (empty($customer->pabx_domain)) {
         $pbx_domain = pbx_create_domain_company_name($customer);
-        if (! $pbx_domain) {
+        if (!$pbx_domain) {
             'PBX add failed. DNS create failed on '.__FUNCTION__;
         }
 
@@ -492,7 +492,7 @@ function provision_airtime_prepaid($provision, $input, $customer, $product)
     }
     if (empty($customer->pabx_domain)) {
         $pbx_domain = pbx_create_domain_company_name($customer);
-        if (! $pbx_domain) {
+        if (!$pbx_domain) {
             'PBX add failed. DNS create failed on '.__FUNCTION__;
         }
 
@@ -505,7 +505,7 @@ function provision_airtime_prepaid($provision, $input, $customer, $product)
         $sip_count = \DB::table('sub_services')
             ->where('account_id', $customer->id)->where('provision_type', 'sip_trunk')->where('status', '!=', 'Deleted')
             ->count();
-        if (! $extension_count && ! $sip_count) {
+        if (!$extension_count && !$sip_count) {
             provision_pbx_extension_default($customer, $provision->invoice_id);
         }
     }
@@ -574,7 +574,7 @@ function provision_bulk_sms_prepaid($provision, $input, $customer, $product)
 
     $balance = 0;
 
-    if (! empty($sms_sub)) {
+    if (!empty($sms_sub)) {
         $balance = $sms_sub->current_usage;
     }
 
@@ -677,7 +677,7 @@ function provision_fibre($provision, $input, $customer, $product)
 
     $latlong_arr = explode(',', $input['strLatLong']);
 
-    $axxess = new Axxess;
+    $axxess = new Axxess();
 
     $available = $axxess->checkFibreAvailability($latlong_arr[0], $latlong_arr[1], $input['strAddress']);
 
@@ -687,13 +687,13 @@ function provision_fibre($provision, $input, $customer, $product)
 
     $available_products = '';
     foreach ($available->arrAvailableProvidersGuids as $provider) {
-        if ($provider->intPreOrder == 0 && ! empty($provider->guidNetworkProviderId)) {
+        if ($provider->intPreOrder == 0 && !empty($provider->guidNetworkProviderId)) {
             $guidProductId = \DB::table('isp_data_products')
                 ->where('guidNetworkProviderId', $provider->guidNetworkProviderId)
                 ->where('product_id', $provision->product_id)
                 ->where('status', 'Enabled')
                 ->pluck('guidProductId')->first();
-            if (! empty($guidProductId)) {
+            if (!empty($guidProductId)) {
                 $guidNetworkProviderId = $provider->guidNetworkProviderId;
             }
 
@@ -716,7 +716,7 @@ function provision_fibre($provision, $input, $customer, $product)
     if (empty($guidClientId)) {
         $client = $axxess->createClient($customer, $input);
 
-        if (! empty($client) && ! empty($client->guidClientId)) {
+        if (!empty($client) && !empty($client->guidClientId)) {
             $guidClientId = $client->guidClientId;
         }
         if (empty($guidClientId)) {
@@ -730,7 +730,7 @@ function provision_fibre($provision, $input, $customer, $product)
 
     if ($result->intCode != 200 || $result->strStatus != 'OK' || empty($result->arrServices) || empty($result->arrServices[0]) || empty($result->arrServices[0]->guidServiceId)) {
         debug_email('Error creating fibre service for '.$customer->company);
-        if (! empty($result->strMessage) && ! empty($result->intCode)) {
+        if (!empty($result->strMessage) && !empty($result->intCode)) {
             return 'Axxess error code:'.$result->intCode.': '.$result->strMessage;
         } else {
             return 'Error creating fibre service';
@@ -741,7 +741,7 @@ function provision_fibre($provision, $input, $customer, $product)
 
     $fibre_details = $axxess->getServiceDetails($guidClientId, $guidServiceId, $guidNetworkProviderId, true);
 
-    if (empty($fibre_details) || ! is_array($fibre_details)) {
+    if (empty($fibre_details) || !is_array($fibre_details)) {
         return 'Failed to set fibre account.';
     }
     $table_data = $fibre_details;
@@ -764,17 +764,17 @@ function provision_fibre_addon($provision, $input, $customer, $product)
 
 function provision_sitebuilderaddon($provision, $input, $customer, $product)
 {
-    $domain_name = (! empty($input['domain_name'])) ? strtolower($input['domain_name']) : '';
+    $domain_name = (!empty($input['domain_name'])) ? strtolower($input['domain_name']) : '';
     if (empty($domain_name)) {
         return 'Please select a domain';
     }
 
-    $ix = new Interworx;
+    $ix = new Interworx();
     $ix->setDomain($domain_name);
     $ix->installSitebuilder();
 
     $ftp = $ix->siteBuilderFTP();
-    if (! $ftp) {
+    if (!$ftp) {
         return 'Interworx create error';
     }
 
@@ -911,18 +911,18 @@ function provision_sitebuilder($provision, $input, $customer, $product)
 function provision_hosting($provision, $input, $customer, $product)
 {
     // aa('provision_hosting');
-    $domain_name = (! empty($input['domain_name'])) ? strtolower($input['domain_name']) : '';
+    $domain_name = (!empty($input['domain_name'])) ? strtolower($input['domain_name']) : '';
     $domain_name = str_replace([' ', 'www.', 'http://', 'https://'], '', $domain_name);
-    $domain_action = (! empty($input['domain_action'])) ? ucfirst($input['domain_action']) : '';
-    $domain_epp = (! empty($input['domain_epp'])) ? ucfirst($input['domain_epp']) : '';
-    $email_address_1 = (! empty($input['email_address_1'])) ? strtolower($input['email_address_1']) : '';
-    $email_address_2 = (! empty($input['email_address_2'])) ? strtolower($input['email_address_2']) : '';
-    $email_address_3 = (! empty($input['email_address_3'])) ? strtolower($input['email_address_3']) : '';
-    $email_password_1 = (! empty($input['email_password_1'])) ? strtolower($input['email_password_1']) : '';
-    $email_password_2 = (! empty($input['email_password_2'])) ? strtolower($input['email_password_2']) : '';
-    $email_password_3 = (! empty($input['email_password_3'])) ? strtolower($input['email_password_3']) : '';
-    $ftp_account = (! empty($input['ftp_account'])) ? strtolower($input['ftp_account']) : '';
-    $ftp_password = (! empty($input['ftp_password'])) ? strtolower($input['ftp_password']) : '';
+    $domain_action = (!empty($input['domain_action'])) ? ucfirst($input['domain_action']) : '';
+    $domain_epp = (!empty($input['domain_epp'])) ? ucfirst($input['domain_epp']) : '';
+    $email_address_1 = (!empty($input['email_address_1'])) ? strtolower($input['email_address_1']) : '';
+    $email_address_2 = (!empty($input['email_address_2'])) ? strtolower($input['email_address_2']) : '';
+    $email_address_3 = (!empty($input['email_address_3'])) ? strtolower($input['email_address_3']) : '';
+    $email_password_1 = (!empty($input['email_password_1'])) ? strtolower($input['email_password_1']) : '';
+    $email_password_2 = (!empty($input['email_password_2'])) ? strtolower($input['email_password_2']) : '';
+    $email_password_3 = (!empty($input['email_password_3'])) ? strtolower($input['email_password_3']) : '';
+    $ftp_account = (!empty($input['ftp_account'])) ? strtolower($input['ftp_account']) : '';
+    $ftp_password = (!empty($input['ftp_password'])) ? strtolower($input['ftp_password']) : '';
 
     if (empty($domain_name) || empty($domain_action)) {
         return 'Fill required inputs';
@@ -941,11 +941,11 @@ function provision_hosting($provision, $input, $customer, $product)
 
     if ($customer->id != 12) {
         $supported_tld = valid_tld($domain_name);
-        if (! $supported_tld) {
+        if (!$supported_tld) {
             return 'Tld not supported';
         }
     }
-    if ($domain_action == 'Transfer') {
+    if ('Transfer' == $domain_action) {
         if (str_ends_with($domain_name, '.com') || str_ends_with($domain_name, '.net') || str_ends_with($domain_name, '.org')) {
             if (empty($domain_epp)) {
                 return 'EPP key required';
@@ -953,7 +953,7 @@ function provision_hosting($provision, $input, $customer, $product)
         }
     }
 
-    if ($domain_action == 'Register') {
+    if ('Register' == $domain_action) {
         $available = domain_available($domain_name);
         if ($available == 'Premium') {
             return 'Premium domain names cannot be ordered.';
@@ -980,49 +980,49 @@ function provision_hosting($provision, $input, $customer, $product)
         'server' => 'host2',
         'hosted' => 1,
     ];
-    if ($domain_action == 'Register') {
+    if ('Register' == $domain_action) {
         $table_data['to_register'] = 1;
-    } elseif ($domain_action == 'Transfer') {
+    } elseif ('Transfer' == $domain_action) {
         $table_data['transfer_in'] = 1;
     }
     $result = siteworx_register($domain_name, $product->provision_package, $customer->id);
 
-    if (! empty($email_address_1)) {
-        if (! str_contains($email_address_1, '@'.$domain_name)) {
+    if (!empty($email_address_1)) {
+        if (!str_contains($email_address_1, '@'.$domain_name)) {
             return 'Email address 1 needs to include @'.$domain_name;
         }
 
         if (empty($email_password_1) || strlen($email_password_1) < 6) {
             return 'Email password 1 needs to be atleast 6 characters.';
-            $result = (new \Interworx)->setServer('host2')->setDomain($domain_name)->createEmail($email_address_1, $email_password_1);
+            $result = (new \Interworx())->setServer('host2')->setDomain($domain_name)->createEmail($email_address_1, $email_password_1);
         }
     }
 
-    if (! empty($email_address_2)) {
-        if (! str_contains($email_address_2, '@'.$domain_name)) {
+    if (!empty($email_address_2)) {
+        if (!str_contains($email_address_2, '@'.$domain_name)) {
             return 'Email address 2 needs to include @'.$domain_name;
         }
         if (empty($email_password_2) || strlen($email_password_2) < 6) {
             return 'Email password 2 needs to be atleast 6 characters.';
-            $result = (new \Interworx)->setServer('host2')->setDomain($domain_name)->createEmail($email_address_2, $email_password_2);
+            $result = (new \Interworx())->setServer('host2')->setDomain($domain_name)->createEmail($email_address_2, $email_password_2);
         }
     }
 
-    if (! empty($email_address_3)) {
-        if (! str_contains($email_address_3, '@'.$domain_name)) {
+    if (!empty($email_address_3)) {
+        if (!str_contains($email_address_3, '@'.$domain_name)) {
             return 'Email address 3 needs to include @'.$domain_name;
         }
         if (empty($email_password_3) || strlen($email_password_3) < 6) {
             return 'Email password 3 needs to be atleast 6 characters.';
-            $result = (new \Interworx)->setServer('host2')->setDomain($domain_name)->createEmail($email_address_3, $email_password_3);
+            $result = (new \Interworx())->setServer('host2')->setDomain($domain_name)->createEmail($email_address_3, $email_password_3);
         }
     }
 
-    if (! empty($ftp_account)) {
+    if (!empty($ftp_account)) {
         $ftp_account = str_replace('@'.$domain_name, '', $ftp_account);
         if (empty($ftp_password) || strlen($ftp_password) < 6) {
             return 'FTP password needs to be atleast 6 characters.';
-            $result = (new \Interworx)->setServer('host2')->setDomain($domain_name)->createFtp($ftp_account, $ftp_password);
+            $result = (new \Interworx())->setServer('host2')->setDomain($domain_name)->createFtp($ftp_account, $ftp_password);
         }
     }
 
@@ -1052,14 +1052,13 @@ function provision_number_porting_deactivation($provision, $input, $customer, $p
     }
 
     $exists = \DB::connection('pbx')->table('p_phone_numbers')->where('number', $sub->detail)->count();
-    if (! $exists) {
+    if (!$exists) {
         return 'Number not found';
     }
     $deleted_at = date('Y-m-d H:i:s');
     $num = \DB::connection('pbx')->table('p_phone_numbers')->where('number', $sub->detail)->get()->first();
     \DB::table('sub_services')->where('id', $sub->id)->where('status', '!=', 'Deleted')->update(['status' => 'Deleted', 'deleted_at' => $deleted_at]);
     \DB::connection('pbx')->table('p_phone_numbers')->where('number', $sub->detail)->update(['domain_uuid' => null, 'status' => 'Deleted', 'deleted_at' => $deleted_at, 'number_routing' => null, 'routing_type' => null]);
-
     // \DB::connection('pbx')->table('p_phone_numbers')->where('number', $sub->detail)->delete();
     return ['detail' => $sub->detail];
 }
@@ -1121,11 +1120,11 @@ function provision_ip_range_gateway($provision, $input, $customer, $product)
         'renew' => 1,
         //'is_test'=>0,
     ];
-    if (! empty($input['loa_as_number'])) {
+    if (!empty($input['loa_as_number'])) {
         $data['loa_as_number'] = $input['loa_as_number'];
     }
 
-    if (! empty($input['gateway'])) {
+    if (!empty($input['gateway'])) {
         $data['gateway'] = $input['gateway'];
     }
 
@@ -1194,17 +1193,17 @@ function provision_ip_range_route($provision, $input, $customer, $product)
         'type' => 'Route Object',
         'ip_range' => $input['ip_address'],
         'renew' => 1,
-        // 'is_test'=>0,
+       // 'is_test'=>0,
     ];
 
-    if (! empty($input['loa_as_number'])) {
+    if (!empty($input['loa_as_number'])) {
         $data['loa_as_number'] = $input['loa_as_number'];
     }
 
-    if (! empty($input['loa_company'])) {
+    if (!empty($input['loa_company'])) {
         $data['loa_company'] = $input['loa_company'];
     }
-    if (! empty($input['gateway'])) {
+    if (!empty($input['gateway'])) {
         $data['gateway'] = $input['gateway'];
     }
 
@@ -1218,12 +1217,12 @@ function provision_ip_range_route($provision, $input, $customer, $product)
 
 function provision_telkom_lte_sim_card($provision, $input, $customer, $product)
 {
-    $axxess = new Axxess;
+    $axxess = new Axxess();
     $guidClientId = \DB::table('crm_accounts')->where('id', $customer->id)->pluck('guidClientId')->first();
     if (empty($guidClientId)) {
         $client = $axxess->createClient($customer, $input);
 
-        if (! empty($client) && ! empty($client->guidClientId)) {
+        if (!empty($client) && !empty($client->guidClientId)) {
             $guidClientId = $client->guidClientId;
         }
         if (empty($guidClientId)) {
@@ -1247,12 +1246,12 @@ function provision_telkom_lte_sim_card($provision, $input, $customer, $product)
 
     if ($result->intCode != 200) {
         $err = 'Error creating telkom lte service for '.$customer->company;
-        if (! empty($result->strMessage)) {
+        if (!empty($result->strMessage)) {
             $err .= PHP_EOL.$result->strMessage;
         }
 
         debug_email($err);
-        if (! empty($result->strMessage) && ! empty($result->intCode)) {
+        if (!empty($result->strMessage) && !empty($result->intCode)) {
             return 'Axxess error code:'.$result->intCode.': '.$result->strMessage;
         } else {
             return 'Error creating telkom lte service';
@@ -1301,12 +1300,12 @@ function provision_telkom_lte_sim_card($provision, $input, $customer, $product)
 
 function provision_mtn_lte_sim_card($provision, $input, $customer, $product)
 {
-    $axxess = new Axxess;
+    $axxess = new Axxess();
     $guidClientId = \DB::table('crm_accounts')->where('id', $customer->id)->pluck('guidClientId')->first();
     if (empty($guidClientId)) {
         $client = $axxess->createClient($customer, $input);
 
-        if (! empty($client) && ! empty($client->guidClientId)) {
+        if (!empty($client) && !empty($client->guidClientId)) {
             $guidClientId = $client->guidClientId;
         }
         if (empty($guidClientId)) {
@@ -1331,12 +1330,12 @@ function provision_mtn_lte_sim_card($provision, $input, $customer, $product)
 
     if ($result->intCode != 200) {
         $err = 'Error creating mtn lte service for '.$customer->company;
-        if (! empty($result->strMessage)) {
+        if (!empty($result->strMessage)) {
             $err .= PHP_EOL.$result->strMessage;
         }
 
         debug_email($err);
-        if (! empty($result->strMessage) && ! empty($result->intCode)) {
+        if (!empty($result->strMessage) && !empty($result->intCode)) {
             return 'Axxess error code:'.$result->intCode.': '.$result->strMessage;
         } else {
             return 'Error creating mtn lte service';
@@ -1385,12 +1384,13 @@ function provision_mtn_lte_sim_card($provision, $input, $customer, $product)
 
 function provision_mtn5g_lte_sim_card($provision, $input, $customer, $product)
 {
-    $axxess = new Axxess;
+    return true;
+    $axxess = new Axxess();
     $guidClientId = \DB::table('crm_accounts')->where('id', $customer->id)->pluck('guidClientId')->first();
     if (empty($guidClientId)) {
         $client = $axxess->createClient($customer, $input);
 
-        if (! empty($client) && ! empty($client->guidClientId)) {
+        if (!empty($client) && !empty($client->guidClientId)) {
             $guidClientId = $client->guidClientId;
         }
         if (empty($guidClientId)) {
@@ -1411,16 +1411,16 @@ function provision_mtn5g_lte_sim_card($provision, $input, $customer, $product)
         return 'LTE product not linked with provider product.';
     }
 
-    $result = $axxess->purchaseMtn5GService($guidClientId, $guidProductId, $simcard_product->guidServiceId, $input['strLatLon'], $input['strAddress'], $input['strSuburb'], $input['strCity'], $input['strCode'], $input['strProvince']);
+    $result = $axxess->purchaseMtn5GService($guidClientId, $guidProductId, $simcard_product->guidServiceId, $input['strLatLong'], $input['Street'], $input['strSuburb'], $input['strCity'], $input['strCode'], $input['strProvince']);
 
     if ($result->intCode != 200) {
         $err = 'Error creating mtn lte service for '.$customer->company;
-        if (! empty($result->strMessage)) {
+        if (!empty($result->strMessage)) {
             $err .= PHP_EOL.$result->strMessage;
         }
 
         debug_email($err);
-        if (! empty($result->strMessage) && ! empty($result->intCode)) {
+        if (!empty($result->strMessage) && !empty($result->intCode)) {
             return 'Axxess error code:'.$result->intCode.': '.$result->strMessage;
         } else {
             return 'Error creating mtn lte service';
@@ -1501,28 +1501,28 @@ function provision_telkom_lte_topup($provision, $input, $customer, $product)
 
 function update_caller_id($domain_uuid, $invoice_id = false)
 {
-    $sub = new ErpSubs;
+    $sub = new ErpSubs();
 
     $d = \DB::connection('pbx')->table('v_domains')
-        ->where('domain_uuid', $domain_uuid)
-        ->where('cost_calculation', '!=', 'volume')
-        ->where('domain_name', '!=', '156.0.96.60')
-        ->where('domain_name', '!=', '156.0.96.69')
-        ->get()->first();
+    ->where('domain_uuid', $domain_uuid)
+    ->where('cost_calculation', '!=', 'volume')
+    ->where('domain_name', '!=', '156.0.96.60')
+    ->where('domain_name', '!=', '156.0.96.69')
+    ->get()->first();
 
     // UNALLOCATE AUTO PROVISIONED 087
     $geo_phone_numbers = \DB::connection('pbx')->table('p_phone_numbers')
-        ->where('status', 'Enabled')
-        ->where('domain_uuid', $d->domain_uuid)
-        ->where('number', 'NOT LIKE', '2787%')
-        ->count();
+    ->where('status', 'Enabled')
+    ->where('domain_uuid', $d->domain_uuid)
+    ->where('number', 'NOT LIKE', '2787%')
+    ->count();
     if ($geo_phone_numbers) {
         $subs = \DB::connection('default')->table('sub_services')
-            ->where('auto_allocated', 1)
-            ->where('product_id', 127)
-            ->where('account_id', $d->account_id)
-            ->where('status', '!=', 'Deleted')
-            ->get();
+        ->where('auto_allocated', 1)
+        ->where('product_id', 127)
+        ->where('account_id', $d->account_id)
+        ->where('status', '!=', 'Deleted')
+        ->get();
         foreach ($subs as $s) {
             pbxnumbers_unallocate($s->detail);
         }
@@ -1539,8 +1539,8 @@ function update_caller_id($domain_uuid, $invoice_id = false)
     }
 
     $allocated = \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid', $d->domain_uuid)->where('status', 'Enabled')->count();
-    if (! $allocated) {
-        if (! $invoice_has_number) {
+    if (!$allocated) {
+        if (!$invoice_has_number) {
             $gateway_uuids = \DB::connection('pbx')->table('v_gateways')->where('allow_provision_numbers', 1)->pluck('gateway_uuid')->toArray();
             $phone_number = \DB::connection('pbx')->table('p_phone_numbers')->where('status', 'Enabled')
                 ->select('number', 'prefix')
@@ -1548,7 +1548,7 @@ function update_caller_id($domain_uuid, $invoice_id = false)
                 ->where('number', 'LIKE', '2787%')->whereNull('domain_uuid')
                 ->whereIn('gateway_uuid', $gateway_uuids)
                 ->orderby('number')->pluck('number')->first();
-            if (! empty($phone_number)) {
+            if (!empty($phone_number)) {
                 pbx_add_number($d->domain_name, $phone_number);
                 $sub->createSubscription($d->account_id, 127, $phone_number);
                 \DB::connection('default')->table('sub_services')->where('detail', $phone_number)->update(['auto_allocated' => 1]);
@@ -1571,25 +1571,26 @@ function update_caller_id($domain_uuid, $invoice_id = false)
 
 function update_all_caller_ids($domain_uuid = false)
 {
-    $sub = new ErpSubs;
+    $sub = new ErpSubs();
 
     if ($domain_uuid) {
         $domains = \DB::connection('pbx')->table('v_domains')
-            ->where('domain_uuid', $domain_uuid)
-            ->where('cost_calculation', '!=', 'volume')
-            ->where('domain_name', '!=', '156.0.96.60')
-            ->where('domain_name', '!=', '156.0.96.69')
-            ->get();
+        ->where('domain_uuid', $domain_uuid)
+        ->where('cost_calculation', '!=', 'volume')
+        ->where('domain_name', '!=', '156.0.96.60')
+        ->where('domain_name', '!=', '156.0.96.69')
+        ->get();
     } else {
         $domains = \DB::connection('pbx')->table('v_domains')
-            ->where('cost_calculation', '!=', 'volume')
-            ->where('domain_name', '!=', '156.0.96.60')
-            ->where('domain_name', '!=', '156.0.96.69')->get();
+        ->where('cost_calculation', '!=', 'volume')
+
+        ->where('domain_name', '!=', '156.0.96.60')
+        ->where('domain_name', '!=', '156.0.96.69')->get();
     }
 
     foreach ($domains as $d) {
         $allocated = \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid', $d->domain_uuid)->where('status', 'Enabled')->count();
-        if (! $allocated) {
+        if (!$allocated) {
             $gateway_uuids = \DB::connection('pbx')->table('v_gateways')->where('allow_provision_numbers', 1)->pluck('gateway_uuid')->toArray();
             $phone_number = \DB::connection('pbx')->table('p_phone_numbers')->where('status', 'Enabled')
                 ->select('number', 'prefix')
@@ -1597,7 +1598,7 @@ function update_all_caller_ids($domain_uuid = false)
                 ->whereIn('gateway_uuid', $gateway_uuids)
                 ->where('is_spam', 0)
                 ->orderby('number')->pluck('number')->first();
-            if (! empty($phone_number)) {
+            if (!empty($phone_number)) {
                 pbx_add_number($d->domain_name, $phone_number);
                 $sub_id = $sub->createSubscription($d->account_id, 127, $phone_number);
                 \DB::connection('default')->table('sub_services')->where('id', $sub_id)->update(['auto_allocated' => 1]);
@@ -1618,7 +1619,7 @@ function update_all_caller_ids($domain_uuid = false)
 function provision_products_monthly($provision, $input, $customer, $product)
 {
     $sub = \DB::table('sub_activations')->where('id', $provision->id)->get()->first();
-    if (! $sub->printed) {
+    if (!$sub->printed) {
         return json_alert('Invoice needs to be printed.', 'warning');
     }
     if (empty($sub->pod_file)) {
@@ -1635,7 +1636,7 @@ function provision_products_monthly($provision, $input, $customer, $product)
         $new_detail = $detail.'_'.$i;
         $activation_detail_exists = \DB::table('sub_activations')->where('detail', $new_detail)->get()->first();
         $detail_exists = \DB::table('sub_services')->where('detail', $new_detail)->get()->first();
-        $i++;
+        ++$i;
     }
     if ($new_detail) {
         $detail = $new_detail;
@@ -1653,10 +1654,10 @@ function provision_iptv_trial($provision, $input, $customer, $product)
      $iptv_account = \DB::table('isp_data_iptv')->where('id',$input['iptv_id'])->get()->first();
     */
     $iptv_account = \DB::table('isp_data_iptv')
-        ->where('trial', 1)
-        ->where('product_id', $provision->product_id)
-        ->where('subscription_id', 0)
-        ->get()->first();
+    ->where('trial', 1)
+    ->where('product_id', $provision->product_id)
+    ->where('subscription_id', 0)
+    ->get()->first();
 
     if (empty($iptv_account)) {
         return 'Activation requires iptv line for '.$product->code.' '.$product->id.', please renew an expired line or create a new trial line.';
@@ -1726,11 +1727,12 @@ function provision_iptv($provision, $input, $customer, $product)
      $iptv_account = \DB::table('isp_data_iptv')->where('id',$input['iptv_id'])->get()->first();
     */
     $iptv_account = \DB::table('isp_data_iptv')
-        ->where('trial', 0)
-        ->where('subscription_status', 'Enabled')
-        ->where('product_id', $provision->product_id)
-        ->where('subscription_id', 0)
-        ->get()->first();
+    ->where('trial', 0)
+    ->where('product_id', $provision->product_id)
+    ->where('subscription_status', 'Deleted')
+    ->where('easypanel_status', 'Enabled')
+    ->get()->first();
+
     if (empty($iptv_account)) {
         return 'Activation requires iptv line for '.$product->code.', please renew an expired line or create a new line.';
     }
@@ -1775,7 +1777,7 @@ function provision_airtime_postpaid($provision, $input, $customer, $product)
     }
     if (empty($customer->pabx_domain)) {
         $pbx_domain = pbx_create_domain_company_name($customer);
-        if (! $pbx_domain) {
+        if (!$pbx_domain) {
             'PBX add failed. DNS create failed on '.__FUNCTION__;
         }
 
@@ -1788,7 +1790,7 @@ function provision_airtime_postpaid($provision, $input, $customer, $product)
         $sip_count = \DB::table('sub_services')
             ->where('account_id', $customer->id)->where('provision_type', 'sip_trunk')->where('status', '!=', 'Deleted')
             ->count();
-        if (! $extension_count && ! $sip_count) {
+        if (!$extension_count && !$sip_count) {
             provision_pbx_extension_default($customer, $provision->invoice_id);
         }
     }

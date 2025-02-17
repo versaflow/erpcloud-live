@@ -3,24 +3,22 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\DatabaseNotification;
+
 
 class ErpNotification extends Notification
 {
     use Queueable;
-
-    protected $table = 'notifications';
-
+    protected $table = "notifications";
+    
     public $reference;
-
     public $title;
-
     public $message;
-
     public $link;
-
     public $type;
-
     public $extra_data;
 
     public function __construct($reference, $title, $message, $link = '', $extra_data = [])
@@ -29,10 +27,10 @@ class ErpNotification extends Notification
         $this->title = $title;
         $this->message = $message;
         $this->link = $link;
-        if (count($extra_data) > 0) {
-            $this->extra_data = $extra_data;
+        if(count($extra_data) > 0 ){
+        $this->extra_data = $extra_data;
         }
-
+       
     }
 
     public function toDatabase($notifiable)
@@ -43,15 +41,17 @@ class ErpNotification extends Notification
             'message' => $this->message,
             'link' => $this->link,
         ];
-        if (! empty($this->extra_data) && is_array($this->extra_data) && count($this->extra_data) > 0) {
-            foreach ($this->extra_data as $k => $v) {
+        if(!empty($this->extra_data) && is_array($this->extra_data) && count($this->extra_data) > 0){
+            foreach($this->extra_data as $k => $v){
                 $data[$k] = $v;
             }
         }
-
+   
         return $data;
     }
-
+    
+    
+    
     /**
      * Get the notification's delivery channels.
      *
@@ -60,6 +60,6 @@ class ErpNotification extends Notification
      */
     public function via($notifiable)
     {
-        return [CustomNotification::class];
+       return [CustomNotification::class];
     }
 }

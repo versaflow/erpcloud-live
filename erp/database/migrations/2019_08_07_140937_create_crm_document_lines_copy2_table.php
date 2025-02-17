@@ -25,6 +25,7 @@ class CreateCrmDocumentLinesCopy2Table extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

@@ -35,6 +35,7 @@ class CreateIspPbxExtensionsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

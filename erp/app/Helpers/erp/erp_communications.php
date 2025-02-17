@@ -1,19 +1,18 @@
 <?php
 
-function schedule_delete_communication_history()
-{
+function schedule_delete_communication_history(){
     //monthly 1st
-    \DB::table('erp_communication_lines')->where('created_at', '<', date('Y-m-d', strtotime('-6 months')))->delete();
-    \DB::table('erp_call_history')->where('created_at', '<', date('Y-m-d', strtotime('-6 months')))->delete();
+   \DB::table('erp_communication_lines')->where('created_at','<',date('Y-m-d',strtotime('-6 months')))->delete();
+   \DB::table('erp_call_history')->where('created_at','<',date('Y-m-d',strtotime('-6 months')))->delete();
 }
 
 function aftersave_set_account_notes($request)
 {
     if ($request->type == 'note') {
         $note = date('Y-m-d H:i').' '.$request->subject;
-        \DB::table('crm_accounts')->where('id', $request->account_id)->update(['notes' => $note]);
+        \DB::table('crm_accounts')->where('id', $request->account_id)->update(['notes'=>$note]);
     }
-    \DB::table('erp_communication_lines')->where('id', $request->id)->update(['success' => 1]);
+    \DB::table('erp_communication_lines')->where('id', $request->id)->update(['success'=>1]);
 }
 
 function button_communications_view($request)
@@ -23,15 +22,15 @@ function button_communications_view($request)
     if ($table == 'crm_accounts') {
         return Redirect::to($menu_name.'?account_id='.$request->id);
     } else {
-        $conn = \DB::connection('default')->table('erp_cruds')->where('db_table', $table)->pluck('connection')->first();
+        $conn =  \DB::connection('default')->table('erp_cruds')->where('db_table', $table)->pluck('connection')->first();
         $account_id = \DB::connection($conn)->table($table)->where('id', $request->id)->pluck('account_id')->first();
-        if (! $account_id) {
+        if (!$account_id) {
             return json_alert('Invalid Account Id', 'error');
         }
-
         return Redirect::to($menu_name.'?account_id='.$account_id);
     }
 }
+
 
 function button_communications_add($request)
 {
@@ -40,12 +39,11 @@ function button_communications_add($request)
     if ($table == 'crm_accounts') {
         return Redirect::to($menu_name.'/edit?account_id='.$request->id);
     } else {
-        $conn = \DB::connection('default')->table('erp_cruds')->where('db_table', $table)->pluck('connection')->first();
+        $conn =  \DB::connection('default')->table('erp_cruds')->where('db_table', $table)->pluck('connection')->first();
         $account_id = \DB::connection($conn)->table($table)->where('id', $request->id)->pluck('account_id')->first();
-        if (! $account_id) {
+        if (!$account_id) {
             return json_alert('Invalid Account Id', 'error');
         }
-
         return Redirect::to($menu_name.'/edit?account_id='.$account_id);
     }
 }
@@ -56,7 +54,6 @@ function button_communications_edit_template($request)
     if (empty($email->email_id)) {
         return json_alert('No template id set for this email', 'warning');
     }
-
     return Redirect::to('/bee?id='.$email->email_id);
 }
 
@@ -71,26 +68,27 @@ function button_communications_view_email($request)
 
     $view .= '<div class="col">';
 
-    if (! empty($email->created_at)) {
+
+    if (!empty($email->created_at)) {
         $view .= '<div class="row mb-2"><div class="col-3"><b>Date Sent</b></div><div class="col">'.$email->created_at.'</div></div>';
     }
 
-    if (! empty($email->source)) {
+    if (!empty($email->source)) {
         $view .= '<div class="row mb-2"><div class="col-3"><b>From Address</b></div><div class="col">'.$email->source.'</div></div>';
     }
-    if (! empty($email->subject)) {
+    if (!empty($email->subject)) {
         $view .= '<div class="row mb-2"><div class="col-3"><b>Subject</b></div><div class="col">'.$email->subject.'</div></div>';
     }
 
-    if (! empty($email->destination)) {
+    if (!empty($email->destination)) {
         $view .= '<div class="row mb-2"><div class="col-3"><b>To Address</b></div><div class="col">'.$email->destination.'</div></div>';
     }
 
-    if (! empty($email->cc_email)) {
+    if (!empty($email->cc_email)) {
         $view .= '<div class="row mb-2"><div class="col-3"><b>CC Address</b></div><div class="col">'.$email->cc_email.'</div></div>';
     }
 
-    if (! empty($email->bcc_email)) {
+    if (!empty($email->bcc_email)) {
         $view .= '<div class="row mb-2"><div class="col-3"><b>BCC Address</b></div><div class="col">'.$email->bcc_email.'</div></div>';
     }
 
@@ -107,6 +105,7 @@ function button_communications_view_email($request)
 
     $view .= '</div>';
 
+
     $view .= '<div class="card-body border-top">';
     $view .= $email->message;
 
@@ -116,6 +115,10 @@ function button_communications_view_email($request)
     echo $view;
 }
 
+
+
+
+
 function button_communications_view_stats($request)
 {
     $type = \DB::table('erp_communications')->where('id', $request->id)->pluck('type')->first();
@@ -124,12 +127,12 @@ function button_communications_view_stats($request)
     } else {
         $url = get_menu_url_from_table('erp_communication_lines');
     }
-
     return redirect()->to($url.'?communication_id='.$request->id);
 }
 
 function schedule_update_communications_headers()
 {
+   
 
     $emails = \DB::table('erp_communication_lines')
         ->selectRaw("*,DATE_FORMAT(created_at,'%Y-%m-%d') as created_date")
@@ -190,7 +193,7 @@ function schedule_update_communications_headers()
         $sms_ids = \DB::table('isp_sms_messages')->where('queuetime', 'like', $email->created_date.'%')->where('email_id', $email->email_id)->pluck('id')->toArray();
         $success_count = \DB::table('isp_sms_message_queue')->whereIn('isp_sms_messages_id', $sms_ids)->where('status', 'Delivered')->count();
         $error_count = \DB::table('isp_sms_message_queue')->whereIn('isp_sms_messages_id', $sms_ids)->where('status', '!=', 'Delivered')->count();
-        $send_count = \DB::table('isp_sms_message_queue')->whereIn('isp_sms_messages_id', $sms_ids)->count();
+        $send_count =\DB::table('isp_sms_message_queue')->whereIn('isp_sms_messages_id', $sms_ids)->count();
         $data = [
             'subject' => substr($sms->message, 0, 100).'...',
             'type' => 'sms',

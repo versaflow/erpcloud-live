@@ -12,14 +12,12 @@ class ApiCurl
     public function setUrl($url)
     {
         $this->service_url = $url;
-
         return $this;
     }
 
     protected function setCurlParams($endpoint, $args, $method)
     {
-        $endpoint_url = $this->service_url.$endpoint;
-
+        $endpoint_url = $this->service_url . $endpoint;
         return ['endpoint_url' => $endpoint_url, 'args' => $args];
     }
 
@@ -48,6 +46,7 @@ class ApiCurl
                 aa($method);
                 aa($args);
             }
+
 
             if ($method == 'post') {
                 $api_request = ApiRequest::post($url);
@@ -87,15 +86,13 @@ class ApiCurl
                 exception_log($response);
             }
 
-            if (! empty($response->body)) {
+            if (!empty($response->body)) {
                 return $response->body;
             } else {
                 return (object) ['intCode' => $response->code];
             }
-
             return $response;
-        } catch (\Throwable $ex) {
-            exception_log($ex);
+        } catch (\Throwable $ex) {  exception_log($ex);
             if ($this->debug == 'output') {
             }
 
@@ -106,8 +103,8 @@ class ApiCurl
         }
     }
 
-    protected function buildUrl($url, $data = [])
+    protected function buildUrl($url, $data = array())
     {
-        return $url.(empty($data) ? '' : '?'.http_build_query($data));
+        return $url . (empty($data) ? '' : '?' . http_build_query($data));
     }
 }

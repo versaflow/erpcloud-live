@@ -69,8 +69,8 @@
         $("#main-container").removeClass('d-none');
         $("#nav-container").removeClass('d-none');
         
-        // if(window['navbar_header'])
-        // window['navbar_header'].refresh();
+        if(window['navbar_header'])
+        window['navbar_header'].refresh();
         @if(!empty($grid_id))
         window['headertoolbar{{ $grid_id }}'].refresh();
         @endif

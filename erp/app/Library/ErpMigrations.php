@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Symfony\Component\Process\Process;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 
 class ErpMigrations
 {
@@ -10,9 +10,9 @@ class ErpMigrations
     {
         $migration = DB::table('erp_instance_migrations')->where('id', $id)->get()->first();
         $data = [
-            'table_name' => str_replace([' ', '-'], '_', strtolower($migration->table_name)),
-            'field_name' => str_replace([' ', '-'], '_', strtolower($migration->field_name)),
-            'new_name' => str_replace([' ', '-'], '_', strtolower($migration->new_name)),
+            'table_name'=> str_replace([' ','-'], '_', strtolower($migration->table_name)),
+            'field_name'=> str_replace([' ','-'], '_', strtolower($migration->field_name)),
+            'new_name'=> str_replace([' ','-'], '_', strtolower($migration->new_name)),
         ];
 
         DB::table('erp_instance_migrations')->where('id', $id)->update($data);
@@ -29,7 +29,7 @@ class ErpMigrations
         }
         $conns = $this->getInstanceConnections($migration);
         $this->remote_connection = false;
-        if (! in_array($migration->connection, $conns)) {
+        if (!in_array($migration->connection, $conns)) {
             $this->remote_connection = true;
         }
 
@@ -37,15 +37,16 @@ class ErpMigrations
             return json_alert('Table required', 'warning');
         }
 
-        if ($migration->action != 'table_add' && ! Schema::connection($migration->connection)->hasTable($migration->table_name)) {
+        if ('table_add' != $migration->action && !Schema::connection($migration->connection)->hasTable($migration->table_name)) {
             return 'Invalid connection, table does not exists';
         }
 
-        if (($migration->action == 'column_rename' || $migration->action == 'column_drop') && ! Schema::connection($migration->connection)->hasColumn($migration->table_name, $migration->field_name)) {
+        if (('column_rename' == $migration->action || 'column_drop' == $migration->action) && !Schema::connection($migration->connection)->hasColumn($migration->table_name, $migration->field_name)) {
             return 'Invalid connection, field does not exists';
         }
 
-        if ($migration->action == 'column_add') {
+
+        if ('column_add' == $migration->action) {
             if (empty($migration->field_name)) {
                 return json_alert('Field required', 'warning');
             }
@@ -53,7 +54,7 @@ class ErpMigrations
             $result = $this->addColumn($migration);
         }
 
-        if ($migration->action == 'column_type') {
+        if ('column_type' == $migration->action) {
             if (empty($migration->field_name)) {
                 return json_alert('Field required', 'warning');
             }
@@ -64,7 +65,7 @@ class ErpMigrations
             $result = $this->changeColumn($migration);
         }
 
-        if ($migration->action == 'column_rename') {
+        if ('column_rename' == $migration->action) {
             if (empty($migration->field_name)) {
                 return json_alert('Field required', 'warning');
             }
@@ -75,26 +76,26 @@ class ErpMigrations
             $result = $this->renameColumn($migration);
         }
 
-        if ($migration->action == 'column_drop') {
+        if ('column_drop' == $migration->action) {
             if (empty($migration->field_name)) {
                 return json_alert('Field required', 'warning');
             }
-
+            
             $result = $this->dropColumn($migration);
         }
 
-        if ($migration->action == 'table_add') {
+        if ('table_add' == $migration->action) {
             $result = $this->addTable($migration);
         }
 
-        if ($migration->action == 'table_rename') {
+        if ('table_rename' == $migration->action) {
             if (empty($migration->new_name)) {
                 return json_alert('New table name required', 'warning');
             }
             $result = $this->renameTable($migration);
         }
 
-        if ($migration->action == 'table_drop') {
+        if ('table_drop' == $migration->action) {
             $result = $this->dropTable($migration);
         }
 
@@ -103,24 +104,24 @@ class ErpMigrations
 
     private function getInstanceConnections($migration)
     {
-        if (is_main_instance() && ! $this->isCustomSchema($migration)) {
+        if (is_main_instance() && !$this->isCustomSchema($migration)) {
             $instance_connections = DB::table('erp_instances')->where('id', 1)->orWhere('sync_erp', 1)->pluck('db_connection')->toArray();
         } else {
             $instance_connections = ['default'];
         }
-
         return $instance_connections;
     }
 
     private function isCustomSchema($migration)
     {
-        $is_custom = (! empty($migration->custom)) ? 1 : 0;
+        $is_custom = (!empty($migration->custom)) ? 1 : 0;
+
 
         $main_instance = is_main_instance();
-        if (! $main_instance) {
+        if (!$main_instance) {
             $is_custom = true;
         }
-        if (! $is_custom) {
+        if (!$is_custom) {
             if (str_contains($migration->action, 'table')) {
                 $is_custom = DB::table('erp_custom_schema')
                     ->where('table_name', $migration->table_name)
@@ -146,13 +147,13 @@ class ErpMigrations
         $custom = $this->isCustomSchema($migration);
 
         if ($custom) {
-            if ($migration->action == 'column_add') {
+            if ('column_add' == $migration->action) {
                 $data = ['field_name' => $migration->field_name, 'table_name' => $migration->table_name, 'type' => 'column'];
                 DB::table('erp_custom_schema')
                     ->insert($data);
             }
 
-            if ($migration->action == 'column_rename') {
+            if ('column_rename' == $migration->action) {
                 $data = ['field_name' => $migration->new_name];
                 DB::table('erp_custom_schema')
                     ->where('table_name', $migration->table_name)
@@ -161,7 +162,7 @@ class ErpMigrations
                     ->update($data);
             }
 
-            if ($migration->action == 'column_drop') {
+            if ('column_drop' == $migration->action) {
                 DB::table('erp_custom_schema')
                     ->where('table_name', $migration->table_name)
                     ->where('field_name', $migration->field_name)
@@ -169,13 +170,13 @@ class ErpMigrations
                     ->delete();
             }
 
-            if ($migration->action == 'table_add') {
+            if ('table_add' == $migration->action) {
                 $data = ['table_name' => $migration->table_name, 'type' => 'table'];
                 DB::table('erp_custom_schema')
                     ->insert($data);
             }
 
-            if ($migration->action == 'table_rename') {
+            if ('table_rename' == $migration->action) {
                 $data = ['table_name' => $migration->new_name];
                 DB::table('erp_custom_schema')
                     ->where('table_name', $migration->table_name)
@@ -183,7 +184,7 @@ class ErpMigrations
                     ->update($data);
             }
 
-            if ($migration->action == 'table_drop') {
+            if ('table_drop' == $migration->action) {
                 DB::table('erp_custom_schema')
                     ->where('table_name', $migration->table_name)
                     ->where('type', 'table')
@@ -200,10 +201,10 @@ class ErpMigrations
         $error = '';
 
         $instance_connections = $this->getInstanceConnections($migration);
-        if (! empty($migration->success_result)) {
+        if (!empty($migration->success_result)) {
             $success = $migration->success_result;
         }
-        if (! empty($migration->error_result)) {
+        if (!empty($migration->error_result)) {
             $error = $migration->error_result;
         }
         foreach ($instance_connections as $conn) {
@@ -217,15 +218,16 @@ class ErpMigrations
                 $schema_conn = $conn;
             }
 
+
             try {
                 $currency_decimals = DB::table('erp_instances')->where('db_connection', $conn)->pluck('currency_decimals')->first();
                 if (empty($currency_decimals)) {
                     $currency_decimals = 2;
                 }
                 $migration->currency_decimals = 2;
-                if (Schema::connection($schema_conn)->hasTable($migration->table_name) && ! Schema::connection($schema_conn)->hasColumn($migration->table_name, $migration->field_name)) {
+                if (Schema::connection($schema_conn)->hasTable($migration->table_name) && !Schema::connection($schema_conn)->hasColumn($migration->table_name, $migration->field_name)) {
                     Schema::connection($schema_conn)->table($migration->table_name, function (Blueprint $table) use ($migration, $conn) {
-                        if ($migration->field_type == 'Text' || empty($migration->field_type)) {
+                        if ('Text' == $migration->field_type || empty($migration->field_type)) {
                             if (isset($migration->default_value)) {
                                 $table->text($migration->field_name, $length)->nullable()->default($migration->default_value);
                             } else {
@@ -233,7 +235,7 @@ class ErpMigrations
                             }
                         }
 
-                        if ($migration->field_type == 'longText') {
+                        if ('longText' == $migration->field_type) {
                             if (isset($migration->default_value)) {
                                 $table->longText($migration->field_name)->nullable()->default($migration->default_value);
                             } else {
@@ -241,7 +243,8 @@ class ErpMigrations
                             }
                         }
 
-                        if ($migration->field_type == 'Varchar') {
+
+                        if ('Varchar' == $migration->field_type) {
                             $length = intval($migration->field_length);
                             $length = ($length) ? $length : 256;
                             if (isset($migration->default_value)) {
@@ -251,7 +254,7 @@ class ErpMigrations
                             }
                         }
 
-                        if ($migration->field_type == 'Decimal') {
+                        if ('Decimal' == $migration->field_type) {
                             if (isset($migration->default_value)) {
                                 $table->double($migration->field_name, 10, $migration->currency_decimals)->default($migration->default_value);
                             } else {
@@ -259,10 +262,10 @@ class ErpMigrations
                             }
                         }
 
-                        if ($migration->field_type == 'Integer') {
+                        if ('Integer' == $migration->field_type) {
                             $length = intval($migration->field_length);
                             $length = ($length) ? $length : 11;
-                            if (! isset($migration->default_value)) {
+                            if (!isset($migration->default_value)) {
                                 $migration->default_value = 0;
                             }
                             if (isset($migration->default_value)) {
@@ -272,22 +275,22 @@ class ErpMigrations
                             }
 
                             if ($migration->field_name == 'module_id') {
-                                //  $table->foreign('module_id')
-                                //      ->references('id')->on('erp_cruds')
-                                //     ->onDelete('cascade');
+                              //  $table->foreign('module_id')
+                              //      ->references('id')->on('erp_cruds')
+                               //     ->onDelete('cascade');
                             }
                         }
 
-                        if ($migration->field_type == 'Date') {
+                        if ('Date' == $migration->field_type) {
                             $table->date($migration->field_name)->nullable();
                         }
 
-                        if ($migration->field_type == 'DateTime') {
+                        if ('DateTime' == $migration->field_type) {
                             $table->dateTime($migration->field_name)->nullable();
                         }
 
-                        if ($migration->field_type == 'Tiny Integer' && ! empty($migration->field_length) && $migration->field_length > 1) {
-                            if (! isset($migration->default_value)) {
+                        if ('Tiny Integer' == $migration->field_type && !empty($migration->field_length) && $migration->field_length > 1) {
+                            if (!isset($migration->default_value)) {
                                 $migration->default_value = 0;
                             }
                             if (isset($migration->default_value)) {
@@ -295,17 +298,17 @@ class ErpMigrations
                             } else {
                                 $table->tinyInteger($migration->field_name)->length($migration->field_length)->default('0');
                             }
-                        } elseif ($migration->field_type == 'Tiny Integer') {
-                            if (! isset($migration->default_value)) {
+                        } elseif ('Tiny Integer' == $migration->field_type) {
+                            if (!isset($migration->default_value)) {
                                 $migration->default_value = 0;
                             }
-                            if (str_contains($conn, 'pbx')) {
+                            if(str_contains($conn,'pbx')){
                                 if (isset($migration->default_value)) {
                                     $table->smallInteger($migration->field_name)->default($migration->default_value);
                                 } else {
                                     $table->smallInteger($migration->field_name)->default('0');
                                 }
-                            } else {
+                            }else{
                                 if (isset($migration->default_value)) {
                                     $table->boolean($migration->field_name)->default($migration->default_value);
                                 } else {
@@ -317,8 +320,7 @@ class ErpMigrations
                 }
                 $success .= $conn.': processsed ';
                 $this->setCustomSchema($migration);
-            } catch (\Throwable $ex) {
-                exception_log($ex);
+            } catch (\Throwable $ex) {  exception_log($ex);
                 $error .= 'Connection: '.$conn.' '.$ex->getMessage();
                 break;
             }
@@ -352,10 +354,10 @@ class ErpMigrations
         $error = '';
 
         $instance_connections = $this->getInstanceConnections($migration);
-        if (! empty($migration->success_result)) {
+        if (!empty($migration->success_result)) {
             $success = $migration->success_result;
         }
-        if (! empty($migration->error_result)) {
+        if (!empty($migration->error_result)) {
             $error = $migration->error_result;
         }
         foreach ($instance_connections as $conn) {
@@ -376,7 +378,7 @@ class ErpMigrations
                 $migration->currency_decimals = 2;
                 if (Schema::connection($schema_conn)->hasTable($migration->table_name) && Schema::connection($schema_conn)->hasColumn($migration->table_name, $migration->field_name)) {
                     Schema::connection($schema_conn)->table($migration->table_name, function (Blueprint $table) use ($migration, $conn) {
-                        if ($migration->field_type == 'Text' || empty($migration->field_type)) {
+                        if ('Text' == $migration->field_type || empty($migration->field_type)) {
                             if (isset($migration->default_value)) {
                                 $table->text($migration->field_name, $length)->default($migration->default_value)->change();
                             } else {
@@ -384,7 +386,7 @@ class ErpMigrations
                             }
                         }
 
-                        if ($migration->field_type == 'longText') {
+                        if ('longText' == $migration->field_type) {
                             if (isset($migration->default_value)) {
                                 $table->longText($migration->field_name)->default($migration->default_value)->change();
                             } else {
@@ -392,7 +394,8 @@ class ErpMigrations
                             }
                         }
 
-                        if ($migration->field_type == 'Varchar') {
+
+                        if ('Varchar' == $migration->field_type) {
                             $length = intval($migration->field_length);
                             $length = ($length) ? $length : 256;
 
@@ -403,7 +406,7 @@ class ErpMigrations
                             }
                         }
 
-                        if ($migration->field_type == 'Decimal') {
+                        if ('Decimal' == $migration->field_type) {
                             if (isset($migration->default_value)) {
                                 $table->double($migration->field_name, 10, $migration->currency_decimals)->default($migration->default_value)->change();
                             } else {
@@ -411,11 +414,11 @@ class ErpMigrations
                             }
                         }
 
-                        if ($migration->field_type == 'Integer') {
+                        if ('Integer' == $migration->field_type) {
                             $length = intval($migration->field_length);
                             $length = ($length) ? $length : 11;
 
-                            if (! isset($migration->default_value)) {
+                            if (!isset($migration->default_value)) {
                                 $migration->default_value = 0;
                             }
                             if (isset($migration->default_value)) {
@@ -425,16 +428,16 @@ class ErpMigrations
                             }
                         }
 
-                        if ($migration->field_type == 'Date') {
+                        if ('Date' == $migration->field_type) {
                             $table->date($migration->field_name)->default(null)->nullable()->change();
                         }
 
-                        if ($migration->field_type == 'DateTime') {
+                        if ('DateTime' == $migration->field_type) {
                             $table->dateTime($migration->field_name)->default(null)->nullable()->change();
                         }
 
-                        if ($migration->field_type == 'Tiny Integer' && ! empty($migration->field_length) && $migration->field_length > 1) {
-                            if (! isset($migration->default_value)) {
+                        if ('Tiny Integer' == $migration->field_type && !empty($migration->field_length) && $migration->field_length > 1) {
+                            if (!isset($migration->default_value)) {
                                 $migration->default_value = 0;
                             }
                             if (isset($migration->default_value)) {
@@ -442,17 +445,17 @@ class ErpMigrations
                             } else {
                                 $table->tinyInteger($migration->field_name)->length($migration->field_length)->default('0')->change();
                             }
-                        } elseif ($migration->field_type == 'Tiny Integer') {
-                            if (! isset($migration->default_value)) {
+                        } elseif ('Tiny Integer' == $migration->field_type) {
+                            if (!isset($migration->default_value)) {
                                 $migration->default_value = 0;
                             }
-                            if (str_contains($conn, 'pbx')) {
+                             if(str_contains($conn,'pbx')){
                                 if (isset($migration->default_value)) {
                                     $table->smallInteger($migration->field_name)->default($migration->default_value)->change();
                                 } else {
                                     $table->smallInteger($migration->field_name)->default('0')->change();
                                 }
-                            } else {
+                            }else{
                                 if (isset($migration->default_value)) {
                                     $table->boolean($migration->field_name)->default($migration->default_value)->change();
                                 } else {
@@ -463,10 +466,12 @@ class ErpMigrations
                     });
                 }
 
+
+
+
                 $success .= $conn.': processsed ';
                 $this->setCustomSchema($migration);
-            } catch (\Throwable $ex) {
-                exception_log($ex);
+            } catch (\Throwable $ex) {  exception_log($ex);
                 $error .= 'Connection: '.$conn.' '.$ex->getMessage();
                 break;
             }
@@ -497,10 +502,10 @@ class ErpMigrations
         $error = '';
 
         $instance_connections = $this->getInstanceConnections($migration);
-        if (! empty($migration->success_result)) {
+        if (!empty($migration->success_result)) {
             $success = $migration->success_result;
         }
-        if (! empty($migration->error_result)) {
+        if (!empty($migration->error_result)) {
             $error = $migration->error_result;
         }
         foreach ($instance_connections as $conn) {
@@ -513,7 +518,7 @@ class ErpMigrations
             } else {
                 $schema_conn = $conn;
             }
-
+            
             try {
                 DB::connection($schema_conn)->statement('SET FOREIGN_KEY_CHECKS = 0');
                 if (Schema::connection($schema_conn)->hasTable($migration->table_name)
@@ -525,8 +530,7 @@ class ErpMigrations
                 $success .= $conn.': processsed ';
                 DB::connection($schema_conn)->statement('SET FOREIGN_KEY_CHECKS = 1');
                 $this->setCustomSchema($migration);
-            } catch (\Throwable $ex) {
-                exception_log($ex);
+            } catch (\Throwable $ex) {  exception_log($ex);
                 DB::connection($schema_conn)->statement('SET FOREIGN_KEY_CHECKS = 1');
                 $error .= 'Connection: '.$conn.' '.$ex->getMessage();
                 break;
@@ -558,10 +562,10 @@ class ErpMigrations
         $error = '';
 
         $instance_connections = $this->getInstanceConnections($migration);
-        if (! empty($migration->success_result)) {
+        if (!empty($migration->success_result)) {
             $success = $migration->success_result;
         }
-        if (! empty($migration->error_result)) {
+        if (!empty($migration->error_result)) {
             $error = $migration->error_result;
         }
 
@@ -578,8 +582,8 @@ class ErpMigrations
 
             if (Schema::connection($schema_conn)->hasTable($migration->table_name)) {
                 if (Schema::connection($schema_conn)->hasColumn($migration->table_name, $migration->field_name)
-                && ! Schema::connection($schema_conn)->hasColumn($migration->table_name, $migration->new_name)) {
-                    Schema::connection($schema_conn)->table($migration->table_name, function (Blueprint $table) use ($migration) {
+                && !Schema::connection($schema_conn)->hasColumn($migration->table_name, $migration->new_name)) {
+                    Schema::connection($schema_conn)->table($migration->table_name, function (Blueprint $table) use ($migration, $conn) {
                         $table->renameColumn($migration->field_name, $migration->new_name);
                     });
                 }
@@ -594,24 +598,26 @@ class ErpMigrations
                 continue;
             }
 
-            $modules = \DB::connection($conn)->table('erp_cruds')->where('db_table', $migration->table_name)->pluck('id')->toArray();
+
+            $modules =  \DB::connection($conn)->table('erp_cruds')->where('db_table', $migration->table_name)->pluck('id')->toArray();
             foreach ($modules as $module_id) {
                 $label = ucwords(str_replace('_', ' ', $migration->new_name));
                 \DB::connection($conn)->table('erp_module_fields')
                     ->where('module_id', $module_id)->where('field', $migration->field_name)
-                    ->update(['field' => $migration->new_name, 'label' => $label]);
-                $layouts = \DB::connection($conn)->table('erp_grid_views')->select('id', 'aggrid_state')->where('aggrid_state', 'like', '%'.$migration->field_name.'%')->where('module_id', $module_id)->get();
+                    ->update(['field'=>$migration->new_name,'label'=>$label]);
+                $layouts = \DB::connection($conn)->table('erp_grid_views')->select('id','aggrid_state')->where('aggrid_state','like','%'.$migration->field_name.'%')->where('module_id', $module_id)->get();  
                 foreach ($layouts as $l) {
                     //aggrid reserved properties
-                    if (! in_array($migration->field_name, ['colId', 'width', 'hide', 'pinned', 'sort', 'sortIndex', 'aggFunc', 'rowGroup', 'rowGroupIndex', 'pivot', 'pivotIndex', 'flex'])) {
+                    if(!in_array($migration->field_name,['colId','width','hide','pinned','sort','sortIndex','aggFunc','rowGroup','rowGroupIndex','pivot','pivotIndex','flex'])){
                         $data = [
                             'aggrid_state' => preg_replace('/\b'.$migration->field_name.'\b/', $migration->new_name, $l->aggrid_state),
                         ];
                         DB::connection($conn)->table('erp_grid_views')->where('id', $l->id)->update($data);
                     }
-                }
-
+                }    
+                    
             }
+
 
             $success .= $conn.': processsed ';
             $this->setCustomSchema($migration);
@@ -639,10 +645,10 @@ class ErpMigrations
 
         $instance_connections = $this->getInstanceConnections($migration);
 
-        if (! empty($migration->success_result)) {
+        if (!empty($migration->success_result)) {
             $success = $migration->success_result;
         }
-        if (! empty($migration->error_result)) {
+        if (!empty($migration->error_result)) {
             $error = $migration->error_result;
         }
         foreach ($instance_connections as $conn) {
@@ -661,8 +667,7 @@ class ErpMigrations
                 });
                 $success .= $conn.': processsed ';
                 $this->setCustomSchema($migration);
-            } catch (\Throwable $ex) {
-                exception_log($ex);
+            } catch (\Throwable $ex) {  exception_log($ex);
                 $error .= 'Connection: '.$conn.' '.$ex->getMessage();
                 break;
             }
@@ -670,6 +675,7 @@ class ErpMigrations
                 break;
             }
         }
+
 
         $data = [
             'success_result' => $success,
@@ -692,10 +698,10 @@ class ErpMigrations
         $error = '';
 
         $instance_connections = $this->getInstanceConnections($migration);
-        if (! empty($migration->success_result)) {
+        if (!empty($migration->success_result)) {
             $success = $migration->success_result;
         }
-        if (! empty($migration->error_result)) {
+        if (!empty($migration->error_result)) {
             $error = $migration->error_result;
         }
         foreach ($instance_connections as $conn) {
@@ -712,8 +718,7 @@ class ErpMigrations
                 Schema::connection($schema_conn)->dropIfExists($migration->table_name);
                 $success .= $conn.': processsed ';
                 $this->setCustomSchema($migration);
-            } catch (\Throwable $ex) {
-                exception_log($ex);
+            } catch (\Throwable $ex) {  exception_log($ex);
                 $error .= 'Connection: '.$conn.' '.$ex->getMessage();
                 break;
             }
@@ -746,12 +751,13 @@ class ErpMigrations
         $error = '';
 
         $instance_connections = $this->getInstanceConnections($migration);
-        if (! empty($migration->success_result)) {
+        if (!empty($migration->success_result)) {
             $success = $migration->success_result;
         }
-        if (! empty($migration->error_result)) {
+        if (!empty($migration->error_result)) {
             $error = $migration->error_result;
         }
+
 
         foreach ($instance_connections as $i => $conn) {
             if (str_contains($success, $conn)) {
@@ -764,7 +770,7 @@ class ErpMigrations
                 $schema_conn = $conn;
             }
 
-            if (Schema::connection($schema_conn)->hasTable($table_name) && ! Schema::connection($schema_conn)->hasTable($new_table_name)) {
+            if (Schema::connection($schema_conn)->hasTable($table_name) && !Schema::connection($schema_conn)->hasTable($new_table_name)) {
                 Schema::connection($schema_conn)->rename($table_name, $new_table_name);
             }
 
@@ -778,9 +784,12 @@ class ErpMigrations
                 continue;
             }
 
+
             try {
                 $modules = DB::connection($conn)->table('erp_cruds')->where('db_table', $table_name)->orwhere('db_sql', 'LIKE', '%'.$table_name.'%')->get();
                 $reports = DB::connection($conn)->table('erp_reports')->where('sql_query', 'LIKE', '%'.$table_name.'%')->get();
+
+
 
                 foreach ($modules as $m) {
                     $data = [
@@ -791,7 +800,9 @@ class ErpMigrations
                     DB::connection($conn)->table('erp_cruds')->where('id', $m->id)->update($data);
                 }
 
+
                 DB::connection($conn)->table('erp_module_fields')->where('opt_db_table', $table_name)->update(['opt_db_table' => $new_table_name]);
+
 
                 foreach ($reports as $r) {
                     $data = [
@@ -812,12 +823,13 @@ class ErpMigrations
                     DB::connection($conn)->table('erp_reports')->where('id', $r->id)->update($data);
                 }
 
+
+
                 DB::connection($conn)->table('erp_module_fields')->where('alias', $table_name)->update(['alias' => $new_table_name]);
 
                 $success .= $conn.': processsed ';
                 $this->setCustomSchema($migration);
-            } catch (\Throwable $ex) {
-                exception_log($ex);
+            } catch (\Throwable $ex) {  exception_log($ex);
                 $error .= 'Connection: '.$conn.' '.$ex->getMessage();
 
                 break;
@@ -835,7 +847,6 @@ class ErpMigrations
             return $error;
         }
         replace_code_references($migration->table_name, $migration->new_name);
-
         return true;
     }
 

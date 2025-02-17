@@ -10,7 +10,7 @@ function schedule_flexmonster_export()
 
 function flexmonster_export($report_id, $format = 'html', $instance_id = false, $uniq_id = false)
 {
-    if (! $instance_id) {
+    if (!$instance_id) {
         $instance_id = session('instance')->id;
     }
 
@@ -21,13 +21,15 @@ function flexmonster_export($report_id, $format = 'html', $instance_id = false, 
         'user_id' => 1,
     ];
 
+
+
     $token = \Erp::encode($data);
     $cmd = 'cd /home/cloudtel/cloudtelecoms.io/html/reports && node pivot.js '.$token.' '.$format.';';
     //aa($report_id);
     //dd($cmd);
     $result = \Erp::ssh('host2.cloudtools.co.za', 'root', 'Ahmed777', $cmd);
     //aa($result);
-
+    
     //dd($cmd,$result);
     return $result;
 }

@@ -17,6 +17,7 @@ class AddForeignKeysToCrmDocumentsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

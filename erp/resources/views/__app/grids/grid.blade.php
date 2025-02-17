@@ -802,7 +802,7 @@ function dropdowntargetrender(args){
             });
         }
         
-        //console.log('layoutsave');
+        console.log('layoutsave');
         // layout.colState = JSON.parse(layout.colState)
         // console.log(layout.colState);
      
@@ -813,9 +813,10 @@ function dropdowntargetrender(args){
         layout.searchtext = searchtext{{ $grid_id }}.value;
         layout.searchtext = '';
         var pivot = {};
-        var pivotMode =window['grid_{{ $grid_id }}'].gridOptions.columnApi.isPivotMode();
+        var pivotMode = true;
         if(pivotMode){
             var pivot_mode = 1;
+
             // pivot.colState =window['grid_{{ $grid_id }}'].gridOptions.columnApi.getPivotColumns();
             pivot.colState =layout.colState;
         }else{
@@ -851,10 +852,10 @@ function dropdowntargetrender(args){
             }
         @endif
        
-        //console.log('layoutsave2')
+        console.log('layoutsave2')
         // console.log()
         // console.log(window['layout_id{{ $grid_id }}']);
-        //console.log(layout_data);
+        console.log(layout_data);
         // layout_data = JSON.parse(layout_data);
         // console.log(layout_data);
         
@@ -863,7 +864,7 @@ function dropdowntargetrender(args){
             url: '{{ url($menu_route."/aggrid_layout_save") }}',
             data: layout_data,
     		success: function(data) {
-    		    //console.log(data);
+    		    console.log(data);
     		    
     		    if(data.status != 'success'){
     		        toastNotify(data.message,data.status);
@@ -942,8 +943,8 @@ function dropdowntargetrender(args){
     }
     
     function load_layout_into_grid{{$grid_id}}(data,layout_id){
-        //console.log('load_layout');
-        //console.log(data);
+        console.log('load_layout');
+        console.log(data);
         if(data.new_row_data){
             row_data{{ $grid_id }} = data.new_row_data;
             window['grid_{{ $grid_id }}'].gridOptions.api.setRowData(data.new_row_data);
@@ -1122,6 +1123,7 @@ function dropdowntargetrender(args){
             });
             },500);
             
+            //window['layout_filter_{{$layout_field_filter->field}}_{{ $grid_id }}']
         }
         // if(state.searchtext){
        //         searchtext{{ $grid_id }}.value = state.searchtext;
@@ -1935,7 +1937,7 @@ $('#conditional_styles{{$module_id}}').bind('contentchanged', function() {
 });
 
 function reload_grid_config{{$module_id}}(){
-   //console.log('reload_grid_config');
+   console.log('reload_grid_config');
     
     //layout_reload{{$module_id}}(window['layout_id{{ $grid_id }}']);
   layout_load{{$grid_id}}(window['layout_id{{ $grid_id }}']);
@@ -2162,7 +2164,7 @@ function getMainMenuItems{{ $grid_id }}(params) {
     // you have on how to build up the menu to return
 
    // var menuItems = params.defaultItems.slice(0);
-   //console.log('getMainMenuItems',params.column.colDef);
+   console.log('getMainMenuItems',params.column.colDef);
     var menuItems = [];
     var colId =  params.column.getId();
     menuItems.push({
@@ -2530,8 +2532,8 @@ function  getContextMenuItems{{$grid_id}}(params) {
     @endif
     }
 
-    @if(isset($grid_menu_context))
-        {!! $grid_menu_context !!}
+    @if($grid_menu_context)
+    {!! $grid_menu_context !!}
     @endif
     
     /* ADD STATUS BUTTONS */
@@ -2848,7 +2850,7 @@ function load_inline_editor(post_data, retries = 0){
     
 }
 
-@if(isset($has_cell_editing) || $inline_editing)
+@if($has_cell_editing || $inline_editing)
 syncfusion_data = {};
 
 class SyncFusionCellEditor{{ $grid_id }} {
@@ -3218,7 +3220,7 @@ var gridOptions = {
             args.node.setExpanded(true);
         }else{
              
-            @if(isset($has_cell_editing))
+            @if($has_cell_editing)
                 var open_form = false;
                 
               
@@ -3490,8 +3492,8 @@ var gridOptions = {
                             }
                             var celldate = new Date(cellValue);
                           
-                            if( celldate <= date_today){
-                              
+                            var dateParts = cellValue.split(/[- :]/);
+                            if((dateParts[2] == cur_day && dateParts[1] == cur_month && dateParts[0] == cur_year) || (celldate < date_today)){
                                 return true;    
                             }else{
                                 
@@ -3509,7 +3511,8 @@ var gridOptions = {
                            
                            var celldate = new Date(cellValue);
                          
-                            if(celldate >= date_today){
+                           var dateParts = cellValue.split(/[- :]/);
+                           if((dateParts[2] == cur_day && dateParts[1] == cur_month && dateParts[0] == cur_year) || (celldate > date_today)){
                               
                                 return true;    
                             }else{
@@ -4027,7 +4030,7 @@ var gridOptions = {
         },
         @else
         @foreach($columnDefs as $i => $colDef)
-            @if(isset($colDef['children']))
+            @if($colDef['children'])
                 @foreach($colDef['children'] as $i => $col)
                     @if(!empty($col['filter_options']))
                     {{ $col['field'].$module_id }}Field: {
@@ -4089,7 +4092,7 @@ var gridOptions = {
                         //suppressSelectAll: true,
                         buttons: ['reset']
                     },
-                    @if(isset($colDef['select_multiple']))
+                    @if($colDef['select_multiple'])
                     valueGetter: multiValueGetter,
                     @endif
                     comparator: function (valueA, valueB, nodeA, nodeB, isInverted) {
@@ -4442,8 +4445,8 @@ var gridOptions = {
                 var dateB = new Date(b);
                 return dateB.getTime() - dateA.getTime();
             } else {
-                //console.log(a);
-                //console.log(b);
+                console.log(a);
+                console.log(b);
                 return a.localeCompare(b); // for normal strings, compare alphabetically
             }
         },
@@ -4569,7 +4572,7 @@ var gridOptions = {
       
         LastRefreshStatusBarComponent{{ $master_grid_id }}: LastRefreshStatusBarComponent{{ $master_grid_id }},
     
-        @if(isset($has_cell_editing) || isset($inline_editing))
+        @if($has_cell_editing || $inline_editing)
         SyncFusionCellEditor{{ $grid_id }}:SyncFusionCellEditor{{ $grid_id }},
         @endif
       
@@ -4692,8 +4695,8 @@ var gridOptions = {
  
     onRowSelected: function(event){
         
-      //console.log('onRowSelected');
-                //console.log(event);
+      console.log('onRowSelected');
+                console.log(event);
         try{
         //window['grid_{{ $grid_id }}'].gridOptions.api.closeToolPanel();
    
@@ -4702,7 +4705,7 @@ var gridOptions = {
             if(first_row_select{{$grid_id}}){
                
                 setTimeout(function(){first_row_select{{$grid_id}} = false; },500)
-                //console.log(event.node);
+                console.log(event.node);
                 
                 window['selectedrow_{{ $grid_id }}'] = event.node.data;
                 window['selectedrow_{{ $grid_id }}'].rowId = window['selectedrow_{{ $grid_id }}'].{{$db_key}};
@@ -5246,7 +5249,7 @@ function report_toolpanel_disable{{$grid_id}}() {
     window['grid_{{ $grid_id }}'].gridOptions.enableRangeSelection = false;
     window['grid_{{ $grid_id }}'].gridOptions.api.redrawRows();
     $("#gridChart{{$grid_id}}").addClass('d-none');
-    @endif
+    @endif 
     @if(!$tree_data)
    // if($("#toolbar_template_filters{{ $grid_id }}").length  > 0) {
   //  $("#toolbar_template_filters{{ $grid_id }}").addClass('d-none');
@@ -5296,7 +5299,6 @@ function getExpandedDetails{{ $grid_id }}(node, expandedDetails = '') {
     if (node && node.group) {
  
         if (expandedDetails === '') {
-  
             expandedDetails = node.field + ':' + node.key
         } else {
    
@@ -5733,8 +5735,8 @@ function sortSidebarColumns{{ $grid_id }}(source = false){
         }
         
       // compare header name (A to Z)
-                //console.log(a.headerName);
-                //console.log(b.headerName);
+                console.log(a.headerName);
+                console.log(b.headerName);
       return a.headerName.localeCompare(b.headerName);
     });
     
@@ -5839,8 +5841,8 @@ function sortFilterColumns{{ $grid_id }}(source = false){
       }
     
     
-      //console.log(a.headerName);
-      //console.log(b.headerName);
+      console.log(a.headerName);
+                console.log(b.headerName);
         // Sort by headerName if both have filters set or if neither have filters set
         return a.headerName.localeCompare(b.headerName);
       });
@@ -5937,7 +5939,7 @@ function onGridReady{{ $grid_id }}(params){
      detail_row_selected{{$grid_id}} = false;
      @endif
    
-    @if(isset($init_filters))
+    @if($init_filters)
         var init_filters = {!! json_encode($init_filters) !!}
         window['grid_{{ $grid_id }}'].gridOptions.api.setFilterModel(init_filters);
     @endif
@@ -5947,7 +5949,7 @@ function onGridReady{{ $grid_id }}(params){
    
   
     
-    row_data{{ $grid_id }} = {!! isset($row_data) ? json_encode($row_data) : '[]' !!};
+    row_data{{ $grid_id }} = {!! json_encode($row_data) !!};
     
     var row_count = window['grid_{{ $grid_id }}'].gridOptions.api.getDisplayedRowCount();
     //$("#rowcount{{ $grid_id }}").text(row_count);
@@ -6023,12 +6025,12 @@ function onGridReady{{ $grid_id }}(params){
     /*setTimeout(function(){window['grid_{{ $grid_id }}'].gridOptions.api.deselectAll();},500)*/
     }
     
-    @if(session('app_ids') != null && session('role_level') == 'Admin' && !empty($grid_id)  && in_array(2,session('app_ids')))
-        @if($module_id!=1923)
-            try{
-                minimize_app_sidebar();
-            }catch(e){}
-        @endif
+    @if(session('role_level') == 'Admin' && !empty($grid_id)  && in_array(2,session('app_ids')))
+    @if($module_id!=1923)
+    try{
+    minimize_app_sidebar();
+    }catch(e){}
+    @endif
     @endif
     
 }
@@ -6119,7 +6121,7 @@ function rowSelected{{ $grid_id }}() {
        console.log('get_sidebar_row_info',e);
    }
    @endif
-   @if(session('app_ids') != null && session('role_level') == 'Admin' && in_array(2,session('app_ids')))
+   @if(session('role_level') == 'Admin' && in_array(2,session('app_ids')))
     if(window['layout_tracking_{{ $grid_id }}']){
     //set_layout_row_tracking_details();
     }

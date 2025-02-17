@@ -19,6 +19,7 @@ class CreateAccTaxReportsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

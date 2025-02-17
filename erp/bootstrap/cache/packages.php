@@ -1,24 +1,35 @@
 <?php return array (
   'akki-io/laravel-google-analytics' => 
   array (
-    'aliases' => 
-    array (
-      'LaravelGoogleAnalytics' => 'AkkiIo\\LaravelGoogleAnalytics\\Facades\\LaravelGoogleAnalytics',
-    ),
     'providers' => 
     array (
       0 => 'AkkiIo\\LaravelGoogleAnalytics\\LaravelGoogleAnalyticsServiceProvider',
     ),
+    'aliases' => 
+    array (
+      'LaravelGoogleAnalytics' => 'AkkiIo\\LaravelGoogleAnalytics\\Facades\\LaravelGoogleAnalytics',
+    ),
+  ),
+  'amrshawky/laravel-currency' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'AmrShawky\\LaravelCurrency\\CurrencyServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'Currency' => 'AmrShawky\\LaravelCurrency\\Facade\\Currency',
+    ),
   ),
   'anhskohbo/no-captcha' => 
   array (
-    'aliases' => 
-    array (
-      'NoCaptcha' => 'Anhskohbo\\NoCaptcha\\Facades\\NoCaptcha',
-    ),
     'providers' => 
     array (
       0 => 'Anhskohbo\\NoCaptcha\\NoCaptchaServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'NoCaptcha' => 'Anhskohbo\\NoCaptcha\\Facades\\NoCaptcha',
     ),
   ),
   'barryvdh/laravel-ide-helper' => 
@@ -30,36 +41,36 @@
   ),
   'barryvdh/laravel-snappy' => 
   array (
+    'providers' => 
+    array (
+      0 => 'Barryvdh\\Snappy\\ServiceProvider',
+    ),
     'aliases' => 
     array (
       'PDF' => 'Barryvdh\\Snappy\\Facades\\SnappyPdf',
       'SnappyImage' => 'Barryvdh\\Snappy\\Facades\\SnappyImage',
     ),
-    'providers' => 
-    array (
-      0 => 'Barryvdh\\Snappy\\ServiceProvider',
-    ),
   ),
   'evilfreelancer/routeros-api-php' => 
   array (
-    'aliases' => 
-    array (
-      'RouterOS' => 'RouterOS\\Laravel\\Facade',
-    ),
     'providers' => 
     array (
       0 => 'RouterOS\\Laravel\\ServiceProvider',
     ),
+    'aliases' => 
+    array (
+      'RouterOS' => 'RouterOS\\Laravel\\Facade',
+    ),
   ),
   'facade/ignition' => 
   array (
-    'aliases' => 
-    array (
-      'Flare' => 'Facade\\Ignition\\Facades\\Flare',
-    ),
     'providers' => 
     array (
       0 => 'Facade\\Ignition\\IgnitionServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'Flare' => 'Facade\\Ignition\\Facades\\Flare',
     ),
   ),
   'fedeisas/laravel-mail-css-inliner' => 
@@ -69,15 +80,22 @@
       0 => 'Fedeisas\\LaravelMailCssInliner\\LaravelMailCssInlinerServiceProvider',
     ),
   ),
+  'fideloper/proxy' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Fideloper\\Proxy\\TrustedProxyServiceProvider',
+    ),
+  ),
   'florianv/laravel-swap' => 
   array (
-    'aliases' => 
-    array (
-      'Swap' => 'Swap\\Laravel\\Facades\\Swap',
-    ),
     'providers' => 
     array (
       0 => 'Swap\\Laravel\\SwapServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'Swap' => 'Swap\\Laravel\\Facades\\Swap',
     ),
   ),
   'fruitcake/laravel-cors' => 
@@ -89,24 +107,24 @@
   ),
   'intervention/image' => 
   array (
-    'aliases' => 
-    array (
-      'Image' => 'Intervention\\Image\\Facades\\Image',
-    ),
     'providers' => 
     array (
       0 => 'Intervention\\Image\\ImageServiceProvider',
     ),
+    'aliases' => 
+    array (
+      'Image' => 'Intervention\\Image\\Facades\\Image',
+    ),
   ),
   'jackiedo/dotenv-editor' => 
   array (
-    'aliases' => 
-    array (
-      'DotenvEditor' => 'Jackiedo\\DotenvEditor\\Facades\\DotenvEditor',
-    ),
     'providers' => 
     array (
       0 => 'Jackiedo\\DotenvEditor\\DotenvEditorServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'DotenvEditor' => 'Jackiedo\\DotenvEditor\\Facades\\DotenvEditor',
     ),
   ),
   'laravel/tinker' => 
@@ -130,24 +148,24 @@
   ),
   'laravolt/avatar' => 
   array (
-    'aliases' => 
-    array (
-      'Avatar' => 'Laravolt\\Avatar\\Facade',
-    ),
     'providers' => 
     array (
       0 => 'Laravolt\\Avatar\\ServiceProvider',
     ),
+    'aliases' => 
+    array (
+      'Avatar' => 'Laravolt\\Avatar\\Facade',
+    ),
   ),
   'maatwebsite/excel' => 
   array (
-    'aliases' => 
-    array (
-      'Excel' => 'Maatwebsite\\Excel\\Facades\\Excel',
-    ),
     'providers' => 
     array (
       0 => 'Maatwebsite\\Excel\\ExcelServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'Excel' => 'Maatwebsite\\Excel\\Facades\\Excel',
     ),
   ),
   'nesbot/carbon' => 
@@ -162,6 +180,17 @@
     'providers' => 
     array (
       0 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
+    ),
+  ),
+  'pixelpeter/laravel5-woocommerce-api-client' => 
+  array (
+    'providers' => 
+    array (
+      0 => 'Pixelpeter\\Woocommerce\\WoocommerceServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'Woocommerce' => 'Pixelpeter\\Woocommerce\\Facades\\Woocommerce',
     ),
   ),
   'propaganistas/laravel-phone' => 
@@ -187,13 +216,13 @@
   ),
   'rollbar/rollbar-laravel' => 
   array (
-    'aliases' => 
-    array (
-      'Rollbar' => 'Rollbar\\Laravel\\Facades\\Rollbar',
-    ),
     'providers' => 
     array (
       0 => 'Rollbar\\Laravel\\RollbarServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'Rollbar' => 'Rollbar\\Laravel\\Facades\\Rollbar',
     ),
   ),
   'silviolleite/laravelpwa' => 
@@ -205,13 +234,13 @@
   ),
   'spatie/laravel-analytics' => 
   array (
-    'aliases' => 
-    array (
-      'Analytics' => 'Spatie\\Analytics\\AnalyticsFacade',
-    ),
     'providers' => 
     array (
       0 => 'Spatie\\Analytics\\AnalyticsServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'Analytics' => 'Spatie\\Analytics\\AnalyticsFacade',
     ),
   ),
   'stechstudio/laravel-php-cs-fixer' => 
@@ -223,35 +252,35 @@
   ),
   'stevebauman/location' => 
   array (
-    'aliases' => 
-    array (
-      'Location' => 'Stevebauman\\Location\\Facades\\Location',
-    ),
     'providers' => 
     array (
       0 => 'Stevebauman\\Location\\LocationServiceProvider',
     ),
+    'aliases' => 
+    array (
+      'Location' => 'Stevebauman\\Location\\Facades\\Location',
+    ),
   ),
   'webklex/laravel-imap' => 
   array (
-    'aliases' => 
-    array (
-      'Client' => 'Webklex\\IMAP\\Facades\\Client',
-    ),
     'providers' => 
     array (
       0 => 'Webklex\\IMAP\\Providers\\LaravelServiceProvider',
     ),
+    'aliases' => 
+    array (
+      'Client' => 'Webklex\\IMAP\\Facades\\Client',
+    ),
   ),
   'wpb/string-blade-compiler' => 
   array (
-    'aliases' => 
-    array (
-      'StringBlade' => 'Wpb\\String_Blade_Compiler\\Facades\\StringBlade',
-    ),
     'providers' => 
     array (
       0 => 'Wpb\\String_Blade_Compiler\\StringBladeServiceProvider',
+    ),
+    'aliases' => 
+    array (
+      'StringBlade' => 'Wpb\\String_Blade_Compiler\\Facades\\StringBlade',
     ),
   ),
 );

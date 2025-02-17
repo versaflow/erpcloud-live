@@ -1,7 +1,7 @@
 <?php
 
-function file_manager_syncfusion_file_operations()
-{
+
+function file_manager_syncfusion_file_operations(){
     /*
     read	Read the details of files or folders available in the given path from the file system, to display the files for the user to browse the content.
     create	Creates a new folder in the current path of the file system.
@@ -16,45 +16,43 @@ function file_manager_syncfusion_file_operations()
     */
 }
 
-function file_manager_get_directories()
-{
-    $directories = Storage::disk('file_manager')->allDirectories();
 
+function file_manager_get_directories(){
+    $directories = Storage::disk('file_manager')->allDirectories();
     return $directories;
 }
 
-function file_manager_save_file($directory, $filename, $file_content)
-{
-
+function file_manager_save_file($directory, $filename, $file_content){
+    
+ 
     Storage::disk('file_manager')->put($directory.'/'.$filename, $file_content);
 }
 
-function file_manager_get_files($directory)
-{
+function file_manager_get_files($directory){
     // Get all files in the specified directory
-
+ 
     $files = Storage::disk('file_manager')->files($directory);
-
     return $files;
 }
 
-function file_manager_get_folder_details($directory)
-{
+function file_manager_get_folder_details($directory){
 
+   ;
     $size = 0;
     $files = Storage::disk('file_manager')->allFiles($directory);
-
+    
     foreach ($files as $file) {
         $size += Storage::disk('file_manager')->size($file);
     }
 
-    return ['size' => $size, 'count' => count($files)];
+    return ['size' => $size,'count' =>count($files)];
 }
 
 function file_manager_path()
 {
     $instance_dir = session('instance')->directory;
     $path = storage_path('file_manager').'/'.$instance_dir.'/';
-
+  
     return $path;
 }
+

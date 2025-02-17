@@ -17,7 +17,7 @@ return [
         database_path(),
         resource_path(),
         base_path('/routes'),
-        base_path('/tests'),
+        base_path('/tests')
 
     ],
 
@@ -31,8 +31,8 @@ return [
         '*.blade.php',
     ],
 
-    /**
-     * These are all the rules.
+    /** 
+     * These are all the rules. 
      * Find them all at https://github.com/FriendsOfPHP/PHP-CS-Fixer/blob/v3.0.0/doc/rules/index.rst
      */
     'rules' => [
@@ -42,7 +42,7 @@ return [
         /** Binary operators should be surrounded by space as configured. */
         'binary_operator_spaces' => [
             'default' => 'single_space',
-            'operators' => ['=>' => null],
+            'operators' => ['=>' => null]
         ],
 
         /** There MUST be one blank line after the namespace declaration. */
@@ -53,7 +53,7 @@ return [
 
         /** An empty line feed must precede any configured statement. */
         'blank_line_before_statement' => [
-            'statements' => ['return'],
+            'statements' => ['return']
         ],
 
         /** The body of each structure MUST be enclosed by braces. Braces should be properly placed. Body of braces should be properly indented. */
@@ -64,7 +64,7 @@ return [
 
         /** Class, trait and interface elements must be separated with one or none blank line. */
         'class_attributes_separation' => [
-            'elements' => ['method'],
+            'elements' => ['method']
         ],
 
         /** Whitespace around the keywords of a class, trait or interfaces definition should be one space. */
@@ -72,7 +72,7 @@ return [
 
         /** Concatenation should be spaced according configuration. */
         'concat_space' => [
-            'spacing' => 'none',
+            'spacing' => 'none'
         ],
 
         /** Equal sign in declare statement should be surrounded by spaces or not following configuration. */
@@ -117,6 +117,7 @@ return [
         /** Cast should be written in lower case. */
         'lowercase_cast' => true,
 
+        /**  */
         'lowercase_constants' => true,
 
         /** PHP keywords MUST be in lower case. */
@@ -132,9 +133,9 @@ return [
         'magic_constant_casing' => true,
 
         /**
-         * In method arguments and method call, there MUST NOT be a space before each comma and
-         * there MUST be one space after each comma. Argument lists MAY be split across multiple
-         * lines, where each subsequent line is indented once. When doing so, the first item in the
+         * In method arguments and method call, there MUST NOT be a space before each comma and 
+         * there MUST be one space after each comma. Argument lists MAY be split across multiple 
+         * lines, where each subsequent line is indented once. When doing so, the first item in the 
          * list MUST be on the next line, and there MUST be only one argument per line.
          */
         'method_argument_space' => true,
@@ -152,7 +153,7 @@ return [
                 'throw',
                 'use',
                 'use_trait',
-            ],
+            ]
         ],
         /** There should be no empty lines after class opening brace. */
         'no_blank_lines_after_class_opening' => true,
@@ -163,11 +164,11 @@ return [
         'no_leading_import_slash' => true,
         'no_leading_namespace_whitespace' => true,
         'no_mixed_echo_print' => [
-            'use' => 'echo',
+            'use' => 'echo'
         ],
         'no_multiline_whitespace_around_double_arrow' => true,
         'multiline_whitespace_before_semicolons' => [
-            'strategy' => 'no_multi_line',
+            'strategy' => 'no_multi_line'
         ],
         'no_short_bool_cast' => true,
         'no_singleline_whitespace_before_semicolons' => true,
@@ -209,7 +210,7 @@ return [
         'single_import_per_statement' => true,
         'single_line_after_imports' => true,
         'single_line_comment_style' => [
-            'comment_types' => ['hash'],
+            'comment_types' => ['hash']
         ],
         'single_quote' => true,
         'space_after_semicolon' => true,
@@ -221,7 +222,7 @@ return [
         'trim_array_spaces' => true,
         'unary_operator_spaces' => true,
         'visibility_required' => [
-            'elements' => ['method', 'property'],
+            'elements' => ['method', 'property']
         ],
         'whitespace_after_comma_in_array' => true,
     ],

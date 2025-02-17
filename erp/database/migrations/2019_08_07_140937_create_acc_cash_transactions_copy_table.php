@@ -29,6 +29,7 @@ class CreateAccCashTransactionsCopyTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

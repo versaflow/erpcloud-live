@@ -1,6 +1,7 @@
 <?php
 
-//## EVENTS
+### EVENTS
+
 
 function beforedelete_payment_provider_check($request)
 {
@@ -16,20 +17,19 @@ function beforedelete_payment_provider_check($request)
         if ($balance != 0) {
             return 'Provider cannot be deleted. Balance needs to be zero.';
         }
-    } catch (\Throwable $ex) {
-        exception_log($ex);
+    } catch (\Throwable $ex) {  exception_log($ex);
         Log::Debug($error);
     }
 }
-//## BUTTONS
+### BUTTONS
 function button_cashbook_reconcile($request)
 {
     cashbook_reconcile($request->id);
-
+    
     return json_alert('Done');
 }
 
-//## HELPERS
+### HELPERS
 
 function is_cashbook_ledger_account($ledger_account_id)
 {
@@ -48,11 +48,11 @@ function cashbook_control_transfer($credit_account_id, $total, $docdate = false,
     // verify both ledger accounts are payment providers
 
     if (is_cashbook_ledger_account($credit_account_id)) {
-        $erp = new DBEvent;
+        $erp = new DBEvent();
         $erp->setTable('acc_cashbook_transactions');
 
         $cashbook_control_id = 57;
-        if (! $docdate) {
+        if (!$docdate) {
             $docdate = date('Y-m-d');
         }
 
@@ -64,11 +64,11 @@ function cashbook_control_transfer($credit_account_id, $total, $docdate = false,
             'doctype' => 'Cashbook Control Payment',
             'total' => $total,
             'docdate' => $docdate,
-            'api_status' => 'Complete',
+            'api_status' => 'Complete'
         ];
 
         if ($cashbook_transaction_id) {
-            if (! str_contains($reference, 'Recovery')) {
+            if(!str_contains($reference,'Recovery')){
                 $data['cashbook_transaction_id'] = $cashbook_transaction_id;
                 $reference = \DB::connection('default')->table('acc_cashbook_transactions')->where('id', $cashbook_transaction_id)->pluck('reference')->first();
                 $data['reference'] = 'Cashbook Transaction ID:'.$bank_id.' '.$reference;
@@ -84,11 +84,11 @@ function cashbook_control_transfer_fee($credit_account_id, $total, $docdate = fa
 {
     // verify both ledger accounts are payment providers
     if (is_cashbook_ledger_account($credit_account_id)) {
-        $erp = new DBEvent;
+        $erp = new DBEvent();
         $erp->setTable('acc_cashbook_transactions');
 
         $cashbook_control_id = 22;
-        if (! $docdate) {
+        if (!$docdate) {
             $docdate = date('Y-m-d');
         }
 
@@ -99,11 +99,11 @@ function cashbook_control_transfer_fee($credit_account_id, $total, $docdate = fa
             'doctype' => 'Cashbook Control Payment',
             'total' => $total,
             'docdate' => $docdate,
-            'api_status' => 'Complete',
+            'api_status' => 'Complete'
         ];
 
         if ($cashbook_transaction_id) {
-            if (! str_contains($reference, 'Recovery')) {
+            if(!str_contains($reference,'Recovery')){
                 $data['cashbook_transaction_id'] = $cashbook_transaction_id;
                 $reference = \DB::connection('default')->table('acc_cashbook_transactions')->where('id', $cashbook_transaction_id)->pluck('reference')->first();
                 $data['reference'] = 'Cashbook Transaction ID:'.$bank_id.' '.$reference;

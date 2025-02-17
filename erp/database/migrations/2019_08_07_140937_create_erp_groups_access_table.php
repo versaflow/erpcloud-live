@@ -29,9 +29,10 @@ class CreateErpGroupsAccessTable extends Migration
             $table->boolean('record_type_partner')->default(0);
             $table->boolean('record_type_account')->default(0);
             $table->boolean('record_type_group')->default(0);
-            $table->unique(['menu_id', 'role_id'], 'menu_id');
+            $table->unique(['menu_id','role_id'], 'menu_id');
         });
     }
+
 
     /**
      * Reverse the migrations.

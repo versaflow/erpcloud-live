@@ -67,11 +67,11 @@ function check_pg_trx()
     $encryptionKey = 'secret';
     unset($data);
 
-    $data = [
+    $data = array(
         'PAYGATE_ID' => 10011072130,
         'PAY_REQUEST_ID' => '23B785AE-C96C-32AF-4879-D2C9363DB6E8',
         'REFERENCE' => 'pgtest_123456789',
-    ];
+    );
 
     //	$data['PAYGATE_ID'] = 10011013800;
 
@@ -94,14 +94,14 @@ function check_pg_trx()
 
 function paygate_get_transactions()
 {
-    $pg = new PayGate_PayWeb3;
+    $pg = new PayGate_PayWeb3();
     $encryptionKey = 'secret';
 
-    $data = [
+    $data = array(
         'PAYGATE_ID' => 1024959100012,
         'PAY_REQUEST_ID' => '23B785AE-C96C-32AF-4879-D2C9363DB6E8',
         'REFERENCE' => 'pgtest_123456789',
-    ];
+    );
 
     $pg->setEncryptionKey($encryptionKey);
     $pg->setQueryRequest($data);
@@ -111,7 +111,7 @@ function paygate_get_transactions()
     $result = $pg->doQuery();
 }
 
-if (! class_exists('CountryCodes')) {
+if (!class_exists('CountryCodes')) {
     class CountryCodes
     {
         public static $mostUsedCountryArray = [
@@ -119,7 +119,6 @@ if (! class_exists('CountryCodes')) {
             'ZAF' => 'South Africa',
             'USA' => 'United States',
         ];
-
         public static $countryArray = [
             'ARG' => 'Argentina',
             'BRA' => 'Brazil',
@@ -624,13 +623,11 @@ if (! class_exists('CountryCodes')) {
     }
 }
 
-if (! class_exists('PayGateFunctions')) {
+if (!class_exists('PayGateFunctions')) {
     class PayGateFunctions
     {
         public $fullPath;
-
         public $root;
-
         public $directory;
 
         public function __construct()
@@ -642,13 +639,13 @@ if (! class_exists('PayGateFunctions')) {
 
         public function getCurrentUrl()
         {
-            $url = [];
+            $url = array();
 
             // set protocol
             $url['protocol'] = 'http://';
-            if (isset($_SERVER['HTTPS']) && (strtolower($_SERVER['HTTPS']) === 'on' || $_SERVER['HTTPS'] == 1)) {
+            if (isset($_SERVER['HTTPS']) && ('on' === strtolower($_SERVER['HTTPS']) || 1 == $_SERVER['HTTPS'])) {
                 $url['protocol'] = 'https://';
-            } elseif (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) {
+            } elseif (isset($_SERVER['SERVER_PORT']) && 443 == $_SERVER['SERVER_PORT']) {
                 $url['protocol'] = 'https://';
             }
 
@@ -683,7 +680,7 @@ if (! class_exists('PayGateFunctions')) {
             $numDirectories = count($pathArray);
             $finalDirectory = '';
 
-            for ($i = 0; $i < ($numDirectories - 1); $i++) {
+            for ($i = 0; $i < ($numDirectories - 1); ++$i) {
                 $finalDirectory .= $pathArray[$i].'/';
             }
 
@@ -703,7 +700,7 @@ if (! class_exists('PayGateFunctions')) {
         public function getDateTime($format)
         {
             date_default_timezone_set('Africa/Johannesburg');
-            $dateTime = new DateTime;
+            $dateTime = new DateTime();
 
             return $dateTime->format($format);
         }
@@ -725,7 +722,7 @@ if (! class_exists('PayGateFunctions')) {
             $options .= '<optgroup label="Most Used">';
             foreach ($mostUsedCountryArray as $id => $name) {
                 $options .= '   <option value="'.$id.'" ';
-                if ($country == $id && ! $defaultSet) {
+                if ($country == $id && !$defaultSet) {
                     $options .= 'selected="selected" ';
                     $defaultSet = true;
                 }
@@ -737,7 +734,7 @@ if (! class_exists('PayGateFunctions')) {
 
             foreach ($countryArray as $id => $name) {
                 $options .= '   <option value="'.$id.'" ';
-                if ($country == $id && ! $defaultSet) {
+                if ($country == $id && !$defaultSet) {
                     $options .= 'selected="selected" ';
                     $defaultSet = true;
                 }
@@ -761,49 +758,41 @@ if (! class_exists('PayGateFunctions')) {
     }
 }
 
-if (! class_exists('PayGate_PayWeb3')) {
+if (!class_exists('PayGate_PayWeb3')) {
     class PayGate_PayWeb3
     {
         /*
          * @var string the url of the PayGate PayWeb 3 initiate page
          */
         public static $initiate_url = 'https://secure.paygate.co.za/payweb3/initiate.trans';
-
         /*
          * @var string the url of the PayGate PayWeb 3 process page
          */
         public static $process_url = 'https://secure.paygate.co.za/payweb3/process.trans';
-
         /*
          * @var string the url of the PayGate PayWeb 3 query page
          */
         public static $query_url = 'https://secure.paygate.co.za/payweb3/query.trans';
-
         /*
          * @var array contains the data to be posted to PayGate PayWeb 3 initiate
          */
         public $initiateRequest;
-
         /*
          * @var array contains the response data from the initiate
          */
         public $initiateResponse;
-
         /*
          * @var array contains the data returned from the initiate, required for the redirect of the client
          */
         public $processRequest;
-
         /*
          * @var array contains the data to be posted to PayGate PayWeb 3 query service
          */
         public $queryRequest;
-
         /*
          * @var array contains the response data from the query
          */
         public $queryResponse;
-
         /*
          * @var string
          *
@@ -817,14 +806,13 @@ if (! class_exists('PayGate_PayWeb3')) {
          */
         public $lastError;
 
-        private $transactionStatusArray = [
+        private $transactionStatusArray = array(
             1 => 'Approved',
             2 => 'Declined',
             4 => 'Cancelled',
-        ];
+        );
 
         public $debug = false;
-
         public $ssl = false;
 
         /*
@@ -832,7 +820,9 @@ if (! class_exists('PayGate_PayWeb3')) {
          */
         private $encryptionKey;
 
-        public function __construct() {}
+        public function __construct()
+        {
+        }
 
         /*
          * @return boolean
@@ -951,7 +941,7 @@ if (! class_exists('PayGate_PayWeb3')) {
 
                 return $dateTime;
             } else {
-                $dateTime = new DateTime;
+                $dateTime = new DateTime();
 
                 return $dateTime->format($format);
             }
@@ -968,7 +958,7 @@ if (! class_exists('PayGate_PayWeb3')) {
             $checksum = '';
 
             foreach ($postData as $key => $value) {
-                if ($value != '') {
+                if ('' != $value) {
                     $checksum .= $value;
                 }
             }
@@ -1011,10 +1001,10 @@ if (! class_exists('PayGate_PayWeb3')) {
                 return false;
             }
 
-            $this->processRequest = [
+            $this->processRequest = array(
                 'PAY_REQUEST_ID' => $this->initiateResponse['PAY_REQUEST_ID'],
                 'CHECKSUM' => $this->initiateResponse['CHECKSUM'],
-            ];
+            );
 
             return true;
         }
@@ -1047,7 +1037,7 @@ if (! class_exists('PayGate_PayWeb3')) {
 
             $result = $this->doCurlPost($this->initiateRequest, self::$initiate_url);
 
-            if ($result !== false) {
+            if (false !== $result) {
                 parse_str($result, $this->initiateResponse);
                 $result = $this->handleInitiateResponse();
             }
@@ -1066,7 +1056,7 @@ if (! class_exists('PayGate_PayWeb3')) {
 
             $result = $this->doCurlPost($this->queryRequest, self::$query_url);
 
-            if ($result !== false) {
+            if (false !== $result) {
                 parse_str($result, $this->queryResponse);
                 $result = $this->handleQueryResponse();
             }
@@ -1100,7 +1090,7 @@ if (! class_exists('PayGate_PayWeb3')) {
                 $ch = curl_init();
 
                 //set the url, number of POST vars, POST data
-                if (! $this->isSsl()) {
+                if (!$this->isSsl()) {
                     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
                     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
                 }

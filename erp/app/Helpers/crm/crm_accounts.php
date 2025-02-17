@@ -1,5 +1,36 @@
 <?php
 
+function schedule_debtors_send_notification()
+{
+    // sends email an sms to debtors with outstanding balances
+    $accounts = \DB::table('crm_accounts')
+    ->where('partner_id', 1)
+    ->where('status', '!=', 'Deleted')
+    ->whereIn('type', ['reseller', 'customer'])
+    ->where('debtor_status_id', '!=', 1)
+    ->where('aging', '>', 10)
+    ->where('balance', '>', 0)
+    ->get();
+    foreach ($accounts as $account) {
+        if (!account_has_debtor_commitment($account->id)) {
+            $data['account_id'] = $account->id;
+            $data['internal_function'] = 'statement_email';
+            erp_process_notification($account->id, $data);
+        }
+    }
+}
+
+
+function schedule_set_company_names()
+{
+    $accounts = \DB::table('crm_accounts')->get();
+    foreach ($accounts as $account) {
+        $company = trim($account->company);
+        \DB::table('crm_accounts')->where('id', $account->id)->update(['company' => $company]);
+    }
+}
+
+
 function schedule_delete_cancelled_accounts()
 {
     $accounts = \DB::table('crm_accounts')
@@ -11,7 +42,6 @@ function schedule_delete_cancelled_accounts()
         ->get();
 
     foreach ($accounts as $account) {
-
         delete_account($account->id);
     }
 }
@@ -28,7 +58,7 @@ function send_email_verification_link_all()
 function send_email_verification_link($account_id)
 {
     $verified = \DB::table('crm_accounts')->where('id', $account_id)->pluck('email_verified')->first();
-    if (! $verified) {
+    if (!$verified) {
         $link_data = ['account_id' => $account_id];
 
         $data['internal_function'] = 'email_verification';
@@ -40,7 +70,6 @@ function send_email_verification_link($account_id)
 
 function aftersave_customers_set_postpaid($request)
 {
-
     $has_pbx = false;
     if ($request->type != 'reseller') {
         $has_pbx = \DB::connection('pbx')->table('v_domains')->where('account_id', $request->id)->count();
@@ -64,15 +93,6 @@ function schedule_accounts_set_is_deleted()
     \DB::table('acc_debit_orders')->whereIn('account_id', $account_ids)->update(['status' => 'Deleted']);
 }
 
-function schedule_set_company_names()
-{
-    $accounts = \DB::table('crm_accounts')->get();
-    foreach ($accounts as $account) {
-        $company = trim($account->company);
-        \DB::table('crm_accounts')->where('id', $account->id)->update(['company' => $company]);
-    }
-}
-
 function schedule_deleted_leads_delete_quotes()
 {
     $draft_doctypes = ['Quotation', 'Credit Note Draft'];
@@ -94,7 +114,6 @@ function schedule_deleted_leads_delete_quotes()
 
 function button_accounts_set_currency_to_usd($request)
 {
-
     $account_id = $request->id;
     $account = dbgetaccount($account_id);
     if ($account->partner_id != 1) {
@@ -113,32 +132,10 @@ function button_accounts_set_currency_to_usd($request)
     }
 
     \DB::table('crm_accounts')
-        ->where('id', $account_id)
-        ->update(['currency' => 'USD', 'pricelist_id' => 2]);
+    ->where('id', $account_id)
+    ->update(['currency' => 'USD', 'pricelist_id' => 2]);
 
     return json_alert('Account converted to USD');
-
-}
-
-function schedule_debtors_send_notification()
-{
-    // sends email an sms to debtors with outstanding balances
-    $accounts = \DB::table('crm_accounts')
-        ->where('partner_id', 1)
-        ->where('status', '!=', 'Deleted')
-        ->whereIn('type', ['reseller', 'customer'])
-        ->where('debtor_status_id', '!=', 1)
-        ->where('aging', '>', 10)
-        ->where('balance', '>', 0)
-        ->get();
-    foreach ($accounts as $account) {
-        if (! account_has_debtor_commitment($account->id)) {
-            $data['account_id'] = $account->id;
-            $data['internal_function'] = 'statement_email';
-            erp_process_notification($account->id, $data);
-
-        }
-    }
 }
 
 function button_accounts_send_iptv_reseller_logins($request)
@@ -177,7 +174,7 @@ function button_accounts_send_logins($request)
     \DB::table('erp_users')->where('id', $user->id)->update(['password' => $hashed_password]);
     $user_email = $user->email;
     $account = dbgetaccount($user->account_id);
-    if ($account->partner_id == 1) {
+    if (1 == $account->partner_id) {
         $portal = 'http://'.$_SERVER['HTTP_HOST'];
     } else {
         $portal = 'http://'.session('instance')->alias;
@@ -246,13 +243,13 @@ function schedule_wholesale_accounts_pay_account_from_airtime()
 function button_accounts_pay_account_from_airtime($request)
 {
     return false;
-    $result = (new DBEvent)->setDebtorBalance($request->id);
+    $result = (new DBEvent())->setDebtorBalance($request->id);
     $account = dbgetaccount($request->id);
     if ($account->balance <= 0) {
         return json_alert('Customer account balance is not in arrears', 'warning');
     }
     $has_pbx_domain = \DB::connection('pbx')->table('v_domains')->where('account_id', $account->id)->count();
-    if (! $has_pbx_domain) {
+    if (!$has_pbx_domain) {
         return json_alert('Customer does not have an active pbx domain', 'warning');
     }
     $pbx = \DB::connection('pbx')->table('v_domains')->where('account_id', $account->id)->get()->first();
@@ -261,24 +258,24 @@ function button_accounts_pay_account_from_airtime($request)
     }
     $cash_amount = $account->balance;
     $cash_id = create_cash_transaction($account->id, $cash_amount, 'Account paid from airtime balance');
-    if (! $cash_id) {
+    if (!$cash_id) {
         return json_alert('Error creating cash transaction', 'warning');
     }
 
     \DB::table('acc_cashbook_transactions')->where('id', $cash_id)->update(['approved' => 1]);
-    (new DBEvent)->setDebtorBalance($account->id);
+    (new DBEvent())->setDebtorBalance($account->id);
     $airtime_history = [
-        'created_at' => date('Y-m-d'),
-        'domain_uuid' => $pbx->domain_uuid,
-        'total' => $cash_amount,
-        'balance' => $pbx->balance - $cash_amount,
-        'type' => 'account_balance_paid',
+    'created_at' => date('Y-m-d'),
+    'domain_uuid' => $pbx->domain_uuid,
+    'total' => $cash_amount,
+    'balance' => $pbx->balance - $cash_amount,
+    'type' => 'account_balance_paid',
     ];
     \DB::connection('pbx')->table('p_airtime_history')->insert($airtime_history);
 
     \DB::connection('pbx')->table('v_domains')
-        ->where('domain_uuid', $pbx->domain_uuid)
-        ->update(['balance' => $pbx->balance - $cash_amount]);
+    ->where('domain_uuid', $pbx->domain_uuid)
+    ->update(['balance' => $pbx->balance - $cash_amount]);
 
     return json_alert('Cash transaction created', 'success');
 }
@@ -290,7 +287,6 @@ function afterdelete_accounts_set_is_deleted()
 
 function send_account_cancel_email($account_id)
 {
-
     $account = dbgetaccount($account_id);
     if ($account->partner_id == 1) {
         if ($account->type == 'reseller') {
@@ -310,7 +306,6 @@ function send_account_cancel_email($account_id)
 
 function send_account_delete_email($account_id)
 {
-
     $account = dbgetaccount($account_id);
 
     if ($account->partner_id == 1) {
@@ -331,7 +326,6 @@ function send_account_delete_email($account_id)
 
 function schedule_accounts_set_documents_last_call()
 {
-
     $sql = 'UPDATE crm_invalid_contacts 
     JOIN crm_accounts ON crm_invalid_contacts.account_id=crm_accounts.id
     SET crm_invalid_contacts.last_call = crm_accounts.last_call
@@ -341,17 +335,15 @@ function schedule_accounts_set_documents_last_call()
 
 function schedule_accounts_set_invoice_days()
 {
-
     $accounts = \DB::table('crm_accounts')->get();
     foreach ($accounts as $account) {
-
         if ($account->partner_id == 1) {
             $aging_date = \DB::connection('default')->table('crm_documents')->where('doctype', 'Tax Invoice')->where('account_id', $account->id)->orderby('docdate', 'desc')->pluck('docdate')->first();
         } else {
             $aging_date = \DB::connection('default')->table('crm_documents')->where('doctype', 'Tax Invoice')->where('reseller_user', $account->id)->orderby('docdate', 'desc')->pluck('docdate')->first();
         }
         $data['invoice_days'] = 0;
-        if (! empty($aging_date)) {
+        if (!empty($aging_date)) {
             if (date('Y-m-d', strtotime($aging_date)) < date('Y-m-d')) {
                 $date = Carbon\Carbon::parse($aging_date);
                 $now = Carbon\Carbon::today();
@@ -385,8 +377,8 @@ function button_accounts_delete_services($request)
     } else {
         $subscription_ids = \DB::table('sub_services')->where('account_id', $request->id)->where('status', '!=', 'Deleted')->pluck('id')->toArray();
     }
-    $subs = new ErpSubs;
-    if (! empty($subscription_ids) && count($subscription_ids) > 0) {
+    $subs = new ErpSubs();
+    if (!empty($subscription_ids) && count($subscription_ids) > 0) {
         foreach ($subscription_ids as $subscription_id) {
             $subs->deleteSubscription($subscription_id);
         }
@@ -399,7 +391,7 @@ function generate_refferal_link($account_id)
 {
     $account = dbgetaccount($account_id);
 
-    if (empty($account) || $account->partner_id != 1 || ($account->type != 'customer' && $account->type != 'reseller') || $account->status == 'Deleted') {
+    if (empty($account) || 1 != $account->partner_id || ('customer' != $account->type && 'reseller' != $account->type) || 'Deleted' == $account->status) {
         return '';
     }
 
@@ -606,7 +598,6 @@ function copy_energy_to_cloud($account_id)
                 }
             }
             $new_doc_id = \DB::connection($to_connection)->table('acc_cashbook_transactions')->insertGetId($doc_data);
-
         }
 
         // copy documents
@@ -654,7 +645,7 @@ function copy_energy_to_cloud($account_id)
 
 function button_accounts_update_debtor_status($request)
 {
-    $erp = new DBEvent;
+    $erp = new DBEvent();
     $erp->setDebtorBalance($request->id);
     $account = dbgetaccount($request->id);
     switch_account($account->id, $account->status, false, true);
@@ -738,9 +729,9 @@ function button_accounts_write_off_account($request)
         return json_alert('Only Deleted accounts can be written off.');
     }
 
-    (new DBEvent)->setAccountAging($request->id, 1);
+    (new DBEvent())->setAccountAging($request->id, 1);
     write_off_account($request->id);
-    (new DBEvent)->setAccountAging($request->id, 1);
+    (new DBEvent())->setAccountAging($request->id, 1);
 
     return json_alert('Account debt written off.');
 }
@@ -771,7 +762,7 @@ function button_accounts_override_debtor_status($request)
 function button_accounts_reset_debtor_status($request)
 {
     \DB::table('crm_accounts')->where('id', $request->id)->update(['debtor_status_id' => 0]);
-    (new DBEvent)->setAccountAging($request->id);
+    (new DBEvent())->setAccountAging($request->id);
 
     return json_alert('Account updated.');
 }
@@ -801,18 +792,12 @@ function button_accounts_send_letter_of_demand($request)
     return email_form($email_id, $request->id, $data);
 }
 
-function beforesave_id_document_check($request)
+function beforesave_check_deal_date($request)
 {
-    /*
-    if ($request->type == 'reseller') {
-        $id_doc = \DB::table('crm_accounts')->where('id', $request->id)->pluck('id_document')->first();
-        if (empty($id_doc) && empty($request->id_document)) {
-            if (!check_access('1,31')) {
-                //  return 'ID Document required for partners.';
-            }
-        }
+    $account = \DB::table('crm_accounts')->where('id', $request->id)->get()->first();
+    if ($account->deal_date != null && $account->deal_date != $request->deal_date) {
+        return 'Cannot change deal date once set.';
     }
-    */
 }
 
 function is_internal_user()
@@ -834,12 +819,12 @@ function get_partner_company($account_id)
 
 function is_customer_active($account_id)
 {
-    return (\DB::connection('default')->table('crm_accounts')->where(['id' => $account_id, 'status' => 'Enabled'])->count() == 1) ? 1 : 0;
+    return (1 == \DB::connection('default')->table('crm_accounts')->where(['id' => $account_id, 'status' => 'Enabled'])->count()) ? 1 : 0;
 }
 
 function is_partner_active($partner_id)
 {
-    return (\DB::connection('default')->table('crm_accounts')->where(['id' => $partner_id, 'status' => 'Enabled'])->count() == 1) ? 1 : 0;
+    return (1 == \DB::connection('default')->table('crm_accounts')->where(['id' => $partner_id, 'status' => 'Enabled'])->count()) ? 1 : 0;
 }
 
 function account_has_debit_order($account_id)
@@ -869,7 +854,7 @@ function get_debtor_transactions_sql($account_id)
     $partner_id = \DB::table('crm_accounts')->where('id', $account_id)->pluck('partner_id')->first();
 
     $payments_table = 'acc_cashbook_transactions';
-    if ($partner_id == 1) {
+    if (1 == $partner_id) {
         $total_field = 'total';
         $account_field = 'account_id';
     } else {
@@ -895,7 +880,6 @@ function get_debtor_transactions_sql($account_id)
     from acc_general_journals aj join acc_general_journal_transactions ajt on aj.transaction_id=ajt.id 
     where account_id = '".$account_id."' and credit_amount > 0 and aj.ledger_account_id=5 and ajt.approved=1
     ) crm_documents order by docdate, doctype asc, reference asc";
-
     // if(is_dev()){
     // print_r($sql);
     //exit;
@@ -907,7 +891,7 @@ function get_debtor_transactions($account_id, $conn = 'default')
     $partner_id = \DB::connection($conn)->table('crm_accounts')->where('id', $account_id)->pluck('partner_id')->first();
 
     $payments_table = 'acc_cashbook_transactions';
-    if ($partner_id == 1) {
+    if (1 == $partner_id) {
         $total_field = 'total';
         $account_field = 'account_id';
     } else {
@@ -933,7 +917,6 @@ function get_debtor_transactions($account_id, $conn = 'default')
     from acc_general_journals aj join acc_general_journal_transactions ajt on aj.transaction_id=ajt.id 
     where account_id = '".$account_id."' and credit_amount > 0 and aj.ledger_account_id=5 and ajt.approved=1
     ) crm_documents order by docdate, doctype asc, reference asc";
-
     //if(is_dev()){
     //print_r($sql);
     //exit;
@@ -946,7 +929,7 @@ function get_debtor_transactions_including_pending($account_id)
     $partner_id = \DB::table('crm_accounts')->where('id', $account_id)->pluck('partner_id')->first();
 
     $payments_table = 'acc_cashbook_transactions';
-    if ($partner_id == 1) {
+    if (1 == $partner_id) {
         $total_field = 'total';
         $account_field = 'account_id';
     } else {
@@ -974,7 +957,6 @@ function get_debtor_transactions_including_pending($account_id)
     ) crm_documents
     JOIN (SELECT @running_total := 0 AS tmpvar) tmpvar 
     order by docdate, doctype asc, reference asc";
-
     } else {
         $sql = 'select id, docdate, doctype, total, account_id, reference, reversal_id, cashbook_id,document_currency,doc_no,salesman_id from
     (select  '.$payments_table.'.id, docdate, "Cashbook Customer Receipt" as doctype, total *-1 as total, account_id, reference, 0 as reversal_id, cashbook_id,document_currency,doc_no,0 as salesman_id from '.$payments_table.' 
@@ -995,7 +977,6 @@ function get_debtor_transactions_including_pending($account_id)
     where account_id = '".$account_id."' and credit_amount > 0 and aj.ledger_account_id=5 and ajt.approved=1
     ) crm_documents order by docdate, doctype asc, reference asc";
     }
-
     //if(is_dev()){
     //print_r($sql);
     //exit;
@@ -1008,7 +989,7 @@ function get_debtor_transactions_excluding_writeoff($account_id)
     $partner_id = \DB::table('crm_accounts')->where('id', $account_id)->pluck('partner_id')->first();
 
     $payments_table = 'acc_cashbook_transactions';
-    if ($partner_id == 1) {
+    if (1 == $partner_id) {
         $total_field = 'total';
         $account_field = 'account_id';
     } else {
@@ -1034,7 +1015,6 @@ function get_debtor_transactions_excluding_writeoff($account_id)
     from acc_general_journals aj join acc_general_journal_transactions ajt on aj.transaction_id=ajt.id 
     where account_id = '".$account_id."' and credit_amount > 0 and aj.ledger_account_id=5 and ajt.approved=1 and aj.reference!='Bad Debt Written Off' and aj.reference!='Account Restored'
     ) crm_documents order by docdate, doctype asc, reference asc";
-
     // if(is_dev()){
     // print_r($sql);
     //exit;
@@ -1044,7 +1024,6 @@ function get_debtor_transactions_excluding_writeoff($account_id)
 
 function customer_control_sql()
 {
-
     $sql = "select id, docdate, doctype, total, account_id, reference, reversal_id from
     (select  acc_cashbook_transactions.id, docdate, 'Cashbook Customer Receipt' as doctype, total *-1 as total, account_id, reference, 0 as reversal_id from acc_cashbook_transactions
     where api_status!='Invalid' and approved=1 and account_id>0
@@ -1072,7 +1051,7 @@ function get_pending_debtor_transactions($account_id)
     $partner_id = \DB::table('crm_accounts')->where('id', $account_id)->pluck('partner_id')->first();
 
     $payments_table = 'acc_cashbook_transactions';
-    if ($partner_id == 1) {
+    if (1 == $partner_id) {
         $total_field = 'total';
         $account_field = 'account_id';
     } else {
@@ -1098,7 +1077,6 @@ function get_pending_debtor_transactions($account_id)
     from acc_general_journals aj join acc_general_journal_transactions ajt on aj.transaction_id=ajt.id 
     where account_id = '".$account_id."' and credit_amount > 0 and aj.ledger_account_id=5 
     ) crm_documents order by docdate, doctype asc, reference asc";
-
     // if(is_dev()){
     // print_r($sql);
     //exit;
@@ -1125,12 +1103,11 @@ function switch_account($account_id, $status = 'Enabled', $manual = false, $upda
 
     $internal = ($account->payment_type == 'Internal') ? true : false;
 
-    if ($account_status == 'Deleted' || $account_status == $status) {
+    if ('Deleted' == $account_status || $account_status == $status) {
         return false;
     }
-    if (! $update_services) {
-
-        if (! $manual && $account->debtor_status_id == 7) {
+    if (!$update_services) {
+        if (!$manual && $account->debtor_status_id == 7) {
             return false;
         }
 
@@ -1159,16 +1136,14 @@ function switch_account($account_id, $status = 'Enabled', $manual = false, $upda
             }
 
             if ($account_type == 'Postpaid30Days') {
-
                 if ($account->aging < 30 && $status == 'Disabled') {
                     return false;
                 }
             }
-
         }
 
         $type = $account->type;
-        if ($type == 'customer' || $type == 'reseller_user') {
+        if ('customer' == $type || 'reseller_user' == $type) {
             if ($status == 'Enabled') {
                 $billing_on_hold = \DB::table('sub_services')->where('status', '!=', 'Deleted')->where('billing_on_hold', 1)->where('account_id', $account_id)->count();
                 if ($billing_on_hold) {
@@ -1184,7 +1159,6 @@ function switch_account($account_id, $status = 'Enabled', $manual = false, $upda
     // VOICE & SMS
 
     if ($account->domain_uuid) {
-
         \DB::connection('pbx')->table('v_domains')
             ->where('domain_uuid', $account->domain_uuid)
             ->update(['status' => $status]);
@@ -1199,28 +1173,27 @@ function switch_account($account_id, $status = 'Enabled', $manual = false, $upda
             ->where('domain_uuid', $account->domain_uuid)
             ->update(['enabled' => $extension_status]);
 
-        $pbx = new FusionPBX;
+        $pbx = new FusionPBX();
         $extensions = \DB::connection('pbx')->table('v_extensions')->where('domain_uuid', $account->domain_uuid)->get();
         foreach ($extensions as $ext) {
             $key = 'directory:'.$ext->extension.'@'.$ext->user_context;
             $pbx->portalCmd('portal_aftersave_extension', $key);
-            if (! empty($ext->cidr)) {
+            if (!empty($ext->cidr)) {
                 $pbx->portalCmd('portal_reloadacl');
             }
         }
-
     }
 
-    if ($type == 'reseller' && $account_id != 1) {
+    if ('reseller' == $type && 1 != $account_id) {
         $partner_customers = \DB::table('crm_accounts')->where('partner_id', $account_id)->where('status', '!=', 'Deleted')->where('status', '!=', 'Disabled by Reseller')->get();
-        if (! empty($partner_customers)) {
+        if (!empty($partner_customers)) {
             foreach ($partner_customers as $customer) {
                 switch_account($customer->id, $status);
             }
         }
     }
 
-    if ($type == 'reseller_user' && ! empty(session('role_id')) && session('role_id') == 11) {
+    if ('reseller_user' == $type && !empty(session('role_id')) && session('role_id') == 11) {
         if ($status == 'Disabled') {
             \DB::table('crm_accounts')->where('id', $account_id)->update(['status' => 'Disabled by Reseller']);
         }
@@ -1228,8 +1201,8 @@ function switch_account($account_id, $status = 'Enabled', $manual = false, $upda
 
     try {
         if ($account_status != $status) {
-            if ($type == 'customer' || $type == 'reseller_user') {
-                $erp_subscriptions = new ErpSubs;
+            if ('customer' == $type || 'reseller_user' == $type) {
+                $erp_subscriptions = new ErpSubs();
                 $erp_subscriptions->setStatus($account_id, $status);
             }
 
@@ -1284,11 +1257,11 @@ function switch_account($account_id, $status = 'Enabled', $manual = false, $upda
 function beforedelete_check_account_services($request)
 {
     $lte_accounts = \DB::table('sub_services')->where(['account_id' => $account_id, 'provision_type' => 'lte_sim_card'])->where('status', '!=', 'Deleted')->get();
-    if (! empty($lte_accounts)) {
+    if (!empty($lte_accounts)) {
         return 'Cannot delete account with active lte subscriptions';
     }
     $phone_numbers = \DB::table('sub_services')->where(['account_id' => $account_id, 'provision_type' => 'phone_number'])->where('status', '!=', 'Deleted')->get();
-    if (! empty($phone_numbers)) {
+    if (!empty($phone_numbers)) {
         return 'Cannot delete account with active phone number subscriptions';
     }
 }
@@ -1318,14 +1291,13 @@ function cancel_account($account_id)
 //// Delete account
 function delete_account($account_id, $deleted_at = false)
 {
-
     $deleted_at = date('Y-m-d H:i:s');
     $account = dbgetaccount($account_id);
     // approval check
     if ($account->partner_id == 1) {
-        if (! $account->cancel_approved) {
+        if (!$account->cancel_approved) {
             $e = \DB::table('crm_approvals')->where('module_id', 343)->where('is_deleted', 0)->where('row_id', $account->id)->where('title', 'like', 'Account Delete%')->count();
-            if (! $e) {
+            if (!$e) {
                 if ($account->account_status == 'Cancelled') {
                     $delete_reason = 'Delete reason: Account Cancelled';
                 } else {
@@ -1339,8 +1311,7 @@ function delete_account($account_id, $deleted_at = false)
                     'processed' => 0,
                     'requested_by' => get_system_user_id(),
                 ];
-                (new \DBEvent)->setTable('crm_approvals')->save($data);
-
+                (new \DBEvent())->setTable('crm_approvals')->save($data);
             }
 
             return false;
@@ -1352,7 +1323,7 @@ function delete_account($account_id, $deleted_at = false)
         \DB::table('acc_debit_orders')->where('account_id', $account->id)->update(['status' => 'Deleted']);
     }
 
-    if ($type == 'reseller') {
+    if ('reseller' == $type) {
         \DB::table('crm_accounts')->where('id', $account_id)->where('status', '!=', 'Deleted')->update(['status' => 'Deleted', 'deleted_at' => $deleted_at]);
         \DB::table('crm_account_partner_settings')->where('account_id', $account_id)->delete();
         $pricelist_ids = \DB::table('crm_pricelists')->where('partner_id', $account_id)->pluck('id')->toArray();
@@ -1362,16 +1333,16 @@ function delete_account($account_id, $deleted_at = false)
         \DB::connection('pbx')->table('p_rates_partner_items')->where('partner_id', $account_id)->delete();
         $partner_customers = \DB::table('crm_accounts')->where('partner_id', $account_id)->where('status', '!=', 'Deleted')->get();
 
-        if (! empty($partner_customers)) {
+        if (!empty($partner_customers)) {
             foreach ($partner_customers as $customer) {
                 delete_account($customer->id, $deleted_at);
             }
         }
     }
 
-    if ($type == 'customer' || $type == 'reseller_user') {
+    if ('customer' == $type || 'reseller_user' == $type) {
         if (in_array(8, session('app_ids'))) {
-            if ($type == 'reseller_user') {
+            if ('reseller_user' == $type) {
                 \DB::table('crm_accounts')->where('id', $account_id)->where('status', '!=', 'Deleted')->update(['aging' => 0, 'balance' => 0]);
             }
 
@@ -1390,7 +1361,7 @@ function delete_account($account_id, $deleted_at = false)
             \DB::table('isp_sms_message_queue')->where('account_id', $account_id)->delete();
             \DB::table('isp_sms_templates')->where('account_id', $account_id)->delete();
             $sms_list_ids = \DB::table('isp_sms_lists')->where('account_id', $account_id)->pluck('id')->toArray();
-            if (! empty($sms_list_ids) && is_array($sms_list_ids) && count($sms_list_ids) > 0) {
+            if (!empty($sms_list_ids) && is_array($sms_list_ids) && count($sms_list_ids) > 0) {
                 \DB::table('isp_sms_list_numbers')->whereIn('sms_list_id', $sms_list_ids)->delete();
             }
             \DB::table('isp_sms_lists')->where('account_id', $account_id)->delete();
@@ -1399,7 +1370,7 @@ function delete_account($account_id, $deleted_at = false)
 
             // LTE
             $lte_accounts = \DB::table('sub_services')->where(['account_id' => $account_id, 'provision_type' => 'lte_sim_card'])->where('status', '!=', 'Deleted')->get();
-            if (! empty($lte_accounts)) {
+            if (!empty($lte_accounts)) {
                 foreach ($lte_accounts as $lte_account) {
                     $data['detail'] = $lte_account->detail;
                     $data['account_company'] = $account->company;
@@ -1412,7 +1383,7 @@ function delete_account($account_id, $deleted_at = false)
             // TELKOM LTE
             $lte_accounts = \DB::table('sub_services')->where(['account_id' => $account_id, 'provision_type' => 'telkom_lte_sim_card'])->where('status', '!=', 'Deleted')->get();
 
-            if (! empty($lte_accounts)) {
+            if (!empty($lte_accounts)) {
                 foreach ($lte_accounts as $lte_account) {
                     $account = dbgetaccount($lte_account->account_id);
                     $data['detail'] = $lte_account->detail.' Telkom LTE Simcard';
@@ -1433,14 +1404,14 @@ function delete_account($account_id, $deleted_at = false)
             }
             */
             $fibre_accounts = \DB::table('sub_services')->where(['account_id' => $account_id, 'provision_type' => 'fibre'])->get();
-            if (! empty($fibre_accounts)) {
+            if (!empty($fibre_accounts)) {
                 foreach ($fibre_accounts as $fibre_sub) {
                     fibre_status_email($fibre_sub, 'Deleted');
                 }
             }
 
             // VOIP
-            if (! empty($account->pabx_domain)) {
+            if (!empty($account->pabx_domain)) {
                 \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid', $account->domain_uuid)->where('status', 'Deleted')->update(['domain_uuid' => null, 'number_routing' => null, 'routing_type' => null]);
                 \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid', $account->domain_uuid)->where('status', '!=', 'Deleted')->update(['domain_uuid' => null, 'status' => 'Enabled', 'number_routing' => null, 'routing_type' => null]);
 
@@ -1472,8 +1443,8 @@ function delete_account($account_id, $deleted_at = false)
     }
 
     // DELETE PAYFAST SUBSCRIPTION
-    if ($type != 'reseller_user') {
-        $sub = new ErpSubs;
+    if ('reseller_user' != $type) {
+        $sub = new ErpSubs();
         $sub->deletePayfastSubscription($account_id);
     }
 
@@ -1500,7 +1471,7 @@ function delete_account($account_id, $deleted_at = false)
         \DB::table('crm_approvals')->where('row_id', $id)->whereIn('module_id', $doc_module_ids)->delete();
     }
 
-    if ($type == 'reseller' || $type == 'customer') {
+    if ('reseller' == $type || 'customer' == $type) {
         $debtor_status = \DB::table('crm_debtor_status')->where('id', $account->debtor_status_id)->get()->first();
         if ($debtor_status->write_off) {
             write_off_account($account_id);
@@ -1511,12 +1482,12 @@ function delete_account($account_id, $deleted_at = false)
 //// write_off_account
 function write_off_account($account_id)
 {
-    (new DBEvent)->setAccountAging($account_id, 1, 0);
+    (new DBEvent())->setAccountAging($account_id, 1, 0);
     $account = dbgetaccount($account_id);
     $account->balance = currency($account->balance);
     $pending_balance = get_pending_debtor_balance($account_id);
 
-    if ($pending_balance != 0 && $account->status == 'Deleted' && $account->type != 'lead' && $account->partner_id == 1) {
+    if (0 != $pending_balance && 'Deleted' == $account->status && 'lead' != $account->type && 1 == $account->partner_id) {
         $trx_data = [
             'docdate' => date('Y-m-d'),
             'doctype' => 'General Journal',
@@ -1557,7 +1528,7 @@ function write_off_account($account_id)
         //if(!$account->cancel_approved){
         //\DB::table('acc_general_journal_transactions')->where('id',$transaction_id)->update(['approved'=>0]);
         //}
-        if ($account->type == 'reseller') {
+        if ('reseller' == $account->type) {
             $reseller_users = \DB::table('crm_accounts')->where('partner_id', $account->id)->get();
             foreach ($reseller_users as $sa) {
                 \DB::table('crm_accounts')->where('id', $sa->id)->update(['balance' => 0]);
@@ -1570,17 +1541,15 @@ function write_off_account($account_id)
             ->where('id', $transaction_id)
             ->update(['credit_total' => $credit_total, 'debit_total' => $debit_total]);
 
-        (new DBEvent)->setDebtorBalance($account->id, 1);
+        (new DBEvent())->setDebtorBalance($account->id, 1);
 
         $journals = \DB::table('acc_general_journal_transactions')->where('approved', 0)->get();
         foreach ($journals as $journal) {
-
             $exists = \DB::table('crm_approvals')->where('module_id', 730)->where('row_id', $journal->id)->count();
             $account_id = \DB::table('acc_general_journals')->where('transaction_id', $journal->id)->pluck('account_id')->first();
 
             $company = dbgetcell('crm_accounts', 'id', $account_id, 'company');
-            if (! $exists) {
-
+            if (!$exists) {
                 $data = [
                     'module_id' => 730,
                     'row_id' => $journal->id,
@@ -1588,11 +1557,10 @@ function write_off_account($account_id)
                     'processed' => 0,
                     'requested_by' => get_user_id_default(),
                 ];
-                (new \DBEvent)->setTable('crm_approvals')->save($data);
+                (new \DBEvent())->setTable('crm_approvals')->save($data);
             }
         }
     }
-
 }
 
 function button_debtors_restore_last_write_off($request)
@@ -1603,7 +1571,7 @@ function button_debtors_restore_last_write_off($request)
     }
     $account_id = $debtor->account_id;
     $debt_total = \DB::table('acc_general_journals')->where('account_id', $account_id)->where('ledger_account_id', 5)->where('reference', 'Bad Debt Written Off')->orderBy('id', 'desc')->pluck('credit_amount')->first();
-    if (! $debt_total) {
+    if (!$debt_total) {
         return json_alert('Account does not have a write off to restore', 'warning');
     }
     restore_account_debt_last_write_off($debtor->account_id);
@@ -1615,7 +1583,7 @@ function restore_account_debt_last_write_off($account_id)
 {
     $debt_total = \DB::table('acc_general_journals')->where('account_id', $account_id)->where('ledger_account_id', 5)->where('reference', 'Bad Debt Written Off')->orderBy('id', 'desc')->pluck('credit_amount')->first();
 
-    if ($debt_total != 0) {
+    if (0 != $debt_total) {
         $trx_data = [
             'docdate' => date('Y-m-d'),
             'doctype' => 'General Journal',
@@ -1633,7 +1601,7 @@ function restore_account_debt_last_write_off($account_id)
             'ledger_account_id' => 5,
         ];
 
-        $db = new DBEvent;
+        $db = new DBEvent();
         $result = $db->setTable('acc_general_journals')->save($data);
 
         $data['credit_amount'] = $data['debit_amount'];
@@ -1641,14 +1609,14 @@ function restore_account_debt_last_write_off($account_id)
         $data['ledger_account_id'] = 51;
         $result = $db->setTable('acc_general_journals')->save($data);
 
-        (new DBEvent)->setAccountAging($account_id, 1, false);
+        (new DBEvent())->setAccountAging($account_id, 1, false);
     }
 }
 function restore_account_debt($account_id)
 {
     $debt_total = \DB::table('acc_general_journals')->where('account_id', $account_id)->where('ledger_account_id', 5)->where('reference', 'Bad Debt Written Off')->sum('credit_amount');
 
-    if ($debt_total != 0) {
+    if (0 != $debt_total) {
         $trx_data = [
             'docdate' => date('Y-m-d'),
             'doctype' => 'General Journal',
@@ -1666,7 +1634,7 @@ function restore_account_debt($account_id)
             'ledger_account_id' => 5,
         ];
 
-        $db = new DBEvent;
+        $db = new DBEvent();
         $result = $db->setTable('acc_general_journals')->save($data);
 
         $data['credit_amount'] = $data['debit_amount'];
@@ -1674,17 +1642,17 @@ function restore_account_debt($account_id)
         $data['ledger_account_id'] = 51;
         $result = $db->setTable('acc_general_journals')->save($data);
 
-        (new DBEvent)->setAccountAging($account_id, 1, false);
+        (new DBEvent())->setAccountAging($account_id, 1, false);
     }
 }
 
 function create_credit_note($account_id, $amount, $reference, $reversal_id = null)
 {
-    $db = new DBEvent;
+    $db = new DBEvent();
 
     $account = dbgetaccount($account_id);
 
-    if ($account->status != 'Deleted' && $account->type != 'lead' && $account->partner_id == 1) {
+    if ('Deleted' != $account->status && 'lead' != $account->type && 1 == $account->partner_id) {
         $doctype = 'Credit Note';
 
         $data = [
@@ -1730,7 +1698,7 @@ function create_credit_note_draft_from_invoice($invoice_id, $post_document = fal
         \DB::table('crm_documents')->where('id', $invoice_id)->update(['reversal_id' => $credit_note_id]);
 
         if ($post_document) {
-            $db = new DBEvent;
+            $db = new DBEvent();
             $db->setTable('crm_documents');
             $db->postDocument($credit_note_id);
             $db->postDocumentCommit();
@@ -1765,7 +1733,7 @@ function create_credit_note_from_invoice($invoice_id, $post_document = true)
         \DB::table('crm_documents')->where('id', $invoice_id)->update(['reversal_id' => $credit_note_id]);
 
         if ($post_document) {
-            $db = new DBEvent;
+            $db = new DBEvent();
             $db->setTable('crm_documents');
             $db->postDocument($credit_note_id);
             $db->postDocumentCommit();
@@ -1783,7 +1751,7 @@ function create_customer($data, $type = 'customer', $create_settings = true, $us
     if (is_array($data)) {
         $data = (object) $data;
     }
-    if (! $data->partner_id) {
+    if (!$data->partner_id) {
         $data->partner_id = 1;
     }
     $customer = [];
@@ -1794,19 +1762,19 @@ function create_customer($data, $type = 'customer', $create_settings = true, $us
     $customer['pricelist_id'] = $partner_pricelist_id;
     $customer['company'] = $data->company;
     $customer['contact'] = $data->contact;
-    if (! empty($data->newsletter)) {
+    if (!empty($data->newsletter)) {
         $customer['newsletter'] = 1;
     } else {
         $customer['newsletter'] = 0;
     }
-    if (! empty($data->email)) {
+    if (!empty($data->email)) {
         $customer['email'] = $data->email;
     }
 
-    if (! empty($data->phone)) {
+    if (!empty($data->phone)) {
         $customer['phone'] = $data->phone;
     }
-    if (! empty($data->marketing_channel_id)) {
+    if (!empty($data->marketing_channel_id)) {
         $customer['marketing_channel_id'] = $data->marketing_channel_id;
     }
     $customer['notification_type'] = $data->notification_type;
@@ -1814,9 +1782,9 @@ function create_customer($data, $type = 'customer', $create_settings = true, $us
         $customer['notification_type'] = 'email';
     }
 
-    if ($type == 'reseller') {
+    if ('reseller' == $type) {
         $customer['type'] = 'reseller';
-    } elseif ($customer['partner_id'] == 1) {
+    } elseif (1 == $customer['partner_id']) {
         if ($type == 'customer') {
             $customer['type'] = 'customer';
         } else {
@@ -1842,11 +1810,11 @@ function create_customer($data, $type = 'customer', $create_settings = true, $us
 //// convert_to_partner
 function convert_to_partner($id, $json = true)
 {
-    $erp = new DBEvent;
+    $erp = new DBEvent();
     $customer = \DB::table('crm_accounts')->where('id', $id)->get()->first();
 
     // create reseller domain
-    if ($customer->partner_id == 1 && ($customer->type == 'lead' || $customer->type == 'customer')) {
+    if (1 == $customer->partner_id && ('lead' == $customer->type || 'customer' == $customer->type)) {
         $partner_id = create_customer($customer, 'reseller', true);
         $new_user_id = \DB::table('erp_users')->where('account_id', $partner_id)->pluck('id')->first();
 
@@ -1883,7 +1851,7 @@ function convert_to_partner($id, $json = true)
         \DB::table('acc_debit_order_batch')->where('limit_account_id', $customer->id)->update(['limit_account_id' => $partner_id]);
         \DB::table('acc_debit_orders')->where('account_id', $customer->id)->update(['account_id' => $partner_id]);
 
-        if ($customer->type == 'lead') {
+        if ('lead' == $customer->type) {
             \DB::table('crm_accounts')->where('id', $id)->update(['type' => 'customer']);
             create_account_settings($customer->id);
         }
@@ -1963,7 +1931,7 @@ function get_pending_debtor_balance($account_id = 0)
         foreach ($rows as $row) {
             $balance += $row->total;
             //if(is_dev()){
-            // }
+           // }
         }
     }
 
@@ -1975,12 +1943,11 @@ function create_account_settings($account_id, $user_arr = false)
 {
     $account = \DB::table('crm_accounts')->where('id', $account_id)->get()->first();
 
-    if (! empty($account)) {
-
+    if (!empty($account)) {
         send_email_verification_link($account_id);
 
         if (empty($account->type)) {
-            if ($account->partner_id == 1) {
+            if (1 == $account->partner_id) {
                 \DB::table('crm_accounts')->where('id', $account_id)->update(['type' => 'lead']);
                 $type = 'lead';
                 $account->type = 'lead';
@@ -1991,10 +1958,10 @@ function create_account_settings($account_id, $user_arr = false)
             }
         } else {
             $type = $account->type;
-            if ($type == 'reseller') {
+            if ('reseller' == $type) {
                 $settings_exists = \DB::table('crm_account_partner_settings')->where('account_id', $account_id)->count();
 
-                if (! $settings_exists) {
+                if (!$settings_exists) {
                     dbinsert('crm_account_partner_settings', ['id' => $account_id, 'account_id' => $account_id]);
                 }
             }
@@ -2003,39 +1970,39 @@ function create_account_settings($account_id, $user_arr = false)
         if ($account->type != 'lead') {
             $user_exists = \DB::table('erp_users')->where('account_id', $account_id)->count();
             $username = false;
-            if (! empty($account->email)) {
+            if (!empty($account->email)) {
                 $account->email = preg_replace('/\s+/', '', $account->email);
                 $username_exists = \DB::table('erp_users')->where('username', $account->email)->count();
-                if (! $username_exists) {
+                if (!$username_exists) {
                     $username = $account->email;
                 }
             }
 
-            if (! $username && ! empty($account->phone)) {
+            if (!$username && !empty($account->phone)) {
                 $username_exists = \DB::table('erp_users')->where('username', $account->phone)->count();
-                if (! $username_exists) {
+                if (!$username_exists) {
                     $username = $account->phone;
                 }
             }
 
-            if (! empty($account->email)) {
+            if (!empty($account->email)) {
                 \DB::table('crm_accounts')->where('id', $account_id)->update(['notification_type' => 'email']);
             } else {
                 \DB::table('crm_accounts')->where('id', $account_id)->update(['notification_type' => 'sms']);
             }
             $disable_customer_login = get_admin_setting('disable_customer_login');
-            if (! $user_exists && ! $disable_customer_login) {
-                $user = new \stdClass;
+            if (!$user_exists && !$disable_customer_login) {
+                $user = new \stdClass();
                 $user->account_id = $account_id;
-                if ($account->type == 'reseller') {
+                if ('reseller' == $account->type) {
                     $user->role_id = 11;
                 }
 
-                if ($account->type == 'reseller_user') {
+                if ('reseller_user' == $account->type) {
                     $user->role_id = 21;
                 }
 
-                if ($account->type == 'customer' || $account->type == 'lead') {
+                if ('customer' == $account->type || 'lead' == $account->type) {
                     $user->role_id = 21;
                 }
 
@@ -2047,7 +2014,7 @@ function create_account_settings($account_id, $user_arr = false)
                 $user->full_name = $username;
                 $user->email = $account->email;
                 $user->phone = $account->phone;
-                if (! empty($account->contact)) {
+                if (!empty($account->contact)) {
                     $user->full_name = $account->contact;
                 }
                 $pass = generate_strong_password();
@@ -2072,13 +2039,11 @@ function create_account_settings($account_id, $user_arr = false)
                             $data['attachments'][] = export_pricelist($account->pricelist_id);
                         }
                         erp_process_notification($account->id, $data);
-
                     }
 
                     if ($account->notification_type == 'sms') {
                         queue_sms(12, $account->phone, 'Register success. '.url('/').'.User: '.$user->username.', Pass: '.$pass);
                     }
-
                 } catch (\Throwable $ex) {
                     exception_log($ex);
                 }
@@ -2091,9 +2056,9 @@ function beforesave_pricelist_check($request)
 {
     $account = \DB::table('crm_accounts')->where('id', $request->id)->get()->first();
     if ($account->type != 'reseller') {
-        if (! empty($request->pricelist_id) && (session('role_level') == 'Admin' || check_access('11'))) {
-            if (! empty($request->id)) {
-                if ($request->type == 'customer' || $request->type == 'lead' || $request->type == 'reseller_user') {
+        if (!empty($request->pricelist_id) && (session('role_level') == 'Admin' || check_access('11'))) {
+            if (!empty($request->id)) {
+                if ('customer' == $request->type || 'lead' == $request->type || 'reseller_user' == $request->type) {
                     $pricelist_type = 'retail';
                 } else {
                     $pricelist_type = 'wholesale';
@@ -2103,7 +2068,7 @@ function beforesave_pricelist_check($request)
 
                 $account_partner_id = dbgetcell('crm_accounts', 'id', $request->id, 'partner_id');
                 $pricelist_ids = \DB::table('crm_pricelists')->where('partner_id', $account_partner_id)->pluck('id')->toArray();
-                if (! in_array($request->pricelist_id, $pricelist_ids)) {
+                if (!in_array($request->pricelist_id, $pricelist_ids)) {
                     return 'Invalid Pricelist';
                 }
             }
@@ -2113,21 +2078,20 @@ function beforesave_pricelist_check($request)
 
 function aftersave_debtors_set_accountability_match()
 {
-
     \DB::table('crm_accounts')->update(['accountability_match' => 0]);
     \DB::table('crm_accounts')->whereRaw('debtor_status_id=accountability_current_status_id')->update(['accountability_match' => 1]);
 }
 
 function aftersave_account_settings($request)
 {
-    $id = (! empty($request->id)) ? $request->id : null;
-    $new_record = (! empty($request->new_record)) ? 1 : 0;
+    $id = (!empty($request->id)) ? $request->id : null;
+    $new_record = (!empty($request->new_record)) ? 1 : 0;
     $request->request->remove('new_record');
     if ($id) {
         set_account_product_category($id);
     }
     if ($new_record && $id) {
-        $type = (session('account_id') == 1) ? 'lead' : 'reseller_user';
+        $type = (1 == session('account_id')) ? 'lead' : 'reseller_user';
 
         \DB::table('crm_accounts')->where('id', $id)->update(['type' => $type, 'partner_id' => session('account_id')]);
         if (empty($request->pricelist_id)) {
@@ -2139,7 +2103,7 @@ function aftersave_account_settings($request)
     }
 
     $user = \DB::table('erp_users')->where('account_id', $id)->count();
-    if (! $user) {
+    if (!$user) {
         create_account_settings($id);
     }
 
@@ -2149,14 +2113,13 @@ function aftersave_account_settings($request)
         $reseller_users = \DB::table('crm_accounts')->where('partner_id', $p->id)->where('status', '!=', 'Deleted')->count();
         \DB::table('crm_accounts')->where('id', $p->id)->update(['reseller_users' => $reseller_users]);
     }
-
 }
 
 function button_accounts_documents($request)
 {
     $menu_name = get_menu_url_from_table('crm_documents');
     $account = dbgetaccount($request->id);
-    if ($account->partner_id == 1) {
+    if (1 == $account->partner_id) {
         return Redirect::to($menu_name.'?account_id='.$request->id);
     } else {
         return Redirect::to($menu_name.'?reseller_user='.$request->id);
@@ -2186,13 +2149,13 @@ function schedule_set_pbx_name()
         $account = dbgetaccount($pbx_domain->account_id);
         $partner_company = \DB::connection('default')->table('crm_accounts')->where('id', $account->partner_id)->pluck('company')->first();
         \DB::connection('pbx')->table('v_domains')
-            ->where('domain_uuid', $pbx_domain->domain_uuid)
-            ->update([
-                'status' => $account->status,
-                'company' => $account->company,
-                'partner_id' => $account->partner_id,
-                'partner_company' => $account->partner_company,
-            ]);
+        ->where('domain_uuid', $pbx_domain->domain_uuid)
+        ->update([
+            'status' => $account->status,
+            'company' => $account->company,
+            'partner_id' => $account->partner_id,
+            'partner_company' => $account->partner_company,
+        ]);
     }
 }
 
@@ -2251,7 +2214,7 @@ function restore_quotations()
     $quotes = \DB::connection('backup_erp')->table('crm_documents')->where('doctype', 'Quotation')->get();
     foreach ($quotes as $q) {
         $exists = \DB::table('crm_documents')->where('id', $q->id)->count();
-        if (! $exists) {
+        if (!$exists) {
             $data = (array) $q;
             \DB::table('crm_documents')->insert($data);
             $lines = \DB::connection('backup_erp')->table('crm_document_lines')->where('document_id', $q->id)->get();
@@ -2274,7 +2237,7 @@ function button_accounts_convert_partner_to_customer($request)
     $default_pricelist_id = \DB::table('crm_pricelists')->where('partner_id', 1)->where('default_pricelist', 1)->pluck('id')->first();
     $sub_accounts = \DB::table('crm_accounts')->where('partner_id', $account_id)->get();
 
-    $sub = new ErpSubs;
+    $sub = new ErpSubs();
 
     $sub->updateProductPrices();
 
@@ -2289,10 +2252,10 @@ function button_accounts_convert_partner_to_customer($request)
         \DB::table('crm_accounts')->where('id', $sub_account->id)->update($data);
 
         $sub->updateSubscriptionsTotal($sub_account->id);
-        (new DBEvent)->setAccountAging($sub_account->id);
+        (new DBEvent())->setAccountAging($sub_account->id);
     }
 
-    (new DBEvent)->setAccountAging($account_id);
+    (new DBEvent())->setAccountAging($account_id);
     \DB::table('crm_accounts')->where('id', $account_id)->update(['pricelist_id' => $default_pricelist_id, 'type' => 'customer', 'notes' => 'Converted Partner Account']);
     \DB::table('erp_users')->where('account_id', $account_id)->update(['role_id' => 11]);
 
@@ -2309,7 +2272,7 @@ function set_account_product_category_all()
 
 function set_account_product_category($account_id = false)
 {
-    if (! $account_id) {
+    if (!$account_id) {
         return false;
     }
     $category_id = 0;
@@ -2402,7 +2365,6 @@ function schedule_set_accounts_services_statuses()
 
 function set_accounts_services_statuses($account_id)
 {
-
     $service_status = 'Normal';
     $account = dbgetaccount($account_id);
     if ($account->status == 'Deleted') {
@@ -2416,7 +2378,7 @@ function set_accounts_services_statuses($account_id)
     }
     // DORMANT
     $annual_subscriptions = \DB::table('sub_services')->where('account_id', $account_id)->where('bill_frequency', '>=', 12)->where('status', '!=', 'Deleted')->count();
-    if (! $annual_subscriptions) {
+    if (!$annual_subscriptions) {
         if ($account->invoice_days > 80) {
             $service_status = 'Dormant';
         }
@@ -2437,7 +2399,7 @@ function set_accounts_services_statuses($account_id)
     \DB::connection('default')->table('crm_accounts')->where('id', $account_id)->update(['service_status' => $service_status]);
     \DB::connection('default')->table('crm_accounts')->where('partner_id', $account_id)->update(['service_status' => $service_status]);
 
-    if (! empty(session('app_ids')) && in_array(12, session('app_ids')) && ! empty($account->pabx_domain)) {
+    if (!empty(session('app_ids')) && in_array(12, session('app_ids')) && !empty($account->pabx_domain)) {
         $pbx_service_status = $service_status;
         // PBX No Balance
         $no_balance = \DB::connection('pbx')->table('v_domains')->where('account_id', $account_id)->where('unlimited_channels', 0)->where('balance', '<=', 0)->where('partner_id', 1)->count();
@@ -2456,10 +2418,10 @@ function set_accounts_services_statuses($account_id)
         if ($prepaid_domain > 0) {
             // BLOCKED_NO_AIRTIME
             $blocked_airtime = \DB::connection('pbx_cdr')->table('call_records_outbound')
-                ->where('hangup_cause', 'BLOCKED_NO_AIRTIME')
-                ->where('domain_name', $account->pabx_domain)
-                ->where('hangup_date', '>=', date('Y-m-d 00:00', strtotime('-1 day')))
-                ->count();
+            ->where('hangup_cause', 'BLOCKED_NO_AIRTIME')
+            ->where('domain_name', $account->pabx_domain)
+            ->where('hangup_date', '>=', date('Y-m-d 00:00', strtotime('-1 day')))
+            ->count();
 
             if ($blocked_airtime) {
                 $pbx_service_status = 'BLOCKED_NO_AIRTIME';
@@ -2467,7 +2429,6 @@ function set_accounts_services_statuses($account_id)
         }
 
         \DB::connection('default')->table('crm_accounts')->where('id', $account_id)->where('service_status', 'Normal')->update(['service_status' => $pbx_service_status]);
-
     }
 }
 
@@ -2498,7 +2459,6 @@ function get_salesman_user_ids()
     $salesman_roles = [62];
 
     $salesmanIds = \DB::table('erp_users')->whereIn('role_id', $salesman_roles)->where('is_deleted', 0)->pluck('id')->toArray();
-
     //if(session('instance')->id == 1){
     // kola
     //    $salesmanIds[] = 4194;
@@ -2508,15 +2468,14 @@ function get_salesman_user_ids()
 
 function aftersave_account_set_salesman($request)
 {
-
     $salesmanIds = get_salesman_user_ids();
 
     $account = \DB::table('crm_accounts')->where('id', $request->id)->get()->first();
 
     if (empty($account->salesman_id) && in_array(session('user_id'), $salesmanIds)) {
         \DB::table('crm_accounts')
-            ->where('id', $request->id)
-            ->update(['salesman_id' => session('user_id')]);
+        ->where('id', $request->id)
+        ->update(['salesman_id' => session('user_id')]);
     }
 }
 
@@ -2531,7 +2490,7 @@ function schedule_assign_customers_to_salesman()
     \DB::table('crm_accounts')->where('status', '!=', 'Deleted')->whereNotIn('salesman_id', $salesmanIds)->update(['salesman_id' => 0]);
 
     $totalSalesmen = count($salesmanIds);
-    if (! $totalSalesmen) {
+    if (!$totalSalesmen) {
         return false;
     }
 
@@ -2552,7 +2511,6 @@ function schedule_assign_customers_to_salesman()
     $totalSalesmen = count($salesmanIds);
 
     if ($totalSalesmen > 0 && $accounts->count() > 0) {
-
         // Group accounts by month
         $accountsByMonth = $accounts->groupBy(function ($account) {
             return \Carbon\Carbon::parse($account->created_at)->format('Y-m'); // Convert to Carbon date object Group by year and month
@@ -2590,9 +2548,7 @@ function schedule_assign_customers_to_salesman()
                 $currentSalesmanIndex = ($currentSalesmanIndex + 1) % $totalSalesmen;
             }
         }
-
     }
-
 }
 
 function schedule_assign_customers_to_salesman_old()
@@ -2607,13 +2563,12 @@ function schedule_assign_customers_to_salesman_old()
     $salesmanIds = get_salesman_user_ids();
 
     $totalSalesmen = count($salesmanIds);
-    if (! $totalSalesmen) {
+    if (!$totalSalesmen) {
         return false;
     }
     // Retrieve all account IDs
     $accountIds = DB::table('crm_accounts')->where('status', '!=', 'Deleted')->whereNotIn('salesman_id', $salesmanIds)->orderBy('form_name')->pluck('id')->toArray();
     if (count($accountIds) > 0) {
-
         $totalAccounts = count($accountIds);
         $accountsPerSalesman = (int) ($totalAccounts / $totalSalesmen);
         $remainder = $totalAccounts % $totalSalesmen;
@@ -2624,8 +2579,8 @@ function schedule_assign_customers_to_salesman_old()
             $numAccounts = $accountsPerSalesman;
 
             if ($remainder > 0) {
-                $numAccounts++;
-                $remainder--;
+                ++$numAccounts;
+                --$remainder;
             }
 
             $accountSubset = array_slice($accountIds, $accountIndex, $numAccounts);
@@ -2640,12 +2595,11 @@ function schedule_assign_customers_to_salesman_old()
                 ->update(['salesman_id' => $salesmanId]);
         }
     }
-
 }
 
 function assign_customer_to_partner($customer_id, $partner_id)
 {
-    if (! $customer_id || ! $partner_id) {
+    if (!$customer_id || !$partner_id) {
         return 'Invalid ID';
     }
     $current_partner_id = \DB::table('crm_accounts')->where('id', $customer_id)->pluck('partner_id')->first();
@@ -2663,7 +2617,7 @@ function assign_customer_to_partner($customer_id, $partner_id)
     \DB::table('erp_communication_lines')->where('account_id', $customer_id)->update(['account_id' => $partner_id]);
     \DB::table('acc_ledgers')->where('account_id', $customer_id)->update(['account_id' => $partner_id]);
 
-    (new DBEvent)->setAccountAging($partner_id);
+    (new DBEvent())->setAccountAging($partner_id);
 
     return 'Done';
 }

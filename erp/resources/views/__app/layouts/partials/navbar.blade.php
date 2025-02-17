@@ -150,7 +150,7 @@
         popupWidth: 'auto',
         showClearButton: false,
         change: function (args) { 
-           //console.log(args);
+           console.log(args);
            var redirect_url = args.itemData.menu_url;
            //if(window['layout_id{{ $grid_id }}']){
            //    var redirect_url = redirect_url+'&layout_id='+window['layout_id{{ $grid_id }}'];
@@ -174,17 +174,18 @@
       
    
     @if(!empty($top_right_menu) && count($top_right_menu) > 0)   
-        var adminMenuItems = @php echo json_encode($top_right_menu); @endphp;
+
+    var adminMenuItems = @php echo json_encode($top_right_menu); @endphp;
 
   
     // top_menu initialization
-        var adminRightMenu =new ej.navigations.Menu({
+    var adminRightMenu =new ej.navigations.Menu({
            items: adminMenuItems,
            orientation: 'Horizontal',
-           cssClass: 'top-menu btn-group',
-           template: '#navMenuTemplate',
-           @if (is_superadmin() && 1==2)
-           created: function(args){
+            cssClass: 'top-menu btn-group',
+        template: '#navMenuTemplate',
+            @if(is_superadmin())
+            created: function(args){
                 $('body').append('<ul id="allaccess_context" class="m-0"></ul>');
                 var context_items = [
                     {
@@ -194,7 +195,7 @@
                         url: 'sf_menu_manager/{{$module_id}}/top_right_menu',
                         data_target: 'view_modal',
                     },
-                    /* {
+                   /* {
                         id: "edit_menu_btn",
                         text: "Edit",
                         iconCss: "fas fa-list",
@@ -209,77 +210,87 @@
                     target: '.top_right_menubtn',
                     items: context_items,
                     beforeItemRender: contextmenurender,
-                    beforeOpen: function(args){
-                        // toggle context items on header
-                    
-                        if( $(args.event.target).hasClass('top_right_menubtn')){
-                            data_menu_id = $(args.event.target).attr('data-menu-id');
-                            data_button_function = $(args.event.target).attr('data-button-function');
-                        }else{
-                            data_menu_id = $(args.event.target).closest('li').attr('data-menu-id');
-                            data_button_function = $(args.event.target).closest('li').attr('data-button-function');
-                        }
-                        if(data_button_function > ''){
-                            top_right_menu_context.enableItems(['Edit Function'], true);        
-                        }else{
-                            top_right_menu_context.enableItems(['Edit Function'], false); 
-                        }
-                    },
-                    select: function(args){
-                        if(args.item.id === 'edit_menu_btn') {
-                            sidebarform('editmenubtn','{{$menu_manager_url}}/edit/'+data_menu_id);
-                        }
-                        if(args.item.id === 'edit_menu_btn_function') {
-                            sidebarform('editfunctionbtn','/code_edit/'+data_button_function);
-                        }
+                
+                beforeOpen: function(args){
+                    // toggle context items on header
+                   
+                    if( $(args.event.target).hasClass('top_right_menubtn')){
+                        data_menu_id = $(args.event.target).attr('data-menu-id');
+                        data_button_function = $(args.event.target).attr('data-button-function');
+                    }else{
+                        data_menu_id = $(args.event.target).closest('li').attr('data-menu-id');
+                        data_button_function = $(args.event.target).closest('li').attr('data-button-function');
                     }
+                    if(data_button_function > ''){
+                        top_right_menu_context.enableItems(['Edit Function'], true);        
+                    }else{
+                        top_right_menu_context.enableItems(['Edit Function'], false); 
+                    }
+                },
+                select: function(args){
+                    if(args.item.id === 'edit_menu_btn') {
+                        sidebarform('editmenubtn','{{$menu_manager_url}}/edit/'+data_menu_id);
+                    }
+                    if(args.item.id === 'edit_menu_btn_function') {
+                        sidebarform('editfunctionbtn','/code_edit/'+data_button_function);
+                    }
+                }
                 };
                 
                 // Initialize ContextMenu control
                 top_right_menu_context = new ej.navigations.ContextMenu(menuOptions, '#allaccess_context');
-        },
-        @endif
-        beforeItemRender: function(args){
-            var el = args.element;   
-            $(el).find("a.main_link").attr("title",args.item.title);
-            if(args.item.border_top){
-                
-                $(el).addClass("menu_border_top");
-            }
+            },
+            beforeOpen: function(args){
             
-            $(el).attr("data-menu-id",args.item.menu_id);
-            $(el).attr("data-button-function",args.item.button_function);
-            
-            if(args.item.cssClass) {
-                $(el).addClass(args.item.cssClass);
-            }
+            top_right_menu_context.refresh();
+            },
+            @endif
+            beforeItemRender: function(args){
                 
-            @if(!empty($menus_newtab) && $menus_newtab === true)
+                var el = args.element;   
+                $(el).find("a.main_link").attr("title",args.item.title);
+                if(args.item.border_top){
+                  
+                   $(el).addClass("menu_border_top");
+                }
+                
+                $(el).attr("data-menu-id",args.item.menu_id);
+                $(el).attr("data-button-function",args.item.button_function);
+                
+                if(args.item.cssClass) {
+                    $(el).addClass(args.item.cssClass);
+                }
+                 
+                @if(!empty($menus_newtab) && $menus_newtab === true)
                 if(args.item.data_target == '' && args.item.url > '' && args.item.url != "#"){
                     var el = args.element;
                     $(el).find("a.main_link").attr("target","_blank");
                 }
-            @endif
-            if(args.item.new_tab == 1) {
+                @endif
+                if(args.item.new_tab == 1) {
+                 
+                   $(el).find("a.main_link").attr("target","_blank");
+                }
                 
-                $(el).find("a.main_link").attr("target","_blank");
-            }
-            if(args.item.data_target == 'javascript') {
-                $(el).find("a.main_link").attr("data-target",args.item.data_target);
-                $(el).find("a.main_link").attr("js-target",args.item.url);
-                $(el).find("a.main_link").attr("id",args.item.url);
-                $(el).find("a.main_link").attr("href","javascript:void(0)");
-            }else if(args.item.data_target == 'transaction' || args.item.data_target == 'transaction_modal') {
-                $(el).find("a.main_link").attr("data-target",args.item.data_target);
-                $(el).find("a.main_link").attr("href","javascript:void(0)");
-                $(el).find("a.main_link").attr("modal_url",args.item.url);
-            }else if(args.item.data_target) {
-                $(el).find("a.main_link").attr("data-target",args.item.data_target);
-                
-            }
-        },
+              
+           if(args.item.data_target == 'javascript') {
+               $(el).find("a.main_link").attr("data-target",args.item.data_target);
+               $(el).find("a.main_link").attr("js-target",args.item.url);
+               $(el).find("a.main_link").attr("id",args.item.url);
+               $(el).find("a.main_link").attr("href","javascript:void(0)");
+           }else if(args.item.data_target == 'transaction' || args.item.data_target == 'transaction_modal') {
+               $(el).find("a.main_link").attr("data-target",args.item.data_target);
+               $(el).find("a.main_link").attr("href","javascript:void(0)");
+               $(el).find("a.main_link").attr("modal_url",args.item.url);
+           }else if(args.item.data_target) {
+               $(el).find("a.main_link").attr("data-target",args.item.data_target);
+              
+           }
+          
+            },
        },'#top_right_menu');
     @endif
+    
     
     @if(!empty($main_menu) && count($main_menu) > 0)   
 
@@ -296,62 +307,68 @@
             created: function(args){
                 $('body').append('<ul id="main_menu_context" class="m-0"></ul>');
                 var context_items = [
-                    {
-                        id: "context_menu_edit_1",
-                        text: "Edit Menu",
-                        iconCss: "fas fa-list",
-                        url: 'sf_menu_manager/{{$module_id}}/main_menu',
-                        data_target: 'view_modal',
-                    },
-                    /*{
-                        id: "context_menu_mvr",
-                        text: "Move to root",
-                        iconCss: "fas fa-list",
-                    },
-                    {
-                        id: "context_menu_edit_5",
-                        text: "Edit Customer Menu",
-                        iconCss: "fas fa-list",
-                        url: 'sf_menu_manager/{{$module_id}}/customer_menu',
-                        data_target: 'view_modal',
-                    },
-                    */
+                {
+                    id: "context_menu_edit_1",
+                    text: "Edit Menu",
+                    iconCss: "fas fa-list",
+                    url: 'sf_menu_manager/{{$module_id}}/main_menu',
+                    data_target: 'view_modal',
+                },
+                {
+                    id: "context_menu_mvr",
+                    text: "Move to root",
+                    iconCss: "fas fa-list",
+                },/*
+                {
+                    id: "context_menu_edit_5",
+                    text: "Edit Customer Menu",
+                    iconCss: "fas fa-list",
+                    url: 'sf_menu_manager/{{$module_id}}/customer_menu',
+                    data_target: 'view_modal',
+                },
+                */
                 ];
                 var menuOptions = {
                     target: '.main_menubtn',
                     items: context_items,
                     beforeItemRender: contextmenurender,
-                    beforeOpen: function(args){
-                        // toggle context items on header
-                    
-                        if( $(args.event.target).hasClass('main_menubtn')){
-                            data_menu_id = $(args.event.target).attr('data-menu-id');
-                            data_button_function = $(args.event.target).attr('data-button-function');
-                        }else{
-                            data_menu_id = $(args.event.target).closest('li').attr('data-menu-id');
-                            data_button_function = $(args.event.target).closest('li').attr('data-button-function');
-                        }
-                        if(data_button_function > ''){
-                            main_menu_context.enableItems(['Edit Function'], true);        
-                        }else{
-                            main_menu_context.enableItems(['Edit Function'], false); 
-                        }
-                    },
-                    select: function(args){
-                        if(args.item.id === 'edit_menu_btn') {
-                            sidebarform('editmenubtn','{{$menu_manager_url}}/edit/'+data_menu_id);
-                        }
-                        if(args.item.id === 'edit_menu_btn_function') {
-                            sidebarform('editfunctionbtn','/code_edit/'+data_button_function);
-                        }
-                        if(args.item.id === 'context_menu_mvr') {
-                            gridAjax('/menu_mvr/'+data_menu_id);
-                            viewDialog('editmenubtn','sf_menu_manager/{{$module_id}}/main_menu');
-                        }
+                
+                beforeOpen: function(args){
+                    // toggle context items on header
+                   
+                    if( $(args.event.target).hasClass('main_menubtn')){
+                        data_menu_id = $(args.event.target).attr('data-menu-id');
+                        data_button_function = $(args.event.target).attr('data-button-function');
+                    }else{
+                        data_menu_id = $(args.event.target).closest('li').attr('data-menu-id');
+                        data_button_function = $(args.event.target).closest('li').attr('data-button-function');
                     }
+                    if(data_button_function > ''){
+                        main_menu_context.enableItems(['Edit Function'], true);        
+                    }else{
+                        main_menu_context.enableItems(['Edit Function'], false); 
+                    }
+                },
+                select: function(args){
+                    if(args.item.id === 'edit_menu_btn') {
+                        sidebarform('editmenubtn','{{$menu_manager_url}}/edit/'+data_menu_id);
+                    }
+                    if(args.item.id === 'edit_menu_btn_function') {
+                        sidebarform('editfunctionbtn','/code_edit/'+data_button_function);
+                    }
+                    if(args.item.id === 'context_menu_mvr') {
+                        gridAjax('/menu_mvr/'+data_menu_id);
+                        viewDialog('editmenubtn','sf_menu_manager/{{$module_id}}/main_menu');
+                    }
+                }
                 };
+                
                 // Initialize ContextMenu control
                 main_menu_context = new ej.navigations.ContextMenu(menuOptions, '#main_menu_context');
+            },
+            beforeOpen: function(args){
+            
+            main_menu_context.refresh();
             },
             @endif
             beforeItemRender: function(args){
@@ -430,30 +447,31 @@
                     target: '.services_menubtn',
                     items: context_items,
                     beforeItemRender: contextmenurender,
-                    beforeOpen: function(args){
-                        // toggle context items on header
-                    
-                        if( $(args.event.target).hasClass('services_menubtn')){
-                            data_menu_id = $(args.event.target).attr('data-menu-id');
-                            data_button_function = $(args.event.target).attr('data-button-function');
-                        }else{
-                            data_menu_id = $(args.event.target).closest('li').attr('data-menu-id');
-                            data_button_function = $(args.event.target).closest('li').attr('data-button-function');
-                        }
-                        if(data_button_function > ''){
-                            services_menu_context.enableItems(['Edit Function'], true);        
-                        }else{
-                            services_menu_context.enableItems(['Edit Function'], false); 
-                        }
-                    },
-                    select: function(args){
-                        if(args.item.id === 'edit_menu_btn') {
-                            sidebarform('editmenubtn','{{$menu_manager_url}}/edit/'+data_menu_id);
-                        }
-                        if(args.item.id === 'edit_menu_btn_function') {
-                            sidebarform('editfunctionbtn','/code_edit/'+data_button_function);
-                        }
+                
+                beforeOpen: function(args){
+                    // toggle context items on header
+                   
+                    if( $(args.event.target).hasClass('services_menubtn')){
+                        data_menu_id = $(args.event.target).attr('data-menu-id');
+                        data_button_function = $(args.event.target).attr('data-button-function');
+                    }else{
+                        data_menu_id = $(args.event.target).closest('li').attr('data-menu-id');
+                        data_button_function = $(args.event.target).closest('li').attr('data-button-function');
                     }
+                    if(data_button_function > ''){
+                        services_menu_context.enableItems(['Edit Function'], true);        
+                    }else{
+                        services_menu_context.enableItems(['Edit Function'], false); 
+                    }
+                },
+                select: function(args){
+                    if(args.item.id === 'edit_menu_btn') {
+                        sidebarform('editmenubtn','{{$menu_manager_url}}/edit/'+data_menu_id);
+                    }
+                    if(args.item.id === 'edit_menu_btn_function') {
+                        sidebarform('editfunctionbtn','/code_edit/'+data_button_function);
+                    }
+                }
                 };
                 
                 // Initialize ContextMenu control
@@ -860,6 +878,7 @@
     });
     window['navbar_header'].appendTo('#navbar_header');
     
+ ////console.log('mainmenu',{!!$main_menu !!});
     </script>
     <script>
         /*global search */
@@ -922,7 +941,7 @@
     },
     
     select: function(args){
-    //console.log('select',args);
+    console.log('select',args);
     ////console.log(args.itemData);
     
     if(args.isInteracted){
@@ -947,10 +966,10 @@
     }
     },
     actionBegin: function(args){
-    //console.log('actionBegin',args);
+    console.log('actionBegin',args);
     },
     actionComplete: function(args){
-        //console.log('actionComplete',args);
+        console.log('actionComplete',args);
         if(args.name == 'actionComplete' && args.request == 'POST'){
             global_search.first_result = false;
             if(args.result && args.result.length > 0){
@@ -959,11 +978,11 @@
         }
     },
     open: function(args){
-    //console.log('open',args);
+    console.log('open',args);
     },
     change: function(args){
-        //console.log('change',args);
-        //console.log(global_search.first_result);
+        console.log('change',args);
+        console.log(global_search.first_result);
         
         if (args.event && args.event.keyCode === 13) {
             if(global_search.first_result && global_search.first_result.link){

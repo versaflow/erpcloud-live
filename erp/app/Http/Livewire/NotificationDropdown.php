@@ -2,15 +2,14 @@
 
 namespace App\Http\Livewire;
 
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Illuminate\Support\Facades\Auth;
 
 class NotificationDropdown extends Component
 {
     public $notifications;
-
     public $isDropdownOpen = false; // Default to closed
-
+    
     public function mount()
     {
         $this->notifications = $this->getNotifications();
@@ -23,7 +22,7 @@ class NotificationDropdown extends Component
         if ($notification) {
             $notification->markAsRead();
             $notifications = $this->getNotifications();
-            if (count($notifications) == 0) {
+            if(count($notifications) == 0){
                 $this->toggleDropdown();
             }
             $this->notifications = $notifications;
@@ -32,10 +31,10 @@ class NotificationDropdown extends Component
 
     public function toggleDropdown()
     {
-
-        $this->isDropdownOpen = ! $this->isDropdownOpen;
+       
+        $this->isDropdownOpen = !$this->isDropdownOpen;
     }
-
+    
     public function render()
     {
         return view('livewire.notification-dropdown', [
@@ -43,8 +42,9 @@ class NotificationDropdown extends Component
         ]);
     }
 
+
     public function getNotifications()
-    {
+    {   
         //rebuild_approval_notifications();
         return Auth::user()->unreadNotifications;
     }
@@ -54,7 +54,7 @@ class NotificationDropdown extends Component
         // Livewire will automatically call this method on a regular interval
         // Use it to refresh the notifications
         $this->notifications = $this->getNotifications();
-
+        
     }
 
     public function hydrate()
@@ -62,3 +62,4 @@ class NotificationDropdown extends Component
         $this->poll();
     }
 }
+

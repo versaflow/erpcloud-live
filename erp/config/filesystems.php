@@ -1,19 +1,33 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Default Filesystem Disk
     |--------------------------------------------------------------------------
     |
     | Here you may specify the default filesystem disk that should be used
-    | by the framework. The "local" disk, as well as a variety of cloud
-    | based disks are available to your application. Just store away!
+    | by the framework. A "local" driver, as well as a variety of cloud
+    | based drivers are available for your choosing. Just store away!
+    |
+    | Supported: "local", "ftp", "s3", "rackspace"
     |
     */
 
-    'default' => env('FILESYSTEM_DRIVER', 'local'),
+    'default' => 'local',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Cloud Filesystem Disk
+    |--------------------------------------------------------------------------
+    |
+    | Many applications store files both locally and in the cloud. For this
+    | reason, you may specify a default "cloud" driver here. This driver
+    | will be bound as the Cloud disk implementation in the container.
+    |
+    */
+
+    'cloud' => 's3',
 
     /*
     |--------------------------------------------------------------------------
@@ -24,12 +38,9 @@ return [
     | may even configure multiple disks of the same driver. Defaults have
     | been setup for each driver as an example of the required options.
     |
-    | Supported Drivers: "local", "ftp", "sftp", "s3"
-    |
     */
 
     'disks' => [
-
         'local' => [
             'driver' => 'local',
             'root' => storage_path('uploads'),
@@ -59,7 +70,6 @@ return [
             'driver' => 'local',
             'root' => public_path('attachments/'),
         ],
-
         'pricing_exports' => [
             'driver' => 'local',
             'root' => public_path().'/uploads',
@@ -103,7 +113,6 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
             'visibility' => 'public',
         ],
 
@@ -115,23 +124,7 @@ return [
             'directoryPerm' => 0755,
         ],
 
-        'porting_data_mnp' => [
-            'driver' => 'local',
-            'root' => storage_path('porting_data/mnp'),
-            'visibility' => 'public',
-            'permPublic' => 0755,
-            'directoryPerm' => 0755,
-        ],
-
-        'porting_data_gnp' => [
-            'driver' => 'local',
-            'root' => storage_path('porting_data/gnp'),
-            'visibility' => 'public',
-            'permPublic' => 0755,
-            'directoryPerm' => 0755,
-        ],
-
-        'porting_ftp_gnp' => [
+        'porting_data_gnp_source' => [
             'driver' => 'ftp',
             'host' => 'ftps.porting.co.za',
             'username' => 'coincorpgnp',
@@ -143,7 +136,7 @@ return [
             'timeout' => 30,
         ],
 
-        'porting_ftp_mnp' => [
+        'porting_data_mnp_source' => [
             'driver' => 'ftp',
             'host' => 'ftps.porting.co.za',
             'username' => 'coincorpmnp',
@@ -152,37 +145,45 @@ return [
             'ssl' => true,
         ],
 
+        // chmod 755 porting_data/
+        // chmod 777 porting_data/* -Rf
+        // chown root:erpcloud-live porting_data/ -Rf
+        'porting_data_mnp_local' => [
+            'driver' => 'local',
+            'root' => storage_path('porting_data/mnp'),
+            'visibility' => 'public',
+            'permPublic' => 0755,
+            'directoryPerm' => 0755,
+        ],
+
+        'porting_data_gnp_local' => [
+            'driver' => 'local',
+            'root' => storage_path('porting_data/gnp'),
+            'visibility' => 'public',
+            'permPublic' => 0755,
+            'directoryPerm' => 0755,
+        ],
+
+        // 'porting_ftp_test' => [
+        //     'driver' => 'ftp',
+        //     'host' => 'ftps.porting.co.za',
+        //     'username' => 'GNPtimestamp',
+        //     'password' => 't1m3st9mp@gnp',
+        //     'port' => 10021,
+        //     'ssl' => true,
+        // ],
+
         's3' => [
             'driver' => 's3',
-            'key' => env('AWS_ACCESS_KEY_ID'),
-            'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            'region' => env('AWS_DEFAULT_REGION'),
-            'bucket' => env('AWS_BUCKET'),
-            'url' => env('AWS_URL'),
-            'endpoint' => env('AWS_ENDPOINT'),
-            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'key' => 'your-key',
+            'secret' => 'your-secret',
+            'region' => 'your-region',
+            'bucket' => 'your-bucket',
         ],
 
         'saml' => [
             'driver' => 'local',
             'root' => storage_path().'/saml',
         ],
-
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Symbolic Links
-    |--------------------------------------------------------------------------
-    |
-    | Here you may configure the symbolic links that will be created when the
-    | `storage:link` Artisan command is executed. The array keys should be
-    | the locations of the links and the values should be their targets.
-    |
-    */
-
-    'links' => [
-        public_path('storage') => storage_path('app/public'),
-    ],
-
 ];

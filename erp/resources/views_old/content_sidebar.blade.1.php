@@ -1,12 +1,12 @@
 @php 
 if(is_services_menu_module($module_id)){
-    $first_tab = 'services';
+$first_tab = 'services';
 }elseif(is_superadmin()){
-    $first_tab = 'system';
+$first_tab = 'system';
 }elseif(session('role_level')=='Admin'){
-    $first_tab = 'customer';
+$first_tab = 'customer';
 }else{
-    $first_tab = 'services';
+$first_tab = 'services';
 }
 @endphp
 

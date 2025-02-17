@@ -20,6 +20,7 @@ class CreateCrmKnowledgeBaseTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

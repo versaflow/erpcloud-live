@@ -11,5 +11,5 @@ return [
     |
      */
 
-    'apikey' => env('e6027610a50f1c95cf267a3da27408c0'),
+    'apikey' => env('e6027610a50f1c95cf267a3da27408c0')
 ];

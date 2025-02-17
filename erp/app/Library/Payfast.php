@@ -4,6 +4,7 @@
 https://developers.payfast.co.za/documentation/#credit-card-transaction-query
 https://github.com/PayFast/payfast-php-sdk
 */
+use PayFast\PayFastPayment as PayFastPayment;
 use PayFast\PayFastApi as PayFastApi;
 
 class Payfast
@@ -13,7 +14,7 @@ class Payfast
         $this->sandbox_merchant_id = '10000100';
         $this->sandbox_merchant_key = '46f0cd694581a';
         $this->sandbox_merchant_passphrase = 'jt7NOE43FZPn';
-        if (session('instance')->id == 11) {
+        if(session('instance')->id == 11){
             $this->sandbox_merchant_id = '10031307';
             $this->sandbox_merchant_key = 'egtvae67byv2k';
             $this->sandbox_merchant_passphrase = 'egtvae67byv2k';
@@ -45,7 +46,6 @@ class Payfast
         $this->merchant_id = $merchant_id;
         $this->merchant_key = $merchant_key;
         $this->pass_phrase = $pass_phrase;
-
         return $this;
     }
 
@@ -55,13 +55,12 @@ class Payfast
         $this->reseller = dbgetaccount($this->account->partner_id);
         $this->m_payment_id = $account_id.'_'.date('U');
         session()->forget('payfast_form_data');
-
         return $this;
     }
 
     public function getFormData($amount = 100)
     {
-        if (! empty(session('payfast_form_data'))) {
+        if (!empty(session('payfast_form_data'))) {
             $form_data = session('payfast_form_data');
         } else {
             if (empty($this->m_payment_id)) {
@@ -75,17 +74,17 @@ class Payfast
             }
 
             $form_data = [
-                'merchant_id' => $this->merchant_id,
-                'merchant_key' => $this->merchant_key,
-                'return_url' => $this->return_url,
-                'cancel_url' => $this->cancel_url,
-                'notify_url' => $this->notify_url,
-                'm_payment_id' => $this->m_payment_id,
-                'amount' => currency($amount),
-                'item_name' => $this->reseller->company.' Services',
-                'custom_int1' => $this->account->id,
+                "merchant_id" => $this->merchant_id,
+                "merchant_key" => $this->merchant_key,
+                "return_url" => $this->return_url,
+                "cancel_url" => $this->cancel_url,
+                "notify_url" => $this->notify_url,
+                "m_payment_id" => $this->m_payment_id,
+                "amount" => currency($amount),
+                "item_name" => $this->reseller->company.' Services',
+                "custom_int1" => $this->account->id,
                 //"payment_method" => "cc",
-                'signature' => '',
+                "signature" => "",
             ];
         }
 
@@ -94,20 +93,20 @@ class Payfast
         if (empty(session('payfast_form_data'))) {
             session(['payfast_form_data' => $form_data]);
         }
-
         return $form_data;
     }
+
 
     public function getForm()
     {
         // hidden payfast form
         $form = '<form action="'.$this->api_url.'/eng/process" method="POST" id="payfast_form">';
         $form_data = $this->getFormData();
-        if (! is_array($form_data)) {
+        if (!is_array($form_data)) {
             return $form_data;
         }
         foreach ($form_data as $key => $value) {
-            if ($key == 'amount') {
+            if ($key=='amount') {
                 $form .= '<input type="hidden" name="'.$key.'" id="payfast_amount" value="'.$value.'">';
             } else {
                 $form .= '<input type="hidden" name="'.$key.'" value="'.$value.'">';
@@ -125,38 +124,37 @@ class Payfast
         // ajax to get md5 signature
 
         $form_data = $this->getFormData($amount);
-
+     
         // Create parameter string
         $encoded_form_data = '';
-        if (! empty($form_data) && is_array($form_data) && count($form_data) > 0) {
-            foreach ($form_data as $key => $val) {
-                if (! empty($val)) {
-                    $encoded_form_data .= $key.'='.urlencode(trim($val)).'&';
-                }
+        if(!empty($form_data) && is_array($form_data) && count($form_data) > 0){
+        foreach ($form_data as $key => $val) {
+            if (!empty($val)) {
+                $encoded_form_data .= $key .'='. urlencode(trim($val)) .'&';
             }
+        }
         }
         // Remove last ampersand
         $form_string = substr($encoded_form_data, 0, -1);
         //Uncomment the next line and add a passphrase if there is one set on the account
 
-        if (! empty($this->pass_phrase)) {
-            $form_string .= '&passphrase='.urlencode(trim($this->pass_phrase));
+        if (!empty($this->pass_phrase)) {
+            $form_string .= '&passphrase='. urlencode(trim($this->pass_phrase));
         }
         $signature = md5($form_string);
-
         return $signature;
     }
 
     public function validate(Request $request)
     {
-        $validHosts = [
+        $validHosts = array(
             'www.payfast.co.za',
             'sandbox.payfast.co.za',
             'w1w.payfast.co.za',
             'w2w.payfast.co.za',
-        ];
+        );
 
-        $validIps = [];
+        $validIps = array();
 
         foreach ($validHosts as $pfHostname) {
             $ips = gethostbynamel($pfHostname);
@@ -168,7 +166,7 @@ class Payfast
         // Remove duplicates
         $validIps = array_unique($validIps);
 
-        if (! in_array($_SERVER['REMOTE_ADDR'], $validIps)) {
+        if (!in_array($_SERVER['REMOTE_ADDR'], $validIps)) {
             return false;
         }
     }
@@ -183,7 +181,7 @@ class Payfast
             $params['to'] = $to;
         }
         $url = 'https://api.payfast.co.za/transactions/history';
-        $url = $url.(empty($params) ? '' : '?'.http_build_query($params));
+        $url = $url . (empty($params) ? '' : '?' . http_build_query($params));
         $api_request = \Httpful\Request::get($url);
 
         $headers = [
@@ -198,13 +196,12 @@ class Payfast
         }
 
         $response = $api_request->send();
-
         return $response;
     }
 
     public function getSanboxTransactionsDaily($date = false)
     {
-        if (! $date) {
+        if(!$date){
             $date = date('Y-m-d');
         }
         $api = new PayFastApi(
@@ -212,7 +209,7 @@ class Payfast
                 'merchantId' => $this->sandbox_merchant_id,
                 'merchantKey' => $this->sandbox_merchant_key,
                 'passPhrase' => $this->sandbox_merchant_passphrase,
-                'testMode' => true,
+                'testMode' => true
             ]
         );
 
@@ -223,20 +220,19 @@ class Payfast
         // $weeklyArray = $api->transactionHistory->weekly(['date' => '2020-08-07']);
 
         $daily = $api->transactionHistory->daily(['date' => date('Y-m-d', strtotime($date))]);
-
         return $daily;
     }
 
     public function getTransactionsDaily($date = false)
     {
-        if (! $date) {
+        if(!$date){
             $date = date('Y-m-d');
         }
         $api = new PayFastApi(
             [
                 'merchantId' => $this->merchant_id,
                 'passPhrase' => $this->pass_phrase,
-                'testMode' => false,
+                'testMode' => false
             ]
         );
 
@@ -247,7 +243,6 @@ class Payfast
         // $weeklyArray = $api->transactionHistory->weekly(['date' => '2020-08-07']);
 
         $daily = $api->transactionHistory->daily(['date' => date('Y-m-d', strtotime($date))]);
-
         return $daily;
     }
 
@@ -257,7 +252,7 @@ class Payfast
             [
                 'merchantId' => $this->merchant_id,
                 'passPhrase' => $this->pass_phrase,
-                'testMode' => false,
+                'testMode' => false
             ]
         );
 
@@ -268,7 +263,6 @@ class Payfast
         // $weeklyArray = $api->transactionHistory->weekly(['date' => '2020-08-07']);
 
         $monthlyArray = $api->transactionHistory->monthly(['date' => date('Y-m', strtotime($date))]);
-
         return $monthlyArray;
     }
 
@@ -276,15 +270,17 @@ class Payfast
     {
         $params = [];
         if ($date) {
-
+            
             //$url = 'https://api.payfast.co.za/transactions/history/monthly';
             //$params['date'] = date('Y-m', strtotime($date));
             $params['from'] = date('Y-m-01', strtotime($date));
             $params['to'] = date('Y-m-t', strtotime($date));
         }
-
-        $url = 'https://api.payfast.co.za/transactions/history';
-        $url = $url.(empty($params) ? '' : '?'.http_build_query($params));
+        
+      
+        
+        $url = 'https://api.payfast.co.za/transactions/history'; 
+        $url = $url . (empty($params) ? '' : '?' . http_build_query($params));
 
         $api_request = \Httpful\Request::get($url);
 
@@ -305,6 +301,7 @@ class Payfast
 
         return $response;
     }
+
 
     public function apiSignature($headers = [], $params = [])
     {
@@ -316,15 +313,14 @@ class Payfast
         }
         ksort($post_data);
         foreach ($post_data as $key => $val) {
-            if (! empty($val)) {
-                $encoded_form_data .= $key.'='.urlencode(trim($val)).'&';
+            if (!empty($val)) {
+                $encoded_form_data .= $key .'='. urlencode(trim($val)) .'&';
             }
         }
         // Remove last ampersand
         $form_string = substr($encoded_form_data, 0, -1);
         //Uncomment the next line and add a passphrase if there is one set on the account
         $signature = md5($form_string);
-
         return $signature;
     }
 }

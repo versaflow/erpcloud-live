@@ -13,7 +13,7 @@ function schedule_eldo_monthly_billing()
     //     $process_billing = true;
     // }
     if ($process_billing) {
-        $billing = new \EldoBilling;
+        $billing = new \EldoBilling();
 
         $billing->monthly_billing(date('Y-m-01'), strtotime('next month'));
 
@@ -30,10 +30,11 @@ function schedule_eldo_monthly_billing()
 function delete_billing()
 {
     $doc_ids = \DB::table('crm_documents')
-        ->whereIn('doctype', ['Quotation'])
-        ->where('docdate', date('Y-m-01'))
-        ->where('billing_type', 'Monthly')
-        ->pluck('id')->toArray();
+    ->whereIn('doctype', ['Quotation'])
+    ->where('docdate', date('Y-m-01', strtotime('+1 month')))
+    ->where('billing_type', 'Monthly')
+    ->pluck('id')->toArray();
+
     if (count($doc_ids) > 0) {
         foreach ($doc_ids as $doc_id) {
             \DB::table('crm_document_lines')->where('document_id', $doc_id)->delete();
@@ -46,9 +47,10 @@ function delete_billing()
 function button_create_bills($request)
 {
     if (session('instance')->directory == 'eldooffice') {
-        $billing_date = \DB::table('acc_billing')->where('billing_type', 'Monthly')->where('processed', 0)->orderBy('id', 'desc')->pluck('billing_date')->first();
+        //$billing_date = \DB::table('acc_billing')->where('billing_type', 'Monthly')->where('processed', 1)->orderBy('id', 'desc')->pluck('billing_date')->first();
+        $billing_date = \DB::table('acc_billing')->where('billing_type', 'Monthly')->where('billing_date', date("Y-m-01"))->orderBy('id', 'desc')->pluck('billing_date')->first();
         if ($billing_date != null) {
-            $billing = new \EldoBilling;
+            $billing = new \EldoBilling();
             $billing->monthly_billing($billing_date);
             schedule_update_billing_details();
             $last_billing_id = \DB::table('acc_billing')->where('billing_type', 'Monthly')->orderBy('id', 'desc')->pluck('id')->first();
@@ -64,6 +66,7 @@ function button_create_bills($request)
 
 function schedule_create_bills()
 {
+    schedule_voice_monthly();
     //Delete cancelled accounts
     $accounts = \DB::table('crm_accounts')
         ->where('id', '!=', 12)
@@ -82,7 +85,7 @@ function schedule_create_bills()
         return false;
     }
 
-    $sub = new ErpSubs;
+    $sub = new ErpSubs();
     $sub->updateProductPrices();
     set_time_limit(0);
 
@@ -90,7 +93,7 @@ function schedule_create_bills()
     $product_ids = \DB::table('sub_services')->where('status', '!=', 'Deleted')->pluck('product_id')->unique()->toArray();
     foreach ($product_ids as $product_id) {
         $pricing_exists = \DB::table('crm_pricelist_items')->where('product_id', $product_id)->where('pricelist_id', 1)->count();
-        if (! $pricing_exists) {
+        if (!$pricing_exists) {
             $code = \DB::table('crm_products')->where('id', $product_id)->pluck('code')->first();
             $error = 'Monthly billing not generated, product pricing not set '.$product_id.' '.$code;
             debug_email($error);
@@ -101,46 +104,46 @@ function schedule_create_bills()
 
     //Set USD Account variables
     $usd_account_ids = \DB::table('crm_accounts')->where('renewal_date_billing', 1)->where('status', '!=', 'Deleted')->pluck('id')->toArray();
-    $docdate = date('Y-m-01');
+    $docdate = date('Y-m-01');//, strtotime('+1 month'));
     \DB::table('sub_services')->whereNotIn('account_id', $usd_account_ids)->where('bill_frequency', 0)->update(['bill_frequency' => 1]);
     \DB::table('sub_services')->whereNotIn('account_id', $usd_account_ids)->where('bill_frequency', 1)->update(['renews_at' => $docdate]);
     \DB::table('sub_services')->whereNotIn('account_id', $usd_account_ids)->whereNull('renews_at')->update(['renews_at' => $docdate]);
 
-    // $renewals = \DB::table('sub_services')->whereNotIn('account_id',$usd_account_ids)->where('status','!=','Deleted')->where('renews_at','<',$docdate)->get();
-    // foreach($renewals as $renewal){
-    //     \DB::table('sub_services')->whereNotIn('account_id',$usd_account_ids)->where('id',$renewal->id)->update(['renews_at'=>date('Y-m').'-'.date('d',strtotime($renewal->renews_at))]);
-    // }
+    $renewals = \DB::table('sub_services')->whereNotIn('account_id', $usd_account_ids)->where('status', '!=', 'Deleted')->where('renews_at', '<', $docdate)->get();
+    foreach ($renewals as $renewal) {
+        \DB::table('sub_services')->whereNotIn('account_id', $usd_account_ids)->where('id', $renewal->id)->update(['renews_at' => date('Y-m').'-'.date('d', strtotime($renewal->renews_at))]);
+    }
 
     //Delete existing billing documents
     $doc_ids = \DB::table('crm_documents')
-        ->whereIn('doctype', ['Tax Invoice', 'Order', 'Quotation'])
-        ->where('docdate', $docdate)
-        ->where('billing_type', 'Monthly')
-        ->whereNotIn('account_id', $usd_account_ids)
-        ->pluck('id')->toArray();
+    ->whereIn('doctype', ['Order', 'Quotation'])
+    ->where('docdate', $docdate)
+    ->where('billing_type', 'Monthly')
+    ->whereNotIn('account_id', $usd_account_ids)
+    ->pluck('id')->toArray();
+    // vd($doc_ids);
     if (count($doc_ids) > 0) {
         $subs = \DB::table('sub_services')->whereNotIn('account_id', $usd_account_ids)->where('bill_frequency', 1)->select('id', 'renews_at', 'last_invoice_date', 'bill_frequency')->where('status', '!=', 'Deleted')->get();
         foreach ($subs as $s) {
             if ($s->renews_at > $docdate) {
                 $data = [
-                    'renews_at' => date('Y-m-d', strtotime($s->renews_at.' -'.$s->bill_frequency.' month')),
-                ];
+                'renews_at' => date('Y-m-d', strtotime($s->renews_at.' -'.$s->bill_frequency.' month')),
+            ];
                 \DB::table('sub_services')->where('id', $s->id)->update($data);
             }
         }
-
         foreach ($doc_ids as $doc_id) {
             \DB::table('crm_document_lines')->where('document_id', $doc_id)->delete();
             \DB::table('crm_documents')->where('id', $doc_id)->delete();
             \DB::table('acc_ledgers')->whereIn('doctype', ['Quotation', 'Order', 'Tax Invoice'])->where('docid', $doc_id)->delete();
             \DB::table('acc_ledgers')->where('doctype', 'Credit Note')->where('docid', $doc_id)->delete();
         }
-
         \DB::table('acc_billing')->where('id', $last_billing_id)->update(['processed' => 0]);
     }
 
+    // exit;
     //-------------------------------------- Billing starts here
-    $billing = new ErpBilling;
+    $billing = new ErpBilling();
     $billing->processCancellations($docdate);
     $billing->saveSubscriptionTable();
     $billing->setCustomerType('customer');
@@ -166,17 +169,16 @@ function button_update_last_bill_totals()
 
 function schedule_update_last_bill_totals()
 {
-    $docdate = date('Y-m-01', strtotime('first day of next month'));
+    $docdate = date('Y-m-01');//, strtotime('first day of next month'));
     $documents_created = \DB::table('crm_documents')->where('docdate', $docdate)->where('billing_type', 'Monthly')->count();
     // if ($documents_created) {
     //     return false;
     // }
 
     pricelist_set_discounts();
-    $sub = new ErpSubs;
+    $sub = new ErpSubs();
     $sub->updateProductPrices();
 
-    $docdate = date('Y-m-01', strtotime('first day of next month'));
     $billing = [
         'billing_date' => $docdate,
         'billing_type' => 'Monthly',
@@ -185,13 +187,12 @@ function schedule_update_last_bill_totals()
     $billing['name'] = $docdate.' '.$billing['billing_type'];
     $billing_id = \DB::table('acc_billing')->where('billing_type', $billing['billing_type'])->where('billing_date', $docdate)->pluck('id')->first();
 
-    if (! $billing_id) {
+    if (!$billing_id) {
         $billing_id = \DB::table('acc_billing')->insertGetId($billing);
     }
 
     $billing = \DB::table('acc_billing')->where('id', $billing_id)->orderBy('id', 'desc')->get()->first();
     if ($billing->processed) {
-
         return false;
     }
 
@@ -207,40 +208,40 @@ function schedule_update_last_bill_totals()
     foreach ($types as $type) {
         if ($type == 'customer') {
             $account_ids = \DB::table('crm_accounts')
-                ->whereNotIn('id', $demo_account_ids)
-                ->where('partner_id', 1)
-                ->where('type', 'customer')
-                ->where('currency', 'ZAR')
-                ->where('id', '!=', 1)
-                ->where('status', '!=', 'Deleted')
-                ->pluck('id')->toArray();
+            ->whereNotIn('id', $demo_account_ids)
+            ->where('partner_id', 1)
+            ->where('type', 'customer')
+            ->where('currency', 'ZAR')
+            ->where('id', '!=', 1)
+            ->where('status', '!=', 'Deleted')
+            ->pluck('id')->toArray();
             $billing_account_ids = $account_ids;
         }
         if ($type == 'reseller') {
             $account_ids = \DB::table('crm_accounts')
-                ->whereNotIn('id', $demo_account_ids)
-                ->where('partner_id', '!=', 1)
-                ->where('type', 'reseller_user')
-                ->where('currency', 'ZAR')
-                ->where('id', '!=', 1)
-                ->where('status', '!=', 'Deleted')
-                ->pluck('id')->toArray();
+            ->whereNotIn('id', $demo_account_ids)
+            ->where('partner_id', '!=', 1)
+            ->where('type', 'reseller_user')
+            ->where('currency', 'ZAR')
+            ->where('id', '!=', 1)
+            ->where('status', '!=', 'Deleted')
+            ->pluck('id')->toArray();
             $billing_account_ids = \DB::table('crm_accounts')
-                ->whereNotIn('id', $demo_account_ids)
-                ->where('type', 'reseller')
-                ->where('currency', 'ZAR')
-                ->where('id', '!=', 1)
-                ->where('status', '!=', 'Deleted')
-                ->pluck('id')->toArray();
+            ->whereNotIn('id', $demo_account_ids)
+            ->where('type', 'reseller')
+            ->where('currency', 'ZAR')
+            ->where('id', '!=', 1)
+            ->where('status', '!=', 'Deleted')
+            ->pluck('id')->toArray();
         }
 
         $subs = \DB::table('sub_services')
-            ->whereIn('account_id', $account_ids)
-            ->where('bill_frequency', 1)
-            ->where('status', '!=', 'Deleted')
-            ->where('bundle_id', 0)
-            ->where('created_at', '<', $billing->billing_date)
-            ->get()->groupBy('product_id');
+        ->whereIn('account_id', $account_ids)
+        ->where('bill_frequency', 1)
+        ->where('status', '!=', 'Deleted')
+        ->where('bundle_id', 0)
+        ->where('created_at', '<', $billing->billing_date)
+        ->get()->groupBy('product_id');
         $docids = [];
 
         //ELDO DEBUG
@@ -260,19 +261,19 @@ function schedule_update_last_bill_totals()
         $prorata_usd = 0;
         foreach ($subs as $product_id => $s) {
             $product = \DB::table('crm_products')->where('id', $product_id)->get()->first();
-            if (! $product->is_subscription) {
+            if (!$product->is_subscription) {
                 continue;
             }
 
             $supplier_id = 0;
             if ($product->reconcile_supplier) {
                 $supplier_id = \DB::table('crm_supplier_document_lines')
-                    ->join('crm_supplier_documents', 'crm_supplier_documents.id', '=', 'crm_supplier_document_lines.document_id')
-                    ->where('crm_supplier_document_lines.product_id', $product->id)
-                    ->where('crm_supplier_documents.docdate', '>', date('Y-m-01', strtotime($billing->date.' -2 months')))
-                    ->limit(1)
-                    ->orderBy('crm_supplier_documents.id', 'desc')
-                    ->pluck('crm_supplier_documents.supplier_id')->first();
+                ->join('crm_supplier_documents', 'crm_supplier_documents.id', '=', 'crm_supplier_document_lines.document_id')
+                ->where('crm_supplier_document_lines.product_id', $product->id)
+                ->where('crm_supplier_documents.docdate', '>', date('Y-m-01', strtotime($billing->date.' -2 months')))
+                ->limit(1)
+                ->orderBy('crm_supplier_documents.id', 'desc')
+                ->pluck('crm_supplier_documents.supplier_id')->first();
                 if (empty($supplier_id)) {
                     $supplier_id = 0;
                 }
@@ -292,46 +293,46 @@ function schedule_update_last_bill_totals()
             $cancelled_qty = 0;
 
             $csubs = \DB::table('sub_services')->whereIn('sub_services.account_id', $account_ids)
-                ->where('bill_frequency', 1)
-                ->where('bundle_id', 0)
-                ->where('product_id', $product_id)
-                ->where('status', '!=', 'Deleted')
-                ->get();
+            ->where('bill_frequency', 1)
+            ->where('bundle_id', 0)
+            ->where('product_id', $product_id)
+            ->where('status', '!=', 'Deleted')
+            ->get();
 
             foreach ($csubs as $n) {
                 $e = \DB::table('sub_services')->where('product_id', $product_id)->where('status', '!=', 'Deleted')->where('id', $n->id)->count();
-                if (! $e) {
+                if (!$e) {
                     if ($n->provision_type == 'airtime_contract') {
                         $activation_qty += $n->qty;
                     } else {
-                        $activation_qty++;
+                        ++$activation_qty;
                     }
                 }
             }
 
             $lsubs = \DB::table('sub_services')->whereIn('sub_services.account_id', $account_ids)
-                ->where('bill_frequency', 1)
-                ->where('bundle_id', 0)
-                ->whereRaw('to_cancel=1 and cancel_date<"'.$billing->billing_date.'"')
-                ->where('product_id', $product_id)
-                ->where('status', '!=', 'Deleted')
-                ->get();
+            ->where('bill_frequency', 1)
+            ->where('bundle_id', 0)
+            ->whereRaw('to_cancel=1 and cancel_date<"'.$billing->billing_date.'"')
+            ->where('product_id', $product_id)
+            ->where('status', '!=', 'Deleted')
+            ->get();
             foreach ($lsubs as $n) {
                 if ($n->provision_type == 'airtime_contract') {
                     $cancelled_qty += $n->qty;
                 } else {
-                    $cancelled_qty++;
+                    ++$cancelled_qty;
                 }
             }
 
             $subs_current_qty = \DB::table('sub_services')->whereIn('sub_services.account_id', $account_ids)
-                ->where('status', '!=', 'Deleted')
-                ->where('bundle_id', 0)
-                ->where('bill_frequency', 1)
-                ->where('status', '!=', ' Deleted')
-                ->whereRaw('(to_cancel=0 or (to_cancel = 1 and cancel_date > "'.$billing->billing_date.'"))')
-                ->where('created_at', '<=', $billing->billing_date)
-                ->where('product_id', $product_id)->count();
+            ->where('status', '!=', 'Deleted')
+            ->where('bundle_id', 0)
+            ->where('bill_frequency', 1)
+            ->where('status', '!=', ' Deleted')
+            ->whereRaw('(to_cancel=0 or (to_cancel = 1 and cancel_date > "'.$billing->billing_date.'"))')
+            ->where('created_at', '<=', $billing->billing_date)
+            ->where('product_id', $product_id)->count();
 
             // foreach ($subs_current as $r) {
             //     if ($r->provision_type == 'airtime_contract') {
@@ -343,19 +344,19 @@ function schedule_update_last_bill_totals()
             // }
 
             $subs_total = \DB::table('sub_services')
-                ->join('crm_products', 'sub_services.product_id', '=', 'crm_products.id')
-                ->whereNotIn('sub_services.account_id', $demo_account_ids)
-                ->whereIn('sub_services.account_id', $account_ids)
-                ->where('crm_products.is_subscription', 1)
-                ->where('sub_services.bundle_id', 0)
-                ->where('sub_services.bill_frequency', 1)
-                ->where('sub_services.status', '!=', 'Deleted')
-                ->where('sub_services.status', '!=', 'Pending')
-                ->where('sub_services.provision_type', 'NOT LIKE', '%prepaid%')
-                ->whereRaw('(to_cancel=0 or (to_cancel=1 and cancel_date>"'.$billing->billing_date.'"))')
-                ->where('sub_services.created_at', '<', $date)
-                ->where('sub_services.product_id', $product_id)
-                ->sum(\DB::raw('price*qty'));
+            ->join('crm_products', 'sub_services.product_id', '=', 'crm_products.id')
+            ->whereNotIn('sub_services.account_id', $demo_account_ids)
+            ->whereIn('sub_services.account_id', $account_ids)
+            ->where('crm_products.is_subscription', 1)
+            ->where('sub_services.bundle_id', 0)
+            ->where('sub_services.bill_frequency', 1)
+            ->where('sub_services.status', '!=', 'Deleted')
+            ->where('sub_services.status', '!=', 'Pending')
+            ->where('sub_services.provision_type', 'NOT LIKE', '%prepaid%')
+            ->whereRaw('(to_cancel=0 or (to_cancel=1 and cancel_date>"'.$billing->billing_date.'"))')
+            ->where('sub_services.created_at', '<', $date)
+            ->where('sub_services.product_id', $product_id)
+            ->sum(\DB::raw('price*qty'));
 
             $subs_total_usd = 0;
             if (abs($subs_total - $billed_total) < 1) {
@@ -401,7 +402,6 @@ function schedule_update_last_bill_totals()
 
 function send_billing_summary($billing_id)
 {
-    //return false;
     schedule_update_billing_details();
     $bill = \DB::table('acc_billing')->where('id', $billing_id)->get()->first();
 
@@ -413,7 +413,7 @@ function send_billing_summary($billing_id)
     }
     $file_path = export_billing_summary_layout($billing_id, $file_name);
 
-    if (! file_exists($file_path)) {
+    if (!file_exists($file_path)) {
         return json_alert('File not saved', 'error');
     }
 
@@ -435,10 +435,10 @@ function send_billing_summary($billing_id)
             $rental_escalations .= 'Rental Escalations:<br>';
             foreach ($escalations as $e) {
                 $rental = \DB::table('crm_rental_leases')
-                    ->select('crm_rental_leases.*', 'crm_rental_spaces.*', 'crm_rental_leases.id as id')
-                    ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
-                    ->where('crm_rental_leases.status', '!=', 'Deleted')
-                    ->where('crm_rental_leases.id', $e->rental_space_id)->get()->first();
+                ->select('crm_rental_leases.*', 'crm_rental_spaces.*', 'crm_rental_leases.id as id')
+                ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
+                ->where('crm_rental_leases.status', '!=', 'Deleted')
+                ->where('crm_rental_leases.id', $e->rental_space_id)->get()->first();
                 $rental_escalations .= '<b>Office #'.$rental->office_number.'<b><br>';
                 $rental_escalations .= 'Old Price'.$e->old_price.'<br>';
                 $rental_escalations .= 'New Price'.$e->price.'<br>';
@@ -448,15 +448,15 @@ function send_billing_summary($billing_id)
         $data['rental_escalations'] = $rental_escalations;
     }
 
-    if ($bill->billing_type == 'Monthly') {
-        $data['approval_links'] = get_monthly_billing_approval_links();
-    }
-    if ($bill->billing_type == 'Renewal') {
-        $data['approval_links'] = get_renewal_billing_approval_links();
-    }
-    if (! $bill->approved) {
+    if (!$bill->approved) {
+        if ($bill->billing_type == 'Monthly') {
+            $data['approval_links'] = get_monthly_billing_approval_links($billing_id);
+        }
+        if ($bill->billing_type == 'Renewal') {
+            $data['approval_links'] = get_renewal_billing_approval_links($billing_id);
+        }
         $exists = \DB::table('crm_approvals')->where('row_id', $bill->id)->where('module_id', 744)->count();
-        if (! $exists) {
+        if (!$exists) {
             $approve_data = [
                 'module_id' => 744,
                 'row_id' => $bill->id,
@@ -465,13 +465,13 @@ function send_billing_summary($billing_id)
                 'requested_by' => get_user_id_default(),
                 'approval_file' => $file_name,
             ];
-            $result = (new \DBEvent)->setTable('crm_approvals')->save($approve_data);
+            $result = (new \DBEvent())->setTable('crm_approvals')->save($approve_data);
         }
         \File::copy($file_path, uploads_path(1859).$file_name);
     }
 
     $data['force_to_email'] = 'ahmed@telecloud.co.za';
-    //    $data['test_debug'] = 1;
+//    $data['test_debug'] = 1;
 
     erp_process_notification(1, $data);
 
@@ -491,12 +491,12 @@ function verify_billing_summary($billing_id)
     $date = $billing->billing_date;
 
     $bills = \DB::table('crm_documents')->select('crm_documents.*')->whereIn('doctype', ['Quotation', 'Order', 'Tax Invoice'])
-        ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
-        ->where('docdate', $date)->where('billing_type', $billing->billing_type)->where('reversal_id', 0)->get();
+    ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
+    ->where('docdate', $date)->where('billing_type', $billing->billing_type)->where('reversal_id', 0)->get();
 
     $bill_count = \DB::table('crm_documents')
-        ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
-        ->whereIn('doctype', ['Quotation', 'Order', 'Tax Invoice'])->where('docdate', $date)->where('billing_type', $billing->billing_type)->where('reversal_id', 0)->count();
+    ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
+    ->whereIn('doctype', ['Quotation', 'Order', 'Tax Invoice'])->where('docdate', $date)->where('billing_type', $billing->billing_type)->where('reversal_id', 0)->count();
 
     \DB::table('acc_billing')->where('id', $billing_id)->update(['reconciled' => $reconciled, 'num_invoices' => $bill_count]);
 }
@@ -504,18 +504,18 @@ function verify_billing_summary($billing_id)
 function verify_bill_emails($billing_id)
 {
     $billing = \DB::table('acc_billing')->where('id', $billing_id)->get()->first();
-    if (! $billing->approved) {
+    if (!$billing->approved) {
         return false;
     }
     $date = $billing->billing_date;
 
     $bills = \DB::table('crm_documents')->select('crm_documents.*')->whereIn('doctype', ['Quotation', 'Order', 'Tax Invoice'])
-        ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
-        ->where('docdate', $date)->where('billing_type', $billing->billing_type)->where('reversal_id', 0)->get();
+    ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
+    ->where('docdate', $date)->where('billing_type', $billing->billing_type)->where('reversal_id', 0)->get();
 
     $bill_count = \DB::table('crm_documents')
-        ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
-        ->whereIn('doctype', ['Quotation', 'Order', 'Tax Invoice'])->where('docdate', $date)->where('billing_type', $billing->billing_type)->where('reversal_id', 0)->count();
+    ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
+    ->whereIn('doctype', ['Quotation', 'Order', 'Tax Invoice'])->where('docdate', $date)->where('billing_type', $billing->billing_type)->where('reversal_id', 0)->count();
 
     $bill_email_count = 0;
     $bill_email_success = 0;
@@ -526,15 +526,15 @@ function verify_bill_emails($billing_id)
         $account = dbgetaccount($b->account_id);
         if ($account->notification_type == 'email') {
             $e = \DB::table('erp_communication_lines')->select('error', 'success', 'destination')->where('account_id', $b->account_id)->where('attachments', 'like', '%Invoice_'.$b->id.'%')->get()->first();
-            if (! empty($e)) {
-                $bill_email_count++;
+            if (!empty($e)) {
+                ++$bill_email_count;
                 if ($e->success == 1) {
-                    $bill_email_success++;
+                    ++$bill_email_success;
                 } else {
-                    $bill_email_error++;
+                    ++$bill_email_error;
 
                     $err = $account->company.' - '.$e->destination.' not delivered';
-                    if (! empty($e->error)) {
+                    if (!empty($e->error)) {
                         $err .= ' - '.$e->error;
                     }
                     $email_errors[] = $err;
@@ -542,11 +542,11 @@ function verify_bill_emails($billing_id)
             } else {
                 $err = $account->company.' - '.$account->email.' not sent';
                 $email_errors[] = $err;
-                $bill_email_error++;
+                ++$bill_email_error;
             }
         } else {
-            $bill_email_count++;
-            $bill_email_success++;
+            ++$bill_email_count;
+            ++$bill_email_success;
         }
     }
 
@@ -568,7 +568,7 @@ function export_billing_summary_layout($billing_id, $file_name)
 
     $module = \DB::table('erp_cruds')->where('id', $layout->module_id)->get()->first();
     $total_fields = \DB::table('erp_module_fields')->where('module_id', $module->detail_module_id)->whereIn('field_type', ['currency', 'decimal', 'integer'])->pluck('label')->toArray();
-    $model = new \App\Models\ErpModel;
+    $model = new \App\Models\ErpModel();
     $model->setModelData($module->detail_module_id);
 
     $grid_data = $model->info;
@@ -592,7 +592,7 @@ function export_billing_summary_layout($billing_id, $file_name)
     // $sort_fields = collect($layout_state->colState);
 
     $sort_fields = collect($layout_state->colState)->where('sortIndex', '!=', '')->sortBy('sortIndex');
-    if (! empty($sort_fields) && count($sort_fields) > 0) {
+    if (!empty($sort_fields) && count($sort_fields) > 0) {
         foreach ($sort_fields as $col) {
             if ($col->sortIndex != '') {
                 $sortModel[] = [
@@ -603,7 +603,7 @@ function export_billing_summary_layout($billing_id, $file_name)
         }
     }
 
-    $request_object = new \Illuminate\Http\Request;
+    $request_object = new \Illuminate\Http\Request();
     $request_object->setMethod('POST');
     $request_object->request->add(['return_all_rows' => 1]);
     $request_object->request->add(['startRow' => 0]);
@@ -617,7 +617,7 @@ function export_billing_summary_layout($billing_id, $file_name)
     } else {
         $request_object->request->add(['filterModel' => []]);
     }
-    if (! empty($layout_state->searchtext) && $layout_state->searchtext != ' ') {
+    if (!empty($layout_state->searchtext) && $layout_state->searchtext != ' ') {
         $request_object->request->add(['search' => $layout_state->searchtext]);
     }
 
@@ -646,7 +646,7 @@ function export_billing_summary_layout($billing_id, $file_name)
                             if ($field_type == 'boolean' && $v) {
                                 $v = 'Yes';
                             }
-                            if ($field_type == 'boolean' && ! $v) {
+                            if ($field_type == 'boolean' && !$v) {
                                 $v = 'No';
                             }
                             $excel_data[$i][$label] = $v;
@@ -662,7 +662,7 @@ function export_billing_summary_layout($billing_id, $file_name)
     if (file_exists($file_path)) {
         unlink($file_path);
     }
-    $export = new App\Exports\CollectionExport;
+    $export = new App\Exports\CollectionExport();
     $export->setTotalFields($total_fields);
     $export->setData($excel_data);
 
@@ -686,35 +686,35 @@ function schedule_renewal_billing()
     //\DB::table('sub_services')->whereIn('account_id',$usd_account_ids)->where('bill_frequency',0)->update(['bill_frequency'=>1]);
     //\DB::table('sub_services')->whereIn('account_id',$usd_account_ids)->whereNull('renews_at')->update(['renews_at'=>$docdate]);
 
-    $docdate = date('Y-m-01', strtotime('+1 month'));
-    $subs = \DB::table('sub_services')->where('status', '!=', 'Deleted')->where('renews_at', '<', $docdate)->get();
-    foreach ($subs as $s) {
-        $renewal_date = $s->renews_at;
-        $new_renewal_date = date('Y-m-01', strtotime($renewal_date.' + '.$s->bill_frequency.' month'));
-        \DB::table('sub_services')->where('id', $s->id)->update(['renews_at' => $new_renewal_date]);
-    }
+    $docdate = date('Y-m-01');
+    // $subs = \DB::table('sub_services')->where('status', '!=', 'Deleted')->where('renews_at', $docdate)->get();
+    // foreach ($subs as $s) {
+    //     $renewal_date = $s->renews_at;
+    //     $new_renewal_date = date('Y-m-01', strtotime($renewal_date.' + '.$s->bill_frequency.' month'));
+    //     \DB::table('sub_services')->where('id', $s->id)->update(['renews_at' => $new_renewal_date]);
+    // }
 
+    //Delete
     $doc_ids = \DB::table('crm_documents')
-        ->whereIn('doctype', ['Tax Invoice', 'Order', 'Quotation'])
-        ->where('docdate', $docdate)
-        ->where('billing_type', 'Renewal')
-        ->pluck('id')->toArray();
-
+    ->whereIn('doctype', ['Quotation'])
+    ->where('docdate', $docdate)
+    ->where('billing_type', 'Renewal')
+    ->pluck('id')->toArray();
     if (count($doc_ids) > 0) {
-        $subs = \DB::table('sub_services')->where('bill_frequency', '!=', 1)->select('id', 'renews_at', 'last_invoice_date', 'bill_frequency')->where('status', '!=', 'Deleted')->get();
-        foreach ($subs as $s) {
-            if ($s->renews_at > $docdate) {
-                $data = [
-                    'renews_at' => date('Y-m-d', strtotime($s->renews_at.' -'.$s->bill_frequency.' month')),
-                ];
-                \DB::table('sub_services')->where('id', $s->id)->update($data);
-            }
-        }
+        // $subs = \DB::table('sub_services')->where('bill_frequency', '!=', 1)->select('id', 'renews_at', 'last_invoice_date', 'bill_frequency')->where('status', '!=', 'Deleted')->get();
+        // foreach ($subs as $s) {
+        //     if ($s->renews_at > $docdate) {
+        //         $data = [
+        //             'renews_at' => date('Y-m-d', strtotime($s->renews_at.' -'.$s->bill_frequency.' month')),
+        //         ];
+        //         \DB::table('sub_services')->where('id', $s->id)->update($data);
+        //     }
+        // }
 
         foreach ($doc_ids as $doc_id) {
             \DB::table('crm_document_lines')->where('document_id', $doc_id)->delete();
             \DB::table('crm_documents')->where('id', $doc_id)->delete();
-            \DB::table('acc_ledgers')->whereIn('doctype', ['Quotation', 'Order', 'Tax Invoice'])->where('docid', $doc_id)->delete();
+            \DB::table('acc_ledgers')->whereIn('doctype', ['Quotation'])->where('docid', $doc_id)->delete();
             \DB::table('acc_ledgers')->where('doctype', 'Credit Note')->where('docid', $doc_id)->delete();
         }
     }
@@ -724,8 +724,8 @@ function schedule_renewal_billing()
 
     $billing = new ErpBilling($docdate);
     $billing->setBillOnRenewal(1);
-    $bill_frequencies = \DB::table('sub_services')->where('status', '!=', 'Deleted')->where('bill_frequency', '>', 1)->pluck('bill_frequency')->unique()->toArray();
-
+    $bill_frequencies = \DB::table('sub_services')->where('status', '!=', 'Deleted')->where('bill_frequency', '<>', 1)->pluck('bill_frequency')->unique()->toArray();
+    // vd($bill_frequencies);
     foreach ($bill_frequencies as $bill_frequency) {
         $billing->setBillingFrequency($bill_frequency);
         $billing->setCustomerType('customer');
@@ -742,7 +742,6 @@ function schedule_renewal_billing()
     if ($billing_id) {
         \DB::table('acc_billing')->where('id', $billing_id)->update(['approved' => 0, 'processed' => 1]);
         schedule_update_renewal_billing_details();
-
         verify_billing_summary($billing_id);
         send_billing_summary($billing_id);
     }
@@ -806,7 +805,6 @@ function button_billing_send_emails($request)
 function button_billing_process_billing($request)
 {
     $data['docdate'] = date('Y-m-01', strtotime('first day of next month'));
-
     /*
     if (session('instance')->id == 2) {
 
@@ -857,21 +855,21 @@ function schedule_process_contract_billing()
     \DB::table('acc_billing')->where('billing_date', $docdate)->where('billing_type', 'Contract')->update(['processed' => 1]);
 }
 
-function get_renewal_billing_approval_links()
+function get_renewal_billing_approval_links($billing_id)
 {
-    $billing = \DB::table('acc_billing')->where('billing_type', 'Renewal')->orderBy('id', 'desc')->get()->first();
+    $billing = \DB::table('acc_billing')->where('billing_type', 'Renewal')->where('id', $billing_id)->orderBy('id', 'desc')->get()->first();
     if (empty($billing) || empty($billing->id)) {
         return '';
     }
     $date = $billing->billing_date;
 
     $bills = \DB::table('crm_documents')->select('crm_documents.*')->whereIn('doctype', ['Quotation', 'Order', 'Tax Invoice'])
-        ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
-        ->where('docdate', $date)->where('billing_type', 'Renewal')->where('reversal_id', 0)->get();
+    ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
+    ->where('docdate', $date)->where('billing_type', 'Renewal')->where('reversal_id', 0)->get();
 
     $bill_count = \DB::table('crm_documents')
-        ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
-        ->whereIn('doctype', ['Quotation', 'Order', 'Tax Invoice'])->where('docdate', $date)->where('billing_type', 'Monthly')->where('reversal_id', 0)->count();
+    ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
+    ->whereIn('doctype', ['Quotation', 'Order', 'Tax Invoice'])->where('docdate', $date)->where('billing_type', 'Monthly')->where('reversal_id', 0)->count();
 
     $billing = \DB::table('acc_billing')->orderBy('id', 'desc')->get()->first();
     $msg = '<br><br>';
@@ -897,21 +895,21 @@ function get_renewal_billing_approval_links()
     return $msg;
 }
 
-function get_monthly_billing_approval_links()
+function get_monthly_billing_approval_links($billing_id)
 {
-    $billing = \DB::table('acc_billing')->where('billing_type', 'Monthly')->orderBy('id', 'desc')->get()->first();
+    $billing = \DB::table('acc_billing')->where('billing_type', 'Monthly')->where('id', $billing_id)->orderBy('id', 'desc')->get()->first();
     if (empty($billing) || empty($billing->id)) {
         return '';
     }
     $date = $billing->billing_date;
 
     $bills = \DB::table('crm_documents')->select('crm_documents.*')->whereIn('doctype', ['Quotation', 'Order', 'Tax Invoice'])
-        ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
-        ->where('docdate', $date)->where('billing_type', 'Monthly')->where('reversal_id', 0)->get();
+    ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
+    ->where('docdate', $date)->where('billing_type', 'Monthly')->where('reversal_id', 0)->get();
 
     $bill_count = \DB::table('crm_documents')
-        ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
-        ->whereIn('doctype', ['Quotation', 'Order', 'Tax Invoice'])->where('docdate', $date)->where('billing_type', 'Monthly')->where('reversal_id', 0)->count();
+    ->join('crm_accounts', 'crm_documents.account_id', '=', 'crm_accounts.id')
+    ->whereIn('doctype', ['Quotation', 'Order', 'Tax Invoice'])->where('docdate', $date)->where('billing_type', 'Monthly')->where('reversal_id', 0)->count();
 
     $billing = \DB::table('acc_billing')->where('id', $billing->id)->orderBy('id', 'desc')->get()->first();
     $msg = '<br><br>';
@@ -957,22 +955,22 @@ function update_billing_run_supplier_invoices($billing_id = false)
 
     $subs = \DB::connection('default')->table('sub_service_summary')->where('billing_id', $billing->id)->whereIn('product_id', $service_product_ids)->get();
     $supplier_doc_ids = \DB::table('crm_supplier_documents')
-        ->where('docdate', 'LIKE', date('Y-m', strtotime($date)).'%')
-        ->pluck('id')->toArray();
+    ->where('docdate', 'LIKE', date('Y-m', strtotime($date)).'%')
+    ->pluck('id')->toArray();
     $supplier_total = 0;
     $billed_total = 0;
-
+    $supplier_reconcile_result;
     foreach ($subs as $s) {
         $product_id = $s->product_id;
         $code = $service_products->where('id', $s->product_id)->pluck('code')->first();
         $supplier_invoice_total = \DB::table('crm_supplier_document_lines')
-            ->whereIn('document_id', $supplier_doc_ids)
-            ->where('product_id', $product_id)
-            ->sum(\DB::raw('price*qty'));
+        ->whereIn('document_id', $supplier_doc_ids)
+        ->where('product_id', $product_id)
+        ->sum(\DB::raw('price*qty'));
         $supplier_qty_total = \DB::table('crm_supplier_document_lines')
-            ->whereIn('document_id', $supplier_doc_ids)
-            ->where('product_id', $product_id)
-            ->sum('qty');
+        ->whereIn('document_id', $supplier_doc_ids)
+        ->where('product_id', $product_id)
+        ->sum('qty');
         \DB::connection('default')->table('sub_service_summary')->where('id', $s->id)->update(['supplier_qty' => $supplier_qty_total, 'supplier_total' => $supplier_invoice_total]);
 
         $billed_qty = \DB::connection('default')->table('sub_service_summary')->where('product_id', $product_id)->where('billing_id', $billing->id)->sum('billed_qty');

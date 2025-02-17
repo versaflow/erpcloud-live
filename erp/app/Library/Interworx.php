@@ -3,13 +3,9 @@
 class Interworx
 {
     protected $apikey;
-
     protected $server_ip;
-
     protected $server;
-
     protected $domain;
-
     protected $debug;
 
     public function __construct($server = 'host2', $domain = false)
@@ -32,7 +28,7 @@ class Interworx
 
     private function setApiKey()
     {
-        if ($this->server == 'host1') {
+        if ('host1' == $this->server) {
             $this->server_ip = '156.0.96.71';
             $this->apikey = '-----BEGIN INTERWORX API KEY-----
 MXwkZilkWjJmLGJ7LUc2cUhMcn5UbUVZSWYxZ0NrXkxiKj9FfkdjeyxxaF1A
@@ -65,7 +61,7 @@ R308PSxtVUZ9eHBzXzZObCMwTDl1K2dMckhdRSZiMQ==
 -----END INTERWORX API KEY-----';
         }
 
-        if ($this->server == 'host2') {
+        if ('host2' == $this->server) {
             $this->server_ip = '156.0.96.72';
             $this->apikey = '-----BEGIN INTERWORX API KEY-----
 MXw8Pnl1eUstUCRQWTkpPkZ1V1FPYiMhdD5sWXZmLD5Xb3hwLE1LdzVeMmJy
@@ -100,6 +96,7 @@ Wzh1bQ==
 -----END INTERWORX API KEY-----';
         }
 
+
         if ($this->domain) {
             $this->apikey = [
                 'domain' => $this->domain,
@@ -126,26 +123,26 @@ Wzh1bQ==
 
     public function curl($controller, $action, $input = null)
     {
-        if ($this->server == 'external') {
+        if ('external' == $this->server){
             return 'Invalid Server';
         }
-
+        
         // if('host1' == $this->server && $controller!='/siteworx/email/box') {
         //     return 'Invalid Server';
         // }
 
         ini_set('default_socket_timeout', 600);
 
-        $client = new \SoapClient('http://'.$this->server_ip.':2080/soap?wsdl', [
+        $client = new \SoapClient('http://'.$this->server_ip.':2080/soap?wsdl', array(
             'stream_context' => stream_context_create(
-                [
-                    'ssl' => [
+                array(
+                    'ssl' => array(
                         'verify_peer' => false,
                         'verify_peer_name' => false,
-                    ],
-                ]
+                    ),
+                )
             ),
-        ]);
+        ));
 
         if ($this->debug) {
             exception_log($controller);
@@ -181,7 +178,6 @@ Wzh1bQ==
     public function getAccountInfo()
     {
         $result = $this->curl('/nodeworx/siteworx', 'querySiteworxAccountDetails', ['domain' => $this->domain]);
-
         return $result['payload'];
     }
 
@@ -193,7 +189,6 @@ Wzh1bQ==
     public function editAccount($input)
     {
         $result = $this->curl('/nodeworx/siteworx', 'edit', $input);
-
         return $result;
     }
 
@@ -203,7 +198,6 @@ Wzh1bQ==
             'domain' => $this->domain,
             'confirm_action' => '1',
         ];
-
         return $this->curl('/nodeworx/siteworx', 'delete', $input);
     }
 
@@ -233,12 +227,11 @@ Wzh1bQ==
             'password' => $password,
             'confirm_password' => $password,
             'status' => 'active',
-            'packagetemplate' => 'resellers',
+            'packagetemplate' => 'resellers'
         ];
         \DB::table('crm_account_partner_settings')->where('account_id', $partner_id)->update(['hosting_pass' => $pass]);
         $result = $this->curl('/nodeworx/reseller', 'add', $input);
         $this->setResellerIds();
-
         return $result;
     }
 
@@ -251,9 +244,8 @@ Wzh1bQ==
             'password' => $password,
             'confirm_password' => $password,
             'status' => 'active',
-            'packagetemplate' => 'resellers',
+            'packagetemplate' => 'resellers'
         ];
-
         return $this->curl('/nodeworx/reseller', 'edit', $input);
     }
 
@@ -264,16 +256,15 @@ Wzh1bQ==
         $dns_records = $this->queryDnsRecords();
         $record = false;
         foreach ($dns_records['payload'] as $dns_record) {
-            if ($dns_record->type == 'CNAME' && $dns_record->host == $pbx_domain) {
+            if ($dns_record->type == "CNAME" && $dns_record->host == $pbx_domain) {
                 $record = $dns_record;
             }
         }
-        if (! $record) {
+        if (!$record) {
             return 'DNS record not found.';
         }
         $input = (array) $record;
         $input['target'] = $target;
-
         return $this->curl('/nodeworx/dns/record', 'editCNAME', $input);
     }
 
@@ -284,14 +275,12 @@ Wzh1bQ==
 
         $records = [];
         foreach ($dns_records['payload'] as $dns_record) {
-            if ($dns_record->type == 'CNAME' && $dns_record->target == 'pbx.cloudtools.co.za') {
+            if ($dns_record->type == "CNAME" && $dns_record->target == 'pbx.cloudtools.co.za') {
                 $records[] = $dns_record;
             }
         }
-
         return $records;
     }
-
     public function getAutomatedPbxDnsRecords()
     {
         $this->setServer('host1');
@@ -299,11 +288,10 @@ Wzh1bQ==
         $dns_records = $this->queryDnsRecords(101);
         $records = [];
         foreach ($dns_records['payload'] as $dns_record) {
-            if ($dns_record->type == 'CNAME' && $dns_record->target == 'pbx.cloudtools.co.za' && str_starts_with($dns_record->host, 'um')) {
+            if ($dns_record->type == "CNAME" && $dns_record->target == 'pbx.cloudtools.co.za' && str_starts_with($dns_record->host, 'um')) {
                 $records[] = $dns_record;
             }
         }
-
         return $records;
     }
 
@@ -314,14 +302,12 @@ Wzh1bQ==
         $dns_records = $this->queryDnsRecords(96);
         $records = [];
         foreach ($dns_records['payload'] as $dns_record) {
-            if ($dns_record->type == 'CNAME' && $dns_record->target == 'pbx.cloudtools.co.za' && str_starts_with($dns_record->host, 'tc')) {
+            if ($dns_record->type == "CNAME" && $dns_record->target == 'pbx.cloudtools.co.za' && str_starts_with($dns_record->host, 'tc')) {
                 $records[] = $dns_record;
             }
         }
-
         return $records;
     }
-
     public function addWhiteLabelDomain($domain)
     {
         $this->setServer('host2');
@@ -329,7 +315,6 @@ Wzh1bQ==
         $input['domain'] = $domain;
         $input['redir_type'] = 'server_alias';
         $input['points_to'] = 'cloudtelecoms.cloudsoftware.cc';
-
         return $this->curl('/siteworx/domains/pointer', 'add', $input);
     }
 
@@ -338,11 +323,11 @@ Wzh1bQ==
         if (session('instance')->directory == 'telecloud') {
             $instances = \DB::connection('default')->table('erp_instances')->get();
             $valid_hostnames = [];
-            $instance_hostnames = [];
+            $instance_hostnames =[];
             foreach ($instances as $instance) {
                 $instance_hostnames[] = $instance->domain_name;
                 $valid_hostnames[] = $instance->domain_name;
-                if (! empty($instance->alias)) {
+                if (!empty($instance->alias)) {
                     $valid_hostnames[] = $instance->alias;
                     $instance_hostnames[] = $instance->alias;
                 }
@@ -362,7 +347,7 @@ Wzh1bQ==
                     if (in_array($pointer_domain, $instance_hostnames)) {
                         continue;
                     }
-                    if (! in_array($pointer_domain, $valid_hostnames)) {
+                    if (!in_array($pointer_domain, $valid_hostnames)) {
                         $input = ['domain' => $pointer_domain];
                         $this->curl('/siteworx/domains/pointer', 'delete', $input);
                     }
@@ -375,7 +360,6 @@ Wzh1bQ==
     {
         $this->setServer('host2');
         $this->setDomain('cloudsoftware.cc');
-
         return $this->curl('/siteworx/domains/pointer', 'list');
     }
 
@@ -383,20 +367,18 @@ Wzh1bQ==
     {
         $this->setServer('host1');
         $this->setDomain('cloudtools.co.za');
-
         return $this->deleteDnsRecord($host_name);
         $record = false;
         foreach ($dns_records['payload'] as $dns_record) {
-            if ($dns_record->type == 'CNAME' && $dns_record->host == $pbx_domain) {
+            if ($dns_record->type == "CNAME" && $dns_record->host == $pbx_domain) {
                 $record = $dns_record;
             }
         }
-        if (! $record) {
+        if (!$record) {
             return 'DNS record not found.';
         }
         $input = (array) $record;
         $input['target'] = $target;
-
         return $this->curl('/nodeworx/dns/record', 'editCNAME', $input);
     }
 
@@ -404,25 +386,23 @@ Wzh1bQ==
     {
         $record = false;
         $dns_records = $this->queryDnsRecords();
-        if (! $dns_records) {
+        if (!$dns_records) {
             foreach ($dns_records['payload'] as $dns_record) {
-                if ($dns_record->type == 'CNAME' && $dns_record->host == $host_name) {
+                if ($dns_record->type == "CNAME" && $dns_record->host == $host_name) {
                     $record = $dns_record;
                 }
             }
         }
-        if (! $record) {
+        if (!$record) {
             return 'DNS record not found.';
         }
         $input['record_id'] = $record->record_id;
-
         return $this->curl('/nodeworx/dns/record', 'delete', $input);
     }
 
     public function deleteDnsRecordById($record_id)
     {
         $input['record_id'] = $record_id;
-
         return $this->curl('/nodeworx/dns/record', 'delete', $input);
     }
 
@@ -430,17 +410,17 @@ Wzh1bQ==
     {
         $dns_records = $this->queryDnsRecords();
         foreach ($dns_records['payload'] as $dns_record) {
-            if ($dns_record->type == 'A' && $dns_record->host == $this->domain) {
+            if ($dns_record->type == "A" && $dns_record->host == $this->domain) {
                 $a_record_id = $dns_record->record_id;
             }
-            if ($dns_record->type == 'CNAME' && $dns_record->host == 'www.'.$this->domain) {
+            if ($dns_record->type == "CNAME" && $dns_record->host == 'www.'.$this->domain) {
                 $cname_record_id = $dns_record->record_id;
             }
         }
-        if (! empty($a_record_id)) {
+        if (!empty($a_record_id)) {
             $this->editDnsRecordA($a_record_id, '156.0.96.71');
         }
-        if (! empty($cname_record_id)) {
+        if (!empty($cname_record_id)) {
             $this->editDnsRecordCname($cname_record_id, $this->domain);
         }
     }
@@ -450,22 +430,20 @@ Wzh1bQ==
         $input = [
             'domain' => $this->domain,
         ];
-
+        
         $result = $this->curl('/nodeworx/dns/zone', 'queryZones', $input);
-
         return $result;
     }
 
     public function queryRecords($zone_id = false)
     {
-        if (! $zone_id) {
+        if (!$zone_id) {
             $zones = $this->queryZones();
             $zone_id = $zones['payload'][0]->zone_id;
         }
         $input = [
             'zone_id' => $zone_id,
         ];
-
         return $this->curl('/nodeworx/dns/record', 'queryRecords', $input);
     }
 
@@ -474,26 +452,24 @@ Wzh1bQ==
         $input = [
             'type' => $type,
         ];
-
         return $this->curl('/nodeworx/dns/record', 'queryRecords', $input);
     }
 
     public function queryDnsRecords($zone_id = false)
     {
-        if (! $zone_id) {
+        if (!$zone_id) {
             $zones = $this->queryZones();
             $zone_id = $zones['payload'][0]->zone_id;
         }
-        if ($zone_id != '101') {
+        if ($zone_id <> '101') {
             $input = [
                 'zone_id' => $zone_id,
             ];
-        } else {
+        } else
             $input = '';
-        }
-
         return $this->curl('/siteworx/dns', 'queryDnsRecords', $input);
     }
+
 
     public function editDnsRecordNS($input)
     {
@@ -512,27 +488,25 @@ Wzh1bQ==
     public function getSoaRecords()
     {
         $response = $this->curl('/nodeworx/dns/record', 'queryRecords');
-
-        return collect($response['payload'])->where('is_template', 0)->where('type', 'SOA');
+        
+        return  collect($response['payload'])->where('is_template',0)->where('type','SOA');
     }
-
-    public function updateAllSoaRecords()
-    {
+    
+    public function updateAllSoaRecords(){
         $soa_records = $this->getSoaRecords();
-        foreach ($soa_records as $record) {
-            if (! str_contains($record->target, 'host2.cloudtools.co.za')) {
-                $input = ['record_id' => $record->record_id, 'nameserver' => 'host2.cloudtools.co.za'];
+        foreach($soa_records as $record){
+            if(!str_contains($record->target,'host2.cloudtools.co.za')){
+                $input = ['record_id' => $record->record_id,'nameserver'=>'host2.cloudtools.co.za'];
                 $this->editDnsRecordSOA($input);
             }
         }
-
         return true;
     }
 
     public function editDnsRecordA($record_id, $ipaddress, $domain = false)
     {
         $zones = $this->queryZones();
-        if (! $domain) {
+        if (!$domain) {
             $domain = $this->domain;
         }
         $zone_id = $zones['payload'][0]->zone_id;
@@ -548,7 +522,7 @@ Wzh1bQ==
 
     public function editDnsRecordCname($record_id, $alias, $domain = false)
     {
-        if (! $domain) {
+        if (!$domain) {
             $domain = 'www.'.$this->domain;
         }
 
@@ -567,7 +541,7 @@ Wzh1bQ==
     public function addMailDNS()
     {
         $zones = $this->queryZones();
-        if (! $domain) {
+        if (!$domain) {
             $domain = $this->domain;
         }
         $zone_id = $zones['payload'][0]->zone_id;
@@ -589,7 +563,7 @@ Wzh1bQ==
     public function addDnsRecordA($ipaddress, $domain = false)
     {
         $zones = $this->queryZones();
-        if (! $domain) {
+        if (!$domain) {
             $domain = $this->domain;
         }
         $zone_id = $zones['payload'][0]->zone_id;
@@ -605,7 +579,7 @@ Wzh1bQ==
     public function addDnsRecordSPF()
     {
         $zones = $this->queryZones();
-        if (! $domain) {
+        if (!$domain) {
             $domain = $this->domain;
         }
         $zone_id = $zones['payload'][0]->zone_id;
@@ -634,11 +608,11 @@ Wzh1bQ==
 
     public function addDnsRecordCname($alias, $domain = false, $zone_id = false)
     {
-        if (! $domain) {
+        if (!$domain) {
             $domain = 'www.'.$this->domain;
         }
 
-        if (! $zone_id) {
+        if (!$zone_id) {
             $zones = $this->queryZones();
             $zone_id = $zones['payload'][0]->zone_id;
         }
@@ -660,6 +634,7 @@ Wzh1bQ==
         $zones = $this->queryZones();
         $zone_id = $zones['payload'][0]->zone_id;
 
+
         $input = [
             'alias' => 'pbx.cloudtools.co.za',
             'host' => $domain_name,
@@ -676,8 +651,8 @@ Wzh1bQ==
 
     public function editEmail($username, $password)
     {
-        if (str_contains($username, '@')) {
-            $username_arr = explode('@', $username);
+        if(str_contains($username,'@')){
+            $username_arr = explode('@',$username);
             $username = $username_arr[0];
         }
         $input = [
@@ -689,10 +664,11 @@ Wzh1bQ==
         return $this->curl('/siteworx/email/box', 'edit', $input);
     }
 
+
     public function createEmail($username, $password)
     {
-        if (str_contains($username, '@')) {
-            $username_arr = explode('@', $username);
+        if(str_contains($username,'@')){
+            $username_arr = explode('@',$username);
             $username = $username_arr[0];
         }
         $input = [
@@ -700,15 +676,14 @@ Wzh1bQ==
             'password' => $password,
             'confirm_password' => $password,
         ];
-
-        // aa($input);
-        return $this->curl('/siteworx/email/box', 'add', $input);
+// aa($input);
+return $this->curl('/siteworx/email/box', 'add', $input);
     }
 
     public function deleteEmail($username)
     {
         $input = [
-            'username' => $username,
+            'username' => $username
         ];
 
         return $this->curl('/siteworx/email/box', 'delete', $input);
@@ -723,7 +698,6 @@ Wzh1bQ==
                 $this->editFtp($ftp->username, $pass, $ftp->homedir);
             }
         }
-
         return $pass;
     }
 
@@ -746,8 +720,9 @@ Wzh1bQ==
         //site path needs to unix user root, otherwise kopage login does not work
         $site_path = '/home/'.$unix_user;
 
+
         $ftp_accounts = $this->listFtpAccounts();
-        if (! empty($ftp_accounts['payload']) && count($ftp_accounts['payload']) > 0) {
+        if (!empty($ftp_accounts['payload']) && count($ftp_accounts['payload']) > 0) {
             foreach ($ftp_accounts['payload'] as $ftp) {
                 if ($ftp->username == 'sitebuilder') {
                     $sitebuilder_ftp = $ftp;
@@ -762,10 +737,13 @@ Wzh1bQ==
             $result = $this->createFtp('sitebuilder', $pass, $site_path);
         }
 
-        \DB::table('isp_host_websites')->where('domain', $domain)->update(['ftp_user' => 'sitebuilder@'.$domain, 'ftp_pass' => $pass]);
 
-        return ['user' => 'sitebuilder@'.$domain, 'pass' => $pass];
+        \DB::table('isp_host_websites')->where('domain', $domain)->update(['ftp_user' => 'sitebuilder@'.$domain,'ftp_pass' =>$pass]);
+        return ['user' => 'sitebuilder@'.$domain,'pass' =>$pass];
     }
+
+
+
 
     public function editFtp($username, $password, $dir)
     {
@@ -778,6 +756,7 @@ Wzh1bQ==
 
         return $this->curl('/siteworx/ftp', 'edit', $input);
     }
+
 
     public function createFtp($username, $password, $dir)
     {
@@ -794,7 +773,7 @@ Wzh1bQ==
     public function deleteFtp($username)
     {
         $input = [
-            'user' => $username,
+            'user' => $username
         ];
 
         return $this->curl('/siteworx/ftp', 'delete', $input);
@@ -827,7 +806,7 @@ Wzh1bQ==
         if ($account->id == 12) {
             $email = 'helpdesk@telecloud.co.za';
         }
-        $active = ($account->status == 'Enabled') ? 1 : 0;
+        $active = ('Enabled' == $account->status) ? 1 : 0;
         $input = [
             'domain' => $domain,
             'user' => $email,
@@ -837,14 +816,14 @@ Wzh1bQ==
 
         if ($domain != 'rentanything.io') {
             $account_id = \DB::table('isp_host_websites')->where('domain', $domain)->pluck('account_id')->first();
-
+     
             $password = substr(\Erp::encode($domain), 0, 20);
-
+            
             \DB::table('isp_host_websites')->where('domain', $domain)->update(['username' => $email, 'password' => $password]);
             $input['confirm_password'] = $password;
             $input['password'] = $password;
         }
-
+        
         if ($domain == 'musa.org.za') {
             $input['email'] = 'info@musa.org.za';
             $input['user'] = 'info@musa.org.za';
@@ -854,19 +833,20 @@ Wzh1bQ==
 
         if ($package) {
             $package = str_replace('_builder_', '_', $package);
-            if (strpos($package, 'monthly') !== false) {
+            if (false !== strpos($package, 'monthly')) {
                 $package_arr = explode('_', $package);
                 $package = $package_arr[0].'_'.$package_arr[1];
             }
             $input_arr['packagetemplate'] = $package;
         }
-        if ($domain == 'cloudtelecoms.co.za' || $domain == 'energyforafrica.co.za') {
+        if ($domain=='cloudtelecoms.co.za' || $domain=='energyforafrica.co.za') {
             $input_arr['OPT_STORAGE'] = 200000;
         }
 
         if ($input_arr && is_array($input_arr)) {
             $input = array_merge($input, $input_arr);
         }
+
 
         return $this->editAccount($input);
     }
@@ -879,6 +859,7 @@ Wzh1bQ==
     public function listAllAccounts()
     {
         $results = $this->setServer('host2')->listAccounts();
+
 
         return $results;
     }
@@ -895,8 +876,7 @@ Wzh1bQ==
 
     public function installSSL()
     {
-        $input = ['domain' => $this->domain, 'chain' => 1];
-
+        $input = ['domain' => $this->domain,'chain' => 1];
         return $this->curl('/siteworx/ssl', 'install', $input);
     }
 
@@ -917,7 +897,7 @@ Wzh1bQ==
 
     public function deleteFailedBackups()
     {
-        \DB::table('isp_host_websites')->update(['backup_date' => null, 'backup_status' => null]);
+        \DB::table('isp_host_websites')->update(['backup_date' => null,'backup_status'=> null]);
         $sites = \DB::table('isp_host_websites')->where('hosted', 1)->get();
 
         foreach ($sites as $site) {
@@ -930,24 +910,24 @@ Wzh1bQ==
                 $delete_backups = [];
                 $keep_backups = [];
 
-                if (is_array($payload) && ! empty($payload) && count($payload) > 0) {
+                if (is_array($payload) && !empty($payload) && count($payload) > 0) {
                     $payload = array_reverse($payload);
                     $status = 'None';
                     foreach ($payload as $backup) {
                         $backup = (array) $backup;
-                        if (count($keep_backups) < 2 && $backup['complete'] && $backup['complete'] == true) {
-                            if (count($keep_backups) == 0) {
+                        if (count($keep_backups) < 2 && $backup['complete'] && true == $backup['complete']) {
+                            if (0 == count($keep_backups)) {
                                 $backup_date = gmdate('Y-m-d', $backup['filedate']);
                                 \DB::table('isp_host_websites')->where('domain', $site->domain)->update(['backup_date' => $backup_date]);
                             }
                             $keep_backups[] = $backup['filename'];
                         }
-                        $status = ($backup['complete'] == true) ? 'Complete' : 'Failed';
+                        $status = (true == $backup['complete']) ? 'Complete' : 'Failed';
                     }
                     \DB::table('isp_host_websites')->where('domain', $site->domain)->update(['backup_status' => $status]);
                     foreach ($payload as $backup) {
                         $backup = (array) $backup;
-                        if (! in_array($backup['filename'], $keep_backups)) {
+                        if (!in_array($backup['filename'], $keep_backups)) {
                             $delete_backups[] = $backup['filename'];
                         }
 
@@ -957,7 +937,7 @@ Wzh1bQ==
                     }
                 }
             }
-            if (! empty($delete_backups)) {
+            if (!empty($delete_backups)) {
                 foreach ($delete_backups as $backup) {
                     $input['backups'] = $backup;
                     $this->deleteBackup($input);
@@ -978,21 +958,22 @@ Wzh1bQ==
 
             if (str_contains($site->package, 'domain_parking')) {
                 \DB::table('isp_host_websites')->where('id', $site->id)->update(['backup_schedule' => '']);
-                if (! empty($schedule['payload'][0]) && ! empty($schedule['payload'][0]->id)) {
+                if (!empty($schedule['payload'][0]) && !empty($schedule['payload'][0]->id)) {
                     $this->backupScheduleDelete($schedule['payload'][0]->id);
                 }
             }
 
-            if (! empty($schedule['payload'][0]) && ! empty($schedule['payload'][0]->frequency)) {
+            if (!empty($schedule['payload'][0]) && !empty($schedule['payload'][0]->frequency)) {
                 $this->backupScheduleDelete($schedule['payload'][0]->id);
             }
 
-            if (! str_contains($site->package, 'domain_parking')) {
+            if (!str_contains($site->package, 'domain_parking')) {
                 $this->backupScheduleAdd($site->account_id);
                 \DB::table('isp_host_websites')->where('id', $site->id)->update(['backup_schedule' => 'weekly']);
             }
         }
     }
+
 
     public function backupScheduleList()
     {
@@ -1026,7 +1007,7 @@ Wzh1bQ==
             $account = dbgetaccount($account_id);
             $valid_email = true;
 
-            if (empty($account->email) || ! filter_var($account->email, FILTER_VALIDATE_EMAIL)) {
+            if (empty($account->email) || !filter_var($account->email, FILTER_VALIDATE_EMAIL)) {
                 $valid_email = false;
             }
 
@@ -1036,6 +1017,7 @@ Wzh1bQ==
                 $input['email_address'] = 'none@none.url';
             }
         }
+
 
         return $this->curl('/siteworx/backup/schedule', 'create', $input);
     }
@@ -1065,7 +1047,7 @@ Wzh1bQ==
     {
         $input = [
             'domain' => $this->domain,
-            'php_available' => ['system-php', '/opt/remi/php73'],
+            'php_available' => ["system-php", "/opt/remi/php73"],
             'php_version' => '/opt/remi/php73',
         ];
         $result = $this->editAccount($input);
@@ -1098,23 +1080,26 @@ Wzh1bQ==
 
         $result = Erp::ssh('host2.cloudtools.co.za', 'root', 'Ahmed777', $command);
 
+
         $command = '~iworx/bin/varpermsfix.pex --siteworx '.$domain;
         $result = Erp::ssh('host2.cloudtools.co.za', 'root', 'Ahmed777', $command);
 
         return true;
     }
+    
 
     public function getSitebuilderAutoLoginUrl()
     {
-
-        if (! $this->hasSitebuilderInstalled()) {
+        
+        if(!$this->hasSitebuilderInstalled()){
             return 'http://'.$this->domain;
         }
+        
 
         $siteworx = $this->getAccountInfo();
 
         $unix_user = $siteworx['unixuser'];
-
+       
         $domain = $this->domain;
 
         $site_url = 'http://www.'.$domain;
@@ -1130,11 +1115,14 @@ Wzh1bQ==
 
         return 'http://'.$this->domain.'/admin.php?key=1';
     }
-
+    
+    
+    
+    
     public function hasSitebuilderInstalled()
     {
         $siteworx = $this->getAccountInfo();
-        try {
+        try{
             $unix_user = $siteworx['unixuser'];
             $code = substr(rand(), 0, 7);
             $password = random();
@@ -1142,27 +1130,28 @@ Wzh1bQ==
             $server = $this->server;
             $domain_arr = explode('.', $domain);
             $subdomain = $domain_arr[0];
-
+    
             $site_url = 'http://www.'.$domain;
             $kopage_file_path = '/home/'.$unix_user.'/'.$domain.'/html/pre.php';
             $kopage_image_dir = '/home/'.$unix_user.'/'.$domain.'/html/editor_images';
-
+           
             $command = '[ -d "'.$kopage_image_dir.'" ] && echo "Directory exists" || echo "Directory does not exist"';
             $result = Erp::ssh('host2.cloudtools.co.za', 'root', 'Ahmed777', $command);
-
-            if (str_contains($result, 'Directory exists')) {
+           
+            if(str_contains($result, 'Directory exists')){
                 return true;
-            } else {
+            }else{
                 $command = 'cat '.$kopage_file_path;
                 $result = Erp::ssh('host2.cloudtools.co.za', 'root', 'Ahmed777', $command);
-
-                if (str_contains($result, 'kopageID')) {
+   
+                if(str_contains($result,'kopageID')){
                     return true;
                 }
             }
-
+            
+    
             return false;
-        } catch (\Throwable $ex) {
+        }catch(\Throwable $ex){
             return 'error '.$ex->getMessage();
         }
     }
@@ -1194,15 +1183,15 @@ Wzh1bQ==
 
     public function addSSL()
     {
-        if ($this->domain == 'cloudtools.co.za') {
-            return false;
+        if($this->domain == 'cloudtools.co.za'){
+        return false;    
         }
         $altNames = [$this->domain, 'mail.'.$this->domain, 'ftp.'.$this->domain, 'www.'.$this->domain];
 
         $input = [
             'domain' => $this->domain,
             'commonName' => $this->domain,
-            'subjectAltName' => $altNames,
+            'subjectAltName' => $altNames
         ];
 
         return $this->curl('/siteworx/ssl', 'generateLetsEncrypt', $input);
@@ -1227,11 +1216,11 @@ Wzh1bQ==
     {
         $ssl_info = $this->curl('/siteworx/ssl', 'listSslInfo');
 
-        if (! $ssl_info['payload']['config_exists']) {
+        if (!$ssl_info['payload']['config_exists']) {
             return 'no ssl';
         }
 
-        if (! in_array('mail.'.$this->domain, $ssl_info['payload']['alt_names']) && 'mail.'.$this->domain != $ssl_info['payload']['ssl_domain']) {
+        if (!in_array('mail.'.$this->domain, $ssl_info['payload']['alt_names']) && 'mail.'.$this->domain != $ssl_info['payload']['ssl_domain']) {
             return 'missing mail ssl';
         }
         if (time() > $ssl_info['payload']['expiry']['valid_to']) {
@@ -1247,7 +1236,7 @@ Wzh1bQ==
         foreach ($domains as $domain) {
             $exists = \DB::table('sub_services')->where('detail', $domain)->where('status', '!=', 'Deleted')->count();
             $activation_exists = \DB::table('sub_activations')->where('detail', $domain)->where('status', 'Pending')->count();
-            if (! $exists && ! $activation_exists) {
+            if (!$exists && !$activation_exists) {
                 // siteworx_delete($domain);
             }
         }
@@ -1258,6 +1247,7 @@ Wzh1bQ==
         $payload = $this->listAllAccounts();
         foreach ($payload['payload'] as $record) {
             $domain = $record->domain;
+
 
             if ($domain == '96.0.156.in-addr.arpa') {
                 continue;
@@ -1275,7 +1265,7 @@ Wzh1bQ==
             $mail_ssl = $this->hasMailSSL();
             if ($mail_ssl != 'valid mail ssl') {
                 $result = $this->addSSL();
-
+               
                 if ($result['status'] == 11) {
                     $mailonly_result = $this->addMailOnlySSL();
                     if ($mailonly_result['status'] == 11) {

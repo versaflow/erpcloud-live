@@ -2,6 +2,7 @@
 
 namespace App\Http;
 
+use Illuminate\Routing\Router;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
@@ -15,7 +16,7 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
-        \Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance::class,
+        \Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode::class,
     ];
 
     /**
@@ -42,8 +43,8 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            'throttle:api',
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            'throttle:60,1',
+            'bindings',
         ],
     ];
 
@@ -57,6 +58,7 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
+        'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
@@ -64,9 +66,9 @@ class Kernel extends HttpKernel
         'cors' => \App\Http\Middleware\Cors::class,
         'globalviewdata' => \App\Http\Middleware\ShareDataForViews::class,
         'tasksactive' => \App\Http\Middleware\StaffActiveTasks::class,
-
+        
     ];
-
+    
     protected function bootstrappers()
     {
         return array_merge(

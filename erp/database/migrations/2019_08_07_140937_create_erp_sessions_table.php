@@ -22,6 +22,7 @@ class CreateErpSessionsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

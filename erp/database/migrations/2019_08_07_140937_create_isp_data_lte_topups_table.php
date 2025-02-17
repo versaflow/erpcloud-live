@@ -26,6 +26,7 @@ class CreateIspDataLteTopupsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

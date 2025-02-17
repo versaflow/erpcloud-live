@@ -20,6 +20,7 @@ class CreateIspSmsTemplatesTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

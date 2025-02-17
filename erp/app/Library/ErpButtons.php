@@ -19,7 +19,7 @@ class ErpButtons
             $button_groups = self::getButtonGroups($menu_id);
         }
 
-        if (! empty($button_groups)) {
+        if (!empty($button_groups)) {
             foreach ($button_groups as $button_group) {
                 $group_btn_visible = '';
                 $group = str_replace(' ', '_', strtolower($button_group)).$module_id;
@@ -31,14 +31,14 @@ class ErpButtons
             }
         }
 
-        if (! empty($buttons)) {
+        if (!empty($buttons)) {
             foreach ($buttons as $btn) {
                 $allow = self::check_button_access($btn);
-                if (! $allow) {
+                if (!$allow) {
                     continue;
                 }
 
-                if (! empty($btn->menu_id) && $btn->menu_id != $menu_id) {
+                if (!empty($btn->menu_id) && $btn->menu_id != $menu_id) {
                     continue;
                 }
 
@@ -47,13 +47,16 @@ class ErpButtons
                     $disabled = 'disabled';
                 }
 
+
                 $main_btn .= "
-                <button id='mainbtn_".$grid_id.$btn->id."'  class='k-button' ".$disabled.'>'.($btn->name).'</button>
+                <button id='mainbtn_".$grid_id.$btn->id."'  class='k-button' ".$disabled.">".($btn->name).'</button>
                 ';
             }
         }
 
-        if (! empty($main_btn) || ! empty($group_btn)) {
+
+
+        if (!empty($main_btn) || !empty($group_btn)) {
             return $group_btn.$main_btn;
         }
     }
@@ -65,10 +68,11 @@ class ErpButtons
 
         $buttons = \DB::connection('default')->table('erp_grid_buttons')->where('inline_grid_button', 1)->where('module_id', $module_id)->orderby('sort_order', 'asc')->get();
 
+
         $inline_buttons = [];
         foreach ($buttons as $btn) {
             $allow = self::check_button_access($btn);
-            if (! $allow) {
+            if (!$allow) {
                 continue;
             }
             if (empty($btn->icon)) {
@@ -80,8 +84,8 @@ class ErpButtons
                     'content' => $btn->name,
                     'title' => $btn->name,
                     //'iconCss' => $btn->icon,
-                    'cssClass' => 'e-flat e-outline e-small inline-btn inline-btn-'.$btn->id,
-                ],
+                    'cssClass' => 'e-flat e-outline e-small inline-btn inline-btn-'.$btn->id
+                ]
             ];
         }
 
@@ -96,10 +100,10 @@ class ErpButtons
 
         $route_name = get_menu_url($module_id);
         $filter_script = '';
-        if (! empty($buttons)) {
+        if (!empty($buttons)) {
             foreach ($buttons as $button) {
                 $btn = $button;
-                if (! self::check_button_access($button)) {
+                if (!self::check_button_access($button)) {
                     continue;
                 }
 
@@ -107,12 +111,13 @@ class ErpButtons
                     $button->url = '/'.$route_name.'/button/'.$button->id.'/';
                 }
 
-                if (! empty($btn->read_only_logic)) {
+
+                if (!empty($btn->read_only_logic)) {
                     $btn->read_only_logic = str_replace('selected.', 'args.data.', $btn->read_only_logic);
                     if (str_contains($btn->read_only_logic, '@show')) {
-                        $filter_script .= '
+                        $filter_script .= "
                 var show_inline_btn = false;
-                '.str_replace('@show', 'var show_inline_btn = true;', $btn->read_only_logic)."
+                ".str_replace('@show', 'var show_inline_btn = true;', $btn->read_only_logic)."
                 if(!show_inline_btn){
                    var inline_btn = $(args.row).find('.inline-btn-".$btn->id."');
                    $(inline_btn).addClass( 'e-disabled' );
@@ -120,9 +125,9 @@ class ErpButtons
                 }
                 ";
                     } else {
-                        $filter_script .= '
+                        $filter_script .= "
                 var show_inline_btn = false;
-                if('.$btn->read_only_logic."){
+                if(".$btn->read_only_logic."){
                     var show_inline_btn = true;
                 }
                 if(!show_inline_btn){
@@ -148,9 +153,9 @@ class ErpButtons
 
         $route_name = get_menu_url($module_id);
         $button_js = '';
-        if (! empty($buttons)) {
+        if (!empty($buttons)) {
             foreach ($buttons as $button) {
-                if (! self::check_button_access($button)) {
+                if (!self::check_button_access($button)) {
                     continue;
                 }
 
@@ -168,19 +173,19 @@ class ErpButtons
         			var row = window['grid_".$grid_id."'].getRowObjectFromUID(ej.base.closest(args.target, '.e-row').getAttribute('data-uid'));
         			window['grid_".$grid_id."'].selectRow(row.index);
 					";
-                if (! empty($button->confirm)) {
+                if (!empty($button->confirm)) {
                     $button_js .= '
 					var confirmation = confirm("'.$button->confirm.'");
 		            if (confirmation) {
 					';
                 }
 
-                if ($button->require_grid_id == 1) {
+                if (1 == $button->require_grid_id) {
                     $button_js .= "
         			var selected = window['selectedrow_".$grid_id."'];
 					var url = '".$button->url."'+selected.rowId;
 					";
-                } elseif ($button->id == 572) {
+                } elseif (572 == $button->id) {
                     $button_js .= "
 					var url = '".$button->url."1';
 					";
@@ -190,19 +195,19 @@ class ErpButtons
 	                ';
                 }
 
-                if ($button->in_iframe == 1) {
+                if (1 == $button->in_iframe) {
                     $button_js .= "
 					var url = url + '/1';
 					";
                 }
 
-                if ($button->type == 'redirect') {
+                if ('redirect' == $button->type) {
                     $button_js .= '
 					window.open(url);
 					';
                 }
 
-                if ($button->type == 'ajax_function') {
+                if ('ajax_function' == $button->type) {
                     $button_js .= '
             	
             	   
@@ -214,30 +219,30 @@ class ErpButtons
 					';
                 }
 
-                if ($button->type == 'grid_config') {
+                if ('grid_config' == $button->type) {
                     $button_js .= '
 					load_grid_config(url);
 					';
                 }
 
-                if ($button->type == 'grid_config_save') {
+                if ('grid_config_save' == $button->type) {
                     $button_js .= '
                         save_grid_config();
 					';
                 }
 
-                if ($button->type == 'modal_form' || $button->type == 'modal_view' || $button->type == 'sidebarview' || $button->type == 'modal_transact') {
+                if ('modal_form' == $button->type || 'modal_view' == $button->type || 'sidebarview' == $button->type || 'modal_transact' == $button->type) {
                     $height = 'auto';
-                    if ($button->type == 'modal_form') {
+                    if ('modal_form' == $button->type) {
                         $modal_type = 'sidebarform';
                     }
-                    if ($button->type == 'modal_view') {
+                    if ('modal_view' == $button->type) {
                         $modal_type = 'viewDialog';
                     }
-                    if ($button->type == 'sidebarview') {
+                    if ('sidebarview' == $button->type) {
                         $modal_type = 'sidebarview';
                     }
-                    if ($button->type == 'modal_transact') {
+                    if ('modal_transact' == $button->type) {
                         $modal_type = 'transactionDialog';
                     }
                     if ($button->id == 602 && $button->module_id == 547) {
@@ -255,7 +260,7 @@ class ErpButtons
                     }
                 }
 
-                if (! empty($button->confirm)) {
+                if (!empty($button->confirm)) {
                     $button_js .= '
 		            }
 					';
@@ -277,13 +282,13 @@ class ErpButtons
 
         $context_buttons = [];
         foreach ($right_click_buttons as $btn) {
-            if (! $btn->require_grid_id) {
+            if (!$btn->require_grid_id) {
                 continue;
             }
 
             $allow = self::check_button_access($btn);
 
-            if (! $allow) {
+            if (!$allow) {
                 continue;
             }
             $context_buttons[] = $btn;
@@ -301,9 +306,9 @@ class ErpButtons
         $route_name = get_menu_url_from_id($menu_id, 'default');
 
         $button_js = '';
-        if (! empty($right_click_buttons)) {
+        if (!empty($right_click_buttons)) {
             foreach ($right_click_buttons as $button) {
-                if (! self::check_button_access($button)) {
+                if (!self::check_button_access($button)) {
                     continue;
                 }
 
@@ -314,20 +319,20 @@ class ErpButtons
                 $button_js .= '
 				if(button_id == "mainbtn_'.$grid_id.$button->id.'"){
 					';
-                if (! empty($button->confirm)) {
+                if (!empty($button->confirm)) {
                     $button_js .= '
 					var confirmation = confirm("'.$button->confirm.'");
 		            if (confirmation) {
 					';
                 }
 
-                if ($button->require_grid_id == 1) {
+                if (1 == $button->require_grid_id) {
                     $button_js .= "
         			var selected = window['selectedrow_".$grid_id."'];
         			
 					var url = '".$button->url."'+selected.rowId;
 					";
-                } elseif ($button->id == 572) {
+                } elseif (572 == $button->id) {
                     $button_js .= "
 					var url = '".$button->url."1';
 					";
@@ -337,19 +342,19 @@ class ErpButtons
 	                ';
                 }
 
-                if ($button->in_iframe == 1) {
+                if (1 == $button->in_iframe) {
                     $button_js .= "
 					var url = url + '/1';
 					";
                 }
 
-                if ($button->type == 'redirect') {
+                if ('redirect' == $button->type) {
                     $button_js .= '
 					window.open(url);
 					';
                 }
 
-                if ($button->type == 'ajax_function') {
+                if ('ajax_function' == $button->type) {
                     $button_js .= '
             	    
             	    if(typeof grid_filters === "undefined"){
@@ -359,30 +364,30 @@ class ErpButtons
 					';
                 }
 
-                if ($button->type == 'grid_config') {
+                if ('grid_config' == $button->type) {
                     $button_js .= '
 					load_grid_config(url);
 					';
                 }
 
-                if ($button->type == 'grid_config_save') {
+                if ('grid_config_save' == $button->type) {
                     $button_js .= '
                         save_grid_config();
 					';
                 }
 
-                if ($button->type == 'modal_form' || $button->type == 'modal_view' || $button->type == 'sidebarview' || $button->type == 'modal_transact') {
+                if ('modal_form' == $button->type || 'modal_view' == $button->type || 'sidebarview' == $button->type || 'modal_transact' == $button->type) {
                     $height = 'auto';
-                    if ($button->type == 'modal_form') {
+                    if ('modal_form' == $button->type) {
                         $modal_type = 'sidebarform';
                     }
-                    if ($button->type == 'modal_view') {
+                    if ('modal_view' == $button->type) {
                         $modal_type = 'viewDialog';
                     }
-                    if ($button->type == 'sidebarview') {
+                    if ('sidebarview' == $button->type) {
                         $modal_type = 'sidebarview';
                     }
-                    if ($button->type == 'modal_transact') {
+                    if ('modal_transact' == $button->type) {
                         $modal_type = 'transactionDialog';
                     }
                     if ($button->id == 602 && $button->module_id == 547) {
@@ -400,7 +405,7 @@ class ErpButtons
                     }
                 }
 
-                if (! empty($button->confirm)) {
+                if (!empty($button->confirm)) {
                     $button_js .= '
 		            }
 					';
@@ -417,32 +422,32 @@ class ErpButtons
     public static function getContextMenuFilters($menu_id)
     {
         $module_id = \DB::connection('default')->table('erp_menu')->where('id', $menu_id)->pluck('module_id')->first();
-        $filter_script = '';
+        $filter_script = "";
         $right_click_buttons = self::getButtons($menu_id, 'all', 1);
 
         foreach ($right_click_buttons as $btn) {
             $allow = self::check_button_access($btn);
-            if (! $allow) {
+            if (!$allow) {
                 continue;
             }
-            if (! empty($btn->read_only_logic)) {
+            if (!empty($btn->read_only_logic)) {
                 if (str_contains($btn->read_only_logic, '@show')) {
                     $filter_script .= "
                     if(button_id == 'mainbtn_".$grid_id.$btn->id."'){
-                    ".str_replace('@show', 'return true;', $btn->read_only_logic).'
+                    ".str_replace('@show', 'return true;', $btn->read_only_logic)."
                     
                     return false;
                     }
-                    ';
+                    ";
                 } else {
                     $filter_script .= "
                     if(button_id == 'mainbtn_".$grid_id.$btn->id."'){
-                    if(".$btn->read_only_logic.'){
+                    if(".$btn->read_only_logic."){
                     return true;
                     }
                     return false;
                     }
-                    ';
+                    ";
                 }
             }
         }
@@ -457,32 +462,32 @@ class ErpButtons
         $buttons = self::getevents_menu($menu_id);
 
         $button_display_js = '';
-        if (! empty($buttons)) {
+        if (!empty($buttons)) {
             foreach ($buttons as $btn) {
-                if (! self::check_button_access($btn)) {
+                if (!self::check_button_access($btn)) {
                     continue;
                 }
 
-                if ($event == 'created') {
+                if ('created' == $event) {
                     $button_display_js .= 'mainbtn_'.$grid_id.$btn->id.' = new ej.buttons.Button(';
-                    if (! empty($btn->icon)) {
+                    if (!empty($btn->icon)) {
                         $button_display_js .= '{iconCss: "'.$btn->icon.'"}';
                     }
                     $button_display_js .= ');';
                     $button_display_js .= 'mainbtn_'.$grid_id.$btn->id.".appendTo('#mainbtn_".$grid_id.$btn->id."');".PHP_EOL;
-                    if ($btn->require_grid_id || ! empty($btn->read_only_logic)) {
+                    if ($btn->require_grid_id || !empty($btn->read_only_logic)) {
                         $button_display_js .= 'mainbtn_'.$grid_id.$btn->id.'.disabled = true;'.PHP_EOL;
                     }
-                } elseif ($btn->require_grid_id == 1 || ! empty($btn->read_only_logic)) {
-                    if ($event == 'selected') {
-                        if (! empty($btn->read_only_logic) && str_contains($btn->read_only_logic, '@show')) {
+                } elseif (1 == $btn->require_grid_id || !empty($btn->read_only_logic)) {
+                    if ('selected' == $event) {
+                        if (!empty($btn->read_only_logic) && str_contains($btn->read_only_logic, '@show')) {
                             $button_display_js .= str_replace('@show', 'mainbtn_'.$grid_id.$btn->id.'.disabled = false;'.PHP_EOL, $btn->read_only_logic).PHP_EOL;
-                        } elseif (! empty($btn->read_only_logic)) {
+                        } elseif (!empty($btn->read_only_logic)) {
                             $button_display_js .= 'if('.$btn->read_only_logic.'){'.PHP_EOL.'mainbtn_'.$grid_id.$btn->id.'.disabled = false;'.PHP_EOL.'}else{'.PHP_EOL.'mainbtn_'.$grid_id.$btn->id.'.disabled = true;'.PHP_EOL.'}'.PHP_EOL;
                         } else {
                             $button_display_js .= 'mainbtn_'.$grid_id.$btn->id.'.disabled = false;'.PHP_EOL;
                         }
-                    } elseif ($event == 'deselected') {
+                    } elseif ('deselected' == $event) {
                         $button_display_js .= 'mainbtn_'.$grid_id.$btn->id.'.disabled = true;'.PHP_EOL;
                     }
                 }
@@ -492,19 +497,19 @@ class ErpButtons
         $button_group_display_js = '';
         $button_groups = self::getAdminButtonGroups($menu_id);
 
-        if (! empty($button_groups)) {
+        if (!empty($button_groups)) {
             foreach ($button_groups as $button_group) {
                 $buttons = self::getevents_menu($menu_id, $button_group);
 
                 $sub_items_require_grid_id = 1;
-                if (! empty($buttons)) {
+                if (!empty($buttons)) {
                     foreach ($buttons as $btn) {
                         $allow = self::check_button_access($btn);
-                        if (! $allow) {
+                        if (!$allow) {
                             continue;
                         }
 
-                        if (! $btn->require_grid_id) {
+                        if (!$btn->require_grid_id) {
                             $sub_items_require_grid_id = 0;
                         }
                     }
@@ -512,16 +517,16 @@ class ErpButtons
 
                 $group = str_replace(' ', '_', strtolower($button_group)).$module_id;
 
-                if ($event == 'created') {
+                if ('created' == $event) {
                     $display_filter = '';
                     $button_group_display_js .= '
 						var '.$grid_id.$group.'adminitems = [';
 
-                    if (! empty($buttons)) {
+                    if (!empty($buttons)) {
                         foreach ($buttons as $btn) {
                             $allow = self::check_button_access($btn);
 
-                            if (! $allow) {
+                            if (!$allow) {
                                 continue;
                             }
 
@@ -534,9 +539,9 @@ class ErpButtons
                             if ($btn->require_grid_id) {
                                 $display_filter .= PHP_EOL."document.getElementById('".$id."').style.display = 'none';".PHP_EOL;
                                 $display_filter .= PHP_EOL."if (typeof selected !== 'undefined' && selected !== null) {".PHP_EOL;
-                                if (! empty($btn->read_only_logic) && str_contains($btn->read_only_logic, '@show')) {
+                                if (!empty($btn->read_only_logic) && str_contains($btn->read_only_logic, '@show')) {
                                     $display_filter .= str_replace('@show', "document.getElementById('".$id."').style.display = 'list-item';".PHP_EOL, $btn->read_only_logic).PHP_EOL;
-                                } elseif (! empty($btn->read_only_logic)) {
+                                } elseif (!empty($btn->read_only_logic)) {
                                     $display_filter .= ''.PHP_EOL.'if('.$btn->read_only_logic.'){'.PHP_EOL."document.getElementById('".$id."').style.display = 'list-item';".PHP_EOL.'}'.PHP_EOL;
                                 } else {
                                     $display_filter .= "document.getElementById('".$id."').style.display = 'list-item';".PHP_EOL;
@@ -566,14 +571,14 @@ class ErpButtons
 				";
                 }
 
-                if ($event == 'selected') {
+                if ('selected' == $event) {
                     $requires_id = false;
                     $display_filter = '';
 
-                    if (! empty($buttons)) {
+                    if (!empty($buttons)) {
                         foreach ($buttons as $btn) {
                             $allow = self::check_button_access($btn);
-                            if (! $allow) {
+                            if (!$allow) {
                                 continue;
                             }
 
@@ -582,9 +587,9 @@ class ErpButtons
                                 $requires_id = true;
                                 $display_filter .= PHP_EOL."if (typeof selected !== 'undefined' && selected !== null) {".PHP_EOL;
                                 //$display_filter .= PHP_EOL."console.log(selected);".PHP_EOL;
-                                if (! empty($btn->read_only_logic) && str_contains($btn->read_only_logic, '@show')) {
+                                if (!empty($btn->read_only_logic) && str_contains($btn->read_only_logic, '@show')) {
                                     $display_filter .= str_replace('@show', 'var enable_group = true;'.PHP_EOL, $btn->read_only_logic).PHP_EOL;
-                                } elseif (! empty($btn->read_only_logic)) {
+                                } elseif (!empty($btn->read_only_logic)) {
                                     $display_filter .= 'if('.$btn->read_only_logic.'){'.PHP_EOL.'var enable_group = true;'.PHP_EOL.'}'.PHP_EOL;
                                 } else {
                                     $display_filter .= 'var enable_group = true;'.PHP_EOL;
@@ -606,22 +611,22 @@ class ErpButtons
                     }
                 }
 
-                if ($event == 'selected' && $sub_items_require_grid_id) {
+                if ('selected' == $event && $sub_items_require_grid_id) {
                     $button_group_display_js .= $display_filter.'
 					if(enable_group){
 					drpDownBtnadmin'.$grid_id.$group.'.disabled = false;'.PHP_EOL.'drpDownBtnadmin'.$grid_id.$group.'.dataBind();
 					}'.PHP_EOL;
-                } elseif ($event == 'deselected' && $sub_items_require_grid_id) {
+                } elseif ('deselected' == $event && $sub_items_require_grid_id) {
                     $button_group_display_js .= 'drpDownBtnadmin'.$grid_id.$group.'.disabled = true;'.PHP_EOL.'drpDownBtnadmin'.$grid_id.$group.'.dataBind();'.PHP_EOL;
                 }
             }
         }
 
-        if (! empty($button_display_js)) {
+        if (!empty($button_display_js)) {
             echo $button_display_js;
         }
 
-        if (! empty($button_group_display_js)) {
+        if (!empty($button_group_display_js)) {
             echo $button_group_display_js;
         }
     }
@@ -633,32 +638,32 @@ class ErpButtons
         $buttons = self::getButtons($menu_id);
 
         $button_display_js = '';
-        if (! empty($buttons)) {
+        if (!empty($buttons)) {
             foreach ($buttons as $btn) {
-                if (! self::check_button_access($btn)) {
+                if (!self::check_button_access($btn)) {
                     continue;
                 }
 
-                if ($event == 'created') {
+                if ('created' == $event) {
                     $button_display_js .= 'mainbtn_'.$grid_id.$btn->id.' = new ej.buttons.Button(';
-                    if (! empty($btn->icon)) {
+                    if (!empty($btn->icon)) {
                         // $button_display_js .= '{iconCss: "'.$btn->icon.'"}';
                     }
                     $button_display_js .= ');';
                     $button_display_js .= 'mainbtn_'.$grid_id.$btn->id.".appendTo('#mainbtn_".$grid_id.$btn->id."');".PHP_EOL;
-                    if ($btn->require_grid_id || ! empty($btn->read_only_logic)) {
+                    if ($btn->require_grid_id || !empty($btn->read_only_logic)) {
                         $button_display_js .= 'mainbtn_'.$grid_id.$btn->id.'.disabled = true;'.PHP_EOL;
                     }
-                } elseif ($btn->require_grid_id == 1 || ! empty($btn->read_only_logic)) {
-                    if ($event == 'selected') {
-                        if (! empty($btn->read_only_logic) && str_contains($btn->read_only_logic, '@show')) {
+                } elseif (1 == $btn->require_grid_id || !empty($btn->read_only_logic)) {
+                    if ('selected' == $event) {
+                        if (!empty($btn->read_only_logic) && str_contains($btn->read_only_logic, '@show')) {
                             $button_display_js .= str_replace('@show', 'mainbtn_'.$grid_id.$btn->id.'.disabled = false;'.PHP_EOL, $btn->read_only_logic).PHP_EOL;
-                        } elseif (! empty($btn->read_only_logic)) {
+                        } elseif (!empty($btn->read_only_logic)) {
                             $button_display_js .= 'if('.$btn->read_only_logic.'){'.PHP_EOL.'mainbtn_'.$grid_id.$btn->id.'.disabled = false;'.PHP_EOL.'}'.PHP_EOL;
                         } else {
                             $button_display_js .= 'mainbtn_'.$grid_id.$btn->id.'.disabled = false;'.PHP_EOL;
                         }
-                    } elseif ($event == 'deselected') {
+                    } elseif ('deselected' == $event) {
                         $button_display_js .= 'mainbtn_'.$grid_id.$btn->id.'.disabled = true;'.PHP_EOL;
                     }
                 }
@@ -668,19 +673,19 @@ class ErpButtons
         $button_group_display_js = '';
         $button_groups = self::getButtonGroups($menu_id);
 
-        if (! empty($button_groups)) {
+        if (!empty($button_groups)) {
             foreach ($button_groups as $button_group) {
                 $buttons = self::getButtons($menu_id, $button_group);
 
                 $sub_items_require_grid_id = 1;
-                if (! empty($buttons)) {
+                if (!empty($buttons)) {
                     foreach ($buttons as $btn) {
                         $allow = self::check_button_access($btn);
-                        if (! $allow) {
+                        if (!$allow) {
                             continue;
                         }
 
-                        if (! $btn->require_grid_id) {
+                        if (!$btn->require_grid_id) {
                             $sub_items_require_grid_id = 0;
                         }
                     }
@@ -688,16 +693,16 @@ class ErpButtons
 
                 $group = str_replace(' ', '_', strtolower($button_group)).$module_id;
 
-                if ($event == 'created') {
+                if ('created' == $event) {
                     $display_filter = '';
                     $button_group_display_js .= '
 						var '.$grid_id.$group.'items = [';
 
-                    if (! empty($buttons)) {
+                    if (!empty($buttons)) {
                         foreach ($buttons as $btn) {
                             $allow = self::check_button_access($btn);
 
-                            if (! $allow) {
+                            if (!$allow) {
                                 continue;
                             }
 
@@ -710,9 +715,9 @@ class ErpButtons
                             if ($btn->require_grid_id) {
                                 $display_filter .= PHP_EOL."$('#".$id."').attr('disabled','disabled');$('#".$id."').addClass('e-disabled');".PHP_EOL;
                                 $display_filter .= PHP_EOL."if (typeof selected !== 'undefined' && selected !== null) {".PHP_EOL;
-                                if (! empty($btn->read_only_logic) && str_contains($btn->read_only_logic, '@show')) {
+                                if (!empty($btn->read_only_logic) && str_contains($btn->read_only_logic, '@show')) {
                                     $display_filter .= str_replace('@show', "$('#".$id."').removeAttr('disabled');$('#".$id."').removeClass('e-disabled');".PHP_EOL, $btn->read_only_logic).PHP_EOL;
-                                } elseif (! empty($btn->read_only_logic)) {
+                                } elseif (!empty($btn->read_only_logic)) {
                                     $display_filter .= ''.PHP_EOL.'if('.$btn->read_only_logic.'){'.PHP_EOL."$('#".$id."').removeAttr('disabled');$('#".$id."').removeClass('e-disabled');".PHP_EOL.'}'.PHP_EOL;
                                 } else {
                                     $display_filter .= "$('#".$id."').removeAttr('disabled');$('#".$id."').removeClass('e-disabled');".PHP_EOL;
@@ -743,14 +748,15 @@ class ErpButtons
 				";
                 }
 
-                if ($event == 'selected') {
+
+                if ('selected' == $event) {
                     $requires_id = false;
                     $display_filter = '';
 
-                    if (! empty($buttons)) {
+                    if (!empty($buttons)) {
                         foreach ($buttons as $btn) {
                             $allow = self::check_button_access($btn);
-                            if (! $allow) {
+                            if (!$allow) {
                                 continue;
                             }
 
@@ -758,9 +764,9 @@ class ErpButtons
                             if ($btn->require_grid_id) {
                                 $requires_id = true;
                                 $display_filter .= PHP_EOL."if (typeof selected !== 'undefined' && selected !== null) {".PHP_EOL;
-                                if (! empty($btn->read_only_logic) && str_contains($btn->read_only_logic, '@show')) {
+                                if (!empty($btn->read_only_logic) && str_contains($btn->read_only_logic, '@show')) {
                                     $display_filter .= str_replace('@show', 'var enable_group = true;'.PHP_EOL, $btn->read_only_logic).PHP_EOL;
-                                } elseif (! empty($btn->read_only_logic)) {
+                                } elseif (!empty($btn->read_only_logic)) {
                                     $display_filter .= 'if('.$btn->read_only_logic.'){'.PHP_EOL.'var enable_group = true;'.PHP_EOL.'}'.PHP_EOL;
                                 } else {
                                     $display_filter .= 'var enable_group = true;'.PHP_EOL;
@@ -782,22 +788,22 @@ class ErpButtons
                     }
                 }
 
-                if ($event == 'selected' && $sub_items_require_grid_id) {
+                if ('selected' == $event && $sub_items_require_grid_id) {
                     $button_group_display_js .= $display_filter.'
 					if(enable_group){
 					drpDownBtn'.$grid_id.$group.'.disabled = false;'.PHP_EOL.'drpDownBtn'.$grid_id.$group.'.dataBind();
 					}'.PHP_EOL;
-                } elseif ($event == 'deselected' && $sub_items_require_grid_id) {
+                } elseif ('deselected' == $event && $sub_items_require_grid_id) {
                     $button_group_display_js .= 'drpDownBtn'.$grid_id.$group.'.disabled = true;'.PHP_EOL.'drpDownBtn'.$grid_id.$group.'.dataBind();'.PHP_EOL;
                 }
             }
         }
 
-        if (! empty($button_display_js)) {
+        if (!empty($button_display_js)) {
             echo $button_display_js;
         }
 
-        if (! empty($button_group_display_js)) {
+        if (!empty($button_group_display_js)) {
             echo $button_group_display_js;
         }
     }
@@ -813,15 +819,15 @@ class ErpButtons
         }
 
         $route_name = get_menu_url($module_id);
-        if ($module_id != 749 && $module_id != 389 && $module_id != 385 && $module_id != 488 && $module_id != 500) {
+        if (749 != $module_id && 389 != $module_id && 385 != $module_id  && 488 != $module_id && 500 != $module_id) {
             $dialogclass = '';
         } else {
             $dialogclass = 'coreDialog';
         }
         $button_js = '';
-        if (! empty($buttons)) {
+        if (!empty($buttons)) {
             foreach ($buttons as $button) {
-                if (! self::check_button_access($button)) {
+                if (!self::check_button_access($button)) {
                     continue;
                 }
 
@@ -829,22 +835,23 @@ class ErpButtons
                     $button->url = '/'.$route_name.'/button/'.$button->id.'/';
                 }
 
+
                 $button_js .= '
 				$(document).off("click","#mainbtn_'.$grid_id.$button->id.'").on("click","#mainbtn_'.$grid_id.$button->id.'",function(){
 					';
-                if (! empty($button->confirm)) {
+                if (!empty($button->confirm)) {
                     $button_js .= '
 					var confirmation = confirm("'.$button->confirm.'");
 		            if (confirmation) {
 					';
                 }
 
-                if ($button->require_grid_id == 1) {
+                if (1 == $button->require_grid_id) {
                     $button_js .= "
         			var selected = window['selectedrow_".$grid_id."'];
 					var url = '".$button->url."'+selected.rowId;
 					";
-                } elseif ($button->id == 572) {
+                } elseif (572 == $button->id) {
                     $button_js .= "
 					var url = '".$button->url."1';
 					";
@@ -854,19 +861,19 @@ class ErpButtons
 	                ';
                 }
 
-                if ($button->in_iframe == 1) {
+                if (1 == $button->in_iframe) {
                     $button_js .= "
 					var url = url + '/1';
 					";
                 }
 
-                if ($button->type == 'redirect') {
+                if ('redirect' == $button->type) {
                     $button_js .= '
 					window.open(url);
 					';
                 }
 
-                if ($button->type == 'ajax_function') {
+                if ('ajax_function' == $button->type) {
                     $button_js .= '
             	
             	    if(typeof grid_filters === "undefined"){
@@ -876,30 +883,30 @@ class ErpButtons
 					';
                 }
 
-                if ($button->type == 'grid_config') {
+                if ('grid_config' == $button->type) {
                     $button_js .= '
 					load_grid_config(url);
 					';
                 }
 
-                if ($button->type == 'grid_config_save') {
+                if ('grid_config_save' == $button->type) {
                     $button_js .= '
                         save_grid_config();
 					';
                 }
 
-                if ($button->type == 'modal_form' || $button->type == 'modal_view' || $button->type == 'sidebarview' || $button->type == 'modal_transact') {
+                if ('modal_form' == $button->type || 'modal_view' == $button->type || 'sidebarview' == $button->type || 'modal_transact' == $button->type) {
                     $height = 'auto';
-                    if ($button->type == 'modal_form') {
+                    if ('modal_form' == $button->type) {
                         $modal_type = 'sidebarform';
                     }
-                    if ($button->type == 'modal_view') {
+                    if ('modal_view' == $button->type) {
                         $modal_type = 'viewDialog';
                     }
-                    if ($button->type == 'sidebarview') {
+                    if ('sidebarview' == $button->type) {
                         $modal_type = 'sidebarview';
                     }
-                    if ($button->type == 'modal_transact') {
+                    if ('modal_transact' == $button->type) {
                         $modal_type = 'transactionDialog';
                     }
                     if ($button->id == 602 && $button->module_id == 547) {
@@ -917,7 +924,7 @@ class ErpButtons
                     }
                 }
 
-                if (! empty($button->confirm)) {
+                if (!empty($button->confirm)) {
                     $button_js .= '
 		            }
 					';
@@ -931,6 +938,9 @@ class ErpButtons
         echo $button_js;
     }
 
+
+
+
     public static function getAggridContextMenu($menu_id)
     {
         $context_js = '';
@@ -942,21 +952,21 @@ class ErpButtons
 
         foreach ($right_click_buttons as $btn) {
             $allow = self::check_button_access($btn);
-            if (! $allow) {
+            if (!$allow) {
                 continue;
             }
             $context_js .= 'var disabled'.$btn->id.' = false;
             ';
-            if (! empty($btn->read_only_logic)) {
-                $context_js .= '
+            if (!empty($btn->read_only_logic)) {
+                $context_js .= "
                
-                if('.$btn->read_only_logic.'){
-                    var disabled'.$btn->id.' = false;
+                if(".$btn->read_only_logic."){
+                    var disabled".$btn->id." = false;
                 }else{
-                    var disabled'.$btn->id.' = true;
+                    var disabled".$btn->id." = true;
                 }
                 
-                ';
+                ";
             }
         }
         $button_js = 'var contextbuttons = [';
@@ -964,49 +974,49 @@ class ErpButtons
 
         $right_click_groups = $right_click_buttons->where('button_group', '>', '')->pluck('button_group')->unique()->toArray();
 
-        if (! empty($right_click_groups) && is_array($right_click_groups) && count($right_click_groups) > 0) {
+        if (!empty($right_click_groups) && is_array($right_click_groups) && count($right_click_groups) > 0) {
             foreach ($right_click_groups as $btn_group) {
                 $group_buttons = $right_click_buttons->where('button_group', $btn_group);
-                if (! empty($group_buttons)) {
+                if (!empty($group_buttons)) {
                     $button_js .= "{
                     name: '".$btn_group."',
                     subMenu: [";
 
                     foreach ($group_buttons as $button) {
-                        if (! self::check_button_access($button)) {
+                        if (!self::check_button_access($button)) {
                             continue;
                         }
                         $button_js .= self::getAggridContextMenuAction($route_name, $button);
                     }
-                    $button_js .= '
+                    $button_js .= "
                     ]
                     },
-                    ';
+                    ";
                 }
             }
         }
 
         $right_click_buttons = $right_click_buttons->where('button_group', '');
-        if (! empty($right_click_buttons)) {
+        if (!empty($right_click_buttons)) {
             foreach ($right_click_buttons as $button) {
-                if (! self::check_button_access($button)) {
+                if (!self::check_button_access($button)) {
                     continue;
                 }
                 $button_js .= self::getAggridContextMenuAction($route_name, $button);
             }
         }
 
-        $button_js .= '
+        $button_js .= "
         ];
         result.push(...contextbuttons);
-        ';
+        ";
         echo $context_js.$button_js;
     }
 
     public static function getAggridContextMenuAction($route_name, $button)
     {
         $allow = self::check_button_access($button);
-        if (! $allow) {
+        if (!$allow) {
             return false;
         }
         $button_js = '
@@ -1016,24 +1026,26 @@ class ErpButtons
             action: function () {
         ';
 
+
         if (empty($button->custom_button)) {
             $button->url = '/'.$route_name.'/button/'.$button->id.'/';
         }
 
-        if (! empty($button->confirm)) {
+
+        if (!empty($button->confirm)) {
             $button_js .= '
 			var confirmation = confirm("'.$button->confirm.'");
             if (confirmation) {
 			';
         }
 
-        if ($button->require_grid_id == 1) {
+        if (1 == $button->require_grid_id) {
             $button_js .= "
 		
 			
 			var url = '".$button->url."'+selected.id;
 			";
-        } elseif ($button->id == 572) {
+        } elseif (572 == $button->id) {
             $button_js .= "
 			var url = '".$button->url."1';
 			";
@@ -1043,49 +1055,49 @@ class ErpButtons
             ';
         }
 
-        if ($button->in_iframe == 1) {
+        if (1 == $button->in_iframe) {
             $button_js .= "
 			var url = url + '/1';
 			";
         }
 
-        if ($button->type == 'redirect') {
+        if ('redirect' == $button->type) {
             $button_js .= '
 			window.open(url);
 			';
         }
 
-        if ($button->type == 'ajax_function') {
+        if ('ajax_function' == $button->type) {
             $button_js .= '
     	
 			gridAjax(url,{},"post");
 			';
         }
 
-        if ($button->type == 'grid_config') {
+        if ('grid_config' == $button->type) {
             $button_js .= '
 			load_grid_config(url);
 			';
         }
 
-        if ($button->type == 'grid_config_save') {
+        if ('grid_config_save' == $button->type) {
             $button_js .= '
                 save_grid_config();
 			';
         }
 
-        if ($button->type == 'modal_form' || $button->type == 'modal_view' || $button->type == 'sidebarview' || $button->type == 'modal_transact') {
+        if ('modal_form' == $button->type || 'modal_view' == $button->type || 'sidebarview' == $button->type || 'modal_transact' == $button->type) {
             $height = 'auto';
-            if ($button->type == 'modal_form') {
+            if ('modal_form' == $button->type) {
                 $modal_type = 'sidebarform';
             }
-            if ($button->type == 'modal_view') {
+            if ('modal_view' == $button->type) {
                 $modal_type = 'viewDialog';
             }
-            if ($button->type == 'sidebarview') {
+            if ('sidebarview' == $button->type) {
                 $modal_type = 'sidebarview';
             }
-            if ($button->type == 'modal_transact') {
+            if ('modal_transact' == $button->type) {
                 $modal_type = 'transactionDialog';
             }
             if ($button->id == 602 && $button->module_id == 547) {
@@ -1103,7 +1115,7 @@ class ErpButtons
             }
         }
 
-        if (! empty($button->confirm)) {
+        if (!empty($button->confirm)) {
             $button_js .= '
             }
 			';
@@ -1112,22 +1124,25 @@ class ErpButtons
         }
         },
         ';
-
         return $button_js;
     }
+
 
     private static function getevents_menu($menu_id, $group = '')
     {
         $menu = \DB::connection('default')->table('erp_menu')->where('id', $menu_id)->get()->first();
         $module_id = $menu->module_id;
 
-        if ($group == 'all') {
+
+        if ('all' == $group) {
             $buttons = \DB::connection('default')->table('erp_grid_buttons')->where('admin_button', 1)->where('module_id', $module_id)->orderby('sort_order', 'asc')->get();
-        } elseif (! empty($group)) {
+        } elseif (!empty($group)) {
             $buttons = \DB::connection('default')->table('erp_grid_buttons')->where('admin_button', 1)->where('button_group', $group)->where('module_id', $module_id)->orderby('sort_order', 'asc')->get();
         } else {
             $buttons = \DB::connection('default')->table('erp_grid_buttons')->where('admin_button', 1)->where('button_group', '')->where('module_id', $module_id)->orderby('sort_order', 'asc')->get();
         }
+
+
 
         return $buttons;
     }
@@ -1137,9 +1152,10 @@ class ErpButtons
         $menu = \DB::connection('default')->table('erp_menu')->where('id', $menu_id)->get()->first();
         $module_id = $menu->module_id;
 
-        if ($group == 'all') {
+
+        if ('all' == $group) {
             $buttons = \DB::connection('default')->table('erp_grid_buttons')->where('admin_button', $admin_button)->where('module_id', $module_id)->orderby('sort_order', 'asc')->get();
-        } elseif (! empty($group)) {
+        } elseif (!empty($group)) {
             $buttons = \DB::connection('default')->table('erp_grid_buttons')->where('admin_button', $admin_button)->where('button_group', $group)->where('module_id', $module_id)->orderby('sort_order', 'asc')->get();
         } else {
             $buttons = \DB::connection('default')->table('erp_grid_buttons')->where('admin_button', $admin_button)->where('button_group', '')->where('module_id', $module_id)->orderby('sort_order', 'asc')->get();
@@ -1155,8 +1171,10 @@ class ErpButtons
         }
        */
 
+
         return $buttons;
     }
+
 
     private static function getAdminButtonGroups($menu_id)
     {
@@ -1226,15 +1244,15 @@ class ErpButtons
 
     private static function check_button_access($btn)
     {
-        if (! empty($btn->redirect_module_id)) {
+        if (!empty($btn->redirect_module_id)) {
             $menu_access = get_menu_access_from_module($btn->redirect_module_id);
-            if (! $menu_access['is_view']) {
+            if (!$menu_access['is_view']) {
                 return false;
             }
         }
         $access = $btn->access;
         $access = array_filter(explode(',', $access));
-        if (empty($access) || count($access) == 0) {
+        if (empty($access) || 0 == count($access)) {
             $allow = false;
         }
 

@@ -39,6 +39,7 @@ class CreateCrmAccountPartnerSettingsCopy3Table extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

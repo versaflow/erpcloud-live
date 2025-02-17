@@ -16,7 +16,7 @@ $currency_symbol = get_currency_symbol($payroll->document_currency);
     </tr>
     <tr>
         <td><b>Pay Date</b></td>
-        <td>{{ $payroll->payroll_date }}</td>
+        <td>{{ $payroll->payroll_end_date }}</td>
     </tr>
 </table>
 <br><br>

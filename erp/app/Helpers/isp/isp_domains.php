@@ -2,7 +2,7 @@
 
 function schedule_domains_renew()
 {
-    $nc = new Namecheap;
+    $nc = new Namecheap();
     $zacr_balance = zacr_check_registrar_balance();
 
     if ($zacr_balance < 100) {
@@ -19,14 +19,14 @@ function schedule_domains_renew()
 
         if (is_local_domain($domain_name)) {
             $expiry_date = zacr_domain_expiry($domain_name);
-            if (! $expiry_date || $expiry_date == '1970-01-01') {
+            if (!$expiry_date || $expiry_date == '1970-01-01') {
                 \DB::table('isp_host_websites')->where('domain', $domain_name)->update(['domain_expiry' => null]);
             } else {
                 \DB::table('isp_host_websites')->where('domain', $domain_name)->update(['domain_expiry' => $expiry_date]);
             }
         } else {
             $expiry_date = namecheap_domain_expiry($domain_name);
-            if (! $expiry_date || $expiry_date == '1970-01-01') {
+            if (!$expiry_date || $expiry_date == '1970-01-01') {
                 \DB::table('isp_host_websites')->where('domain', $domain_name)->update(['domain_expiry' => null]);
             } else {
                 \DB::table('isp_host_websites')->where('domain', $domain_name)->update(['domain_expiry' => $expiry_date]);
@@ -87,8 +87,8 @@ function schedule_domains_renew()
             }
 
             \DB::table('isp_host_websites')
-                ->where('domain', $k)
-                ->update(['renew_error' => $v]);
+            ->where('domain', $k)
+            ->update(['renew_error' => $v]);
         }
         admin_email('Domains renewed successfully', $msg);
     } else {
@@ -139,7 +139,7 @@ function button_domains_import_namecheap($request)
             'domain_expiry' => $expires,
             'domain_status' => 'Active',
         ];
-        if (! $c) {
+        if (!$c) {
             \DB::table('isp_host_websites')->insert($data);
         } else {
             \DB::table('isp_host_websites')->where('domain', $domain_name)->update($data);
@@ -149,7 +149,7 @@ function button_domains_import_namecheap($request)
 
 function button_domains_reconcile($request)
 {
-    if (! $data['reconciled']) {
+    if (!$data['reconciled']) {
         return json_alert('Domains not Reconciled', 'warning');
     }
 
@@ -177,7 +177,7 @@ function zacr_balance_email($msg)
 
 function schedule_update_tld_pricing()
 {
-    $namecheap = new Namecheap;
+    $namecheap = new Namecheap();
     $namecheap->importPricing();
 }
 
@@ -215,7 +215,7 @@ function schedule_domains_lock()
     if (count($updated_locked_domains) > count($locked_domains)) {
         $domain_list = '';
         foreach ($updated_locked_domains as $d) {
-            if (! in_array($d, $locked_domains)) {
+            if (!in_array($d, $locked_domains)) {
                 $domain_list .= $d.PHP_EOL;
             }
         }

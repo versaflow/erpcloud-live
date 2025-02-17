@@ -18,6 +18,7 @@ class CreateAccLedgerAccountCategoriesTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

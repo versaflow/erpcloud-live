@@ -69,7 +69,7 @@ class Fnb
     /**
      * Holds an array of results from the curl requests.
      */
-    private $result = [];
+    private $result = array();
 
     /**
      * Curl should talk more.
@@ -97,7 +97,7 @@ class Fnb
         // Loop and set config values
         foreach ($params as $key) {
             if (array_key_exists($key, $config)) {
-                if (! call_user_func([$this, 'set'.ucfirst(strtolower($key))], $config[$key])) {
+                if (!call_user_func(array($this, 'set'.ucfirst(strtolower($key))), $config[$key])) {
                     throw new \Exception('Could not set '.$key.' to '.$config[$key].': '.implode($this->error));
                 }
             }
@@ -184,14 +184,14 @@ class Fnb
         }
 
         // Check for username and password
-        if (! $this->username or ! $this->password) {
+        if (!$this->username or !$this->password) {
             throw new \Exception("Username and or password not set, can't login without it.");
         }
 
         // STEP ONE: Find all inputs of the homepage //
 
         // Build login fieds
-        $fields = [
+        $fields = array(
             'BrowserType' => 'undefined',
             'BrowserVersion' => 'undefined',
             'LoginButton' => 'Login',
@@ -211,7 +211,7 @@ class Fnb
             'nav' => 'navigator.UserLogon',
             'products' => '',
             'url' => '0',
-        ];
+        );
 
         // First call
         $this->write('Login into Fnb - Step 1.');
@@ -222,26 +222,26 @@ class Fnb
         $this->write('Login into Fnb - Step 2.');
         $new_inputs = array_merge(
             $inputs,
-            [
+            array(
                 'OperatingSystem' => 'MacIntel',
                 'BrowserType' => 'Firefox',
                 'BrowserVersion' => '26.0',
                 'BrowserHeight' => '0',
                 'BrowserWidth' => '0',
                 'isMobile' => 'false',
-            ]
+            )
         );
         $this->request($this->login_two_url, $new_inputs, 'GET');
 
         // Third call
         $this->write('Clicking on the "My Bank Accounts" Button.');
-        $data_array = [
+        $data_array = array(
             'FARFN' => 4,
             'actionchild' => 1,
             'isTopMenu' => 'true',
             'nav' => 'accounts.summaryofaccountbalances.navigator.SummaryOfAccountBalances',
             'targetDiv' => 'workspace',
-        ];
+        );
         $result = $this->request($this->my_bank_accounts_url, $data_array, 'POST');
         $links_to_accounts = $this->processAccountsPageToFindLinks($result);
 
@@ -263,7 +263,7 @@ class Fnb
             $this->request($link, $params, 'POST');
 
             // Do it
-            $this->request($this->downloads_url, [], 'POST', $n.'.zip');
+            $this->request($this->downloads_url, array(), 'POST', $n.'.zip');
 
             // Unzip it
             $this->unzip($n.'.zip');
@@ -279,10 +279,10 @@ class Fnb
     /**
      * Performs curl requests to FNB.
      */
-    private function request($url, $postFieldsArray = [], $method = false, $asFile = false)
+    private function request($url, $postFieldsArray = array(), $method = false, $asFile = false)
     {
         // Fire up curl for first time
-        if (! is_resource($this->ch)) {
+        if (!is_resource($this->ch)) {
             // Cookie folder and name
             $cookie = $this->getTemp().'fnb_cookie.txt';
 
@@ -307,18 +307,18 @@ class Fnb
         // Post request
         switch ($method) {
             case 'POST':
-                curl_setopt($this->ch, CURLOPT_POSTFIELDS, $postFields);
-                curl_setopt($this->ch, CURLOPT_POST, true);
-                break;
+            curl_setopt($this->ch, CURLOPT_POSTFIELDS, $postFields);
+            curl_setopt($this->ch, CURLOPT_POST, true);
+            break;
 
             case 'GET':
-                $url .= '?'.$postFields;
-                curl_setopt($this->ch, CURLOPT_POSTFIELDS, false);
-                curl_setopt($this->ch, CURLOPT_POST, false);
-                break;
+            $url .= '?'.$postFields;
+            curl_setopt($this->ch, CURLOPT_POSTFIELDS, false);
+            curl_setopt($this->ch, CURLOPT_POST, false);
+            break;
 
             default:
-                throw new \Exception('Please set the correct request type: POST or GET');
+            throw new \Exception('Please set the correct request type: POST or GET');
         }
 
         // As a download?
@@ -350,11 +350,11 @@ class Fnb
     private function processHtmlResultToFindInputs($html)
     {
         // Parsing the html
-        $dom = new \DOMDocument;
+        $dom = new \DOMDocument();
         $dom->preserveWhiteSpace = false;
         @$dom->loadHTML($html);
         $tags = $dom->getElementsByTagName('input');
-        $array = [];
+        $array = array();
 
         // Loop tags
         foreach ($tags as $key => $tag) {
@@ -376,11 +376,11 @@ class Fnb
      */
     private function processAccountsPageToFindLinks($html)
     {
-        $dom = new \DOMDocument;
+        $dom = new \DOMDocument();
         $dom->preserveWhiteSpace = false;
         @$dom->loadHTML($html);
         $tags = $dom->getElementsByTagName('a');
-        $array = [];
+        $array = array();
 
         // Loop
         foreach ($tags as $key => $tag) {
@@ -388,10 +388,10 @@ class Fnb
             if ($onclick = $tag->getAttribute('onclick')) {
                 if (preg_match('/nav=transactionhistory/', $onclick)) {
                     $array[] = str_replace(
-                        [
+                        array(
                             "fnb.controls.controller.eventsObject.raiseEvent('loadResultScreen','fnb.controls.controller.eventsObject.raiseEvent('loadResultScreen','/banking/Controller?nav=navigator.AccountView&accountRefNum=-21439450&productCode=DDA&action=prepareMaintainAccount&FARFN=89&pN=QWNjb3VudCBWaWV3');; return false;",
-                        ],
-                        ['', ''],
+                        ),
+                        array('', ''),
                         $onclick
                     );
                 }
@@ -415,9 +415,9 @@ class Fnb
         $zipFile = $this->getTemp().$file;
 
         // Upzup it
-        $zip = new \ZipArchive;
+        $zip = new \ZipArchive();
         $res = $zip->open($zipFile);
-        if ($res === true) {
+        if (true === $res) {
             $zip->extractTo($this->getTemp());
             $zip->close();
             $this->write(' -> unziped '.$file);
@@ -434,7 +434,7 @@ class Fnb
         // Scan temp folder
         if ($handle = opendir($this->getTemp())) {
             while (false !== ($entry = readdir($handle))) {
-                if (substr($entry, -4) == '.csv') {
+                if ('.csv' == substr($entry, -4)) {
                     $found[] = $entry;
                 }
             }
@@ -457,27 +457,26 @@ class Fnb
                         $row = isset($row) ? $row + 1 : 1;
 
                         // Check the first row for
-                        if ($row == 1) {
-                            if (trim($data[0]) !== 'ACCOUNT TRANSACTION HISTORY') {
+                        if (1 == $row) {
+                            if ('ACCOUNT TRANSACTION HISTORY' !== trim($data[0])) {
                                 $this->write($file.' is not a FNB file, skipping it.');
                                 //throw new \Notice("");
                                 fclose($handle);
-
                                 continue;
                             }
                         }
 
                         // Find account number on row 4, col 2
-                        if ($row == 4) {
+                        if (4 == $row) {
                             $account = trim($data[1]);
                         }
 
-                        if ($row == 7) {
+                        if (7 == $row) {
                             // Count data
                             $num = count($data);
 
                             // Build headers
-                            for ($c = 0; $c < $num; $c++) {
+                            for ($c = 0; $c < $num; ++$c) {
                                 $headers[$c] = strtolower(trim($data[$c]));
                             }
                         }
@@ -488,10 +487,10 @@ class Fnb
                             $num = count($data);
 
                             // Rows from seven onward
-                            $trow++;
+                            ++$trow;
 
                             // We assume the order is: date, amount, balance, description - again for all account types.
-                            for ($c = 0; $c < $num; $c++) {
+                            for ($c = 0; $c < $num; ++$c) {
                                 $array[$account][$trow][$headers[$c]] = preg_replace('/\s+/', ' ', trim($data[$c]));
                             }
                         }

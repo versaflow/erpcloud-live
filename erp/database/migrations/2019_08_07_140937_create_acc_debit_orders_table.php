@@ -29,6 +29,7 @@ class CreateAccDebitOrdersTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

@@ -23,6 +23,7 @@ class CreateIspSmsMessageQueueTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

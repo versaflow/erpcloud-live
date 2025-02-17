@@ -3,9 +3,13 @@
 function button_mailqueue_truncate($request)
 {
     \DB::table('erp_mail_queue')->truncate();
-
     return json_alert('Done');
 }
+
+
+
+
+
 
 function button_whatsapp_reset_from_accounts($request)
 {
@@ -32,7 +36,7 @@ function button_whatsapp_reset_from_accounts($request)
         $data = [
             'mobile_number' => $n,
             'created_at' => date('Y-m-d H:i:s'),
-            'status' => 'Enabled',
+            'status' => 'Enabled'
         ];
         \DB::table('crm_whatsapp_list')->insert($data);
     }
@@ -46,7 +50,7 @@ function valid_za_mobile_number($mobile_number = false)
         return false;
     }
     try {
-        $number = phone($mobile_number, ['ZA', 'US', 'Auto']);
+        $number = phone($mobile_number, ['ZA','US','Auto']);
         if ($number->isOfType('fixed_line')) {
             return false;
         }
@@ -54,11 +58,8 @@ function valid_za_mobile_number($mobile_number = false)
         if (strlen($number) != 10) {
             return false;
         }
-
         return $number;
-    } catch (\Throwable $ex) {
-        exception_log($ex);
-
+    } catch (\Throwable $ex) {  exception_log($ex);
         return false;
     }
 }

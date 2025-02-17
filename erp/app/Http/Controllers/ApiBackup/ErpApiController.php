@@ -11,29 +11,26 @@ use Validator;
 class ErpApiController extends BaseController
 {
     protected $request; // request as an attribute of the controllers
-
     protected $token;
-
     protected $account;
-
     protected $debug_numbers;
 
     public function __construct(Request $request)
     {
-        $this->debug_numbers = ['0813334444'];
+        $this->debug_numbers = ['0813334444', '0824119555'];
         $this->request = $request; // Request becomes available for all the controller functions that call $this->request
         $this->middleware(function ($request, $next) {
-            if (\Route::getCurrentRoute()->getActionName() != 'App\\Http\\Controllers\\ErpApiController@documentation') {
+            if ('App\\Http\\Controllers\\ErpApiController@documentation' != \Route::getCurrentRoute()->getActionName()) {
                 $appkeys = ['$2y$10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O', 'opFldG94bgQudpVyciFpbG9gLp3vo5'];
-                if (empty($request->key) || ! in_array($request->key, $appkeys)) {
+                if (empty($request->key) || !in_array($request->key, $appkeys)) {
                     // return api_error('Invalid API Key');
                 }
 
-                if (\Route::getCurrentRoute()->getActionName() != 'App\\Http\\Controllers\\ErpApiController@getLogin'
-                && \Route::getCurrentRoute()->getActionName() != 'App\\Http\\Controllers\\ErpApiController@postSignup'
-                && \Route::getCurrentRoute()->getActionName() != 'App\\Http\\Controllers\\ErpApiController@postSMSToken') {
+                if ('App\\Http\\Controllers\\ErpApiController@getLogin' != \Route::getCurrentRoute()->getActionName()
+                && 'App\\Http\\Controllers\\ErpApiController@postSignup' != \Route::getCurrentRoute()->getActionName()
+                && 'App\\Http\\Controllers\\ErpApiController@postSMSToken' != \Route::getCurrentRoute()->getActionName()) {
                     $validation = $this->validateToken();
-                    if ($validation !== true) {
+                    if (true !== $validation) {
                         return api_error($validation);
                     }
 
@@ -125,80 +122,73 @@ class ErpApiController extends BaseController
      */
     public function getLogin()
     {
-
         // 105 - $2y$10$CRQmxS.4BoSi2qc9.vCUreGcKz7Hl26.7pkH5N.5PAhQJYOCOJ0.a
         //http://ct.versaflow.io/erp_api/getlogin?key=$2y10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O&mobile_number=0812223333
-        /**
-         * @api {get} api/login getLogin
-         *
-         * @apiVersion 1.0.0
-         *
-         * @apiName getLogin
-         *
-         * @apiGroup Auth
-         *
-         * @apiParam {String} key appkey
-         * @apiParam {Number} mobile_number valid za mobile number
-         *
-         * @apiSampleRequest http://ct.versaflow.io/erp_api/getlogin?key=$2y10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O&mobile_number=0812223333
-         *
-         * @apiSuccess (HTTP 200) {String} message
-         * @apiSuccess (HTTP 200) {String} status
-         *
-         * @apiSuccessExample Success-Response Verification:
-         *     HTTP/1.1 200 OK
-         *     {
-         *       "status": "SUCCESS",
-         *       "message": "Account Exists. SMS Sent."
-         *     }
-         *
-         * @apiError (HTTP 400) InvalidPhoneNumber invalid ZA phone number
-         *
-         * @apiErrorExample Error-Response:
-         *     HTTP/1.1 400 Bad Request
-         *     {
-         *       "status": "FAILURE",
-         *       "message": "Invalid phone number"
-         *     }
-         *
-         * @apiError (HTTP 400) InvalidPhoneNumber fixed line phone number
-         *
-         * @apiErrorExample Error-Response:
-         *     HTTP/1.1 400 Bad Request
-         *     {
-         *       "status": "FAILURE",
-         *       "message": "You can not use a fixed line number"
-         *     }
-         *
-         * @apiError (HTTP 400) InvalidPhoneNumber lookup failed
-         *
-         * @apiErrorExample Error-Response:
-         *     HTTP/1.1 400 Bad Request
-         *     {
-         *       "status": "FAILURE",
-         *       "message": "Phone number not found"
-         *     }
-         *
-         * @apiError (HTTP 500) Exception-Response
-         *
-         * @apiErrorExample Exception-Response:
-         *     HTTP/1.1 500 Internal Error
-         *     {
-         *       "status": "FAILURE",
-         *       "message": "Verification SMS could not be sent."
-         *     }
-         *
-         * @apiError (HTTP 500) Exception-Response
-         *
-         * @apiErrorExample Exception-Response:
-         *     HTTP/1.1 500 Internal Error
-         *     {
-         *       "status": "FAILURE",
-         *       "message": "Error exception."
-         *     }
-         */
-        try {
+        /*
+        * @api {get} api/login getLogin
+        * @apiVersion 1.0.0
+        * @apiName getLogin
+        * @apiGroup Auth
+        *
+        * @apiParam {String} key appkey
+        * @apiParam {Number} mobile_number valid za mobile number
+        * @apiSampleRequest http://ct.versaflow.io/erp_api/getlogin?key=$2y10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O&mobile_number=0812223333
+        * @apiSuccess (HTTP 200) {String} message
+        * @apiSuccess (HTTP 200) {String} status
+        *
+        *
+        * @apiSuccessExample Success-Response Verification:
+        *     HTTP/1.1 200 OK
+        *     {
+        *       "status": "SUCCESS",
+        *       "message": "Account Exists. SMS Sent."
+        *     }
+        *
+        * @apiError (HTTP 400) InvalidPhoneNumber invalid ZA phone number
+        *
+        * @apiErrorExample Error-Response:
+        *     HTTP/1.1 400 Bad Request
+        *     {
+        *       "status": "FAILURE",
+        *       "message": "Invalid phone number"
+        *     }
+        *
+        * @apiError (HTTP 400) InvalidPhoneNumber fixed line phone number
+        *
+        * @apiErrorExample Error-Response:
+        *     HTTP/1.1 400 Bad Request
+        *     {
+        *       "status": "FAILURE",
+        *       "message": "You can not use a fixed line number"
+        *     }
+        *
+        * @apiError (HTTP 400) InvalidPhoneNumber lookup failed
+        *
+        * @apiErrorExample Error-Response:
+        *     HTTP/1.1 400 Bad Request
+        *     {
+        *       "status": "FAILURE",
+        *       "message": "Phone number not found"
+        *     }
+        * @apiError (HTTP 500) Exception-Response
+        *
+        * @apiErrorExample Exception-Response:
+        *     HTTP/1.1 500 Internal Error
+        *     {
+        *       "status": "FAILURE",
+        *       "message": "Verification SMS could not be sent."
+        *     }
+        * @apiError (HTTP 500) Exception-Response
+        *
+        * @apiErrorExample Exception-Response:
+        *     HTTP/1.1 500 Internal Error
+        *     {
+        *       "status": "FAILURE",
+        *       "message": "Error exception."
+        *     }
+        */
 
+        try {
             $phone = $this->request->mobile_number;
 
             $number = phone($phone, ['ZA', 'US', 'Auto']);
@@ -214,7 +204,7 @@ class ErpApiController extends BaseController
         } catch (\Throwable $ex) {
             exception_log($ex);
             $post_arr = (array) $this->request->all();
-            if (! str_contains($ex->getMessage(), 'The string supplied did not seem to be a phone number.')) {
+            if (!str_contains($ex->getMessage(), 'The string supplied did not seem to be a phone number.')) {
                 exception_email($ex, 'API error token phone number '.date('Y-m-d H:i'), $post_arr);
             }
 
@@ -223,7 +213,7 @@ class ErpApiController extends BaseController
 
         try {
             $user = \DB::connection('default')->table('erp_users')->where('erp_app_number', $number)->get()->first();
-            if (! $user) {
+            if (!$user) {
                 return api_error('Phone number not found. Already have an account? Call us to link your number to your account.');
             }
             $account_id = $user->account_id;
@@ -255,14 +245,10 @@ class ErpApiController extends BaseController
 
     public function postSignup()
     {
-
         /**
          * @api {post} api/postsignup postSignup
-         *
          * @apiVersion 1.0.0
-         *
          * @apiName postSignup
-         *
          * @apiGroup Auth
          *
          * @apiParam {String} key appkey
@@ -271,9 +257,7 @@ class ErpApiController extends BaseController
          * @apiParam {String} email (required)
          * @apiParam {String} company (optional)
          * @apiParam {String} reseller_code (optional)
-         *
          * @apiSampleRequest http://ct.versaflow.io/erp_api/postsignup
-         *
          * @apiSuccess (HTTP 200) {String} message
          *
          * @apiSuccessExample Success-Response:
@@ -291,7 +275,6 @@ class ErpApiController extends BaseController
          *       "status": "FAILURE",
          *       "message": "Name required."
          *     }
-         *
          * @apiError (HTTP 400) FieldRequired
          *
          * @apiErrorExample Error-Response:
@@ -345,7 +328,6 @@ class ErpApiController extends BaseController
          *       "status": "FAILURE",
          *       "message": "Account could not be created."
          *     }
-         *
          * @apiError (HTTP 500) Exception-Response
          *
          * @apiErrorExample Exception-Response:
@@ -374,7 +356,7 @@ class ErpApiController extends BaseController
          *     }
          */
         $test_numbers = ['0743141193'];
-        if (! empty($this->request->mobile_number)) {
+        if (!empty($this->request->mobile_number)) {
             try {
                 $phone = $this->request->mobile_number;
                 $number = phone($phone, ['ZA', 'US', 'Auto']);
@@ -391,7 +373,7 @@ class ErpApiController extends BaseController
             } catch (\Throwable $ex) {
                 exception_log($ex);
                 $post_arr = (array) $this->request->all();
-                if (! str_contains($ex->getMessage(), 'Number does not match the provided countries')) {
+                if (!str_contains($ex->getMessage(), 'Number does not match the provided countries')) {
                     exception_email($ex, 'API error token phone number '.date('Y-m-d H:i'), $post_arr);
                 }
 
@@ -438,7 +420,7 @@ class ErpApiController extends BaseController
                 'signup_data' => json_encode($post_data),
             ];
             \DB::connection('default')->table('erp_user_api')->insert($insert_data);
-            if (! in_array($post_data->mobile_number, $this->debug_numbers)) {
+            if (!in_array($post_data->mobile_number, $this->debug_numbers)) {
                 $result = queue_sms(1, $post_data->mobile_number, 'Unlimited Mobile Verification Code - '.$verification_code, 1, 1);
             }
 
@@ -453,51 +435,47 @@ class ErpApiController extends BaseController
 
     public function postSMSToken()
     {
-        /**
-         * @api {post} api/postsmstoken postSMSToken
-         *
-         * @apiVersion 1.0.0
-         *
-         * @apiName postSMSToken
-         *
-         * @apiGroup Auth
-         *
-         * @apiParam {String} key appkey
-         * @apiParam {Number} mobile_number valid za mobile number
-         * @apiParam {String} code valid verification code sent in sms
-         *
-         * @apiSampleRequest http://ct.versaflow.io/erp_api/postsmstoken
-         *
-         * @apiSuccess (HTTP 200) {String} message
-         * @apiSuccess (HTTP 200) {String} api_token
-         * @apiSuccess (HTTP 200) {Array} user
-         *
-         * @apiSuccessExample Success-Response:
-         *     HTTP/1.1 200 OK
-         *     {
-         *       "status": "SUCCESS",
-         *       "message": "SMS Verified.",
-         *       "api_token": "2y10$oW.IHaXEm4ooZPr48ISrGeaVQ2jVug7jgy6xgHfE8fpN22TBzDng.",
-         *     }
-         *
-         * @apiError (HTTP 400) InvalidCode
-         *
-         * @apiErrorExample Error-Response:
-         *     HTTP/1.1 400 Bad Request
-         *     {
-         *       "status": "FAILURE",
-         *       "message": "Verification code not found"
-         *     }
-         *
-         * @apiError (HTTP 500) Exception-Response
-         *
-         * @apiErrorExample Exception-Response:
-         *     HTTP/1.1 500 Internal Error
-         *     {
-         *       "status": "FAILURE",
-         *       "message": "Error exception."
-         *     }
-         */
+        /*
+        * @api {post} api/postsmstoken postSMSToken
+        * @apiVersion 1.0.0
+        * @apiName postSMSToken
+        * @apiGroup Auth
+        *
+        * @apiParam {String} key appkey
+        * @apiParam {Number} mobile_number valid za mobile number
+        * @apiParam {String} code valid verification code sent in sms
+        * @apiSampleRequest http://ct.versaflow.io/erp_api/postsmstoken
+        * @apiSuccess (HTTP 200) {String} message
+        * @apiSuccess (HTTP 200) {String} api_token
+        * @apiSuccess (HTTP 200) {Array} user
+        *
+        * @apiSuccessExample Success-Response:
+        *     HTTP/1.1 200 OK
+        *     {
+        *       "status": "SUCCESS",
+        *       "message": "SMS Verified.",
+        *       "api_token": "2y10$oW.IHaXEm4ooZPr48ISrGeaVQ2jVug7jgy6xgHfE8fpN22TBzDng.",
+        *     }
+        *
+        * @apiError (HTTP 400) InvalidCode
+        *
+        * @apiErrorExample Error-Response:
+        *     HTTP/1.1 400 Bad Request
+        *     {
+        *       "status": "FAILURE",
+        *       "message": "Verification code not found"
+        *     }
+        *
+        * @apiError (HTTP 500) Exception-Response
+        *
+        * @apiErrorExample Exception-Response:
+        *     HTTP/1.1 500 Internal Error
+        *     {
+        *       "status": "FAILURE",
+        *       "message": "Error exception."
+        *     }
+        */
+
         try {
             $signup_check = \DB::connection('default')->table('erp_user_api')
                 ->where('mobile_number', $this->request->mobile_number)
@@ -544,35 +522,34 @@ class ErpApiController extends BaseController
     public function getVehicledbDropdowns()
     {
         try {
-
-            $search = (! empty($this->request->search)) ? $this->request->search : '';
-            $make = (! empty($this->request->make)) ? urldecode($this->request->make) : '';
-            $model = (! empty($this->request->model)) ? urldecode($this->request->model) : '';
-            $sub_type = (! empty($this->request->sub_type)) ? urldecode($this->request->sub_type) : '';
-            $year = (! empty($this->request->year)) ? $this->request->year : '';
+            $search = (!empty($this->request->search)) ? $this->request->search : '';
+            $make = (!empty($this->request->make)) ? urldecode($this->request->make) : '';
+            $model = (!empty($this->request->model)) ? urldecode($this->request->model) : '';
+            $sub_type = (!empty($this->request->sub_type)) ? urldecode($this->request->sub_type) : '';
+            $year = (!empty($this->request->year)) ? $this->request->year : '';
 
             $query = \DB::connection('default')->table('crm_vehicle_models');
             $query->select('make', 'model', 'sub_type', \DB::raw('SUBSTRING(intro_date,1,4) as year'));
 
-            if (! empty($search)) {
+            if (!empty($search)) {
                 $query->whereRaw('(LOWER(make) LIKE "%'.strtolower($search).'%" or  LOWER(model) LIKE "%'.strtolower($search).'%")');
                 $query->orderBy('make');
                 $query->orderBy('model');
             }
-            if (! empty($make)) {
+            if (!empty($make)) {
                 $query->whereRaw('(LOWER(make) LIKE "%'.strtolower($make).'%")');
                 $query->orderBy('make');
             }
-            if (! empty($model)) {
+            if (!empty($model)) {
                 $query->whereRaw('(LOWER(model) LIKE "%'.strtolower($model).'%")');
                 $query->orderBy('model');
             }
-            if (! empty($sub_type)) {
+            if (!empty($sub_type)) {
                 $query->whereRaw('(LOWER(sub_type) LIKE "%'.strtolower($sub_type).'%")');
                 $query->orderBy('sub_type');
             }
 
-            if (! empty($year)) {
+            if (!empty($year)) {
                 $query->where('intro_date', 'LIKE', $year.'%');
                 $query->orderBy('year', 'desc');
             }
@@ -590,7 +567,6 @@ class ErpApiController extends BaseController
             ];
 
             return api_success('Success', $data);
-
         } catch (\Throwable $ex) {
             exception_log($ex);
 
@@ -601,37 +577,37 @@ class ErpApiController extends BaseController
     public function getVehicledbVehicles()
     {
         try {
-            $search = (! empty($this->request->search)) ? $this->request->search : '';
+            $search = (!empty($this->request->search)) ? $this->request->search : '';
 
-            $make = (! empty($this->request->make)) ? urldecode($this->request->make) : '';
-            $model = (! empty($this->request->model)) ? urldecode($this->request->model) : '';
-            $sub_type = (! empty($this->request->sub_type)) ? urldecode($this->request->sub_type) : '';
-            $year = (! empty($this->request->year)) ? $this->request->year : '';
+            $make = (!empty($this->request->make)) ? urldecode($this->request->make) : '';
+            $model = (!empty($this->request->model)) ? urldecode($this->request->model) : '';
+            $sub_type = (!empty($this->request->sub_type)) ? urldecode($this->request->sub_type) : '';
+            $year = (!empty($this->request->year)) ? $this->request->year : '';
 
-            $page = (! empty($this->request->page)) ? $this->request->page : 0;
-            $limit = (! empty($this->request->limit)) ? $this->request->limit : 500;
+            $page = (!empty($this->request->page)) ? $this->request->page : 0;
+            $limit = (!empty($this->request->limit)) ? $this->request->limit : 500;
             $offset = ($page) ? $page * $limit : 0;
             $query = \DB::connection('default')->table('crm_vehicle_models');
 
-            if (! empty($search)) {
+            if (!empty($search)) {
                 $query->whereRaw('(LOWER(make) LIKE "%'.strtolower($search).'%" or  LOWER(model) LIKE "%'.strtolower($search).'%")');
                 $query->orderBy('make');
                 $query->orderBy('model');
             }
-            if (! empty($make)) {
+            if (!empty($make)) {
                 $query->whereRaw('(LOWER(make) LIKE "%'.strtolower($make).'%")');
                 $query->orderBy('make');
             }
-            if (! empty($model)) {
+            if (!empty($model)) {
                 $query->whereRaw('(LOWER(model) LIKE "%'.strtolower($model).'%")');
                 $query->orderBy('model');
             }
-            if (! empty($sub_type)) {
+            if (!empty($sub_type)) {
                 $query->whereRaw('(LOWER(sub_type) LIKE "%'.strtolower($sub_type).'%")');
                 $query->orderBy('sub_type');
             }
 
-            if (! empty($year)) {
+            if (!empty($year)) {
                 $query->where('intro_date', 'LIKE', $year.'%');
                 $query->orderBy('year', 'desc');
             }
@@ -650,7 +626,6 @@ class ErpApiController extends BaseController
             $data = $query->get();
 
             return api_success('Success', ['total_rows' => $num_rows, 'rows' => $data]);
-
         } catch (\Throwable $ex) {
             exception_log($ex);
 
@@ -660,52 +635,48 @@ class ErpApiController extends BaseController
 
     public function postVehicledbInvoice()
     {
-        /**
-         * @api {post} api/postinvoice postInvoice
-         *
-         * @apiVersion 1.0.0
-         *
-         * @apiName postInvoice
-         *
-         * @apiGroup Auth
-         *
-         * @apiParam {String} key appkey
-         * @apiParam {Number} account_id
-         * @apiParam {Number} amount
-         * @apiParam {String} reference
-         *
-         * @apiSampleRequest http://ct.versaflow.io/erp_api/postinvoice
-         *
-         * @apiSuccess (HTTP 200) {String} message
-         * @apiSuccess (HTTP 200) {String} api_token
-         * @apiSuccess (HTTP 200) {Array} user
-         *
-         * @apiSuccessExample Success-Response:
-         *     HTTP/1.1 200 OK
-         *     {
-         *       "status": "SUCCESS",
-         *       "message": "SMS Verified.",
-         *       "api_token": "2y10$oW.IHaXEm4ooZPr48ISrGeaVQ2jVug7jgy6xgHfE8fpN22TBzDng.",
-         *     }
-         *
-         * @apiError (HTTP 400) InvalidCode
-         *
-         * @apiErrorExample Error-Response:
-         *     HTTP/1.1 400 Bad Request
-         *     {
-         *       "status": "FAILURE",
-         *       "message": "Verification code not found"
-         *     }
-         *
-         * @apiError (HTTP 500) Exception-Response
-         *
-         * @apiErrorExample Exception-Response:
-         *     HTTP/1.1 500 Internal Error
-         *     {
-         *       "status": "FAILURE",
-         *       "message": "Error exception."
-         *     }
-         */
+        /*
+        * @api {post} api/postinvoice postInvoice
+        * @apiVersion 1.0.0
+        * @apiName postInvoice
+        * @apiGroup Auth
+        *
+        * @apiParam {String} key appkey
+        * @apiParam {Number} account_id
+        * @apiParam {Number} amount
+        * @apiParam {String} reference
+        * @apiSampleRequest http://ct.versaflow.io/erp_api/postinvoice
+        * @apiSuccess (HTTP 200) {String} message
+        * @apiSuccess (HTTP 200) {String} api_token
+        * @apiSuccess (HTTP 200) {Array} user
+        *
+        * @apiSuccessExample Success-Response:
+        *     HTTP/1.1 200 OK
+        *     {
+        *       "status": "SUCCESS",
+        *       "message": "SMS Verified.",
+        *       "api_token": "2y10$oW.IHaXEm4ooZPr48ISrGeaVQ2jVug7jgy6xgHfE8fpN22TBzDng.",
+        *     }
+        *
+        * @apiError (HTTP 400) InvalidCode
+        *
+        * @apiErrorExample Error-Response:
+        *     HTTP/1.1 400 Bad Request
+        *     {
+        *       "status": "FAILURE",
+        *       "message": "Verification code not found"
+        *     }
+        *
+        * @apiError (HTTP 500) Exception-Response
+        *
+        * @apiErrorExample Exception-Response:
+        *     HTTP/1.1 500 Internal Error
+        *     {
+        *       "status": "FAILURE",
+        *       "message": "Error exception."
+        *     }
+        */
+
         try {
             if (empty($this->account->id)) {
                 return api_error('Account id is required');
@@ -720,12 +691,11 @@ class ErpApiController extends BaseController
                 return api_error('Reference is required');
             }
             $result = create_vehicledb_invoice($this->account->id, $this->request->amount, $this->request->qty, $this->request->reference);
-            if (! $result) {
+            if (!$result) {
                 return api_error('Invoice could not be created');
             }
 
             return api_success('Invoice created');
-
         } catch (\Throwable $ex) {
             exception_log($ex);
             exception_email($ex, 'API error token '.date('Y-m-d H:i'));
@@ -737,7 +707,6 @@ class ErpApiController extends BaseController
     public function postVehicledbCreditsUsed()
     {
         try {
-
             if (empty($this->account->id)) {
                 return api_error('Account id is required');
             }
@@ -760,7 +729,6 @@ class ErpApiController extends BaseController
                 'balance' => $credits_balance - $qty,
             ];
             dbinsert('crm_purchase_history', $data);
-
         } catch (\Throwable $ex) {
             exception_log($ex);
             exception_email($ex, 'API error signup '.date('Y-m-d H:i'));
@@ -788,7 +756,6 @@ class ErpApiController extends BaseController
                 $row = \Auth::user();
 
                 if (empty($row) || empty($row->username)) {
-
                     return Redirect::to('/user/login')->with('status', 'error')->with('message', 'Your username/password combination was incorrect')->withInput();
                 }
 
@@ -803,16 +770,16 @@ class ErpApiController extends BaseController
                 return Redirect::back()->with('status', 'error')->with('message','Maintenance: Login unavailable');
                 }
                 */
-                if ($row->active == '0') {
+                if ('0' == $row->active) {
                     \Auth::logout();
 
                     return Redirect::to('/user/login')->with('status', 'error')->with('message', 'Your Account is suspended. Please contact support.')->withInput();
-                } elseif ($row->active == '2') {
+                } elseif ('2' == $row->active) {
                     // Blocked users
                     \Auth::logout();
 
                     return Redirect::to('/user/login')->with('status', 'error')->with('message', 'Your Account is blocked.')->withInput();
-                } elseif ($row->active == '1') {
+                } elseif ('1' == $row->active) {
                     $account = dbgetaccount($row->account_id);
 
                     if (empty($account)) {
@@ -821,7 +788,7 @@ class ErpApiController extends BaseController
                         return Redirect::to('/user/login')->with('status', 'error')->with('message', 'Account not found.')->withInput();
                     }
 
-                    if ($account->status == 'Deleted') {
+                    if ('Deleted' == $account->status) {
                         \Auth::logout();
 
                         return Redirect::to('/user/login')->with('status', 'error')->with('message', 'Account not found.')->withInput();
@@ -833,14 +800,14 @@ class ErpApiController extends BaseController
                     //   }
 
                     $reseller = dbgetaccount($account->partner_id);
-                    if (empty($reseller) || $reseller->status == 'Deleted') {
+                    if (empty($reseller) || 'Deleted' == $reseller->status) {
                         \Auth::logout();
 
                         return Redirect::to('/user/login')->with('status', 'error')->with('message', 'Invalid Reseller Account.')->withInput();
                     }
 
                     $group_exists = \DB::table('erp_user_roles')->where('id', $row->role_id)->count();
-                    if (! $group_exists) {
+                    if (!$group_exists) {
                         \Auth::logout();
 
                         return Redirect::to('/user/login')->with('status', 'error')->with('message', 'Invalid Access.')->withInput();
@@ -848,9 +815,9 @@ class ErpApiController extends BaseController
 
                     \DB::table('erp_users')->where('id', '=', $row->id)->update(['last_login' => date('Y-m-d H:i:s')]);
 
-                    if ($account->status != 'Deleted') {
+                    if ('Deleted' != $account->status) {
                         /* Set Lang if available */
-                        if (! is_null($request->input('language'))) {
+                        if (!is_null($request->input('language'))) {
                             $session['lang'] = $request->input('language');
                         } else {
                             $session['lang'] = $this->config['cnf_lang'];
@@ -863,7 +830,7 @@ class ErpApiController extends BaseController
                         session(['is_api_session' => true]);
                     }
 
-                    if (! empty(session('role_id'))) {
+                    if (!empty(session('role_id'))) {
                         if (empty($default_page) && session('role_level') == 'Admin') {
                             $default_page = 'dashboard';
                         }
@@ -881,11 +848,9 @@ class ErpApiController extends BaseController
                             }
                         }
 
-                        if (! empty($this->request->redirect_to)) {
-
+                        if (!empty($this->request->redirect_to)) {
                             return Redirect::to('/'.$this->request->redirect_to);
                         } else {
-
                             return Redirect::to('/'.$default_page);
                         }
                     } else {
@@ -895,7 +860,6 @@ class ErpApiController extends BaseController
                         \Session::put('lang', $currentLang);
 
                         return Redirect::to('/user/login');
-
                     }
                 }
             } else {
@@ -929,12 +893,10 @@ class ErpApiController extends BaseController
             }
             \DB::connection('default')->table('erp_users')->where('id', $user->id)->update(['verification_code' => $verification_code]);
 
-            if (! in_array($post_data->erp_app_number, $this->debug_numbers)) {
+            if (!in_array($post_data->erp_app_number, $this->debug_numbers)) {
                 if ($hashkey == '') {
-
                     $result = queue_sms(1, $user->erp_app_number, 'ERP Verification Code: '.$verification_code, 1, 1);
                 } else {
-
                     $result = queue_sms(1, $user->erp_app_number, '<#> ERP Verification Code: '.$verification_code.' '.$hashkey, 1, 1);
                 }
             }
@@ -955,12 +917,12 @@ class ErpApiController extends BaseController
             $post_data = json_decode($signup_data->signup_data);
             $token = $signup_data->api_token;
             $company = $post_data->name;
-            if (! empty($post_data->company)) {
+            if (!empty($post_data->company)) {
                 $company = $post_data->company;
             }
 
-            $account = new \stdClass;
-            if (! empty($post_data->reseller_code)) {
+            $account = new \stdClass();
+            if (!empty($post_data->reseller_code)) {
                 $account->partner_id = \DB::table('crm_account_partner_settings')->where('afriphone_signup_code', $post_data->reseller_code)->pluck('account_id')->first();
             }
             if (empty($account->partner_id)) {
@@ -971,18 +933,18 @@ class ErpApiController extends BaseController
             $account->contact = $post_data->name;
             $account->notification_type = 'sms';
 
-            if (! empty($post_data->mobile_number)) {
+            if (!empty($post_data->mobile_number)) {
                 $account->phone = $post_data->mobile_number;
             }
 
-            if (! empty($post_data->email)) {
+            if (!empty($post_data->email)) {
                 $account->notification_type = 'email';
                 $account->email = $post_data->email;
             }
 
             $account_id = create_customer($account, 'customer');
 
-            if (! $account_id) {
+            if (!$account_id) {
                 return api_abort('Account could not be created');
             }
 
@@ -1006,47 +968,43 @@ class ErpApiController extends BaseController
 
     public function getAccount()
     {
-        /**
-         * @api {get} api/getaccount getAccount
-         *
-         * @apiVersion 1.0.0
-         *
-         * @apiName getAccount
-         *
-         * @apiGroup Account
-         *
-         * @apiParam {String} key appkey
-         * @apiParam {String} api_token
-         *
-         * @apiSampleRequest http://ct.versaflow.io/erp_api/getaccount?api_token=$2y$10$NfqNMruT8Az1ezzVYcW5TeV28p7XvBp0A7BH/GD1mbXKDoS9lCli6&key=$2y$10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O
-         *
-         * @apiSuccess (HTTP 200) {String} message
-         * @apiSuccess (HTTP 200) {Array} account
-         *
-         * @apiSuccessExample Success-Response:
-         *     HTTP/1.1 200 OK
-         *     {
-         *       "status": "SUCCESS",
-         *       "message": "Account data retrieved",
-         *       "account": {company: 'Company Name',contact: 'Full name', etc }
-         *     }
-         *
-         * @apiError (HTTP 500) Exception-Response
-         *
-         * @apiErrorExample Exception-Response:
-         *     HTTP/1.1 500 Internal Error
-         *     {
-         *       "status": "FAILURE",
-         *       "message": "Error exception."
-         *     }
-         *
-         * @apiUse TokenRequiredError
-         * @apiUse TokenInvalidError
-         * @apiUse AccountNotFoundError
-         * @apiUse AccountTypeError
-         * @apiUse AccountStatusDisabledError
-         * @apiUse AccountStatusDeletedError
-         */
+        /*
+        * @api {get} api/getaccount getAccount
+        * @apiVersion 1.0.0
+        * @apiName getAccount
+        * @apiGroup Account
+        *
+        * @apiParam {String} key appkey
+        * @apiParam {String} api_token
+        * @apiSampleRequest http://ct.versaflow.io/erp_api/getaccount?api_token=$2y$10$NfqNMruT8Az1ezzVYcW5TeV28p7XvBp0A7BH/GD1mbXKDoS9lCli6&key=$2y$10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O
+        * @apiSuccess (HTTP 200) {String} message
+        * @apiSuccess (HTTP 200) {Array} account
+        *
+        * @apiSuccessExample Success-Response:
+        *     HTTP/1.1 200 OK
+        *     {
+        *       "status": "SUCCESS",
+        *       "message": "Account data retrieved",
+        *       "account": {company: 'Company Name',contact: 'Full name', etc }
+        *     }
+        *
+        * @apiError (HTTP 500) Exception-Response
+        *
+        * @apiErrorExample Exception-Response:
+        *     HTTP/1.1 500 Internal Error
+        *     {
+        *       "status": "FAILURE",
+        *       "message": "Error exception."
+        *     }
+        *
+        * @apiUse TokenRequiredError
+        * @apiUse TokenInvalidError
+        * @apiUse AccountNotFoundError
+        * @apiUse AccountTypeError
+        * @apiUse AccountStatusDisabledError
+        * @apiUse AccountStatusDeletedError
+        */
+
         try {
             $account_data = [
                 'id' => $this->account->id,
@@ -1063,7 +1021,6 @@ class ErpApiController extends BaseController
             }
 
             if ($is_vehicledb) {
-
                 $credits_balance = \DB::table('crm_purchase_history')->where('account_id', $this->account->id)->sum('charge');
                 if (empty($credits_balance)) {
                     $credits_balance = 0;
@@ -1083,7 +1040,6 @@ class ErpApiController extends BaseController
     public function getAppRoutes()
     {
         try {
-
             $modules = \DB::table('erp_cruds')->select('id', 'name', 'slug')->get();
             $forms = \DB::table('erp_forms')->get();
             $app_routes = \DB::table('erp_app_routes')->where('is_deleted', 0)->orderBy('sort_order')->get();
@@ -1094,7 +1050,6 @@ class ErpApiController extends BaseController
                         'route' => $route->url,
                     ];
                 } else {
-
                     $access = $forms->where('module_id', $route->module_id)->where('role_id', $this->user->role_id)->where('is_view', 1)->count();
                     if ($access) {
                         $routes[] = [
@@ -1102,7 +1057,6 @@ class ErpApiController extends BaseController
                             'route' => $modules->where('id', $route->module_id)->pluck('slug')->first(),
                         ];
                     }
-
                 }
             }
 
@@ -1117,47 +1071,42 @@ class ErpApiController extends BaseController
 
     public function getPartner()
     {
-        /**
-         * @api {get} api/getpartner getPartner
-         *
-         * @apiVersion 1.0.0
-         *
-         * @apiName getPartner
-         *
-         * @apiGroup Account
-         *
-         * @apiParam {String} key appkey
-         * @apiParam {String} api_token
-         *
-         * @apiSampleRequest http://ct.versaflow.io/erp_api/getpartner?api_token=$2y$10$NfqNMruT8Az1ezzVYcW5TeV28p7XvBp0A7BH/GD1mbXKDoS9lCli6&key=$2y$10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O
-         *
-         * @apiSuccess (HTTP 200) {String} message
-         * @apiSuccess (HTTP 200) {Array} account
-         *
-         * @apiSuccessExample Success-Response:
-         *     HTTP/1.1 200 OK
-         *     {
-         *       "status": "SUCCESS",
-         *       "message": "Partner data retrieved",
-         *       "account": {company: 'Company Name',contact: 'Full name', etc }
-         *     }
-         *
-         * @apiError (HTTP 500) Exception-Response
-         *
-         * @apiErrorExample Exception-Response:
-         *     HTTP/1.1 500 Internal Error
-         *     {
-         *       "status": "FAILURE",
-         *       "message": "Error exception."
-         *     }
-         *
-         * @apiUse TokenRequiredError
-         * @apiUse TokenInvalidError
-         * @apiUse AccountNotFoundError
-         * @apiUse AccountTypeError
-         * @apiUse AccountStatusDisabledError
-         * @apiUse AccountStatusDeletedError
-         */
+        /*
+        * @api {get} api/getpartner getPartner
+        * @apiVersion 1.0.0
+        * @apiName getPartner
+        * @apiGroup Account
+        *
+        * @apiParam {String} key appkey
+        * @apiParam {String} api_token
+        * @apiSampleRequest http://ct.versaflow.io/erp_api/getpartner?api_token=$2y$10$NfqNMruT8Az1ezzVYcW5TeV28p7XvBp0A7BH/GD1mbXKDoS9lCli6&key=$2y$10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O
+        * @apiSuccess (HTTP 200) {String} message
+        * @apiSuccess (HTTP 200) {Array} account
+        *
+        * @apiSuccessExample Success-Response:
+        *     HTTP/1.1 200 OK
+        *     {
+        *       "status": "SUCCESS",
+        *       "message": "Partner data retrieved",
+        *       "account": {company: 'Company Name',contact: 'Full name', etc }
+        *     }
+        *
+        * @apiError (HTTP 500) Exception-Response
+        *
+        * @apiErrorExample Exception-Response:
+        *     HTTP/1.1 500 Internal Error
+        *     {
+        *       "status": "FAILURE",
+        *       "message": "Error exception."
+        *     }
+        *
+        * @apiUse TokenRequiredError
+        * @apiUse TokenInvalidError
+        * @apiUse AccountNotFoundError
+        * @apiUse AccountTypeError
+        * @apiUse AccountStatusDisabledError
+        * @apiUse AccountStatusDeletedError
+        */
         try {
             $reseller = dbgetaccount($this->account->partner_id);
 
@@ -1185,11 +1134,11 @@ class ErpApiController extends BaseController
             return 'Account does not exists, create a new account';
         }
 
-        if (! in_array($account->type, ['reseller_user', 'reseller', 'customer'])) {
+        if (!in_array($account->type, ['reseller_user', 'reseller', 'customer'])) {
             return 'Invalid account type';
         }
 
-        if ($account->status != 'Enabled') {
+        if ('Enabled' != $account->status) {
             return 'Account '.strtolower($account->status);
         }
 

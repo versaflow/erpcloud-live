@@ -19,6 +19,7 @@ class CreateIspSmsListsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

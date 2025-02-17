@@ -47,10 +47,10 @@ return [
     'accounts' => [
 
         'default' => [// account identifier
-            'host' => env('IMAP_HOST', 'localhost'),
-            'port' => env('IMAP_PORT', 993),
-            'protocol' => env('IMAP_PROTOCOL', 'imap'), //might also use imap, [pop3 or nntp (untested)]
-            'encryption' => env('IMAP_ENCRYPTION', 'ssl'), // Supported: false, 'ssl', 'tls', 'notls', 'starttls'
+            'host'  => env('IMAP_HOST', 'localhost'),
+            'port'  => env('IMAP_PORT', 993),
+            'protocol'  => env('IMAP_PROTOCOL', 'imap'), //might also use imap, [pop3 or nntp (untested)]
+            'encryption'    => env('IMAP_ENCRYPTION', 'ssl'), // Supported: false, 'ssl', 'tls', 'notls', 'starttls'
             'validate_cert' => env('IMAP_VALIDATE_CERT', true),
             'username' => env('IMAP_USERNAME', 'root@example.com'),
             'password' => env('IMAP_PASSWORD', ''),
@@ -60,25 +60,25 @@ return [
                 'request_fulluri' => false,
                 'username' => null,
                 'password' => null,
-            ],
+            ]
         ],
         'test' => [
-            'host' => 'mail.turnkeyerp.io',
-            'port' => 993,
-            'encryption' => false,
+            'host'          => 'mail.turnkeyerp.io',
+            'port'          => 993,
+            'encryption'    => false,
             'validate_cert' => false,
-            'username' => 'test@turnkeyerp.io',
-            'password' => 'Webmin321',
-            'protocol' => 'imap',
+            'username'      => 'test@turnkeyerp.io',
+            'password'      => 'Webmin321',
+            'protocol'      => 'imap'
         ],
         'sms' => [
-            'host' => 'mail.smssend.co.za',
-            'port' => 143,
-            'encryption' => false,
+            'host'          => 'mail.smssend.co.za',
+            'port'          => 143,
+            'encryption'    => false,
             'validate_cert' => false,
-            'username' => 'catchall@smssend.co.za',
-            'password' => 'Webmin321',
-            'protocol' => 'imap',
+            'username'      => 'catchall@smssend.co.za',
+            'password'      => 'Webmin321',
+            'protocol'      => 'imap'
         ],
         'outlook_test' => [ // account identifier
             'host' => 'outlook.office365.com',
@@ -165,19 +165,19 @@ return [
         'fetch_order' => 'asc',
         'dispositions' => ['attachment', 'inline'],
         'common_folders' => [
-            'root' => 'INBOX',
-            'junk' => 'INBOX/Junk',
-            'draft' => 'INBOX/Drafts',
-            'sent' => 'INBOX/Sent',
-            'trash' => 'INBOX/Trash',
+            "root" => "INBOX",
+            "junk" => "INBOX/Junk",
+            "draft" => "INBOX/Drafts",
+            "sent" => "INBOX/Sent",
+            "trash" => "INBOX/Trash",
         ],
         'open' => [
             // 'DISABLE_AUTHENTICATOR' => 'GSSAPI'
         ],
         'decoder' => [
             'message' => 'utf-8', // mimeheader
-            'attachment' => 'utf-8', // mimeheader
-        ],
+            'attachment' => 'utf-8' // mimeheader
+        ]
     ],
 
     /*
@@ -187,19 +187,19 @@ return [
     |
     */
     'events' => [
-        'message' => [
+        "message" => [
             'new' => \Webklex\IMAP\Events\MessageNewEvent::class,
             'moved' => \Webklex\IMAP\Events\MessageMovedEvent::class,
             'copied' => \Webklex\IMAP\Events\MessageCopiedEvent::class,
             'deleted' => \Webklex\IMAP\Events\MessageDeletedEvent::class,
             'restored' => \Webklex\IMAP\Events\MessageRestoredEvent::class,
         ],
-        'folder' => [
+        "folder" => [
             'new' => \Webklex\IMAP\Events\FolderNewEvent::class,
             'moved' => \Webklex\IMAP\Events\FolderMovedEvent::class,
             'deleted' => \Webklex\IMAP\Events\FolderDeletedEvent::class,
         ],
-        'flag' => [
+        "flag" => [
             'new' => \Webklex\IMAP\Events\FlagNewEvent::class,
             'deleted' => \Webklex\IMAP\Events\FlagDeletedEvent::class,
         ],
@@ -220,6 +220,6 @@ return [
     */
     'masks' => [
         'message' => \Webklex\PHPIMAP\Support\Masks\MessageMask::class,
-        'attachment' => \Webklex\PHPIMAP\Support\Masks\AttachmentMask::class,
-    ],
+        'attachment' => \Webklex\PHPIMAP\Support\Masks\AttachmentMask::class
+    ]
 ];

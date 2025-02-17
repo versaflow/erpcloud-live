@@ -34,6 +34,7 @@ class CreateCrmSupplierDocumentsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

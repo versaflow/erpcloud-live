@@ -17,7 +17,7 @@ class Axxess extends ApiCurl
 
     */
 
-    public function __construct($debug = false)
+    public function __construct($debug = true)
     {
         $this->service_url = 'https://rcp.axxess.co.za/';
         $this->username = 'TUR40';
@@ -26,13 +26,13 @@ class Axxess extends ApiCurl
         $this->authpass = 'jFbd5lg7Djfbn48idmlf4Kd';
         $this->providers_table = 'isp_data_products';
         $this->debug = $debug;
+        $this->setDebug();
     }
 
     public function setDebug()
     {
         $this->service_url = 'https://apitest.axxess.co.za/';
         $this->debug = 'output';
-
         return $this;
     }
 
@@ -54,7 +54,7 @@ class Axxess extends ApiCurl
         foreach ($clients as $client) {
             $services = $this->getServicesByClient($client->guidClientId);
 
-            if (! empty($services->arrServices) && is_array($services->arrServices) && count($services->arrServices) > 0) {
+            if (!empty($services->arrServices) && is_array($services->arrServices) && count($services->arrServices) > 0) {
                 $combo_services = [];
                 $combo_service_details = [];
 
@@ -64,6 +64,7 @@ class Axxess extends ApiCurl
                         $combo_services[] = $service;
                     }
                 }
+
 
                 if (count($combo_services) > 0) {
                     // get the combo service details
@@ -83,23 +84,23 @@ class Axxess extends ApiCurl
 
                     foreach ($combo_service_details as $combo_service_detail) {
                         $account = \DB::table('crm_accounts')->where('guidClientId', $client->guidClientId)->get()->first();
-                        if (! $account || $account->status == 'Deleted') {
+                        if (!$account || $account->status == 'Deleted') {
                             continue 2;
                         }
 
                         $fibre_account = \DB::table('isp_data_fibre')->where('guidClientId', $client->guidClientId)->where('username', $combo_service_detail->username)->get()->first();
-                        if (! $fibre_account) {
+                        if (!$fibre_account) {
                             continue 2;
                         }
 
                         $fibre_subscription = \DB::table('sub_services')->where('detail', $combo_service_detail->username)->get()->first();
-                        if (! $fibre_subscription || $fibre_subscription->status == 'Deleted') {
+                        if (!$fibre_subscription || $fibre_subscription->status == 'Deleted') {
                             continue 2;
                         }
                         \DB::table('isp_data_fibre')
                             ->where('guidClientId', $client->guidClientId)
                             ->where('username', $combo_service_detail->username)
-                            ->update(['line_speed' => $combo_service_detail->speed, 'guidServiceId' => $combo_service_detail->guidServiceId, 'guidProductId' => $combo_service_detail->guidProductId]);
+                            ->update(['line_speed'=>$combo_service_detail->speed,'guidServiceId'=>$combo_service_detail->guidServiceId,'guidProductId'=>$combo_service_detail->guidProductId]);
                     }
                 }
             }
@@ -120,7 +121,6 @@ class Axxess extends ApiCurl
     public function getClientById($guidClientId)
     {
         $args['guidClientId'] = $guidClientId;
-
         return $this->curl('getClientById', $args);
     }
 
@@ -173,11 +173,12 @@ class Axxess extends ApiCurl
                     $data['fibre_password'] = $password_result->strPassword;
                 }
             }
-            if ($service->guidLinkedServiceId == $guidServiceId && ! str_contains($service->strDescription, '@ct.co.za')) {
+            if ($service->guidLinkedServiceId == $guidServiceId && !str_contains($service->strDescription, '@ct.co.za')) {
                 // line service
                 $data['line_guidServiceId'] = $service->guidServiceId;
                 $data['line_guidProductId'] = $service->guidProductId;
             }
+
 
             if ($guidServiceId == $service->guidServiceId) {
                 $data['guidProductId'] = $service->guidProductId;
@@ -196,6 +197,7 @@ class Axxess extends ApiCurl
         return $data;
     }
 
+
     public function getProducts()
     {
         return $this->curl('getProducts');
@@ -204,42 +206,36 @@ class Axxess extends ApiCurl
     public function getServicesByClient($guidClientId)
     {
         $args['guidClientId'] = $guidClientId;
-
         return $this->curl('getServicesByClient', $args);
     }
 
     public function getServiceById($guidServiceId)
     {
         $args['guidServiceId'] = $guidServiceId;
-
         return $this->curl('getServiceById', $args);
     }
 
     public function getServiceSessionDetailsById($guidServiceId)
     {
         $args['guidServiceId'] = $guidServiceId;
-
         return $this->curl('getServiceSessionDetailsById', $args);
     }
 
     public function getPreviousMonthUsageById($guidServiceId)
     {
         $args['guidServiceId'] = $guidServiceId;
-
         return $this->curl('getPreviousMonthUsageById', $args);
     }
 
     public function getRadiusServiceBandwidth($guidServiceId)
     {
         $args['guidServiceId'] = $guidServiceId;
-
         return $this->curl('getRadiusServiceBandwidth', $args);
     }
 
     public function getServiceUsageDetailsById($guidServiceId)
     {
         $args['guidServiceId'] = $guidServiceId;
-
         return $this->curl('getServiceUsageDetailsById', $args);
     }
 
@@ -248,7 +244,6 @@ class Axxess extends ApiCurl
     {
         $args['guidClientId'] = $guidClientId;
         $args['guidProductId'] = $guidProductId;
-
         return $this->curl('createService', $args, 'put');
     }
 
@@ -256,7 +251,6 @@ class Axxess extends ApiCurl
     {
         $args['guidServiceId'] = $guidServiceId;
         $args['strDate'] = $strDate;
-
         return $this->curl('getServiceChangeHistory', $args);
     }
 
@@ -274,7 +268,6 @@ class Axxess extends ApiCurl
     public function getNetworkProviderProducts($guidNetworkProviderId)
     {
         $args['guidNetworkProviderId'] = $guidNetworkProviderId;
-
         return $this->curl('getNetworkProviderProducts', $args);
     }
 
@@ -283,7 +276,6 @@ class Axxess extends ApiCurl
         $args['strLatitude'] = $strLatitude;
         $args['strLongitude'] = $strLongitude;
         $args['strAddress'] = $strAddress;
-
         return $this->curl('checkFibreAvailability', $args);
     }
 
@@ -293,7 +285,6 @@ class Axxess extends ApiCurl
         $args['strLatitude'] = $strLatitude;
         $args['strLongitude'] = $strLongitude;
         $args['strAddress'] = $strAddress;
-
         return $this->curl('checkTelkomLteAvailability', $args, 'post');
     }
 
@@ -308,7 +299,7 @@ class Axxess extends ApiCurl
         $args['strHeight'] = $strHeight;
         $args['strICoOrdinate'] = $strICoOrdinate;
         $args['strJCoOrdinate'] = $strJCoOrdinate;
-
+       
         /*
         strBBox String Retrieved from map render
         strWidth String Retrieved from map render
@@ -325,7 +316,6 @@ class Axxess extends ApiCurl
         $args['guidClientId'] = $guidClientId;
         $args['guidProductId'] = $guidProductId;
         $args['guidNetworkProviderId'] = $guidNetworkProviderId;
-
         return $this->curl('createFibreComboService', $args);
     }
 
@@ -335,14 +325,13 @@ class Axxess extends ApiCurl
         $args['guidClientId'] = $guidClientId;
         $args['guidProductId'] = $guidProductId;
         $args['guidNetworkProviderId'] = $guidNetworkProviderId;
-
         return $this->curl('createFibreComboPreOrder', $args);
     }
 
     /// FUNCTIONS
     public function funcServiceChanges($guidServiceId, $guidProductId, $strDateStart = false, $intQuantity = 1)
     {
-        if (! $strDateStart) {
+        if (!$strDateStart) {
             $strDateStart = date('Y-m-d');
         } else {
             $strDateStart = date('Y-m-d', strtotime($strDateStart));
@@ -353,20 +342,19 @@ class Axxess extends ApiCurl
         $args['strDateStart'] = $strDateStart;
         $args['intQuantity'] = $intQuantity;
 
+
         return $this->curl('funcServiceChanges', $args, 'put');
     }
 
     public function funcSuspend($guidServiceId)
     {
         $args['guidServiceId'] = $guidServiceId;
-
         return $this->curl('funcSuspend', $args);
     }
 
     public function funcLiftSuspend($guidServiceId)
     {
         $args['guidServiceId'] = $guidServiceId;
-
         return $this->curl('funcLiftSuspend', $args);
     }
 
@@ -374,19 +362,18 @@ class Axxess extends ApiCurl
     {
         $args['guidServiceId'] = $guidServiceId;
         $args['strDate'] = $strDate;
-
         return $this->curl('funcExpireService', $args);
     }
 
     public function funcPasswordReset($guidServiceId, $password = null)
     {
         $args['guidServiceId'] = $guidServiceId;
-        if (! $password) {
+        if (!$password) {
             $args['strPassword'] = $password;
         }
-
         return $this->curl('funcPasswordReset', $args);
     }
+
 
     /// HELPERS
     public function setAxxessProviderProducts()
@@ -396,16 +383,16 @@ class Axxess extends ApiCurl
         foreach ($providers as $provider) {
             $products = $this->getNetworkProviderProducts($provider->guidNetworkProviderId)->arrNetworkProviderProducts;
 
-            if (! empty($products) && count($products) > 0) {
+            if (!empty($products) && count($products) > 0) {
                 foreach ($products as $product) {
-                    $exists = \DB::table($this->providers_table)->where('guidProductId', $product->guidProductId)->count();
-                    if (! $exists) {
+                    $exists =  \DB::table($this->providers_table)->where('guidProductId', $product->guidProductId)->count();
+                    if (!$exists) {
                         $data = [
                             'guidNetworkProviderId' => $provider->guidNetworkProviderId,
                             'provider' => $provider->strName,
                             'guidProductId' => $product->guidProductId,
                             'product' => $product->strName,
-                            'status' => 'Enabled',
+                            'status' => 'Enabled'
                         ];
                         \DB::table($this->providers_table)->insert($data);
                     } else {
@@ -426,21 +413,19 @@ class Axxess extends ApiCurl
 
     public function getProductFromName($product_name)
     {
-        $product_code = 'fibre_'.str_replace('/', '_', preg_replace("/[^0-9\/]/", '', $product_name));
-
+        $product_code = 'fibre_'.str_replace('/', '_', preg_replace("/[^0-9\/]/", "", $product_name));
         return \DB::table('crm_products')->where('code', $product_code)->get()->first();
     }
 
     public function getProductIdFromName($product_name)
     {
-        $product_code = 'fibre_'.str_replace('/', '_', preg_replace("/[^0-9\/]/", '', $product_name));
-
+        $product_code = 'fibre_'.str_replace('/', '_', preg_replace("/[^0-9\/]/", "", $product_name));
         return \DB::table('crm_products')->where('code', $product_code)->pluck('id')->first();
     }
 
     public function deleteComboService($guidClientId, $guidServiceId, $date = false)
     {
-        if (! $date) {
+        if (!$date) {
             $date = date('Y-m-t');
         }
 
@@ -449,7 +434,7 @@ class Axxess extends ApiCurl
         $guidLinkedServiceId = false;
         foreach ($services as $service) {
             if ($service->guidServiceId == $guidServiceId) {
-                if (! empty($service->guidLinkedServiceId)) {
+                if (!empty($service->guidLinkedServiceId)) {
                     $guidLinkedServiceId = $service->guidLinkedServiceId;
                     $service_ids[] = $service->guidServiceId;
                 }
@@ -471,7 +456,6 @@ class Axxess extends ApiCurl
                 $services_cancelled = false;
             }
         }
-
         return ['services_cancelled' => $services_cancelled, 'api_results' => $api_results];
     }
 
@@ -485,20 +469,20 @@ class Axxess extends ApiCurl
 
         $args->strName = $data->company;
         $args->strFirstName = $data->company;
-        $args->strLastName = $data->contact;
+        $args->strLastName =   $data->contact;
         $args->strEmail = $data->email;
         $args->strCell = $data->mobile;
         $args->strAddress = $data->address;
-        if (! empty($data->guidClientId)) {
+        if (!empty($data->guidClientId)) {
             $args->guidClientId = $data->guidClientId;
         }
-        if (! empty($input['strSuburb'])) {
+        if (!empty($input['strSuburb'])) {
             $args->strSuburb = $input['strSuburb'];
         }
-        if (! empty($input['strCity'])) {
+        if (!empty($input['strCity'])) {
             $args->strCity = $input['strCity'];
         }
-        if (! empty($input['intPostalCode'])) {
+        if (!empty($input['intPostalCode'])) {
             $args->intPostalCode = $input['intPostalCode'];
         }
         /*
@@ -518,7 +502,6 @@ class Axxess extends ApiCurl
         intPostalCode Integer Postal Code of the client
         */
         $args = (array) $args;
-
         return $args;
     }
 
@@ -531,7 +514,6 @@ class Axxess extends ApiCurl
     public function getTelkomLteProducts($guidProductId = '46e3f5fa-e425-11e9-93c7-0050568d6656')
     {
         $args['guidProductId'] = $guidProductId;
-
         return $this->curl('getTelkomLteProductsForPurchase', $args);
     }
 
@@ -590,14 +572,15 @@ class Axxess extends ApiCurl
     public function getMtnFixedLteProducts($guidProductId)
     {
         $args['guidProductId'] = $guidProductId;
-
         return $this->curl('getMtnFixedLtePurchaseProducts', $args);
     }
+
 
     public function getMtnFixedLtePurchaseOptions()
     {
         return $this->curl('getMtnFixedLtePurchaseOptions');
     }
+
 
     public function getMtnFixedLteSims()
     {
@@ -639,7 +622,7 @@ class Axxess extends ApiCurl
     }
 
     // MtnFixed END
-
+    
     // MTNFIXED 5G START
 
     public function checkMtn5GAvailability($strLatitude, $strLongitude, $strAddress, $strBBox, $strWidth, $strHeight, $strICoOrdinate, $strJCoOrdinate)
@@ -653,7 +636,7 @@ class Axxess extends ApiCurl
         $args['strHeight'] = $strHeight;
         $args['strICoOrdinate'] = $strICoOrdinate;
         $args['strJCoOrdinate'] = $strJCoOrdinate;
-
+       
         /*
         strBBox String Retrieved from map render
         strWidth String Retrieved from map render
@@ -663,18 +646,16 @@ class Axxess extends ApiCurl
         */
         return $this->curl('checkMtn5GAvailability', $args, 'post');
     }
-
+    
     public function getMtn5GPurchaseProducts()
     {
         return $this->curl('getMtn5GPurchaseProducts');
     }
-
     public function getMtn5GAvailableSims()
     {
         return $this->curl('getMtn5GAvailableSims');
     }
-
-    public function purchaseMtn5GService($guidClientId, $guidProductId, $guidServiceId, $strLatLon, $strAddress, $strSuburb, $strCity, $intPostalCode, $strProvince)
+    public function purchaseMtn5GService($guidClientId,$guidProductId,$guidServiceId,$strLatLon,$strStreet,$strSuburb,$strCity,$intPostalCode,$strProvince)
     {
         /*
             strSessionId String Session identifier
@@ -688,30 +669,27 @@ class Axxess extends ApiCurl
             intPostalCode Int Postal code of usage
             strProvince String Province of usage
         */
-
+        
         $args['guidClientId'] = $guidClientId;
         $args['guidProductId'] = $guidProductId;
         $args['guidServiceId'] = $guidServiceId;
         $args['strLatLon'] = $strLatLon;
-        $args['strAddress'] = $strAddress;
+        $args['strStreet'] = $strStreet;
         $args['strSuburb'] = $strSuburb;
         $args['strCity'] = $strCity;
         $args['intPostalCode'] = $intPostalCode;
         $args['strProvince'] = $strProvince;
-
+        
         return $this->curl('purchaseMtn5GService', $args, 'post');
     }
-
     public function getMtn5GServiceChangeProducts()
     {
         return $this->curl('getMtn5GServiceChangeProducts');
     }
-
     public function purchaseMtn5GServiceChange()
     {
         return $this->curl('purchaseMtn5GServiceChange');
     }
-
     public function getMtn5GBandwidth()
     {
         return $this->curl('getMtn5GBandwidth');
@@ -734,17 +712,18 @@ class Axxess extends ApiCurl
                             'hardware_guidProductId' => $telkom_products_product->guidProductId,
                             'name' => $lte_product->strName,
                             'guidProductId' => $lte_product->guidProductId,
-                            'network' => 'Telkom',
+                            'network' => 'Telkom'
                         ];
                         $guidProductIds[] = $lte_product->guidProductId;
-                        \DB::connection('default')->table('isp_data_lte_axxess_products')->updateOrInsert(['guidProductId' => $lte_product->guidProductId], $data);
+                        \DB::connection('default')->table('isp_data_lte_axxess_products')->updateOrInsert(['guidProductId'=>$lte_product->guidProductId], $data);
                     }
                 }
             }
         }
 
-        $mtn_products = $this->getMtnFixedLteHardware();
 
+        $mtn_products = $this->getMtnFixedLteHardware();
+      
         if ($mtn_products->intCode == 200 && $mtn_products->strStatus == 'OK') {
             foreach ($mtn_products->arrMtnFixedLtePurchaseOptions as $mtn_products_product) {
                 $lte = $this->getMtnFixedLteProducts($mtn_products_product->guidProductId);
@@ -756,17 +735,18 @@ class Axxess extends ApiCurl
                             'hardware_guidProductId' => $mtn_products_product->guidProductId,
                             'name' => $lte_product->strName,
                             'guidProductId' => $lte_product->guidProductId,
-                            'network' => 'MTN',
+                            'network' => 'MTN'
                         ];
                         $guidProductIds[] = $lte_product->guidProductId;
-                        \DB::connection('default')->table('isp_data_lte_axxess_products')->updateOrInsert(['guidProductId' => $lte_product->guidProductId], $data);
+                        \DB::connection('default')->table('isp_data_lte_axxess_products')->updateOrInsert(['guidProductId'=>$lte_product->guidProductId], $data);
                     }
                 }
             }
         }
-
+        
         $mtn_5g_products = $this->getMtn5GPurchaseProducts();
-
+        
+      
         if ($mtn_5g_products->intCode == 200 && $mtn_5g_products->strStatus == 'OK') {
             foreach ($mtn_5g_products->arrMtn5GPurchaseProducts as $mtn_5g_products_product) {
                 $data = [
@@ -778,34 +758,36 @@ class Axxess extends ApiCurl
                     'lte_5g' => 1,
                 ];
                 $guidProductIds[] = $mtn_5g_products_product->guidProductId;
-                \DB::connection('default')->table('isp_data_lte_axxess_products')->updateOrInsert(['guidProductId' => $mtn_5g_products_product->guidProductId], $data);
+                \DB::connection('default')->table('isp_data_lte_axxess_products')->updateOrInsert(['guidProductId'=>$mtn_5g_products_product->guidProductId], $data);
             }
-
+               
         }
-
-        \DB::connection('default')->table('isp_data_lte_axxess_products')->where('guidProductId', '>', '')->whereNotIn('guidProductId', $guidProductIds)->delete();
-
+            
+        
+       \DB::connection('default')->table('isp_data_lte_axxess_products')->where('guidProductId','>','')->whereNotIn('guidProductId', $guidProductIds)->delete();
+       
     }
 
     /// CURL
     private function login()
     {
-        $args['strUserName'] = $this->username;
-        $args['strPassword'] = $this->password;
+        $args["strUserName"] = $this->username;
+        $args["strPassword"] = $this->password;
 
-        $response = $this->curl('getSession', $args);
+        $response = $this->curl("getSession", $args);
 
         if ($response->intCode != 200) {
             return false;
         }
-
+       
         $this->strSessionId = $response->strSessionId;
     }
 
+
     private function checkSession()
     {
-        if (! empty($this->strSessionId)) {
-            $response = $this->curl('checkSession', $args);
+        if (!empty($this->strSessionId)) {
+            $response = $this->curl("checkSession", $args);
             if ($this->strSessionId != $response->strSessionId) {
                 $this->login();
             }
@@ -819,18 +801,18 @@ class Axxess extends ApiCurl
         if ($endpoint != 'getSession' && $endpoint != 'checkSession') {
             $this->checkSession();
         }
-
+      
         $endpoint_args = $args;
         $args = [];
         if ($endpoint != 'getSession') {
-            $args['strSessionId'] = $this->strSessionId;
-            $session['strSessionId'] = $this->strSessionId;
+            $args["strSessionId"] = $this->strSessionId;
+            $session["strSessionId"] = $this->strSessionId;
         }
         foreach ($endpoint_args as $k => $v) {
             $args[$k] = $v;
         }
 
-        $endpoint_url = $this->service_url.'calls/rsapi/'.$endpoint.'.json';
+        $endpoint_url = $this->service_url . 'calls/rsapi/' . $endpoint . '.json';
 
         return ['endpoint_url' => $endpoint_url, 'args' => $args];
     }
@@ -838,9 +820,9 @@ class Axxess extends ApiCurl
     protected function setCurlAuth($api_request)
     {
         $api_request->authenticateWith($this->authuser, $this->authpass);
-
         return $api_request;
     }
+
 
     protected function curl($endpoint, $args = [], $method = 'get')
     {
@@ -858,16 +840,17 @@ class Axxess extends ApiCurl
                 exception_log($args);
             }
 
+
             if ($method == 'post') {
                 // $url = $this->buildUrl($url, $args);
                 $api_request = ApiRequest::post($url);
                 $api_request = $this->setCurlAuth($api_request);
                 //$api_request->sendsJson();
                 $api_request->method(\Httpful\Http::POST);
-                // if ($endpoint == 'purchaseTelkomLteService' || $endpoint == 'purchaseMtnFixedLteService') {
-                $api_request->sendsType(\Httpful\Mime::FORM);
-                // }
-
+               // if ($endpoint == 'purchaseTelkomLteService' || $endpoint == 'purchaseMtnFixedLteService') {
+                    $api_request->sendsType(\Httpful\Mime::FORM);
+               // }
+               
                 $response = $api_request->body($args)
                     ->send();
             }
@@ -902,15 +885,13 @@ class Axxess extends ApiCurl
                 exception_log($response);
             }
 
-            if (! empty($response->body)) {
+            if (!empty($response->body)) {
                 return $response->body;
             } else {
                 return (object) ['intCode' => $response->code];
             }
-
             return $response;
-        } catch (\Throwable $ex) {
-            exception_log($ex);
+        } catch (\Throwable $ex) {  exception_log($ex);
             if ($this->debug == 'output') {
             }
 

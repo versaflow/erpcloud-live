@@ -53,11 +53,10 @@ function get_afriphone_faq()
 
     $articles = [];
     foreach ($json['id'] as $i => $id) {
-        if (! $json['itemType'][$i]) {
+        if (!$json['itemType'][$i]) {
             $articles[] = ['title' => $json['title'][$i], 'text' => $json['subtitle'][$i]];
         }
     }
-
     //dd($articles);
     return $articles;
 }

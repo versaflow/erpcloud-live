@@ -16,21 +16,21 @@ class PanaceaApi
 
     public $performActionsImmediately = true;
 
-    public $queuedActions = [];
+    public $queuedActions = array();
 
     public function __construct()
     {
         $ver = explode('.', phpversion());
         if (($ver[0] >= 5)) {
             $this->debug('Version OK '.implode('.', $ver));
-            if (! function_exists('json_decode') || ! function_exists('json_encode')) {
+            if (!function_exists('json_decode') || !function_exists('json_encode')) {
                 $this->debug('You need the json_encode and json_decode functions to use this Class, JSON is available in PHP 5.2.0 and up for alternatives please see http://json.org');
                 $this->debug('Your PHP version is '.implode('.', $ver).' '.__FILE__);
-                exit();
+                die();
             }
         } else {
             $this->debug('You need at least PHP 5 to use this Class '.__FILE__);
-            exit();
+            die();
         }
     }
 
@@ -47,7 +47,7 @@ class PanaceaApi
     public function call_api($url)
     {
         if (function_exists('curl_init')) {
-            if ($this->curl === false) {
+            if (false === $this->curl) {
                 $this->curl = curl_init();
             } else {
                 curl_close($this->curl);
@@ -57,7 +57,7 @@ class PanaceaApi
             curl_setopt($this->curl, CURLOPT_URL, $url);
             curl_setopt($this->curl, CURLOPT_RETURNTRANSFER, 1);
             curl_setopt($this->curl, CURLINFO_HEADER_OUT, true);
-            curl_setopt($this->curl, CURLOPT_HTTPHEADER, ['Connection: keep-alive']);
+            curl_setopt($this->curl, CURLOPT_HTTPHEADER, array('Connection: keep-alive'));
 
             $result = curl_exec($this->curl);
 
@@ -71,7 +71,7 @@ class PanaceaApi
             $this->debug($response_headers, false);
             $this->debug($result);
 
-            if ($result !== false) {
+            if (false !== $result) {
                 return json_decode($result, true);
             }
 
@@ -88,7 +88,7 @@ class PanaceaApi
         if ($this->performActionsImmediately) {
             $url = $this->url.'?action='.urlencode($method->getName());
             if ($authenticate) {
-                if (! is_null($this->password) && ! is_null($this->username)) {
+                if (!is_null($this->password) && !is_null($this->username)) {
                     $url .= '&username='.urlencode($this->username);
                     $url .= '&password='.urlencode($this->password);
                 } else {
@@ -98,8 +98,8 @@ class PanaceaApi
                 }
             }
             $parameters = $method->getParameters();
-            for ($i = 0; $i < count($params); $i++) {
-                if (! is_null($params[$i])) {
+            for ($i = 0; $i < count($params); ++$i) {
+                if (!is_null($params[$i])) {
                     $url .= '&'.urlencode($parameters[$i]->getName()).'='.urlencode($params[$i]);
                 }
             }
@@ -111,13 +111,13 @@ class PanaceaApi
 
                 return false;
             }
-            $action = [
+            $action = array(
                 'command' => $method->getName(),
-                'params' => [],
-            ];
+                'params' => array(),
+            );
 
             $parameters = $method->getParameters();
-            for ($i = 0; $i < count($params); $i++) {
+            for ($i = 0; $i < count($params); ++$i) {
                 $action['params'][$parameters[$i]->getName()] = $params[$i];
             }
 
@@ -130,7 +130,7 @@ class PanaceaApi
     public function execute_multiple()
     {
         if (function_exists('curl_init')) {
-            if ($this->curl === false) {
+            if (false === $this->curl) {
                 $this->curl = curl_init();
             } else {
                 curl_close($this->curl);
@@ -147,7 +147,7 @@ class PanaceaApi
             curl_setopt($this->curl, CURLINFO_HEADER_OUT, true);
             curl_setopt($this->curl, CURLOPT_POST, 1);
             curl_setopt($this->curl, CURLOPT_POSTFIELDS, 'data='.urlencode(json_encode($this->queuedActions)));
-            curl_setopt($this->curl, CURLOPT_HTTPHEADER, ['Connection: keep-alive']);
+            curl_setopt($this->curl, CURLOPT_HTTPHEADER, array('Connection: keep-alive'));
 
             $result = curl_exec($this->curl);
 
@@ -162,7 +162,7 @@ class PanaceaApi
             $this->debug($response_headers, false);
             $this->debug($result);
 
-            if ($result !== false) {
+            if (false !== $result) {
                 return json_decode($result, true);
             }
 
@@ -319,20 +319,20 @@ class PanaceaApi
     {
         /* This function has special requirements in terms of streaming raw data, hence it calls the API directly */
         if (function_exists('curl_init')) {
-            if ($this->curl === false) {
+            if (false === $this->curl) {
                 $this->curl = curl_init();
             } else {
                 curl_close($this->curl);
                 $this->curl = curl_init();
             }
 
-            if (! file_exists($file)) {
+            if (!file_exists($file)) {
                 $this->debug("File {$file} does not exist");
 
                 return false;
             }
 
-            if ($file_type != 'zip') {
+            if ('zip' != $file_type) {
                 $data = 'data='.urlencode(file_get_contents($file));
             } else {
                 $data = 'data='.urlencode(base64_encode(file_get_contents($file)));
@@ -346,7 +346,7 @@ class PanaceaApi
             $url .= '&filter='.($filter ? 'true' : 'false');
             $url .= '&throughput='.$throughput;
 
-            if (! is_null($start_time)) {
+            if (!is_null($start_time)) {
                 $url .= '&start_time='.urlencode($start_time);
             }
 
@@ -354,7 +354,7 @@ class PanaceaApi
             curl_setopt($this->curl, CURLOPT_URL, $url);
             curl_setopt($this->curl, CURLOPT_RETURNTRANSFER, 1);
             curl_setopt($this->curl, CURLINFO_HEADER_OUT, true);
-            curl_setopt($this->curl, CURLOPT_HTTPHEADER, ['Connection: keep-alive']);
+            curl_setopt($this->curl, CURLOPT_HTTPHEADER, array('Connection: keep-alive'));
             curl_setopt($this->curl, CURLOPT_POST, 1);
             curl_setopt($this->curl, CURLOPT_POSTFIELDS, $data);
 
@@ -370,7 +370,7 @@ class PanaceaApi
             $this->debug($response_headers, false);
             $this->debug($result);
 
-            if ($result !== false) {
+            if (false !== $result) {
                 return json_decode($result, true);
             }
 
@@ -392,7 +392,7 @@ class PanaceaApi
                 $this->error = $result['message'];
             }
         } else {
-            if ($result === true) {
+            if (true === $result) {
                 $this->error = 'Command queued';
 
                 return true;

@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
     use Notifiable;
-
+    
     protected $table = 'erp_users';
+
 
     protected $fillable = [
         'name', 'email', 'password',
@@ -24,6 +25,7 @@ class User extends Authenticatable
         'password', 'remember_token',
     ];
 
+
     /**
      * The attributes that are mass assignable.
      *
@@ -33,4 +35,5 @@ class User extends Authenticatable
     {
         set_db_connection();
     }
+
 }

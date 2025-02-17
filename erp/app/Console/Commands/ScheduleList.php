@@ -8,7 +8,6 @@ use Illuminate\Console\Scheduling\Schedule;
 class ScheduleList extends Command
 {
     protected $signature = 'schedule:list';
-
     protected $description = 'List when scheduled commands are executed.';
 
     /**
@@ -18,6 +17,8 @@ class ScheduleList extends Command
 
     /**
      * ScheduleList constructor.
+     *
+     * @param Schedule $schedule
      */
     public function __construct(Schedule $schedule)
     {
@@ -50,6 +51,7 @@ class ScheduleList extends Command
     /**
      * If it's an artisan command, strip off the PHP
      *
+     * @param $command
      * @return string
      */
     protected static function fixupCommand($command)

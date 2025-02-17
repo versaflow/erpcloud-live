@@ -5,54 +5,38 @@ use App\Library\EPPTCPTransport;
 class Zacr extends EPPTCPTransport
 {
     protected $debug;
-
     protected $debug_file;
-
     protected $session_uuid;
-
     protected $production;
-
     protected $nameservers;
-
     protected $alt_nameservers;
-
     protected $registrar_id;
-
     protected $registrar_password;
-
     protected $registrar_prefix;
-
     protected $registrar_address_line_1;
-
     protected $registrar_address_line_2;
-
     protected $suburb;
-
     protected $province;
-
     protected $registrar_phone;
-
     protected $server;
-
     protected $port;
-
     protected $loggedin;
 
     public function __construct($tld = '', $production = true)
     {
         $this->production = $production;
         $this->debug = false;
-        // epp sld endpoint update
-        if (! in_array($tld, ['co.za', 'org.za', 'net.za', 'web.za'])) {
+ // epp sld endpoint update
+        if(!in_array($tld,[ 'co.za', 'org.za','net.za', 'web.za'])){
             echo 'Invalid TLD';
             exit;
         }
-
+        
         $this->registrar_id = 'cloudtel6r2k8g';
         $this->registrar_password = '79f9a51292';
         $this->server = 'epp.zarc.net.za';
         $this->port = 700;
-
+        
         /*
         if ('co.za' == $tld) {
             //Cloud Telecoms: EPP LIVE Account Details for co.za
@@ -83,7 +67,7 @@ class Zacr extends EPPTCPTransport
             exit;
         }
         */
-        if (! $production) {
+        if (!$production) {
             $this->registrar_id = 'cloudtel6r2k8g';
             $this->registrar_password = 'c4d3dd513f';
             $this->server = 'regphase3.dnservices.co.za';
@@ -99,20 +83,20 @@ class Zacr extends EPPTCPTransport
         $this->debug_file = '/home/erp/storage/logs/debug.log';
         $this->debug = false;
 
-        $this->nameservers = [
+        $this->nameservers = array(
             'host1.cloudtools.co.za',
             'host2.cloudtools.co.za',
-        ];
+        );
 
         /*
         There are several global nameservers that provide authority; please use ns1.sedoparking.com and ns2.sedoparking.com as nameservers.
         */
-        $this->alt_nameservers = [
+        $this->alt_nameservers = array(
             'ns1.sedoparking.com',
             'ns2.sedoparking.com',
-        ];
+        );
 
-        if (! $this->production) {
+        if (!$this->production) {
             $this->nameservers = $this->alt_nameservers;
         }
 
@@ -175,8 +159,8 @@ class Zacr extends EPPTCPTransport
         //dd($xml_response);
         $xmlData = $this->xmlstr_to_array($xml_response);
 
-        if (isset($xmlData['epp:response']['epp:result']) && $xmlData['epp:response']['epp:result']['@attributes']['code'] == '1000' ||
-        $xmlData['epp:response']['epp:result']['@attributes']['code'] == '2202') {
+        if (isset($xmlData['epp:response']['epp:result']) && '1000' == $xmlData['epp:response']['epp:result']['@attributes']['code'] ||
+        '2202' == $xmlData['epp:response']['epp:result']['@attributes']['code']) {
             $this->loggedin = true;
         } else {
             $this->loggedin = false;
@@ -227,7 +211,7 @@ class Zacr extends EPPTCPTransport
         2. The check command will indicate that a domain name is available for registration if the requesting registrar has reserved the name.
         */
         if ($domain) {
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
 
@@ -242,9 +226,9 @@ class Zacr extends EPPTCPTransport
             </epp>';
             $result = $this->process($xml);
             //dd($result);
-            if ($result['code'] == '1000') {
+            if ('1000' == $result['code']) {
                 $response['available'] = $result['data']['domain:chkData']['domain:cd']['domain:name']['@attributes']['avail'];
-                if ($response['available'] == 0) {
+                if (0 == $response['available']) {
                     $response['reason'] = $result['data']['domain:chkData']['domain:cd']['domain:reason'];
                 }
                 $result['response'] = $response;
@@ -280,13 +264,13 @@ class Zacr extends EPPTCPTransport
         if ($domain) {
             $customer_check = $this->contact_check($customer->id);
             //dd($this->registrar_prefix.$customer->id);
-            if ($customer_check['response']['available'] == 0) {
+            if (0 == $customer_check['response']['available']) {
                 $account_id = $this->registrar_prefix.$customer->id;
             } else {
                 $account_id = $this->contact_create($customer);
             }
 
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
 
@@ -320,7 +304,7 @@ class Zacr extends EPPTCPTransport
             add before  </epp:command> for premium domain
             charge amount retrieve from domain check
             // https://registry.net.za/content2.php?wiki=1&contentid=155&title=Price+Charge+Extension
-
+            
             <epp:extension>
             <charge:agreement xmlns:charge="http://www.unitedtld.com/epp/charge-1.0">
             <charge:set>
@@ -332,7 +316,7 @@ class Zacr extends EPPTCPTransport
             </epp:extension>
             */
             $result = $this->process($xml);
-            if ($result['code'] == '1000') {
+            if ('1000' == $result['code']) {
                 $result['response'] = true;
             } else {
                 $result['response'] = false;
@@ -357,7 +341,7 @@ class Zacr extends EPPTCPTransport
         */
 
         if ($domain) {
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
 
@@ -383,7 +367,7 @@ class Zacr extends EPPTCPTransport
 
             if ($return_expiry) {
                 $date = Carbon\Carbon::parse($result['data']['domain:infData']['domain:exDate'])->format('Y-m-d');
-
+               
                 return $date;
             } else {
                 return $result;
@@ -406,13 +390,13 @@ class Zacr extends EPPTCPTransport
         if ($domain) {
             //$result = $this->domain_cancel_action($domain,'PendingUpdate');
             //dd($result);
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
-            $customers_to_delete = [];
+            $customers_to_delete = array();
             $domain_info = $this->domain_info($domain);
             $response = $this->contact_create($customer);
-            if ($response['response']['created'] == false) {
+            if (false == $response['response']['created']) {
                 $response = $this->contact_update($customer, 1);
                 $new_contact_id = $this->registrar_prefix.$customer->id;
             } else {
@@ -428,14 +412,14 @@ class Zacr extends EPPTCPTransport
     {
         if ($domain) {
             $customer_check = $this->contact_check($customer->id);
-            if ($customer_check['response']['available'] == 0) {
+            if (0 == $customer_check['response']['available']) {
                 $new_contact_id = $this->registrar_prefix.$customer->id;
             } else {
                 $new_contact = $this->contact_create($customer);
                 $new_contact_id = $this->registrar_prefix.$customer->id;
             }
 
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
 
@@ -450,6 +434,8 @@ class Zacr extends EPPTCPTransport
                 <domain:contact type="billing">'.$this->registrar_prefix.$customer->id.'</domain:contact></domain:add>
             <domain:rem></domain:rem>';
 
+          
+
             $xml .= '</domain:update>
             </update>
             </command>
@@ -460,6 +446,8 @@ class Zacr extends EPPTCPTransport
             return $result;
         }
     }
+    
+    
 
     public function domain_update_registrant($domain, $customer)
     {
@@ -476,13 +464,13 @@ class Zacr extends EPPTCPTransport
         if ($domain) {
             //$result = $this->domain_cancel_action($domain,'PendingUpdate');
             //dd($result);
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
-            $customers_to_delete = [];
+            $customers_to_delete = array();
             $domain_info = $this->domain_info($domain);
             $response = $this->contact_create($customer);
-            if ($response['response']['created'] == false) {
+            if (false == $response['response']['created']) {
                 $response = $this->contact_update($customer, 1);
                 $new_contact_id = $this->registrar_prefix.$customer->id;
             } else {
@@ -493,19 +481,19 @@ class Zacr extends EPPTCPTransport
             return $result;
         }
     }
-
+    
     public function domain_update_registrant_info($domain, $customer)
     {
         if ($domain) {
             $customer_check = $this->contact_check($customer->id);
-            if ($customer_check['response']['available'] == 0) {
+            if (0 == $customer_check['response']['available']) {
                 $new_contact_id = $this->registrar_prefix.$customer->id;
             } else {
                 $new_contact = $this->contact_create($customer);
                 $new_contact_id = $this->registrar_prefix.$customer->id;
             }
 
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
 
@@ -550,7 +538,7 @@ class Zacr extends EPPTCPTransport
             foreach ($domain_info['data']['domain:infData']['domain:ns']['domain:hostAttr'] as $attr) {
                 $domain_remove .= '<domain:hostAttr>';
                 foreach ($attr as $key => $val) {
-                    if ($key == 'domain:hostName') {
+                    if ('domain:hostName' == $key) {
                         $domain_remove .= '<'.$key.'>'.$val.'</'.$key.'>';
                     }
                 }
@@ -603,7 +591,7 @@ class Zacr extends EPPTCPTransport
             foreach ($domain_info['data']['domain:infData']['domain:ns']['domain:hostAttr'] as $attr) {
                 $domain_remove .= '<domain:hostAttr>';
                 foreach ($attr as $key => $val) {
-                    if ($key == 'domain:hostName') {
+                    if ('domain:hostName' == $key) {
                         $domain_remove .= '<'.$key.'>'.$val.'</'.$key.'>';
                     }
                 }
@@ -623,7 +611,7 @@ class Zacr extends EPPTCPTransport
         if (count($nameservers) == 0) {
             $domain_add .= '<domain:ns>
             <domain:hostAttr>
-            <domain:hostName>localhost</domain:hostName>
+            <domain:hostName>host1.cloudtools.co.za</domain:hostName>
             </domain:hostAttr>
             <domain:hostAttr>
             <domain:hostName>host2.cloudtools.co.za</domain:hostName>
@@ -651,6 +639,7 @@ class Zacr extends EPPTCPTransport
         return $result;
     }
 
+
     public function nameserver_update_glue($domain)
     {
         $domain_info = $this->domain_info($domain);
@@ -663,7 +652,7 @@ class Zacr extends EPPTCPTransport
             foreach ($domain_info['data']['domain:infData']['domain:ns']['domain:hostAttr'] as $attr) {
                 $domain_remove .= '<domain:hostAttr>';
                 foreach ($attr as $key => $val) {
-                    if (! is_array($val)) {
+                    if (!is_array($val)) {
                         $domain_remove .= '<'.$key.'>'.$val.'</'.$key.'>';
                     } else {
                         $domain_remove .= '<'.$key.' ip="v4">'.$val['@content'].'</'.$key.'>';
@@ -678,7 +667,7 @@ class Zacr extends EPPTCPTransport
 
         // $domain_add .= '<domain:ns>
         // <domain:hostAttr>
-        // <domain:hostName>localhost</domain:hostName>
+        // <domain:hostName>host1.cloudtools.co.za</domain:hostName>
         // </domain:hostAttr>
         // <domain:hostAttr>
         // <domain:hostName>host2.cloudtools.co.za</domain:hostName>
@@ -687,7 +676,7 @@ class Zacr extends EPPTCPTransport
 
         $domain_add .= '<domain:ns>
         <domain:hostAttr>
-        <domain:hostName>localhost</domain:hostName>
+        <domain:hostName>host1.cloudtools.co.za</domain:hostName>
         <domain:hostAddr ip="v4">156.0.96.71</domain:hostAddr>
         </domain:hostAttr>
         <domain:hostAttr>
@@ -696,7 +685,6 @@ class Zacr extends EPPTCPTransport
         </domain:hostAttr>
         </domain:ns>';
         $result = $this->domain_update($domain, $domain_add, $domain_remove);
-
         return $result;
     }
 
@@ -733,7 +721,7 @@ class Zacr extends EPPTCPTransport
     public function domain_autorenew($domain, $status = 'true')
     {
         if ($domain) {
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
 
@@ -755,7 +743,7 @@ class Zacr extends EPPTCPTransport
 
             $result = $this->process($xml);
 
-            if ($result['code'] == '1001' || $result['code'] == '2304') {
+            if ('1001' == $result['code'] || '2304' == $result['code']) {
                 $result['response'] = true;
             } else {
                 $result['response'] = false;
@@ -790,7 +778,7 @@ class Zacr extends EPPTCPTransport
         12. All update requests will notify the associated domain name Registrant via email.
         */
         if ($domain) {
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
 
@@ -815,7 +803,7 @@ class Zacr extends EPPTCPTransport
             // var_dump($xml);
             $result = $this->process($xml);
             //dd($result);
-            if ($result['code'] == '1001' || $result['code'] == '2304') {
+            if ('1001' == $result['code'] || '2304' == $result['code']) {
                 $result['response'] = true;
             } else {
                 $result['response'] = false;
@@ -838,7 +826,7 @@ class Zacr extends EPPTCPTransport
         */
 
         if ($domain && $action_to_cancel) {
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
 
@@ -861,7 +849,7 @@ class Zacr extends EPPTCPTransport
 
             $result = $this->process($xml);
 
-            if ($result['code'] == '1000') {
+            if ('1000' == $result['code']) {
                 $result['response']['updated'] = true;
             } else {
                 $result['response']['updated'] = false;
@@ -903,7 +891,7 @@ class Zacr extends EPPTCPTransport
         */
 
         if ($domain) {
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
 
@@ -920,7 +908,7 @@ class Zacr extends EPPTCPTransport
 
             $result = $this->process($xml);
 
-            if ($result['code'] == '1000') {
+            if ('1000' == $result['code']) {
                 $result['response']['updated'] = true;
             } else {
                 $result['response']['updated'] = false;
@@ -940,7 +928,7 @@ class Zacr extends EPPTCPTransport
         5. If the resulting expiry date is 10 years from the date of successful transfer, the expiry date will not be increased and the Gaining Registrar's account will not be charged.
         */
         if ($domain) {
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
             $xml = '<epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
@@ -967,7 +955,7 @@ class Zacr extends EPPTCPTransport
         3. The Poll Message sent to the Registrar of Record will include a status of "clientRejected" in the transfer data status element.
         */
         if ($domain) {
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
             $xml = '<epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
@@ -996,7 +984,7 @@ class Zacr extends EPPTCPTransport
         5. If the resulting expiry date is 10 years from the date of successful transfer, the expiry date will not be increased and the Gaining Registrar's account will not be charged.
         */
         if ($domain) {
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
             $xml = '<epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
@@ -1030,7 +1018,7 @@ class Zacr extends EPPTCPTransport
         */
 
         if ($domain) {
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
 
@@ -1046,7 +1034,7 @@ class Zacr extends EPPTCPTransport
 
             $result = $this->process($xml);
 
-            if ($result['code'] == '1001' || $result['code'] == '2300') {
+            if ('1001' == $result['code'] || '2300' == $result['code']) {
                 $result['response'] = true;
             } else {
                 $result['response'] = false;
@@ -1058,7 +1046,7 @@ class Zacr extends EPPTCPTransport
 
     public function domain_renew($domain)
     {
-
+      
         /*
         1000: Successful Renew
         2105: Cannot Renew Domain Past 10 years
@@ -1078,7 +1066,7 @@ class Zacr extends EPPTCPTransport
         */
 
         if ($domain) {
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
             $session_uuid = $this->session_uuid;
@@ -1099,11 +1087,11 @@ class Zacr extends EPPTCPTransport
 
             $result = $this->process($xml);
             $success = false;
-            if ($result['code'] == '1000' || $result['code'] == '2201') {
+            if ('1000' == $result['code'] || '2201' == $result['code']) {
                 $success = true;
-            }
+            } 
 
-            return ['success' => $success, 'result' => $result];
+            return ['success'=>$success,'result'=>$result];
         }
     }
 
@@ -1125,7 +1113,7 @@ class Zacr extends EPPTCPTransport
         */
 
         if ($domain) {
-            if (! $this->production && strpos($domain, '.test.dnservices.co.za') === false) {
+            if (!$this->production && false === strpos($domain, '.test.dnservices.co.za')) {
                 $domain .= '.test.dnservices.co.za';
             }
 
@@ -1141,7 +1129,7 @@ class Zacr extends EPPTCPTransport
 
             $result = $this->process($xml);
 
-            if ($result['code'] == '1001' || $result['code'] == '2201') {
+            if ('1001' == $result['code'] || '2201' == $result['code']) {
                 $result['response'] = true;
             } else {
                 $result['response'] = false;
@@ -1181,9 +1169,9 @@ class Zacr extends EPPTCPTransport
 
             $result = $this->process($xml);
 
-            if ($result['code'] == '1000') {
+            if ('1000' == $result['code']) {
                 $response['available'] = $result['data']['contact:chkData']['contact:cd']['contact:id']['@attributes']['avail'];
-                if ($response['available'] == 0) {
+                if (0 == $response['available']) {
                     $response['reason'] = $result['data']['contact:chkData']['contact:cd']['contact:reason'];
                 }
                 $result['response'] = $response;
@@ -1216,10 +1204,10 @@ class Zacr extends EPPTCPTransport
         */
 
         if ($customer) {
-            if (! $contact_id) {
+            if (!$contact_id) {
                 $contact_id = $this->registrar_prefix.$customer->id;
             }
-            if (! $email) {
+            if (!$email) {
                 $email = $customer->email;
             }
             $customer->contact = str_replace('&', '', $customer->contact);
@@ -1235,9 +1223,9 @@ class Zacr extends EPPTCPTransport
             <contact:name>'.$customer->contact.'</contact:name>
             <contact:org>'.$customer->company.'</contact:org>
             <contact:addr>';
-            $address = (! empty($customer->address)) ? $customer->address : $this->registrar_address_line_1;
-            $suburb = (! empty($customer->suburb)) ? $customer->suburb : $this->registrar_suburb;
-            $province = (! empty($customer->province)) ? $customer->province : $this->registrar_province;
+            $address = (!empty($customer->address)) ? $customer->address : $this->registrar_address_line_1;
+            $suburb = (!empty($customer->suburb)) ? $customer->suburb : $this->registrar_suburb;
+            $province = (!empty($customer->province)) ? $customer->province : $this->registrar_province;
             $xml .= '<contact:street>'.$address.'</contact:street>';
             $xml .= '<contact:city>'.$suburb.'</contact:city>';
             $xml .= '<contact:sp>'.$province.'</contact:sp>';
@@ -1257,7 +1245,7 @@ class Zacr extends EPPTCPTransport
 
             $result = $this->process($xml);
 
-            if ($result['code'] == '1000') {
+            if ('1000' == $result['code']) {
                 $result['response']['contactid'] = $this->registrar_prefix.$customer->id;
                 $result['response'] = true;
             } else {
@@ -1338,13 +1326,13 @@ class Zacr extends EPPTCPTransport
             <contact:name>'.clean($customer->contact).'</contact:name>
             <contact:org>'.clean($customer->company).'</contact:org>
             <contact:addr>';
-            if (! $customer->address) {
+            if (!$customer->address) {
                 $customer->address = clean($this->registrar_address_line_1);
             }
-            if (! $customer->city) {
+            if (!$customer->city) {
                 $customer->city = clean($this->registrar_suburb);
             }
-            if (! $customer->province) {
+            if (!$customer->province) {
                 $customer->province = clean($this->registrar_province);
             }
             $xml .= '<contact:street>'.clean($customer->address).'</contact:street>';
@@ -1364,7 +1352,7 @@ class Zacr extends EPPTCPTransport
             </epp>';
             $result = $this->process($xml);
 
-            if ($result['code'] == '1000' || $result['code'] == '1001') {
+            if ('1000' == $result['code'] || '1001' == $result['code']) {
                 $result['response']['updated'] = true;
             } else {
                 $result['response']['updated'] = false;
@@ -1389,7 +1377,7 @@ class Zacr extends EPPTCPTransport
         */
 
         if ($account_id) {
-            if (! $account_id_complete) {
+            if (!$account_id_complete) {
                 $account_id = $this->registrar_prefix.$account_id;
             }
             $xml = '<epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
@@ -1404,7 +1392,7 @@ class Zacr extends EPPTCPTransport
 
             $result = $this->process($xml);
 
-            if ($result['code'] == '1000') {
+            if ('1000' == $result['code']) {
                 $result['response']['deleted'] = true;
             } else {
                 $result['response']['deleted'] = false;
@@ -1417,7 +1405,7 @@ class Zacr extends EPPTCPTransport
     public function poll_check()
     {
         /*https://www.registry.net.za/content.php?wiki=1&contentid=17&title=Polling%20and%20Acking%20Messages#transfer_request*/
-        $xml =
+        $xml = 
         '<epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
             <command>
                 <poll op="req"/>
@@ -1426,7 +1414,7 @@ class Zacr extends EPPTCPTransport
 
         $result = $this->process($xml);
 
-        if ($result['code'] == '1301') {
+        if ('1301' == $result['code']) {
             $result['response']['poll_contains_message'] = true;
         } else {
             $result['response']['poll_contains_message'] = false;
@@ -1445,7 +1433,7 @@ class Zacr extends EPPTCPTransport
         </epp>';
 
         $result = $this->process($xml);
-        if ($result['code'] == '1000') {
+        if ('1000' == $result['code']) {
             $result['response'] = true;
         } else {
             $result['response'] = false;
@@ -1520,7 +1508,7 @@ class Zacr extends EPPTCPTransport
 
     public function log_file($result, $append = true)
     {
-        if (! is_string($result)) {
+        if (!is_string($result)) {
             ob_start();
             var_dump($result);
             $result = ob_get_clean();
@@ -1545,7 +1533,7 @@ class Zacr extends EPPTCPTransport
             $x .= str_pad(base_convert(mt_rand(0, pow(2, $maxbits)), 10, 2), $maxbits, '0', STR_PAD_LEFT);
         }
 
-        $a = [];
+        $a = array();
         $a['time_low_part'] = substr($x, 0, 32);
         $a['time_mid'] = substr($x, 32, 16);
         $a['time_hi_and_version'] = substr($x, 48, 16);
@@ -1577,7 +1565,7 @@ class Zacr extends EPPTCPTransport
 
     private function xmlstr_to_array($xmlstr)
     {
-        $doc = new DOMDocument;
+        $doc = new DOMDocument();
         $doc->loadXML($xmlstr);
         $root = $doc->documentElement;
         $output = $this->domnode_to_array($root);
@@ -1588,50 +1576,50 @@ class Zacr extends EPPTCPTransport
 
     private function domnode_to_array($node)
     {
-        $output = [];
+        $output = array();
 
         switch ($node->nodeType) {
             case XML_CDATA_SECTION_NODE:
             case XML_TEXT_NODE:
-                $output = trim($node->textContent);
-                break;
+            $output = trim($node->textContent);
+            break;
             case XML_ELEMENT_NODE:
-                for ($i = 0, $m = $node->childNodes->length; $i < $m; $i++) {
-                    $child = $node->childNodes->item($i);
-                    $v = $this->domnode_to_array($child);
-                    if (isset($child->tagName)) {
-                        $t = $child->tagName;
-                        if (! isset($output[$t])) {
-                            $output[$t] = [];
-                        }
-                        $output[$t][] = $v;
-                    } elseif ($v || $v === '0') {
-                        $output = (string) $v;
+            for ($i = 0, $m = $node->childNodes->length; $i < $m; ++$i) {
+                $child = $node->childNodes->item($i);
+                $v = $this->domnode_to_array($child);
+                if (isset($child->tagName)) {
+                    $t = $child->tagName;
+                    if (!isset($output[$t])) {
+                        $output[$t] = array();
                     }
+                    $output[$t][] = $v;
+                } elseif ($v || '0' === $v) {
+                    $output = (string) $v;
                 }
+            }
 
-                if ($node->attributes->length && ! is_array($output)) {
-                    $output = ['@content' => $output];
-                }
+            if ($node->attributes->length && !is_array($output)) {
+                $output = array('@content' => $output);
+            }
 
-                if (is_array($output)) {
-                    if ($node->attributes->length) {
-                        $a = [];
-                        foreach ($node->attributes as $attrName => $attrNode) {
-                            $a[$attrName] = (string) $attrNode->value;
-                        }
-
-                        $output['@attributes'] = $a;
+            if (is_array($output)) {
+                if ($node->attributes->length) {
+                    $a = array();
+                    foreach ($node->attributes as $attrName => $attrNode) {
+                        $a[$attrName] = (string) $attrNode->value;
                     }
 
-                    foreach ($output as $t => $v) {
-                        if (is_array($v) && count($v) == 1 && $t != '@attributes') {
-                            $output[$t] = $v[0];
-                        }
-                    }
+                    $output['@attributes'] = $a;
                 }
 
-                break;
+                foreach ($output as $t => $v) {
+                    if (is_array($v) && 1 == count($v) && '@attributes' != $t) {
+                        $output[$t] = $v[0];
+                    }
+                }
+            }
+
+            break;
         }
 
         return $output;
@@ -1642,13 +1630,13 @@ class Zacr extends EPPTCPTransport
         if ($number) {
             $formatted_number = $this->valid_phone_number($number);
             if ($formatted_number) {
-                if (substr($formatted_number, 0, 3) == '270') {
+                if ('270' == substr($formatted_number, 0, 3)) {
                     $formatted_number = substr($formatted_number, 3);
                 }
-                if (substr($formatted_number, 0, 2) == '27') {
+                if ('27' == substr($formatted_number, 0, 2)) {
                     $formatted_number = substr($formatted_number, 2);
                 }
-                if (substr($formatted_number, 0, 1) == '0') {
+                if ('0' == substr($formatted_number, 0, 1)) {
                     $formatted_number = substr($formatted_number, 1);
                 }
 
@@ -1662,7 +1650,7 @@ class Zacr extends EPPTCPTransport
     private function valid_phone_number($number = false)
     {
         if ($number) {
-            $number = str_replace([' ', '+', '(', ')', '-', '.', ',', '?'], '', $number);
+            $number = str_replace(array(' ', '+', '(', ')', '-', '.', ',', '?'), '', $number);
             if (is_numeric($number) && (intval($number) == $number) && strlen($number) >= 9 && intval($number) > 0) {
                 return $this->get_numerics($number);
             }

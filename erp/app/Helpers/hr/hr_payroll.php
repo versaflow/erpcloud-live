@@ -2,13 +2,13 @@
 
 function button_payroll_update_payroll_recon()
 {
-    if (! is_main_instance()) {
+    if (!is_main_instance()) {
         return false;
     }
     check_timesheet_max_hours();
     $payroll_date = date('Y-m-25');
 
-    $completed = \DB::table('acc_payroll_recon')->where('payroll_date', $payroll_date)->where('status', 'Complete')->count();
+    $completed = \DB::table('acc_payroll')->where('payroll_end_date', $payroll_date)->where('status', 'Complete')->count();
 
     update_payroll($payroll_date);
 
@@ -17,15 +17,15 @@ function button_payroll_update_payroll_recon()
 
 function update_payroll($payroll_date)
 {
-    $completed = \DB::table('acc_payroll_recon')->where('payroll_date', $payroll_date)->where('status', 'Complete')->count();
+    $completed = \DB::table('acc_payroll')->where('payroll_end_date', $payroll_date)->where('status', 'Complete')->count();
     if ($completed) {
         //   return false;
     }
     build_payroll_details($payroll_date);
 
-    $last_payroll_date = \DB::table('acc_payroll_recon')->where('payroll_date', '<', $payroll_date)->orderBy('id', 'desc')->pluck('payroll_date')->first();
+    $last_payroll_date = \DB::table('acc_payroll')->where('payroll_end_date', '<', $payroll_date)->orderBy('id', 'desc')->pluck('payroll_end_date')->first();
     $payroll_date_month_start = date('Y-m-d', strtotime($last_payroll_date.' +1 day'));
-    $payroll_date_month_end = $payroll_date;
+    $payroll_date_month_end = date("Y-m-t", strtotime($payroll_date_month_start));
 
     $holidays_count = 0;
 
@@ -33,21 +33,24 @@ function update_payroll($payroll_date)
     foreach ($holidays as $holiday) {
         $holiday_date = new Carbon($holiday->holiday_date);
         if ($holiday_date->isWeekday()) {
-            $holidays_count++;
+            ++$holidays_count;
         }
     }
+    // if(date('m',strtotime($recon->payroll_end_date)) == 12){
+    //     $holidays_count +=3;
+    // }
 
     $employees = \DB::table('hr_employees')->where('start_date', '<', $payroll_date)->where('status', 'Enabled')->get();
 
     $work_days = countDays(date('Y', strtotime($payroll_date)), date('m', strtotime($payroll_date)), [0, 6]);
-    $last_payroll_date = \DB::table('acc_payroll_recon')->where('payroll_date', '<', $payroll_date)->orderBy('id', 'desc')->pluck('payroll_date')->first();
+    // $last_payroll_date = \DB::table('acc_payroll')->where('payroll_end_date', '<', $payroll_date)->orderBy('id', 'desc')->pluck('payroll_end_date')->first();
     foreach ($employees as $employee) {
-        $payroll_date_month_start = date('Y-m-d', strtotime($last_payroll_date.' +1 day'));
-        if (date('Y-m-d', strtotime($employee->start_date)) > date('Y-m-d', strtotime($payroll_date_month_start))) {
-            $payroll_date_month_start = $employee->start_date;
-        }
+        // $payroll_date_month_start = date('Y-m-d', strtotime($last_payroll_date.' +1 day'));
+        // if (date('Y-m-d', strtotime($employee->start_date)) > date('Y-m-d', strtotime($payroll_date_month_start))) {
+        //     $payroll_date_month_start = $employee->start_date;
+        // }
 
-        $completed = \DB::table('acc_payroll_recon')->where('employee_id', $employee->id)->where('payroll_date', $payroll_date)->where('status', 'Complete')->count();
+        $completed = \DB::table('acc_payroll')->where('employee_id', $employee->id)->where('payroll_end_date', $payroll_date)->where('status', 'Complete')->count();
         if ($completed) {
             continue;
         }
@@ -61,14 +64,14 @@ function update_payroll($payroll_date)
 
         $where_data = [
             'employee_id' => $employee->id,
-            'payroll_date' => $payroll_date,
+            'payroll_end_date' => $payroll_date,
         ];
 
         $leave_requests = \DB::table('hr_leave')
-            ->where('employee_id', $employee->id)
-            ->where('date_from', '>', $last_payroll_date)
-            ->where('is_deleted', 0)
-            ->get();
+        ->where('employee_id', $employee->id)
+        ->where('date_from', '>', $last_payroll_date)
+        ->where('is_deleted', 0)
+        ->get();
 
         $leave_dates = [];
         foreach ($leave_requests as $leave_request) {
@@ -94,8 +97,8 @@ function update_payroll($payroll_date)
         $leave_days = 0;
 
         foreach ($leave_dates as $leave_date) {
-            if ($leave_date->isWeekday() && ! in_array(Carbon::parse($leave_date), $holidays)) {
-                $leave_days++;
+            if ($leave_date->isWeekday() && !in_array(Carbon::parse($leave_date), $holidays)) {
+                ++$leave_days;
             }
         }
 
@@ -105,16 +108,16 @@ function update_payroll($payroll_date)
 
         foreach ($dates as $date) {
             if ($date->isWeekday()) {
-                $work_days++;
+                ++$work_days;
                 $work_dates[] = $date->toDateString();
             }
         }
 
-        $total_payroll_days = $work_days - $holidays_count;
+        $total_payroll_days = $work_days;
 
         $timesheet_worked_days = \DB::table('hr_timesheet')->where('user_id', $employee->user_id)->where('created_date', 'like', date('Y-m', strtotime($payroll_date)).'%')->count();
-        $timesheet_worked_days = $timesheet_worked_days + $future_work_days;
-        $payroll_id = \DB::table('acc_payroll_recon')->where('employee_id', $employee->id)->where('payroll_date', $payroll_date)->pluck('id')->first();
+        // $timesheet_worked_days = $timesheet_worked_days + $future_work_days;
+        $payroll_id = \DB::table('acc_payroll')->where('employee_id', $employee->id)->where('payroll_end_date', $payroll_date)->pluck('id')->first();
 
         if ($employee->user_id) {
             $adjustments_total = \DB::table('acc_payroll_details')->where('payroll_recon_id', $payroll_id)->sum('total');
@@ -153,15 +156,11 @@ function update_payroll($payroll_date)
             $annual_paid_leave_total = $annual_paid_leave_days * $daily_rate;
         }
 
-        //if(date('m',strtotime($recon->payroll_date)) == 12){
-        //     $holidays_count +=3;
-        //}
-
         $update_data = [
             'employee_id' => $employee->id,
             'start_date' => $employee->start_date,
             'payroll_start_date' => $payroll_date_month_start,
-            'payroll_date' => $payroll_date,
+            'payroll_end_date' => $payroll_date,
             'monthly_rate' => $employee->monthly_rate,
             'work_days' => $work_days,
             'leave_days' => $leave_days,
@@ -180,8 +179,8 @@ function update_payroll($payroll_date)
             $update_data['incentive_total'] -= $employee->incentive;
         }
 
-        $exists = \DB::table('acc_payroll_recon')->where('employee_id', $employee->id)->where('payroll_date', $payroll_date)->count();
-        if (! $exists) {
+        $exists = \DB::table('acc_payroll')->where('employee_id', $employee->id)->where('payroll_end_date', $payroll_date)->count();
+        if (!$exists) {
             $update_data['status'] = 'Draft';
         }
 
@@ -194,10 +193,10 @@ function update_payroll($payroll_date)
             }
         }
 
-        \DB::table('acc_payroll_recon')->updateOrInsert($where_data, $update_data);
+        \DB::table('acc_payroll')->updateOrInsert($where_data, $update_data);
     }
 
-    $recons = \DB::table('acc_payroll_recon')->where('payroll_date', $payroll_date)->get();
+    $recons = \DB::table('acc_payroll')->where('payroll_end_date', $payroll_date)->get();
     foreach ($recons as $recon) {
         if ($recon->status == 'Completed') {
             continue;
@@ -216,11 +215,11 @@ function update_payroll($payroll_date)
         $total = currency($total_days * $recon->daily_rate);
 
         $month_total = currency($total + $recon->adjustments_total);
-        if (date('m', strtotime($recon->payroll_date)) == 12) {
+        if (date('m', strtotime($recon->payroll_end_date)) == 12) {
             $month_total = currency($month_total + $recon->annual_paid_leave_total);
         }
 
-        \DB::table('acc_payroll_recon')->where('id', $recon->id)->update(['total_days' => $total_days, 'total' => $total, 'month_total' => $month_total]);
+        \DB::table('acc_payroll')->where('id', $recon->id)->update(['total_days' => $total_days, 'total' => $total, 'month_total' => $month_total]);
     }
 }
 
@@ -234,15 +233,15 @@ function build_payroll_details($payroll_date)
     $employees = \DB::table('hr_employees')->where('status', 'Enabled')->get();
     foreach ($employees as $employee) {
         $user = \DB::table('erp_users')->where('id', $employee->user_id)->get()->first();
-        $payroll_recon = \DB::table('acc_payroll_recon')->where('employee_id', $employee->id)->where('payroll_date', $payroll_date)->get()->first();
-        $status = \DB::table('acc_payroll_recon')->where('employee_id', $employee->id)->where('payroll_date', $payroll_date)->pluck('status')->first();
+        $payroll_recon = \DB::table('acc_payroll')->where('employee_id', $employee->id)->where('payroll_end_date', $payroll_date)->get()->first();
+        $status = \DB::table('acc_payroll')->where('employee_id', $employee->id)->where('payroll_end_date', $payroll_date)->pluck('status')->first();
 
         if ($status == 'Complete') {
             continue;
         }
 
         $payroll_recon_id = $payroll_recon->id;
-        $payroll_date = $payroll_recon->payroll_date;
+        $payroll_date = $payroll_recon->payroll_end_date;
         $payroll_date_month_start = date('Y-m-01', strtotime($payroll_date));
         $payroll_date_month_end = date('Y-m-t', strtotime($payroll_date));
 
@@ -253,13 +252,13 @@ function build_payroll_details($payroll_date)
             \DB::table('acc_payroll_details')->where('payroll_recon_id', $payroll_recon_id)->where('type', 'Commission')->delete();
 
             $loans = \DB::table('hr_loans')->where('employee_id', $employee->id)
-                ->where('is_deleted', 0)
-                ->where('payroll_id', '!=', $payroll_recon_id)
-                ->where('request_date', '<', date('Y-m-t', strtotime($payroll_date)))
-                ->whereRaw(\DB::raw('(amount-amount_paid) > 0'))
-                ->where('approved', 1)
-                ->where('is_deleted', 0)
-                ->get();
+            ->where('is_deleted', 0)
+            ->where('payroll_id', '!=', $payroll_recon_id)
+            ->where('request_date', '<', date('Y-m-t', strtotime($payroll_date)))
+            ->whereRaw(\DB::raw('(amount-amount_paid) > 0'))
+            ->where('approved', 1)
+            ->where('is_deleted', 0)
+            ->get();
             foreach ($loans as $loan) {
                 $line_total = $loan->amount - $loan->amount_paid;
                 $data = [
@@ -275,7 +274,7 @@ function build_payroll_details($payroll_date)
                 dbinsert('acc_payroll_details', $data);
             }
 
-            \DB::table('acc_payroll_recon')->where('id', $payroll_recon_id)->where('employee_id', $employee->id)->update(['loans' => $loan_total]);
+            \DB::table('acc_payroll')->where('id', $payroll_recon_id)->where('employee_id', $employee->id)->update(['loans' => $loan_total]);
 
             //incentive
             $work_days = countDays(date('Y', strtotime($payroll_date)), date('m', strtotime($payroll_date)), [0, 6]);
@@ -286,7 +285,7 @@ function build_payroll_details($payroll_date)
                 $holiday_date = new Carbon($holiday->holiday_date);
                 if ($holiday_date->isWeekday()) {
                     $holiday_dates[] = Carbon::parse($holiday->holiday_date);
-                    $holidays_count++;
+                    ++$holidays_count;
                 }
             }
 
@@ -297,8 +296,8 @@ function build_payroll_details($payroll_date)
             foreach ($dates as $date) {
                 if ($date->isWeekday()) {
                     $work_dates[] = $date->toDateString();
-                    if ($date->toDateString() > date('Y-m-d') && ! in_array($date, $holiday_dates)) {
-                        $future_work_days++;
+                    if ($date->toDateString() > date('Y-m-d') && !in_array($date, $holiday_dates)) {
+                        ++$future_work_days;
                     }
                 }
             }
@@ -321,26 +320,26 @@ function build_payroll_details($payroll_date)
             }
         }
 
-        \DB::table('acc_payroll_recon')->where('id', $payroll_recon_id)->update(['document_currency' => $employee->currency]);
+        \DB::table('acc_payroll')->where('id', $payroll_recon_id)->update(['document_currency' => $employee->currency]);
         \DB::table('acc_payroll_details')->where('payroll_recon_id', $payroll_recon_id)->update(['document_currency' => $employee->currency]);
     }
 }
 
 function build_commissions($payroll_date = false)
 {
-    if (! $payroll_date) {
+    if (!$payroll_date) {
         $payroll_date = date('Y-m-25');
     }
     $conns = ['telecloud', 'moviemagic', 'eldooffice'];
     $adjustments_total = 0;
 
     $employees = \DB::table('hr_employees')->where('status', 'Enabled')->get();
-    $last_payroll_date = \DB::table('acc_payroll_recon')->where('payroll_date', '<', $payroll_date)->orderBy('id', 'desc')->pluck('payroll_date')->first();
+    $last_payroll_date = \DB::table('acc_payroll')->where('payroll_end_date', '<', $payroll_date)->orderBy('id', 'desc')->pluck('payroll_end_date')->first();
 
     $stock_product_ids = \DB::table('crm_products')->where('status', '!=', 'Deleted')->where('type', 'Stock')->pluck('id')->toArray();
 
     foreach ($employees as $employee) {
-        $payroll_recon_id = \DB::table('acc_payroll_recon')->where('employee_id', $employee->id)->where('payroll_date', $payroll_date)->pluck('id')->first();
+        $payroll_recon_id = \DB::table('acc_payroll')->where('employee_id', $employee->id)->where('payroll_end_date', $payroll_date)->pluck('id')->first();
 
         \DB::table('acc_payroll_details')->where('payroll_recon_id', $payroll_recon_id)->where('type', 'Commission')->delete();
         foreach ($conns as $c) {
@@ -353,23 +352,23 @@ function build_commissions($payroll_date = false)
             $instance_user_id = \DB::connection($c)->table('erp_users')->where('username', $username)->pluck('id')->first();
             if ($instance->id == 2) {
                 $sales = \DB::connection($c)->table('crm_document_lines')
-                    ->join('crm_documents', 'crm_documents.id', '=', 'crm_document_lines.document_id')
-                    ->select('crm_documents.id', 'crm_documents.reversal_id', 'crm_document_lines.price as total', 'crm_documents.id', 'crm_documents.docdate', 'crm_documents.doc_no', 'crm_documents.document_currency', 'crm_documents.docdate')
-                    ->where('total', '!=', 0)
-                    ->where('product_id', 149)
-                    ->where('salesman_id', $instance_user_id)
-                    ->where('doctype', 'Tax Invoice')
-                    ->where('docdate', '>', $last_payroll_date)
-                    ->get();
+            ->join('crm_documents', 'crm_documents.id', '=', 'crm_document_lines.document_id')
+            ->select('crm_documents.id', 'crm_documents.reversal_id', 'crm_document_lines.price as total', 'crm_documents.id', 'crm_documents.docdate', 'crm_documents.doc_no', 'crm_documents.document_currency', 'crm_documents.docdate')
+            ->where('total', '!=', 0)
+            ->where('product_id', 149)
+            ->where('salesman_id', $instance_user_id)
+            ->where('doctype', 'Tax Invoice')
+            ->where('docdate', '>', $last_payroll_date)
+            ->get();
             } else {
                 $sales = \DB::connection($c)->table('crm_documents')
-                    ->select('crm_documents.id', 'crm_documents.reversal_id', 'crm_documents.total', 'crm_documents.tax', 'crm_documents.id', 'crm_documents.docdate', 'crm_documents.doc_no', 'crm_documents.document_currency', 'crm_documents.docdate')
-                    ->where('total', '!=', 0)
-                    ->whereNotIn('id', $pending_activation_invoice_ids)
-                    ->where('salesman_id', $instance_user_id)
-                    ->where('doctype', 'Tax Invoice')
-                    ->where('docdate', '>', $last_payroll_date)
-                    ->get();
+            ->select('crm_documents.id', 'crm_documents.reversal_id', 'crm_documents.total', 'crm_documents.tax', 'crm_documents.id', 'crm_documents.docdate', 'crm_documents.doc_no', 'crm_documents.document_currency', 'crm_documents.docdate')
+            ->where('total', '!=', 0)
+            ->whereNotIn('id', $pending_activation_invoice_ids)
+            ->where('salesman_id', $instance_user_id)
+            ->where('doctype', 'Tax Invoice')
+            ->where('docdate', '>', $last_payroll_date)
+            ->get();
             }
 
             if (count($sales) > 0) {
@@ -406,7 +405,7 @@ function build_commissions($payroll_date = false)
                     $commission_total += $commission;
 
                     $total_excl += $sale->subtotal;
-                    $num_invoices++;
+                    ++$num_invoices;
                     /*
 
                     try{
@@ -438,14 +437,14 @@ function build_commissions($payroll_date = false)
 
                 if ($commission_total != 0) {
                     $data = [
-                        'type' => 'Commission',
-                        'total' => $commission_total,
-                        'docdate' => $payroll_date,
-                        'instance_id' => 1,
-                        'user_id' => $employee->user_id,
-                        'payroll_recon_id' => $payroll_recon_id,
-                        'details' => 'Num Invoices: '.$num_invoices.' | Total Excl: '.$total_excl,
-                    ];
+                    'type' => 'Commission',
+                    'total' => $commission_total,
+                    'docdate' => $payroll_date,
+                    'instance_id' => 1,
+                    'user_id' => $employee->user_id,
+                    'payroll_recon_id' => $payroll_recon_id,
+                    'details' => 'Num Invoices: '.$num_invoices.' | Total Excl: '.$total_excl,
+                ];
                     dbinsert('acc_payroll_details', $data);
                 }
             }
@@ -456,16 +455,16 @@ function build_commissions($payroll_date = false)
 // INCENTIVE FUNCTIONS START
 function incentive_timesheet($payroll_recon_id, $incentive_total, $employee, $user, $payroll_date, $total_payroll_days)
 {
-    $payroll = \DB::table('acc_payroll_recon')->where('id', $payroll_recon_id)->get()->first();
-    $payroll_start_date = \DB::table('acc_payroll_recon')->where('id', $payroll_recon_id)->pluck('payroll_start_date')->first();
-    $payroll_end_date = \DB::table('acc_payroll_recon')->where('id', $payroll_recon_id)->pluck('payroll_date')->first();
+    $payroll = \DB::table('acc_payroll')->where('id', $payroll_recon_id)->get()->first();
+    $payroll_start_date = \DB::table('acc_payroll')->where('id', $payroll_recon_id)->pluck('payroll_start_date')->first();
+    $payroll_end_date = \DB::table('acc_payroll')->where('id', $payroll_recon_id)->pluck('payroll_end_date')->first();
     $incentive_timesheet = $incentive_total;
     // TIMESHEET
     if (date('Y-m-d', strtotime($employee->start_date)) > date('Y-m-d', strtotime($payroll_start_date))) {
         $payroll_start_date = $employee->start_date;
     }
 
-    $last_payroll_date = \DB::table('acc_payroll_recon')->where('payroll_date', '<', $payroll_date)->orderBy('id', 'desc')->pluck('payroll_date')->first();
+    $last_payroll_date = \DB::table('acc_payroll')->where('payroll_end_date', '<', $payroll_date)->orderBy('id', 'desc')->pluck('payroll_end_date')->first();
     // if($employee->role_id == 54){
     //     $commit_dates = \DB::table('erp_github_commits')->select(\DB::raw('DATE(committed_at) as commit_date'))
     //     ->where('committer_name','oyen-bright')
@@ -519,7 +518,7 @@ function incentive_sales($payroll_recon_id, $incentive_total, $employee, $user, 
 {
     $incentive_sales = $incentive_total;
     //SALES INCENTIVE
-    $last_payroll_date = \DB::table('acc_payroll_recon')->where('payroll_date', '<', $payroll_date)->orderBy('id', 'desc')->pluck('payroll_date')->first();
+    $last_payroll_date = \DB::table('acc_payroll')->where('payroll_end_date', '<', $payroll_date)->orderBy('id', 'desc')->pluck('payroll_end_date')->first();
     $total = 0;
     $sales_target = 30000;
     $salesman_count = \DB::table('erp_users')->where('role_id', 62)->where('is_deleted', 0)->count();
@@ -535,21 +534,21 @@ function incentive_sales($payroll_recon_id, $incentive_total, $employee, $user, 
         $name = $name_arr[0];
 
         $sales_total = \DB::table('crm_document_lines')
-            ->join('crm_documents', 'crm_documents.id', '=', 'crm_document_lines.document_id')
-            ->where('salesman_id', $s->id)
-            ->where('docdate', '>', $last_payroll_date)
-            ->where('billing_type', '')
-            ->whereIn('doctype', ['Tax Invoice', 'Credit Note'])->sum('zar_sale_total');
+        ->join('crm_documents', 'crm_documents.id', '=', 'crm_document_lines.document_id')
+        ->where('salesman_id', $s->id)
+        ->where('docdate', '>', $last_payroll_date)
+        ->where('billing_type', '')
+        ->whereIn('doctype', ['Tax Invoice', 'Credit Note'])->sum('zar_sale_total');
         if ($sales_total) {
             $sales_details_arr[] = $name.': R'.currency($sales_total);
             $monthly_sales += $sales_total;
             $sales = \DB::table('crm_documents')
-                ->join('crm_accounts', 'crm_accounts.id', '=', 'crm_documents.account_id')
-                ->select('doctype', 'crm_documents.id', 'total', 'crm_accounts.company')
-                ->where('crm_documents.salesman_id', $s->id)
-                ->where('docdate', '>', $last_payroll_date)
-                ->where('billing_type', '')
-                ->whereIn('doctype', ['Tax Invoice', 'Credit Note'])->get();
+            ->join('crm_accounts', 'crm_accounts.id', '=', 'crm_documents.account_id')
+            ->select('doctype', 'crm_documents.id', 'total', 'crm_accounts.company')
+            ->where('crm_documents.salesman_id', $s->id)
+            ->where('docdate', '>', $last_payroll_date)
+            ->where('billing_type', '')
+            ->whereIn('doctype', ['Tax Invoice', 'Credit Note'])->get();
             foreach ($sales as $sale) {
                 $commission_details .= $sale->doctype.' #'.$sale->id.' '.$sale->total.' '.$sale->company.PHP_EOL;
             }
@@ -567,15 +566,15 @@ function incentive_sales($payroll_recon_id, $incentive_total, $employee, $user, 
     $details = implode(' | ', $sales_details_arr).' '.currency($monthly_sales).'/'.currency($sales_target).' sales target '.intval($percentage).'%';
 
     $data = [
-        'type' => 'Incentive Sales',
-        'total' => currency($total),
-        'docdate' => $payroll_date,
-        'instance_id' => 1,
-        'user_id' => $employee->user_id,
-        'payroll_recon_id' => $payroll_recon_id,
-        'total_incentive' => $incentive_sales,
-        'details' => $details,
-        'commission_details' => $commission_details,
+    'type' => 'Incentive Sales',
+    'total' => currency($total),
+    'docdate' => $payroll_date,
+    'instance_id' => 1,
+    'user_id' => $employee->user_id,
+    'payroll_recon_id' => $payroll_recon_id,
+    'total_incentive' => $incentive_sales,
+    'details' => $details,
+    'commission_details' => $commission_details,
     ];
 
     dbinsert('acc_payroll_details', $data);
@@ -590,9 +589,9 @@ function incentive_leads($payroll_recon_id, $incentive_total, $employee, $user, 
 
     $target = 300;
     $monthly_leads = \DB::table('crm_accounts')
-        ->where('created_at', 'like', date('Y-m', strtotime($payroll_date)).'%')
-        ->where('partner_id', 1)
-        ->count();
+    ->where('created_at', 'like', date('Y-m', strtotime($payroll_date)).'%')
+    ->where('partner_id', 1)
+    ->count();
     if ($monthly_leads > $target || $target == 0) {
         $total = $incentive_leads;
         $percentage = 100;
@@ -619,14 +618,14 @@ function incentive_products($payroll_recon_id, $incentive_total, $employee, $use
     $incentive_products = $incentive_total;
     //productS INCENTIVE
 
-    $last_payroll_date = \DB::table('acc_payroll_recon')->where('payroll_date', '<', $payroll_date)->orderBy('id', 'desc')->pluck('payroll_date')->first();
+    $last_payroll_date = \DB::table('acc_payroll')->where('payroll_end_date', '<', $payroll_date)->orderBy('id', 'desc')->pluck('payroll_end_date')->first();
     $total = 0;
 
     $target = 300;
     $monthly_products = \DB::table('crm_products')
-        ->where('created_at', '>', $last_payroll_date)
-        ->where('created_by', $employee->user_id)
-        ->count();
+    ->where('created_at', '>', $last_payroll_date)
+    ->where('created_by', $employee->user_id)
+    ->count();
     if ($monthly_products > $target || $target == 0) {
         $total = $incentive_products;
         $percentage = 100;
@@ -657,8 +656,8 @@ function incentive_suppliers($payroll_recon_id, $incentive_total, $employee, $us
 
     $target = 20;
     $monthly_suppliers = \DB::table('acc_potential_suppliers')
-        ->where('created_at', 'like', date('Y-m', strtotime($payroll_date)).'%')
-        ->count();
+    ->where('created_at', 'like', date('Y-m', strtotime($payroll_date)).'%')
+    ->count();
     if ($monthly_suppliers > $target || $target == 0) {
         $total = $incentive_suppliers;
         $percentage = 100;
@@ -709,7 +708,7 @@ function incentive_github_commits($payroll_recon_id, $incentive_total, $employee
 
         foreach ($git_commits as $git_commit) {
             if ($git_commit->commits_count >= $daily_commits) {
-                $code_changes_daily++;
+                ++$code_changes_daily;
             }
         }
         if ($code_changes_daily > $total_payroll_days) {
@@ -720,18 +719,18 @@ function incentive_github_commits($payroll_recon_id, $incentive_total, $employee
 
         if ($core_process_totals > 0) {
             $data = [
-                'type' => 'Incentive Github Commits',
-                'total' => currency($core_process_totals),
-                'docdate' => $payroll_date,
-                'instance_id' => 1,
-                'user_id' => $employee->user_id,
-                'payroll_recon_id' => $payroll_recon_id,
-                'total_incentive' => $incentive_commits,
-                'details' => $code_changes_daily.'/'.$total_payroll_days.' commits',
-            ];
+            'type' => 'Incentive Github Commits',
+            'total' => currency($core_process_totals),
+            'docdate' => $payroll_date,
+            'instance_id' => 1,
+            'user_id' => $employee->user_id,
+            'payroll_recon_id' => $payroll_recon_id,
+            'total_incentive' => $incentive_commits,
+            'details' => $code_changes_daily.'/'.$total_payroll_days.' commits',
+        ];
             dbinsert('acc_payroll_details', $data);
         }
-        \DB::table('acc_payroll_recon')->where('id', $payroll_recon_id)->where('employee_id', $employee->id)->update(['code_changes_daily' => $code_changes_daily]);
+        \DB::table('acc_payroll')->where('id', $payroll_recon_id)->where('employee_id', $employee->id)->update(['code_changes_daily' => $code_changes_daily]);
     }
 }
 /// INCENTIVE FUNCTIONS END
@@ -740,12 +739,12 @@ function payroll_get_current_details($payroll_date = false)
 {
     // aa($payroll_date);
 
-    if (! $payroll_date) {
+    if (!$payroll_date) {
         $payroll_date = date('Y-m-d');
     }
-    $payroll = \DB::table('acc_payroll_recon')->where('payroll_date', 'like', date('Y-m', strtotime($payroll_date)).'-%')->orderBy('id', 'asc')->get()->first();
+    $payroll = \DB::table('acc_payroll')->where('payroll_end_date', 'like', date('Y-m', strtotime($payroll_date)).'-%')->orderBy('id', 'asc')->get()->first();
     $payroll_date_month_start = $payroll->payroll_start_date;
-    $payroll_date_month_end = $payroll->payroll_date;
+    $payroll_date_month_end = $payroll->payroll_end_date;
 
     //incentive
     $holiday_dates = [];
@@ -755,7 +754,7 @@ function payroll_get_current_details($payroll_date = false)
         $holiday_date = new Carbon($holiday->holiday_date);
         if ($holiday_date->isWeekday()) {
             $holiday_dates[] = Carbon::parse($holiday->holiday_date);
-            $holidays_count++;
+            ++$holidays_count;
         }
     }
 
@@ -770,12 +769,12 @@ function payroll_get_current_details($payroll_date = false)
                 $work_dates[] = $date->toDateString();
 
                 if ($date->toDateString() > date('Y-m-d')) {
-                    if (! in_array($date, $holiday_dates)) {
-                        $future_work_days++;
+                    if (!in_array($date, $holiday_dates)) {
+                        ++$future_work_days;
                     }
                 } else {
-                    if (! in_array($date, $holiday_dates)) {
-                        $work_days++;
+                    if (!in_array($date, $holiday_dates)) {
+                        ++$work_days;
                     }
                 }
             }
@@ -797,7 +796,7 @@ function payroll_get_current_details($payroll_date = false)
 function schedule_create_leave_requests()
 {
     $today = Carbon::parse(date('Y-m-d'));
-    if (! $today->isWeekday()) {
+    if (!$today->isWeekday()) {
         return false;
     }
 
@@ -805,10 +804,10 @@ function schedule_create_leave_requests()
     foreach ($employees as $employee) {
         if ($employee->user_id > 1) {
             $logged_in = \DB::table('hr_timesheet')->where('user_id', $employee->user_id)->where('start_time', 'like', date('Y-m-d').'%')->count();
-            if (! $logged_in) {
+            if (!$logged_in) {
                 $e = \DB::table('hr_leave')->where('employee_id', $employee->id)->where('date_from', date('Y-m-d'))->count();
-                if (! $e) {
-                    $db = new DBEvent;
+                if (!$e) {
+                    $db = new DBEvent();
                     $db->setTable('hr_leave');
                     $data = [
                         'employee_id' => $employee->id,
@@ -829,23 +828,23 @@ function schedule_create_leave_requests()
 function aftersave_payroll_details_update_totals($request)
 {
     $payroll_detail = \DB::table('acc_payroll_details')->where('id', $request->id)->get()->first();
-    $payroll = \DB::table('acc_payroll_recon')->where('id', $payroll_detail->payroll_recon_id)->get()->first();
+    $payroll = \DB::table('acc_payroll')->where('id', $payroll_detail->payroll_recon_id)->get()->first();
 
     $adjustments_total = \DB::table('acc_payroll_details')->where('payroll_recon_id', $payroll_detail->payroll_recon_id)->sum('total');
     $month_total = $payroll->total + $adjustments_total;
 
-    \DB::table('acc_payroll_recon')->where('id', $payroll_detail->payroll_recon_id)->update(['adjustments_total' => $adjustments_total, 'month_total' => $month_total]);
+    \DB::table('acc_payroll')->where('id', $payroll_detail->payroll_recon_id)->update(['adjustments_total' => $adjustments_total, 'month_total' => $month_total]);
 }
 
 function afterdelete_payroll_details_update_totals($request)
 {
     $payroll_detail = \DB::table('acc_payroll_details')->where('id', $request->id)->get()->first();
-    $payroll = \DB::table('acc_payroll_recon')->where('id', $payroll_detail->payroll_recon_id)->get()->first();
+    $payroll = \DB::table('acc_payroll')->where('id', $payroll_detail->payroll_recon_id)->get()->first();
 
     $adjustments_total = \DB::table('acc_payroll_details')->where('payroll_recon_id', $payroll_detail->payroll_recon_id)->sum('total');
     $month_total = $payroll->total + $adjustments_total;
 
-    \DB::table('acc_payroll_recon')->where('id', $payroll_detail->payroll_recon_id)->update(['adjustments_total' => $adjustments_total, 'month_total' => $month_total]);
+    \DB::table('acc_payroll')->where('id', $payroll_detail->payroll_recon_id)->update(['adjustments_total' => $adjustments_total, 'month_total' => $month_total]);
 }
 
 function update_mobile_developer_timesheet()
@@ -908,15 +907,15 @@ function check_timesheet_max_hours()
 
 function button_payroll_send_approve_email($request)
 {
-    $payroll_date = \DB::table('acc_payroll_recon')->where('approved', 0)->where('payroll_date', '<', date('Y-m-d'))->orderBy('id', 'desc')->pluck('payroll_date')->first();
-    if (! $payroll_date) {
+    $payroll_date = \DB::table('acc_payroll')->where('approved', 0)->where('payroll_end_date', '<', date('Y-m-d'))->orderBy('id', 'desc')->pluck('payroll_end_date')->first();
+    if (!$payroll_date) {
         return json_alert('Payroll already approved');
     }
-    $payrolls = \DB::table('acc_payroll_recon')->where('payroll_date', $payroll_date)->where('is_deleted', 0)->get();
+    $payrolls = \DB::table('acc_payroll')->where('payroll_end_date', $payroll_date)->where('is_deleted', 0)->get();
 
     $msg = '';
     foreach ($payrolls as $payroll) {
-        $payroll_date = $payroll->payroll_date;
+        $payroll_date = $payroll->payroll_end_date;
         $employee = \DB::table('hr_employees')->where('id', $payroll->employee_id)->get()->first();
         $msg .= $employee->name;
         $msg .= '<br> Basic: '.$payroll->total;
@@ -933,28 +932,28 @@ function button_payroll_send_approve_email($request)
 
 function payroll_approve($payroll_date)
 {
-    $payrolls = \DB::table('acc_payroll_recon')->where('payroll_date', $payroll_date)->where('is_deleted', 0)->get();
+    $payrolls = \DB::table('acc_payroll')->where('payroll_end_date', $payroll_date)->where('is_deleted', 0)->get();
 
     foreach ($payrolls as $payroll) {
-        DB::table('acc_payroll_recon')->where('id', $payroll->id)->update(['approved' => 1, 'status' => 'Complete']);
+        DB::table('acc_payroll')->where('id', $payroll->id)->update(['approved' => 1, 'status' => 'Complete']);
         payroll_complete_and_email_payslip($payroll);
     }
 }
 
 function button_payroll_complete_and_email_all($request)
 {
-    if (! is_superadmin()) {
+    if (!is_superadmin()) {
         return json_alert('No Access', 'warning');
     }
 
-    $payroll_date = \DB::table('acc_payroll_recon')->where('payroll_date', '<', date('Y-m-d'))->orderBy('id', 'desc')->pluck('payroll_date')->first();
+    $payroll_date = \DB::table('acc_payroll')->where('payroll_end_date', '<', date('Y-m-d'))->orderBy('id', 'desc')->pluck('payroll_end_date')->first();
 
-    $payrolls = \DB::table('acc_payroll_recon')->where('payroll_date', $payroll_date)->where('is_deleted', 0)->get();
+    $payrolls = \DB::table('acc_payroll')->where('payroll_end_date', $payroll_date)->where('is_deleted', 0)->get();
     foreach ($payrolls as $payroll) {
-        \DB::table('acc_payroll_recon')->where('id', $payroll->id)->update(['status' => 'Complete']);
-        $recon = \DB::table('acc_payroll_recon')->where('id', $payroll->id)->get()->first();
+        \DB::table('acc_payroll')->where('id', $payroll->id)->update(['status' => 'Complete']);
+        $recon = \DB::table('acc_payroll')->where('id', $payroll->id)->get()->first();
 
-        $payroll = \DB::table('acc_payroll_recon')->where('id', $payroll->id)->get()->first();
+        $payroll = \DB::table('acc_payroll')->where('id', $payroll->id)->get()->first();
         $payroll_details = \DB::table('acc_payroll_details')->where('payroll_recon_id', $payroll->id)->get();
         $company = dbgetaccount(1);
         $employee = \DB::table('hr_employees')->where('id', $payroll->employee_id)->get()->first();
@@ -965,7 +964,7 @@ function button_payroll_complete_and_email_all($request)
         $data['company'] = $company;
 
         $pdf = PDF::loadView('__app.components.pages.payslip', $data);
-        $pdf_name = str_replace(' ', '_', 'Payslip '.date('Y-m-d', strtotime($payroll->payroll_date)).'.pdf');
+        $pdf_name = str_replace(' ', '_', 'Payslip '.date('Y-m-d', strtotime($payroll->payroll_end_date)).'.pdf');
 
         $filename = attachments_path().$pdf_name;
         if (file_exists($filename)) {
@@ -989,16 +988,16 @@ function button_payroll_complete_and_email_all($request)
 
 function payroll_complete_and_email_payslip($request)
 {
-    $approved = \DB::table('acc_payroll_recon')->where('id', $request->id)->pluck('approved')->first();
-    if (! $approved) {
+    $approved = \DB::table('acc_payroll')->where('id', $request->id)->pluck('approved')->first();
+    if (!$approved) {
         return false;
     }
 
-    \DB::table('acc_payroll_recon')->where('id', $request->id)->update(['status' => 'Complete']);
+    \DB::table('acc_payroll')->where('id', $request->id)->update(['status' => 'Complete']);
     update_loan_amounts_paid();
-    $recon = \DB::table('acc_payroll_recon')->where('id', $request->id)->get()->first();
+    $recon = \DB::table('acc_payroll')->where('id', $request->id)->get()->first();
 
-    $payroll = \DB::table('acc_payroll_recon')->where('id', $request->id)->get()->first();
+    $payroll = \DB::table('acc_payroll')->where('id', $request->id)->get()->first();
     $payroll_details = \DB::table('acc_payroll_details')->where('payroll_recon_id', $request->id)->get();
     $company = dbgetaccount(1);
     $employee = \DB::table('hr_employees')->where('id', $payroll->employee_id)->get()->first();
@@ -1009,7 +1008,7 @@ function payroll_complete_and_email_payslip($request)
     $data['company'] = $company;
 
     $pdf = PDF::loadView('__app.components.pages.payslip', $data);
-    $pdf_name = str_replace(' ', '_', 'Payslip '.date('Y-m-d', strtotime($payroll->payroll_date)).'.pdf');
+    $pdf_name = str_replace(' ', '_', 'Payslip '.date('Y-m-d', strtotime($payroll->payroll_end_date)).'.pdf');
 
     $filename = attachments_path().$pdf_name;
     if (file_exists($filename)) {
@@ -1031,26 +1030,26 @@ function payroll_complete_and_email_payslip($request)
 
 function button_payroll_draft($request)
 {
-    \DB::table('acc_payroll_recon')->where('id', $request->id)->update(['status' => 'Draft']);
+    \DB::table('acc_payroll')->where('id', $request->id)->update(['status' => 'Draft']);
 }
 
 function button_payroll_complete($request)
 {
-    \DB::table('acc_payroll_recon')->where('id', $request->id)->update(['status' => 'Complete']);
+    \DB::table('acc_payroll')->where('id', $request->id)->update(['status' => 'Complete']);
     update_loan_amounts_paid();
 }
 
 function button_payroll_email_payslip($request)
 {
-    $approved = \DB::table('acc_payroll_recon')->where('id', $request->id)->pluck('approved')->first();
-    if (! $approved) {
+    $approved = \DB::table('acc_payroll')->where('id', $request->id)->pluck('approved')->first();
+    if (!$approved) {
         return json_alert('Payroll needs to be approved', 'warning');
     }
 
     update_loan_amounts_paid();
-    $recon = \DB::table('acc_payroll_recon')->where('id', $request->id)->get()->first();
+    $recon = \DB::table('acc_payroll')->where('id', $request->id)->get()->first();
 
-    $payroll = \DB::table('acc_payroll_recon')->where('id', $request->id)->get()->first();
+    $payroll = \DB::table('acc_payroll')->where('id', $request->id)->get()->first();
     $payroll_details = \DB::table('acc_payroll_details')->where('payroll_recon_id', $request->id)->get();
     $company = dbgetaccount(1);
     $employee = \DB::table('hr_employees')->where('id', $payroll->employee_id)->get()->first();
@@ -1061,7 +1060,7 @@ function button_payroll_email_payslip($request)
     $data['company'] = $company;
 
     $pdf = PDF::loadView('__app.components.pages.payslip', $data);
-    $pdf_name = str_replace(' ', '_', 'Payslip '.date('Y-m-d', strtotime($payroll->payroll_date)).'.pdf');
+    $pdf_name = str_replace(' ', '_', 'Payslip '.date('Y-m-d', strtotime($payroll->payroll_end_date)).'.pdf');
 
     $filename = attachments_path().$pdf_name;
     if (file_exists($filename)) {
@@ -1084,7 +1083,7 @@ function button_payroll_email_payslip($request)
 
 function button_payroll_download_payslip($request)
 {
-    $payroll = \DB::table('acc_payroll_recon')->where('id', $request->id)->get()->first();
+    $payroll = \DB::table('acc_payroll')->where('id', $request->id)->get()->first();
     $payroll_details = \DB::table('acc_payroll_details')->where('payroll_recon_id', $request->id)->get();
     $company = dbgetaccount(1);
     $employee = \DB::table('hr_employees')->where('id', $payroll->employee_id)->get()->first();
@@ -1094,7 +1093,7 @@ function button_payroll_download_payslip($request)
     $data['company'] = $company;
 
     $pdf = PDF::loadView('__app.components.pages.payslip', $data);
-    $pdf_name = str_replace(' ', '_', 'Payslip '.date('Y-m-d', strtotime($payroll->payroll_date)).'.pdf');
+    $pdf_name = str_replace(' ', '_', 'Payslip '.date('Y-m-d', strtotime($payroll->payroll_end_date)).'.pdf');
 
     $filename = attachments_path().$pdf_name;
     if (file_exists($filename)) {
@@ -1122,7 +1121,7 @@ function weekdaysRemainingInMonth(Carbon $date)
     while ($date->lte($lastDayOfMonth)) {
         // Check if the current day is a weekday (Monday to Friday)
         if ($date->isWeekday()) {
-            $weekdaysCount++;
+            ++$weekdaysCount;
         }
 
         // Move to the next day
@@ -1134,7 +1133,7 @@ function weekdaysRemainingInMonth(Carbon $date)
 
 function getSouthAfricaHolidays($year)
 {
-    $client = new Google_Client;
+    $client = new Google_Client();
     $client->setAuthConfig(base_path().'/google_creds.json'); // Path to your credentials file
     $client->addScope(Google_Service_Calendar::CALENDAR_READONLY);
 
@@ -1193,18 +1192,20 @@ function work_days_month($payroll_date_month_start, $payroll_date_month_end)
 
 function button_payroll_update_payroll_recon_lastmonth()
 {
-    if (! is_main_instance()) {
+    if (!is_main_instance()) {
         return false;
     }
     $payroll_date = date('Y-m-25');
-    $payroll_date = \DB::table('acc_payroll_recon')->where('payroll_date', '<', $payroll_date)->orderBy('payroll_date', 'desc')->pluck('payroll_date')->first();
+    $payroll_date = \DB::table('acc_payroll')->where('payroll_end_date', '<', $payroll_date)->orderBy('payroll_end_date', 'desc')->pluck('payroll_end_date')->first();
 
     update_payroll($payroll_date);
 
     return json_alert('Complete');
 }
 
-function aftersave_set_daily_rate() {}
+function aftersave_set_daily_rate()
+{
+}
 
 function countDays($year, $month, $ignore)
 {
@@ -1212,7 +1213,7 @@ function countDays($year, $month, $ignore)
     $counter = mktime(0, 0, 0, $month, 1, $year);
     while (date('n', $counter) == $month) {
         if (in_array(date('w', $counter), $ignore) == false) {
-            $count++;
+            ++$count;
         }
         $counter = strtotime('+1 day', $counter);
     }
@@ -1256,7 +1257,7 @@ function button_payroll_eldo_commission($request)
 
 function schedule_update_payroll_recon()
 {
-    if (! is_main_instance()) {
+    if (!is_main_instance()) {
         return false;
     }
     $payroll_date = date('Y-m-25');
@@ -1281,7 +1282,7 @@ function aftersave_calulate_leave_days($request)
             }
 
             $days = $startDate->diffInDaysFiltered(function (Carbon $date) use ($holidays) {
-                return $date->isWeekday() && ! in_array($date, $holidays);
+                return $date->isWeekday() && !in_array($date, $holidays);
             }, $endDate);
         }
 
@@ -1349,11 +1350,11 @@ function copy_payroll()
 
 function beforesave_payroll_calculate($request)
 {
-    $id = (! empty($request->id)) ? $request->id : null;
+    $id = (!empty($request->id)) ? $request->id : null;
 
     $payroll = (object) $request->all();
     $payroll_status = \DB::table('hr_payroll')->where('id', $payroll->id)->pluck('status')->first();
-    if ($payroll_status == 'Complete') {
+    if ('Complete' == $payroll_status) {
         // return 'Completed document cannot be changed';
     } else {
         $payroll_status = 'Draft';
@@ -1380,10 +1381,10 @@ function beforesave_payroll_calculate($request)
     /// TAXABLE INCOME
 
     $paye_taxable_income = $payroll->gross_salary;
-    if (! empty($payroll->addition_1_amount)) {
+    if (!empty($payroll->addition_1_amount)) {
         $paye_taxable_income += $payroll->addition_1_amount;
     }
-    if (! empty($payroll->addition_2_amount)) {
+    if (!empty($payroll->addition_2_amount)) {
         $paye_taxable_income += $payroll->addition_2_amount;
     }
     $paye_taxable_income = currency($paye_taxable_income * 12);
@@ -1393,7 +1394,7 @@ function beforesave_payroll_calculate($request)
         foreach ($paye_tax_rates as $tax) {
             if ($paye_taxable_income > $tax['income_min'] && $paye_taxable_income < $tax['income_max']) {
                 $paye_tax_base_amount = $tax['tax_amount'];
-                if ($tax['income_min'] == 0) {
+                if (0 == $tax['income_min']) {
                     $paye_tax_calculated_amount = ($paye_taxable_income * $tax['tax_rate']) / 100;
                 } else {
                     $paye_tax_calculated_amount = (($paye_taxable_income - ($tax['income_min'] + 1)) * $tax['tax_rate']) / 100;
@@ -1416,16 +1417,16 @@ function beforesave_payroll_calculate($request)
 
     // NET SALARY
     $payroll->net_salary = $payroll->gross_salary;
-    if (! empty($payroll->addition_1_amount)) {
+    if (!empty($payroll->addition_1_amount)) {
         $payroll->net_salary += $payroll->addition_1_amount;
     }
-    if (! empty($payroll->addition_2_amount)) {
+    if (!empty($payroll->addition_2_amount)) {
         $payroll->net_salary += $payroll->addition_2_amount;
     }
-    if (! empty($payroll->deduction_1_amount)) {
+    if (!empty($payroll->deduction_1_amount)) {
         $payroll->net_salary -= currency($payroll->deduction_1_amount);
     }
-    if (! empty($payroll->deduction_2_amount)) {
+    if (!empty($payroll->deduction_2_amount)) {
         $payroll->net_salary -= currency($payroll->deduction_2_amount);
     }
 

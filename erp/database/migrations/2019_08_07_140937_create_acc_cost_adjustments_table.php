@@ -20,6 +20,7 @@ class CreateAccCostAdjustmentsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

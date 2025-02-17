@@ -1,7 +1,7 @@
 <?php
 
 Route::get('clear_cache_migrations', function () {
-    $erp = new ErpMigrations;
+    $erp = new ErpMigrations();
     $erp->clearCache();
 });
 

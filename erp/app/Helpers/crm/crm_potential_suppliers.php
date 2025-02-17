@@ -2,7 +2,7 @@
 
 function button_potential_supplier_copy_to_suppliers($request)
 {
-    $db = new DBEvent;
+    $db = new DBEvent();
     $db->setTable('crm_suppliers');
     $row = \DB::table('acc_potential_suppliers')->where('id', $request->id)->get()->first();
     // if(!$row->is_importer){

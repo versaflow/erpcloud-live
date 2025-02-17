@@ -19,6 +19,7 @@ class CreateAccPeriodsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

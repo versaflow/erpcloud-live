@@ -40,6 +40,7 @@ class CreateCrmAccountPartnerSettingsTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

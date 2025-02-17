@@ -1,6 +1,6 @@
 <?php
 
-return [
+return array(
 
     /*
     |--------------------------------------------------------------------------
@@ -30,7 +30,7 @@ return [
         'my-disk' => [
             //'URL' => url('/packages/barryvdh/elfinder'),
             'alias' => 'Local storage',
-        ],
+        ]
     ],
 
     /*
@@ -44,7 +44,7 @@ return [
 
     'route' => [
         'prefix' => 'elfinder',
-        'middleware' => ['web', 'auth'], //Set to null to disable middleware filter
+        'middleware' => array('web', 'auth') //Set to null to disable middleware filter
     ],
 
     /*
@@ -80,7 +80,7 @@ return [
     |
     */
 
-    'options' => [],
+    'options' => array(),
 
     /*
     |--------------------------------------------------------------------------
@@ -91,8 +91,8 @@ return [
     | See https://github.com/Studio-42/elFinder/wiki/Connector-configuration-options-2.1#root-options
     |
     */
-    'root_options' => [
+    'root_options' => array(
 
-    ],
+    ),
 
-];
+);

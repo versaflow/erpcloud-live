@@ -22,6 +22,7 @@ class CreateErpSqlFiltersTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

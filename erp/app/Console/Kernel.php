@@ -45,26 +45,26 @@ class Kernel extends ConsoleKernel
                     continue;
                 }
 
-                if (! function_exists($job->function_name)) {
+                if (!function_exists($job->function_name)) {
                     continue;
                 }
 
                 if (str_contains($job->function_name, 'teleshield')) {
-                    $schedule->call(function () use ($job, $instance) {
+                    $schedule->call(function () use ($job, $instance, $instance_dir) {
                         $this->kernel_run_command($job->id, $instance);
                     })
-                        ->name($instance_dir.' - '.$job->id.' - '.$job->frequency_cron)
-                        ->cron($job->frequency_cron);
-                } elseif ($job->frequency_type == 'Minutely' || $job->frequency_type == 'Hourly') {
+                    ->name($instance_dir.' - '.$job->id.' - '.$job->frequency_cron)
+                    ->cron($job->frequency_cron);
+                } elseif ('Minutely' == $job->frequency_type || 'Hourly' == $job->frequency_type) {
                     // do not run schedule during pbx reboot
-                    $schedule->call(function () use ($job, $instance) {
+                    $schedule->call(function () use ($job, $instance, $instance_dir) {
                         $this->kernel_run_command($job->id, $instance);
                     })
-                        ->name($instance_dir.$job->id.' - '.$job->frequency_cron)
-                        ->cron($job->frequency_cron);
+                    ->name($instance_dir.$job->id.' - '.$job->frequency_cron)
+                    ->cron($job->frequency_cron);
                 } else {
                     // move daily events 1 hour up to prevent overlap with reboots
-                    if (! str_contains($job->function_name, 'reboot')) {
+                    if (!str_contains($job->function_name, 'reboot')) {
                         $cronParts = explode(' ', $job->frequency_cron);
 
                         // Update the hour part (assuming it is in the first position)
@@ -74,24 +74,24 @@ class Kernel extends ConsoleKernel
                         }
                     }
 
-                    if ($job->frequency_type == 'Monthly') {
+                    if ('Monthly' == $job->frequency_type) {
                         if (str_contains($job->frequency_cron, 31)) {
                             $job->frequency_cron = str_replace(31, date('t'), $job->frequency_cron);
                         }
                     }
 
                     if (str_contains($job->function_name, 'reboot')) {
-                        $schedule->call(function () use ($job, $instance) {
+                        $schedule->call(function () use ($job, $instance, $instance_dir) {
                             $this->kernel_run_command($job->id, $instance);
                         })
-                            ->cron($job->frequency_cron)
-                            ->name($instance_dir.' - '.$job->id.' - '.$job->frequency_cron);
+                        ->cron($job->frequency_cron)
+                        ->name($instance_dir.' - '.$job->id.' - '.$job->frequency_cron);
                     } else {
-                        $schedule->call(function () use ($job, $instance) {
+                        $schedule->call(function () use ($job, $instance, $instance_dir) {
                             $this->kernel_run_command($job->id, $instance);
                         })
-                            ->name($instance_dir.' - '.$job->id.' - '.$job->frequency_cron)
-                            ->cron($job->frequency_cron);
+                        ->name($instance_dir.' - '.$job->id.' - '.$job->frequency_cron)
+                        ->cron($job->frequency_cron);
                     }
                 }
             }
@@ -178,20 +178,19 @@ class Kernel extends ConsoleKernel
                 $function_exists = false;
             } else {
                 $function_name = $command->function_name;
-                if (! is_string($function_name) || ! function_exists($function_name)) {
+                if (!is_string($function_name) || !function_exists($function_name)) {
                     $function_exists = false;
                 }
             }
 
-            if (! $function_exists) {
+            if (!$function_exists) {
                 system_log('schedule', $id, 'function does not exists', 'schedule', '', 0, $id);
-
                 return false;
             }
 
             $frequency = $command->frequency_type;
             \DB::connection('default')->table('erp_form_events')->where('id', $id)->update(['last_run' => date('Y-m-d H:i:s'), 'started' => 1, 'completed' => 0]);
-            if ($frequency != 'Minutely') {
+            if ('Minutely' != $frequency) {
                 system_log('schedule', $function_name.' started', 'success', 'schedule', $frequency, 1, $id);
             }
 
@@ -200,7 +199,7 @@ class Kernel extends ConsoleKernel
             // aa($frequency);
             // aa($id);
             // aa($frequency);
-            if ($frequency != 'Minutely') {
+            if ('Minutely' != $frequency) {
                 system_log('schedule', $function_name.' completed', 'success', 'schedule', $frequency, 1, $id);
             }
 
@@ -209,11 +208,11 @@ class Kernel extends ConsoleKernel
             \DB::connection('default')->table('erp_form_events')->where('id', $id)->update(['started' => 0, 'completed' => 1, 'last_success' => date('Y-m-d H:i:s'), 'run_time' => $duration, 'last_failed' => null, 'error' => '']);
         } catch (\Throwable $ex) {
             exception_log($ex);
-            if ($function_name != 'schedule_zammad_import_tickets' && $function_name != 'schedule_update_workboard_stats' && ! str_contains($error, 'Deadlock found')) {
+            if ($function_name != 'schedule_zammad_import_tickets' && $function_name != 'schedule_update_workboard_stats' && !str_contains($error, 'Deadlock found')) {
                 create_github_issue(ucwords(str_replace('_', ' ', $function_name)).' Error ', $function_name.' '.session('instance')->name.': '.$id.' '.date('Y-m-d H:i').PHP_EOL.$error);
             }
             \DB::connection('default')->table('erp_form_events')->where('id', $id)->update(['started' => 0, 'completed' => 1, 'last_failed' => date('Y-m-d H:i:s'), 'run_time' => 0, 'error' => $error]);
-            if (! $function_name) {
+            if (!$function_name) {
                 system_log('schedule', $function_name, 'function not found, id: '.$id.', command: '.$command, 'schedule', $frequency, 0, $id);
             } else {
                 system_log('schedule', $function_name, $ex->getMessage(), 'schedule', $frequency, 0, $id);
@@ -224,8 +223,9 @@ class Kernel extends ConsoleKernel
     /**
      * Merge the given configuration with the existing configuration.
      *
-     * @param  string  $path
-     * @param  string  $key
+     * @param string $path
+     * @param string $key
+     *
      * @return void
      */
     protected function mergeConfigFrom($path, $key)
@@ -245,11 +245,11 @@ class Kernel extends ConsoleKernel
         $array = array_merge($merging, $original);
 
         foreach ($original as $key => $value) {
-            if (! is_array($value)) {
+            if (!is_array($value)) {
                 continue;
             }
 
-            if (! Arr::exists($merging, $key)) {
+            if (!Arr::exists($merging, $key)) {
                 continue;
             }
 

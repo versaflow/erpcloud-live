@@ -24,6 +24,7 @@ class CreateHrLeaveTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

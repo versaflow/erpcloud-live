@@ -24,6 +24,7 @@ class CreateAccSubscriptionBundlesTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

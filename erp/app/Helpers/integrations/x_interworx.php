@@ -1,28 +1,28 @@
 <?php
 
-function ns2_soap($domain, $controller, $action, $input = null)
+function ns2_soap($domain = '', $controller, $action, $input = null)
 {
     ini_set('default_socket_timeout', 600);
     $connect = false;
     $x = 0;
-    $client = new \SoapClient('https://156.0.96.72:2443/soap?wsdl', [
+    $client = new \SoapClient('https://156.0.96.72:2443/soap?wsdl', array(
         'keep_alive' => false,
         'stream_context' => stream_context_create(
-            [
-                'ssl' => [
+            array(
+                'ssl' => array(
                     'verify_peer' => false,
                     'verify_peer_name' => false,
-                ],
-            ]
+                ),
+            )
         ),
-    ]);
+    ));
     // if ($domain == '')
     //     $key = array('email' => 'ahmed@telecloud.co.za', 'password' => 'Webmin321');
     // else
     //     $key = array('email' => 'helpdesk@telecloud.co.za', 'password' => 'superlicious', 'domain' => $domain);
 
     if (str_contains($controller, 'siteworx')) {
-        $key = ['domain' => $domain,
+        $key = array('domain' => $domain,
             'apikey' => '-----BEGIN INTERWORX API KEY-----
 MXw8Pnl1eUstUCRQWTkpPkZ1V1FPYiMhdD5sWXZmLD5Xb3hwLE1LdzVeMmJy
 0VUNSUVdUa3BQa1oxVjFGUFlpTWhkRDVzV1habUxENVhiM2h3TEUxTGR6VmV
@@ -53,7 +53,7 @@ aVlgxU1VHRXFkR1pKVDJVakpGMWJURk42YjNOQkl6TmZiMUp2TFNwb1JIbFV
 aShtPW5JVlV2VElWUnMjaCo8KSNMMCwwTyNeZmItRDhyKkZASSFlW0pEUnJz
 yVkVsV1VuTWphQ284S1NOTU1Dd3dUeU5lWm1JdFJEaHlLa1pBU1NGbFcwcEV
 Wzh1bQ==
------END INTERWORX API KEY-----', ];
+-----END INTERWORX API KEY-----' );
     } elseif (str_contains($controller, 'nodeworx')) {
         $key = '-----BEGIN INTERWORX API KEY-----
 MXw8Pnl1eUstUCRQWTkpPkZ1V1FPYiMhdD5sWXZmLD5Xb3hwLE1LdzVeMmJy
@@ -97,29 +97,29 @@ Wzh1bQ==
     return $result;
 }
 
-function soap($domain, $controller, $action, $input = null)
+function soap($domain = '', $controller, $action, $input = null)
 {
     ini_set('default_socket_timeout', 600);
     $connect = false;
     $x = 0;
-    $client = new \SoapClient('http://156.0.96.71:2080/soap?wsdl', [
+    $client = new \SoapClient('http://156.0.96.71:2080/soap?wsdl', array(
         'stream_context' => stream_context_create(
-            [
-                'ssl' => [
+            array(
+                'ssl' => array(
                     'verify_peer' => false,
                     'verify_peer_name' => false,
-                ],
-            ]
+                ),
+            )
         ),
-    ]);
+    ));
     // if ($domain == '')
     //     $key = array('email' => 'ahmed@telecloud.co.za', 'password' => 'Webmin321');
     // else
     //     $key = array('email' => 'helpdesk@telecloud.co.za', 'password' => 'superlicious', 'domain' => $domain);
     $is_delete = ($controller == '/nodeworx/siteworx' && $action == 'delete') ? 1 : 0;
 
-    if (! $is_delete && str_contains($controller, 'siteworx')) {
-        $key = ['domain' => $domain,
+    if (!$is_delete && str_contains($controller, 'siteworx')) {
+        $key = array('domain' => $domain,
             'apikey' => '-----BEGIN INTERWORX API KEY-----
 MXwkZilkWjJmLGJ7LUc2cUhMcn5UbUVZSWYxZ0NrXkxiKj9FfkdjeyxxaF1A
 tTEdKN0xVYzJjVWhNY241VWJVVlpTV1l4WjBOclhreGlLajlGZmtkamV5eHh
@@ -148,7 +148,7 @@ xY1VBL1UyRm9hSGROWVdKeFJYUlJYMkpTUzJVNVB5NVRlQ1EyUW1oTlEwa3B
 VUhjdFZeLlouSj9APVBnamhpQ0FwdTApV1ZASigkV3VRKURNPlUofTRnLCxA
 1U2o5QVBWQm5hbWhwUTBGd2RUQXBWMVpBU2lna1YzVlJLVVJOUGxVb2ZUUm5
 R308PSxtVUZ9eHBzXzZObCMwTDl1K2dMckhdRSZiMQ==
------END INTERWORX API KEY-----', ];
+-----END INTERWORX API KEY-----', );
     } elseif (str_contains($controller, 'nodeworx')) {
         $key = '-----BEGIN INTERWORX API KEY-----
 MXwkZilkWjJmLGJ7LUc2cUhMcn5UbUVZSWYxZ0NrXkxiKj9FfkdjeyxxaF1A
@@ -214,11 +214,11 @@ function nodeworx_logout()
 
 function panel_to_siteworx_all()
 {
-
+        
     $product_ids = \DB::table('isp_host_websites')->pluck('product_id')->filter()->unique()->toArray();
-    foreach ($product_ids as $product_id) {
-        $package = \DB::table('crm_products')->where('id', $product_id)->pluck('provision_package')->first();
-        \DB::table('isp_host_websites')->where('product_id', $product_id)->update(['package' => $package]);
+    foreach($product_ids as $product_id){
+        $package = \DB::table('crm_products')->where('id',$product_id)->pluck('provision_package')->first();
+        \DB::table('isp_host_websites')->where('product_id',$product_id)->update(['package'=>$package]);
     }
     $sites = \DB::table('isp_host_websites')->where('server', 'host2')->get();
     foreach ($sites as $row) {
@@ -234,28 +234,29 @@ function panel_to_siteworx($account_id, $domain, $package)
     //aa($package);
     $customer = dbgetaccount($account_id);
     $site = \DB::table('isp_host_websites')->where('domain', $domain)->get()->first();
-    if (empty($site) || $site->server != 'host2') {
+    if (empty($site) || $site->server!='host2') {
         return false;
     }
     $email = $customer->email;
     $password = substr(\Erp::encode($domain), 0, 20);
 
-    if (strpos($package, 'monthly') !== false) {
+
+    if (false !== strpos($package, 'monthly')) {
         $package_arr = explode('_', $package);
         $package = $package_arr[0].'_'.$package_arr[1];
     }
     $up = \DB::table('isp_host_websites')->where('domain', $domain)->update(['username' => $email, 'password' => $password]);
 
-    $active = ($customer->status == 'Enabled') ? 1 : 0;
+    $active = ('Enabled' == $customer->status) ? 1 : 0;
 
-    $input = ['domain' => $domain, 'user' => $email, 'email' => $email, 'password' => $password, 'confirm_password' => $password, 'packagetemplate' => $package, 'status' => $active];
-    if ($domain == 'smartsites.co.za') {
+    $input = array('domain' => $domain, 'user' => $email, 'email' => $email, 'password' => $password, 'confirm_password' => $password, 'packagetemplate' => $package, 'status' => $active);
+    if ('smartsites.co.za' == $domain) {
         unset($input['packagetemplate']);
     }
 
-    $iw = new \Interworx;
-    $r = $iw->setServer($site->server)->setDomain($site->domain)->editAccount($input);
 
+    $iw = new \Interworx();
+    $r = $iw->setServer($site->server)->setDomain($site->domain)->editAccount($input);
     return true;
 }
 
@@ -300,7 +301,7 @@ function nodeworx_edit_soa_records()
     $action = 'listRecords';
     $result = soap('', $controller, $action);
     foreach ($result['payload'] as $row) {
-        if ($row->type == 'SOA') {
+        if ('SOA' == $row->type) {
             $input['nameserver'] = 'host2.cloudtools.co.za';
             $input['record_id'] = $row->record_id;
             $controller = '/nodeworx/dns/record';
@@ -316,7 +317,7 @@ function nodeworx_delete_dns_records()
     $action = 'listRecords';
     $result = soap('', $controller, $action);
     foreach ($result['payload'] as $row) {
-        if ($row->type == 'TXT' and $row->target == 'v=spf1 MX A') {
+        if ('TXT' == $row->type and 'v=spf1 MX A' == $row->target) {
             $input['record_id'] = $row->record_id;
             $controller = '/nodeworx/dns/record';
             $action = 'delete';
@@ -340,7 +341,7 @@ function nodeworx_add_dns_records()
         //if ($host != '1.dns-template.com') {
         $result = nodeworx_add_dns_record('TXT', $zone_id, $host, 'v=spf1 MX A');
         //dd($result);
-        //	ns1.nserver.co.za hostmaster@1pricemobile.co.za 7200 300 1209600 10800
+            //	ns1.nserver.co.za hostmaster@1pricemobile.co.za 7200 300 1209600 10800
         //}
     }
 }
@@ -353,7 +354,7 @@ function nodeworx_delete_cname_record($cname)
     $records = [];
 
     foreach ($result['payload'] as $row) {
-        if ($row->target == 'pbx.cloudtools.co.za' || $row->target == 'pbx.telecloud.co.za') {
+        if ('pbx.cloudtools.co.za' == $row->target || 'pbx.telecloud.co.za' == $row->target) {
             $records[] = $row;
         }
     }
@@ -408,7 +409,7 @@ function nodeworx_delete_unsused_cname_records()
     $records = [];
 
     foreach ($result['payload'] as $row) {
-        if ($row->target == 'pbx.cloudtelecoms.co.za' || $row->target == 'cloudtools.versaflow.io') {
+        if ('pbx.cloudtelecoms.co.za' == $row->target || 'cloudtools.versaflow.io' == $row->target) {
             $records[] = $row;
         }
     }
@@ -563,11 +564,11 @@ function ns2_siteworx_info($domain = '6feetunder.co.za')
     $controller = '/nodeworx/siteworx';
     $action = 'querySiteworxAccountDetails';
 
-    $input = ['domain' => $domain];
+    $input = array('domain' => $domain);
 
     $result = ns2_soap('', $controller, $action, $input);
 
-    if ($result['status'] == 0 && ! empty($result['payload'])) {
+    if (0 == $result['status'] && !empty($result['payload'])) {
         return $result['payload'];
     } else {
         return false;
@@ -580,9 +581,9 @@ function siteworx_info($domain = '6feetunder.co.za')
     $controller = '/nodeworx/siteworx';
     $action = 'querySiteworxAccountDetails';
 
-    $input = ['domain' => $domain];
+    $input = array('domain' => $domain);
     $result = soap('', $controller, $action, $input);
-    if ($result['status'] == 0 && ! empty($result['payload'])) {
+    if (0 == $result['status'] && !empty($result['payload'])) {
         return $result['payload'];
     } else {
         return false;
@@ -618,17 +619,17 @@ function siteworx_update_logins()
         $password = 'superlicious';
 
         $package = str_replace('_builder_', '_', $package);
-        if (strpos($row->package, 'monthly') !== false) {
+        if (false !== strpos($row->package, 'monthly')) {
             $package_arr = explode('_', $row->package);
             $row->package = $package_arr[0].'_'.$package_arr[1];
         }
 
         $controller = '/nodeworx/siteworx';
         $action = 'edit';
-        $input = ['domain' => $row->domain, 'user' => $email, 'email' => $email, 'password' => $password, 'confirm_password' => $password, 'packagetemplate' => $row->package, 'status' => $active];
+        $input = array('domain' => $row->domain, 'user' => $email, 'email' => $email, 'password' => $password, 'confirm_password' => $password, 'packagetemplate' => $row->package, 'status' => $active);
         $result = soap('', $controller, $action, $input);
 
-        if ($result['payload'] == 'SiteWorx account edited successfully') {
+        if ('SiteWorx account edited successfully' == $result['payload']) {
             echo $row->domain.' - '.$result['payload'].'<br>';
         } else {
             echo '|'.$row->domain.' - Unsuccessful.<br>';
@@ -693,13 +694,13 @@ function siteworx_list()
                     }
                     if ($package_exists) {
                         $package = str_replace('_builder_', '_', $package);
-                        if (strpos($panel_data->package, 'monthly') !== false) {
+                        if (false !== strpos($panel_data->package, 'monthly')) {
                             $package_arr = explode('_', $panel_data->package);
                             $panel_data->package = $package_arr[0].'_'.$package_arr[1];
                         }
                         siteworx_setcell($row->domain, 'packagetemplate', $panel_data->package);
                         $siteworx_updated = 1;
-                    }
+                    } 
                 }
 
                 if ($panel_email > '' && ($panel_email != $row->email)) {
@@ -710,8 +711,8 @@ function siteworx_list()
                 }
             }
 
-            if (! $siteworx_updated) {
-                if (! $panel_data) {
+            if (!$siteworx_updated) {
+                if (!$panel_data) {
                     $data->domain = $row->domain;
                     $data->account_id = 2;
                     insert('isp_host_websites', $data);
@@ -760,13 +761,13 @@ function delete_sitebuilder($domain)
     $subdomain = $domain_arr[0];
     $server = $domain_details->server;
 
-    if ($server == 'host2') {
+    if ('host2' == $server) {
         $unix_user = ns2_siteworx_info($domain)['unixuser'];
     } else {
         $unix_user = siteworx_info($domain)['unixuser'];
     }
 
-    if (! $unix_user) {
+    if (!$unix_user) {
         return false;
     }
     $site_url = 'http://www.'.$domain;

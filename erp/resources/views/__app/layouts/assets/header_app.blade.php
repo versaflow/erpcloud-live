@@ -133,7 +133,6 @@ z-index:3001 !important;
 
  <style id="erp_color_scheme">
     
- @if (isset($color_scheme) && isset($grid_id))
     #app_toolbar .k-button {
     background: {{ $color_scheme['first_row_buttons_color'] }} !important;
     }
@@ -212,11 +211,6 @@ z-index:3001 !important;
     min-width: 0px;
     }
   
-    #gridheadertoolbar{{ $grid_id }} #toolbar_template_grid_adminbtns{{ $grid_id }} .k-button {
-    background: #ffffff !important;
-    }
-@endif
-
     span.global_search_input{
     border-top-left-radius: 0px !important;
     border-bottom-left-radius: 0px !important;    
@@ -226,7 +220,9 @@ z-index:3001 !important;
     }
     </style>
     <style>
-
+    #gridheadertoolbar{{ $grid_id }} #toolbar_template_grid_adminbtns{{ $grid_id }} .k-button {
+    background: #ffffff !important;
+    }
     .btn:hover:not(.btn-icon-only) {
         box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.09), 0 2px 3px -1px rgba(0, 0, 0, 0.07);
         transform: none !important;

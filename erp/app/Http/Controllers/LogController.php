@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ModuleManager;
 use Rap2hpoutre\LaravelLogViewer\LogViewerController;
+use Illuminate\Http\Request;
+use Validator;
+use Input;
 use Redirect;
 
 class LogController extends LogViewerController

@@ -1,10 +1,8 @@
 <?php
 
-function button_reports_open_report($request)
-{
+function button_reports_open_report($request){
     $url = get_menu_url_from_module_id(488);
-    $url .= '/view_report/'.$request->id;
-
+    $url.='/view_report/'.$request->id;
     return redirect()->to(url($url));
 }
 
@@ -42,18 +40,18 @@ function get_report_col_defs($report_id)
         foreach ($query_data['db_columns'] as $i => $col) {
             $col_arr = explode('.', $col);
             if ($table == $col_arr[0]) {
-                if (! in_array($col_arr[1], $cols_added)) {
+                if (!in_array($col_arr[1], $cols_added)) {
                     $cols_added[] = $col_arr[1];
                     $label = $col_arr[1];
                 } else {
-                    $label = $table_aliases[$col_arr[0]].' '.$col_arr[1];
+                    $label = $table_aliases[$col_arr[0]] . ' ' . $col_arr[1];
                     $label = str_replace('records_lastmonth ', '', $label);
                     $label = str_replace('records ', '', $label);
                 }
 
-                $sql_label = $table_aliases[$col_arr[0]].' '.$col_arr[1];
+                $sql_label = $table_aliases[$col_arr[0]] . ' ' . $col_arr[1];
 
-                $colDef = [
+                $colDef =  [
                     'field' => $sql_label,
                     'headerName' => $label,
                 ];
@@ -62,9 +60,10 @@ function get_report_col_defs($report_id)
             }
         }
     }
-
     return $colDefs;
 }
+
+
 
 function aftersave_reports_set_default($request)
 {
@@ -74,7 +73,7 @@ function aftersave_reports_set_default($request)
     $module_ids = \DB::connection('default')->table('erp_reports')->pluck('module_id')->toArray();
     foreach ($module_ids as $module_id) {
         $default_set = \DB::connection('default')->table('erp_reports')->where('module_id', $module_id)->where('default', 1)->count();
-        if (! $default_set) {
+        if (!$default_set) {
             $id = \DB::connection('default')->table('erp_reports')->where('module_id', $module_id)->pluck('id')->first();
             \DB::connection('default')->table('erp_reports')->where('id', $id)->update(['default' => 1]);
         }
@@ -83,7 +82,7 @@ function aftersave_reports_set_default($request)
 
 function aftersave_reports_default_query($request)
 {
-    if (! empty($request->new_record)) {
+    if (!empty($request->new_record)) {
         $module = \DB::connection('default')->table('erp_cruds')->where('id', $request->module_id)->get()->first();
         $sql_query = $module->db_sql;
         if (empty($module->db_sql)) {
@@ -91,7 +90,7 @@ function aftersave_reports_default_query($request)
         }
 
         $sql_where = $module->db_where;
-        if (! empty($module->db_where)) {
+        if (!empty($module->db_where)) {
             $sql_query .= ' '.$module->db_where;
         }
 
@@ -117,7 +116,8 @@ function aftersave_reports_default_query($request)
 
         \DB::connection('default')->table('erp_reports')->where('id', $request->id)->update($data);
 
-        $erp_reports = new \ErpReports;
+
+        $erp_reports = new \ErpReports();
         $erp_reports->setErpConnection(session('instance')->db_connection);
         $sql = $erp_reports->reportSQL($request->id);
 
@@ -130,7 +130,7 @@ function aftersave_reports_default_query($request)
 function create_default_report($module_id)
 {
     $name = \DB::connection('default')->table('erp_menu')->where('module_id', $module_id)->pluck('menu_name')->first();
-    if (! $name) {
+    if (!$name) {
         $name = \DB::connection('default')->table('erp_cruds')->where('id', $module_id)->pluck('name')->first();
     }
     $data = [
@@ -146,7 +146,7 @@ function create_default_report($module_id)
     }
 
     $sql_where = $module->db_where;
-    if (! empty($module->db_where)) {
+    if (!empty($module->db_where)) {
         $sql_query .= ' '.$module->db_where;
     }
 
@@ -173,28 +173,29 @@ function create_default_report($module_id)
 
     \DB::connection('default')->table('erp_reports')->where('id', $id)->update($data);
 
-    $erp_reports = new \ErpReports;
+
+    $erp_reports = new \ErpReports();
     $erp_reports->setErpConnection(session('instance')->db_connection);
     $sql = $erp_reports->reportSQL($id);
 
     if ($sql) {
         \DB::connection('default')->table('erp_reports')->where('id', $id)->update(['sql_query' => $sql]);
     }
-
     return $id;
 }
 
 function button_reports_copy_report($request)
 {
-    if (! empty(session('instance')->id)) {
+    if (!empty(session('instance')->id)) {
         $report = \DB::connection('default')->table('erp_reports')->where('id', $request->id)->get()->first();
 
         if ($report->custom) {
             return json_alert('Custom reports cannot be copied.', 'warning');
         }
 
+
         if (is_main_instance()) {
-            $instances = \DB::connection('system')->table('erp_instances')->where('installed', 1)->where('installed', 1)->get();
+            $instances = \DB::connection('system')->table('erp_instances')->where('installed',1)->where('installed', 1)->get();
             foreach ($instances as $instance) {
                 if ($instance->id != session('instance')->id) {
                     $data = (array) $report;
@@ -209,7 +210,7 @@ function button_reports_copy_report($request)
                 }
             }
         } else {
-            $instances = \DB::connection('system')->table('erp_instances')->where('installed', 1)->where('installed', 1)->get();
+            $instances = \DB::connection('system')->table('erp_instances')->where('installed',1)->where('installed', 1)->get();
             foreach ($instances as $instance) {
                 if ($instance->id == 1) {
                     $data = (array) $report;
@@ -223,6 +224,7 @@ function button_reports_copy_report($request)
                     }
                 }
             }
+
 
             foreach ($instances as $instance) {
                 if ($instance->id != session('instance')->id && $instance->id != 1) {
@@ -283,7 +285,7 @@ function get_report_month_filter_options($row)
 function save_img_to_pdf($file_path)
 {
     if (str_ends_with($file_path, '.jpg') || str_ends_with($file_path, '.jpeg') || str_ends_with($file_path, '.png')) {
-        $pdf_html = '<img src="data:image/jpeg;base64,'.base64_encode(@file_get_contents($file_path)).'">';
+        $pdf_html = '<img src="data:image/jpeg;base64,'. base64_encode(@file_get_contents($file_path)) .'">';
 
         $pdf = PDF::loadHtml($pdf_html);
         $options = [
@@ -294,17 +296,17 @@ function save_img_to_pdf($file_path)
         ];
 
         $pdf->setOptions($options);
-        $file_path = str_replace(['.jpg', '.jpeg', '.png'], '.pdf', $file_path);
+        $file_path = str_replace(['.jpg','.jpeg','.png'], '.pdf', $file_path);
         if (file_exists($file_path)) {
             unlink($file_path);
         }
         $pdf->save($file_path);
-
         return true;
     }
-
     return false;
 }
+
+
 
 function button_reports_joins_update_from_schema($request)
 {
@@ -313,10 +315,10 @@ function button_reports_joins_update_from_schema($request)
     foreach ($tables as $table) {
         $foreign_keys = get_all_foreign_keys_from_schema($table);
         foreach ($foreign_keys as $key => $ref) {
-            $data = ['join_1' => $key, 'join_2' => $ref['table'].'.'.$ref['key'], 'type' => 'Schema'];
+            $data = ['join_1' => $key,'join_2' => $ref['table'].'.'.$ref['key'], 'type' => 'Schema'];
 
             $exists = \DB::table('erp_report_joins')->where('join_1', $data['join_1'])->where('join_2', $data['join_2'])->count();
-            if (! $exists) {
+            if (!$exists) {
                 \DB::table('erp_report_joins')->insert($data);
             }
         }
@@ -325,14 +327,13 @@ function button_reports_joins_update_from_schema($request)
     $fields = \DB::table('erp_module_fields')->where('field_type', 'select_module')->where('opts_multiple', 0)->get();
 
     foreach ($fields as $field) {
-        $data = ['join_1' => $field->alias.'.'.$field->field, 'join_2' => $field->opt_db_table.'.'.$field->opt_db_key, 'type' => 'Field'];
+        $data = ['join_1' => $field->alias.'.'.$field->field,'join_2' => $field->opt_db_table.'.'.$field->opt_db_key, 'type' => 'Field'];
 
         $exists = \DB::table('erp_report_joins')->where('join_1', $data['join_1'])->where('join_2', $data['join_2'])->count();
-        if (! $exists) {
+        if (!$exists) {
             \DB::table('erp_report_joins')->insert($data);
         }
     }
-
     return json_alert('Done');
 }
 
@@ -340,16 +341,18 @@ function aftercommit_set_fds_reports($request)
 {
     $beforesave_row = session('event_db_record');
 
-    if (! empty($beforesave_row) && $request->fds && $request->fds != $beforesave_row->fds) {
-        $flexmonster = new \Flexmonster;
+    if (!empty($beforesave_row) && $request->fds && $request->fds != $beforesave_row->fds) {
+        $flexmonster = new \Flexmonster();
         $flexmonster->loadIndexes();
         $flexmonster->dataServerRestart();
     }
 }
 
+
+
 function button_reports_restart_fds($request)
 {
-    $flexmonster = new \Flexmonster;
+    $flexmonster = new \Flexmonster();
     $flexmonster->loadIndexes();
     $result = $flexmonster->dataServerRestart();
     if ($result == true) {
@@ -360,22 +363,23 @@ function button_reports_restart_fds($request)
 }
 
 function schedule_daily_reportserver_restart()
-{
-    $flexmonster = new \Flexmonster;
+{ 
+    $flexmonster = new \Flexmonster();
     $flexmonster->testReportQueries();
-
-    $erp_reports = new \ErpReports;
+    
+    $erp_reports = new \ErpReports();
     $erp_reports->setErpConnection(session('instance')->db_connection);
-    $report_ids = \DB::connection('default')->table('erp_reports')->where('invalid_query', 1)->pluck('id')->toArray();
-    foreach ($report_ids as $report_id) {
+    $report_ids = \DB::connection('default')->table('erp_reports')->where('invalid_query',1)->pluck('id')->toArray();
+    foreach($report_ids as $report_id){
         $sql = $erp_reports->reportSQL($report_id);
-
+      
         if ($sql) {
             \DB::connection('default')->table('erp_reports')->where('id', $report_id)->update(['sql_query' => $sql]);
         }
     }
     $flexmonster->testReportQueries();
-
+    
+    
     $flexmonster->loadIndexes();
     $flexmonster->dataServerRestart();
 }

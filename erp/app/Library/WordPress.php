@@ -3,11 +3,8 @@
 class WordPress
 {
     protected $wc;
-
     protected $excluded_categories;
-
     protected $update_images;
-
     protected $config;
 
     public function __construct($integration_id)
@@ -19,7 +16,7 @@ class WordPress
     {
         $config = \DB::table('crm_wordpress_integrations')->where('id', $integration_id)->get()->first();
 
-        if (! $config || empty($config->store_url) || empty($config->consumer_key) || empty($config->consumer_secret)) {
+        if (!$config || empty($config->store_url) || empty($config->consumer_key) || empty($config->consumer_secret)) {
             throw new \ErrorException('Integration details invalid');
         }
 
@@ -42,24 +39,24 @@ class WordPress
         $this->update_images = true;
         if ($config->storefront_id == 3) {
             $category_ids = \DB::table('crm_product_categories')
-                ->where('not_for_sale', 0)
-                ->where('is_deleted', 0)
-                ->where('storefront_id', $config->storefront_id)
+            ->where('not_for_sale', 0)
+            ->where('is_deleted', 0)
+            ->where('storefront_id', $config->storefront_id)
             //->whereIn('id', explode(',', $config->allowed_categories))
-                ->pluck('id')->toArray();
+            ->pluck('id')->toArray();
         } elseif (session('instance')->id == 1) {
             $category_ids = \DB::table('crm_product_categories')
-                ->where('not_for_sale', 0)
-                ->where('is_deleted', 0)
-                ->where('storefront_id', $config->storefront_id)
-                ->whereIn('id', explode(',', $config->allowed_categories))
-                ->pluck('id')->toArray();
+            ->where('not_for_sale', 0)
+            ->where('is_deleted', 0)
+            ->where('storefront_id', $config->storefront_id)
+            ->whereIn('id', explode(',', $config->allowed_categories))
+            ->pluck('id')->toArray();
         } else {
             $category_ids = \DB::table('crm_product_categories')
-                ->where('not_for_sale', 0)
-                ->where('is_deleted', 0)
-                ->whereIn('id', explode(',', $config->allowed_categories))
-                ->pluck('id')->toArray();
+            ->where('not_for_sale', 0)
+            ->where('is_deleted', 0)
+            ->whereIn('id', explode(',', $config->allowed_categories))
+            ->pluck('id')->toArray();
         }
 
         $this->allowed_category_ids = $category_ids;
@@ -133,7 +130,7 @@ class WordPress
         $all_products = collect($products);
         $i = 1;
         while (count($products) == 100) {
-            $i++;
+            ++$i;
 
             $products = $this->wc->get('products', ['page' => $i, 'per_page' => 100]);
             $products = collect($products);
@@ -154,7 +151,7 @@ class WordPress
         $all_categories = collect($categories);
         $i = 1;
         while (count($categories) == 100) {
-            $i++;
+            ++$i;
 
             $categories = $this->wc->get('products/categories', ['page' => $i, 'per_page' => 100]);
             $categories = collect($categories);
@@ -188,7 +185,7 @@ class WordPress
                 'menu_order' => $i,
             ];
             try {
-                if (! empty($department_id)) { // update
+                if (!empty($department_id)) { // update
                     $result = $this->wc->put('products/categories/'.$department_id, $data);
                 } else { // create
                     aa($data);
@@ -202,12 +199,12 @@ class WordPress
                 //dd($data,$ex->getMessage(),$ex->getTraceAsString());
             }
 
-            $i++;
+            ++$i;
 
             $department_categories = collect($categories)->where('department', $department);
 
             foreach ($department_categories as $category) {
-                vd($category);
+                // vd($category);
                 $category_id = $this->wordpress_links->where('type', 'category')->where('erp_value', $category->id)->where('integration_id', $this->config->id)->pluck('wordpress_id')->first();
                 $data = [
                     'name' => $category->name,
@@ -216,9 +213,9 @@ class WordPress
                     'menu_order' => $category->sort_order,
                 ];
 
-                if ($this->update_images && ! empty($category->website_image_1)) {
+                if ($this->update_images && !empty($category->website_image_1)) {
                     $file = $category->website_image_1;
-                    if (! empty($file) && file_exists(uploads_path(72).$file)) {
+                    if (!empty($file) && file_exists(uploads_path(72).$file)) {
                         $img_data = ['src' => uploads_url(72).$category->website_image_1];
                         $category_image_id = $this->wordpress_links->where('type', 'categoryimage')->where('erp_value', $category->id)->where('integration_id', $this->config->id)->pluck('wordpress_id')->first();
                         if ($category_image_id) {
@@ -229,7 +226,7 @@ class WordPress
                 }
 
                 try {
-                    if (! empty($category_id)) { // update
+                    if (!empty($category_id)) { // update
                         $result = $this->wc->put('products/categories/'.$category_id, $data);
                     } else { // create
                         $result = $this->wc->post('products/categories', $data);
@@ -252,7 +249,7 @@ class WordPress
         $this->wordpress_links = \DB::table('crm_wordpress_links')->where('integration_id', $this->config->id)->get();
         $products = $this->getAllProducts();
         foreach ($products as $product) {
-            if (! empty($product['images'][0]['id'])) {
+            if (!empty($product['images'][0]['id'])) {
                 $product_id = $this->wordpress_links->where('type', 'product')->where('wordpress_id', $product['id'])->where('integration_id', $this->config->id)->pluck('erp_value')->first();
                 if ($product_id) {
                     $this->addWordpressLink('productimage', $product_id, $product['images'][0]['id']);
@@ -262,7 +259,7 @@ class WordPress
 
         $categories = $this->getAllCategories();
         foreach ($categories as $category) {
-            if (! empty($category['image']['id'])) {
+            if (!empty($category['image']['id'])) {
                 $category_id = $this->wordpress_links->where('type', 'category')->where('wordpress_id', $category['id'])->where('integration_id', $this->config->id)->pluck('erp_value')->first();
                 if ($category_id) {
                     $this->addWordpressLink('categoryimage', $category_id, $category['image']['id']);
@@ -271,9 +268,13 @@ class WordPress
         }
     }
 
-    public function getFeaturedProducts() {}
+    public function getFeaturedProducts()
+    {
+    }
 
-    public function getBestSellingProducts() {}
+    public function getBestSellingProducts()
+    {
+    }
 
     public function getContractAttributeId()
     {
@@ -287,13 +288,13 @@ class WordPress
             }
         }
 
-        if (! $attribute_id) {
+        if (!$attribute_id) {
             $data = [
-                'name' => $name,
-                'slug' => 'ct_'.strtolower(str_replace(' ', '_', $name)),
-                'type' => 'select',
-                'order_by' => 'menu_order',
-                'has_archives' => true,
+            'name' => $name,
+            'slug' => 'ct_'.strtolower(str_replace(' ', '_', $name)),
+            'type' => 'select',
+            'order_by' => 'menu_order',
+            'has_archives' => true,
             ];
             $result = $this->wc->post('products/attributes', $data);
 
@@ -308,7 +309,7 @@ class WordPress
             $attribute_term_names[] = $attribute_term['name'];
         }
 
-        if (! in_array('Monthly', $attribute_term_names)) {
+        if (!in_array('Monthly', $attribute_term_names)) {
             $data = [
                 'name' => 'Monthly',
             ];
@@ -316,7 +317,7 @@ class WordPress
             $this->wc->post('products/attributes/'.$attribute_id.'/terms', $data);
         }
 
-        if (! in_array('12 Month Contract', $attribute_term_names)) {
+        if (!in_array('12 Month Contract', $attribute_term_names)) {
             $data = [
                 'name' => '12 Month Contract',
             ];
@@ -365,7 +366,7 @@ class WordPress
 
         foreach ($products as $product) {
             try {
-                if (in_array($product->id, $lte_product_ids) && ! in_array($product->id, $linked_lte_product_ids)) {
+                if (in_array($product->id, $lte_product_ids) && !in_array($product->id, $linked_lte_product_ids)) {
                     continue;
                 }
 
@@ -373,7 +374,7 @@ class WordPress
                     continue;
                 }
 
-                if (! in_array($product->product_category_id, $this->allowed_category_ids)) {
+                if (!in_array($product->product_category_id, $this->allowed_category_ids)) {
                     continue;
                 }
 
@@ -381,7 +382,7 @@ class WordPress
                     continue;
                 }
                 $category_id = $this->wordpress_links->where('erp_value', $product->product_category_id)
-                    ->where('type', 'category')->where('integration_id', $this->config->id)->pluck('wordpress_id')->first();
+            ->where('type', 'category')->where('integration_id', $this->config->id)->pluck('wordpress_id')->first();
                 $product_id = $this->wordpress_links->where('type', 'product')->where('erp_value', $product->id)->where('integration_id', $this->config->id)->pluck('wordpress_id')->first();
 
                 if ($product->product_bill_frequency > 1) {
@@ -389,17 +390,17 @@ class WordPress
                 }
 
                 $data = [
-                    'sku' => $product->code,
-                    'name' => $product->name,
-                    'short_description' => $product->description,
-                    'description' => $product->description,
-                    'menu_order' => $product->sort_order,
-                    'categories' => [['id' => $category_id]],
-                    'regular_price' => (string) currency($product->price),
-                    'catalog_visibility' => 'visible',
-                    'stock_status' => 'instock',
-                    'type' => 'simple',
-                ];
+                'sku' => $product->code,
+                'name' => $product->name,
+                'short_description' => $product->description,
+                'description' => $product->description,
+                'menu_order' => $product->sort_order,
+                'categories' => [['id' => $category_id]],
+                'regular_price' => (string) currency($product->price),
+                'catalog_visibility' => 'visible',
+                'stock_status' => 'instock',
+                'type' => 'simple',
+            ];
 
                 if (str_contains($product->code, 'rate')) {
                     $data['type'] = 'external';
@@ -464,9 +465,9 @@ class WordPress
                 $meta_data[] = ['key' => 'num_sold', 'value' => $count_document_lines];
                 $data['meta_data'] = [$meta_data];
 
-                if ($this->update_images && ! empty($product->upload_file)) {
+                if ($this->update_images && !empty($product->upload_file)) {
                     $file = $product->upload_file;
-                    if (! empty($file) && file_exists(uploads_path(71).$file)) {
+                    if (!empty($file) && file_exists(uploads_path(71).$file)) {
                         $img_data = ['src' => uploads_url(71).$file];
                         $product_image_id = $this->wordpress_links->where('type', 'productimage')->where('erp_value', $product->id)->where('integration_id', $this->config->id)->pluck('wordpress_id')->first();
                         if ($product_image_id) {
@@ -476,15 +477,15 @@ class WordPress
                     }
                 }
 
-                if (! empty($product_id)) { // update
+                if (!empty($product_id)) { // update
                     $result = $this->wc->put('products/'.$product_id, $data);
 
-                    /*
-                    if(str_contains($result,'Error: Invalid ID')){
-                        $result =  $this->wc->post('products', $data);
+                /*
+                if(str_contains($result,'Error: Invalid ID')){
+                    $result =  $this->wc->post('products', $data);
 
-                    }
-                    */
+                }
+                */
                 } else {
                     // create
 
@@ -577,22 +578,22 @@ class WordPress
         $wp_category_ids = $wp_categories->where('parent', '!=', 0)->pluck('id')->toArray();
 
         \DB::table('crm_wordpress_links')
-            ->where('integration_id', $this->config->id)
-            ->where('type', 'category')
-            ->whereNotIn('erp_value', $this->allowed_category_ids)
-            ->delete();
+         ->where('integration_id', $this->config->id)
+         ->where('type', 'category')
+         ->whereNotIn('erp_value', $this->allowed_category_ids)
+         ->delete();
 
         \DB::table('crm_wordpress_links')
-            ->where('integration_id', $this->config->id)
-            ->where('type', 'department')
-            ->whereNotIn('wordpress_id', $wp_department_ids)
-            ->delete();
+         ->where('integration_id', $this->config->id)
+         ->where('type', 'department')
+         ->whereNotIn('wordpress_id', $wp_department_ids)
+         ->delete();
 
         \DB::table('crm_wordpress_links')
-            ->where('integration_id', $this->config->id)
-            ->where('type', 'category')
-            ->whereNotIn('wordpress_id', $wp_category_ids)
-            ->delete();
+         ->where('integration_id', $this->config->id)
+         ->where('type', 'category')
+         ->whereNotIn('wordpress_id', $wp_category_ids)
+         ->delete();
 
         foreach ($wp_categories as $wp_category) {
             $wp_category = (object) $wp_category;
@@ -601,9 +602,9 @@ class WordPress
             }
 
             $exists = \DB::table('crm_wordpress_links')
-                ->where('integration_id', $this->config->id)
-                ->whereIn('type', ['department', 'category'])
-                ->where('wordpress_id', $wp_category->id)->count();
+            ->where('integration_id', $this->config->id)
+            ->whereIn('type', ['department', 'category'])
+            ->where('wordpress_id', $wp_category->id)->count();
 
             if ($exists) {
                 continue;
@@ -630,10 +631,10 @@ class WordPress
         $wp_product_ids = $wp_products->pluck('id')->toArray();
 
         \DB::table('crm_wordpress_links')
-            ->where('integration_id', $this->config->id)
-            ->where('type', 'product')
-            ->whereNotIn('wordpress_id', $wp_product_ids)
-            ->delete();
+         ->where('integration_id', $this->config->id)
+         ->where('type', 'product')
+         ->whereNotIn('wordpress_id', $wp_product_ids)
+         ->delete();
 
         $telkom_lte_product_ids = get_activation_type_product_ids('telkom_lte_sim_card');
         $mtn_lte_product_ids = get_activation_type_product_ids('mtn_lte_sim_card');
@@ -652,11 +653,11 @@ class WordPress
             }
 
             $erp_value = \DB::table('crm_wordpress_links')
-                ->where('integration_id', $this->config->id)
-                ->where('type', 'product')
-                ->where('wordpress_id', $wp_product->id)->pluck('erp_value')->first();
+            ->where('integration_id', $this->config->id)
+            ->where('type', 'product')
+            ->where('wordpress_id', $wp_product->id)->pluck('erp_value')->first();
 
-            if (! $erp_value) {
+            if (!$erp_value) {
                 $result = $this->wc->delete('products/'.$wp_product->id, ['id' => $wp_product->id, 'force' => true]);
             } else {
                 $products = \DB::table('crm_products');
@@ -669,7 +670,7 @@ class WordPress
                 $products->where('crm_pricelist_items.pricelist_id', 1);
 
                 $valid_product = $products->count();
-                if (in_array($erp_value, $lte_product_ids) && ! in_array($erp_value, $linked_lte_product_ids)) {
+                if (in_array($erp_value, $lte_product_ids) && !in_array($erp_value, $linked_lte_product_ids)) {
                     $valid_product = false;
                 }
 
@@ -716,12 +717,14 @@ class WordPress
         $new_orders = [];
 
         foreach ($orders as $order) {
+            if ($order['meta_data']['key'] == 'erp_id')
+                continue;
+
             if ($order['status'] == 'cancelled') {
                 continue;
             }
             if ($order['customer_id'] == 0) {
                 $result = $this->wc->delete('orders/'.$order['id'], ['id' => $order['id'], 'force' => true]);
-
                 continue;
             }
 
@@ -784,7 +787,7 @@ class WordPress
                 // }
 
                 $doctype = 'Order';
-                if (! $order['needs_payment']) {
+                if (!$order['needs_payment']) {
                     $doctype = 'Tax Invoice';
                 }
                 // $doctype = 'Quotation';
@@ -792,11 +795,10 @@ class WordPress
                 $this->importCustomer($order['customer_id']);
                 $account_id = $this->getCustomerErpId($order['customer_id']);
                 // vd($account_id);
-                vd($order['id']);
+                // vd($order['id']);
 
-                if (! $account_id) {
+                if (!$account_id) {
                     debug_email('WordPress order could not be imported, invalid customer - order id: '.$order['id']);
-
                     continue;
                 }
 
@@ -831,7 +833,7 @@ class WordPress
                 }
 
                 foreach ($order['line_items'] as $line) {
-                    vd($line);
+                    // vd($line);
                     // vd($this->config->id);
 
                     $description = '';
@@ -881,13 +883,13 @@ class WordPress
                     }
                 }
 
-                $db = new DBEvent;
+                $db = new DBEvent();
                 $result = $db->setTable('crm_documents')->setProperties(['validate_document' => 1])->save($data);
-                // vd($result);
-                if (is_array($result) && ! empty($result['id'])) {
+                vd($result);
+                if (is_array($result) && !empty($result['id'])) {
                     $erp_id = $result['id'];
-                    $this->markOrderProcessed($order['id'], $erp_id);
-
+                    $check = $this->markOrderProcessed($order['id'], $erp_id);
+                    vd($check);
                     $this->addWordpressLink('document', $result['id'], $order['id'], 0, $order['payment_method'], $order['transaction_id']);
 
                     if ($doctype == 'Tax Invoice' && $order['payment_method'] == 'payfast') {
@@ -950,26 +952,26 @@ class WordPress
             }
         }
 
-        if (! empty($order['transaction_id'])) {
+        if (!empty($order['transaction_id'])) {
             \DB::table('acc_cashbook_transactions')->where('cashbook_id', 5)->where('doctype', 'Cashbook Customer Receipt')->where('api_id', $order['transaction_id'])->delete();
         }
 
         if ($payfast_amount_fee) {
             $exists = \DB::table('acc_cashbook_transactions')->where('reference', 'LIKE', 'Payfast Fee%')->where('api_id', $order['transaction_id'])->count();
-            if (! $exists) {
+            if (!$exists) {
                 $fee_data = [
-                    'ledger_account_id' => 22,
-                    'cashbook_id' => $cashbook->id,
-                    'total' => abs($payfast_amount_fee),
-                    'api_id' => $order['transaction_id'],
-                    'reference' => 'Payfast Fee '.$order['transaction_id'],
-                    'api_status' => 'Complete',
-                    'doctype' => 'Cashbook Control Payment',
-                    'docdate' => date('Y-m-d H:i:s'), //, strtotime($order['date_created'])),
-                ];
+            'ledger_account_id' => 22,
+            'cashbook_id' => $cashbook->id,
+            'total' => abs($payfast_amount_fee),
+            'api_id' => $order['transaction_id'],
+            'reference' => 'Payfast Fee '.$order['transaction_id'],
+            'api_status' => 'Complete',
+            'doctype' => 'Cashbook Control Payment',
+            'docdate' => date('Y-m-d H:i:s'), //, strtotime($order['date_created'])),
+            ];
 
-                $fee_result = (new \DBEvent)->setTable('acc_cashbook_transactions')->save($fee_data);
-                if (! is_array($fee_result) || empty($fee_result['id'])) {
+                $fee_result = (new \DBEvent())->setTable('acc_cashbook_transactions')->save($fee_data);
+                if (!is_array($fee_result) || empty($fee_result['id'])) {
                     debug_email(session('instance')->name.' Error processing payfast website order fee.', 'Error processing payfast website order.'.json_encode($fee_result));
                     throw new \ErrorException('Error inserting Payfast Fee into journals.'.json_encode($fee_result));
                 }
@@ -989,9 +991,9 @@ class WordPress
             'api_balance' => 0,
         ];
 
-        $result = (new \DBEvent)->setTable('acc_cashbook_transactions')->save($api_data);
+        $result = (new \DBEvent())->setTable('acc_cashbook_transactions')->save($api_data);
 
-        if (! is_array($result) || empty($result['id'])) {
+        if (!is_array($result) || empty($result['id'])) {
             debug_email(session('instance')->name.' Error processing payfast website order.', 'Error processing payfast website order.'.json_encode($result));
         }
     }
@@ -999,7 +1001,7 @@ class WordPress
     public function importCustomer($customer_id)
     {
         // vd($customer_id);
-        if (! in_array(session('instance')->id, [1, 11])) {
+        if (!in_array(session('instance')->id, [1, 11])) {
             return false;
         }
 
@@ -1015,7 +1017,7 @@ class WordPress
             $details = $customer['billing'];
             $customer_data = [
                 'contact' => implode(' ', [$details['first_name'], $details['last_name']]),
-                'company' => (! empty($details['company'])) ? $details['company'].' - '.implode(' ', [$details['first_name'], $details['last_name']]) : implode(' ', [$details['first_name'], $details['last_name']]),
+                'company' => (!empty($details['company'])) ? $details['company'].' - '.implode(' ', [$details['first_name'], $details['last_name']]) : implode(' ', [$details['first_name'], $details['last_name']]),
                 'phone' => $details['phone'],
                 'email' => $details['email'],
                 'address' => implode(',', [$details['address_1'], $details['address_2'], $details['city'], $details['postcode'], $details['country']]),
@@ -1042,7 +1044,7 @@ class WordPress
             $account_id = \DB::table('crm_accounts')->insertGetId($customer_data);
             // vd($account_id);
             $disable_customer_login = get_admin_setting('disable_customer_login');
-            if (! $disable_customer_login) {
+            if (!$disable_customer_login) {
                 // get wp user data
                 $user = \DB::connection($store_db)->table($this->config->users_table_name)->where('id', $customer['id'])->get()->first();
 
@@ -1072,30 +1074,30 @@ class WordPress
             $store_db = $this->config->store_db;
 
             $linked_customers = \DB::table('crm_wordpress_links')
-                ->where('integration_id', $this->config->id)
-                ->where('type', 'customer')
-                ->get();
+            ->where('integration_id', $this->config->id)
+            ->where('type', 'customer')
+            ->get();
 
             // vd($linked_customers);
 
             $erp_customers = \DB::table('crm_accounts')
-                ->select('crm_accounts.*', 'erp_users.username', 'erp_users.password')
-                ->leftJoin('erp_users', 'crm_accounts.id', '=', 'erp_users.account_id')
-                ->where('crm_accounts.partner_id', 1)
-                ->where('crm_accounts.id', '!=', 1)
-                ->where('crm_accounts.status', '!=', 'Deleted')
-                ->whereIn('crm_accounts.type', ['customer', 'reseller'])
-                ->get();
+            ->select('crm_accounts.*', 'erp_users.username', 'erp_users.password')
+            ->leftJoin('erp_users', 'crm_accounts.id', '=', 'erp_users.account_id')
+            ->where('crm_accounts.partner_id', 1)
+            ->where('crm_accounts.id', '!=', 1)
+            ->where('crm_accounts.status', '!=', 'Deleted')
+            ->whereIn('crm_accounts.type', ['customer', 'reseller'])
+            ->get();
             // dd($erp_customers);
 
             foreach ($erp_customers as $erp_customer) {
-                vd($erp_customer->id);
+                // vd($erp_customer->id);
                 $wp_id = $linked_customers->where('erp_value', $erp_customer->id)->pluck('wordpress_id')->first();
-                vd($wp_id);
+                // vd($wp_id);
                 if ($wp_id) {
                     \DB::connection($store_db)->table($this->config->users_table_name)->where('id', $wp_id)->update(['user_pass' => $erp_customer->password]);
                 } else {
-                    if (! empty($erp_customer->username) && filter_var($erp_customer->username, FILTER_VALIDATE_EMAIL)) {
+                    if (!empty($erp_customer->username) && filter_var($erp_customer->username, FILTER_VALIDATE_EMAIL)) {
                         try {
                             // Customer data
                             $customerData = [
@@ -1132,10 +1134,10 @@ class WordPress
     public function getCustomerErpId($id)
     {
         return \DB::table('crm_wordpress_links')
-            ->where('integration_id', $this->config->id)
-            ->where('type', 'customer')
-            ->where('wordpress_id', $id)
-            ->pluck('erp_value')
-            ->first();
+        ->where('integration_id', $this->config->id)
+        ->where('type', 'customer')
+        ->where('wordpress_id', $id)
+        ->pluck('erp_value')
+        ->first();
     }
 }

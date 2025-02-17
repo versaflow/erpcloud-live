@@ -18,6 +18,7 @@ class AddForeignKeysToAccSubscriptionBundlesTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *

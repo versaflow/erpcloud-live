@@ -21,6 +21,7 @@ class CreateIspPbxCarrierRatesTable extends Migration
         });
     }
 
+
     /**
      * Reverse the migrations.
      *
