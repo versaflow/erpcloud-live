@@ -1,6 +1,7 @@
 <?php
 
-function addHourtoCronFrequency($cronExpression) {
+function addHourtoCronFrequency($cronExpression)
+{
     // Split the cron expression into individual parts
     $cronParts = explode(' ', $cronExpression);
 

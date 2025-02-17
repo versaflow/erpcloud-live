@@ -2,8 +2,8 @@
 
 namespace App\Http\Middleware;
 
-use Illuminate\Support\Facades\Auth;
 use Closure;
+use Illuminate\Support\Facades\Auth;
 
 class IpblockedMiddleware
 {
@@ -11,23 +11,21 @@ class IpblockedMiddleware
      * Handle an incoming request.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
      * @return mixed
      */
     public function handle($request, Closure $next)
     {
 
         $config = config('sximo');
-        if ($config['cnf_allowip'] !='') {
+        if ($config['cnf_allowip'] != '') {
             $ipsAllow = explode(',', preg_replace('/\s+/', '', $config['cnf_allowip']));
             if (count($ipsAllow) >= 1) {
-//                echo count($ipsAllow);exit;
-                if (!in_array($request->ip(), $ipsAllow)) {
+                //                echo count($ipsAllow);exit;
+                if (! in_array($request->ip(), $ipsAllow)) {
                     return redirect('restric');
                 }
             }
         }
-
 
         $ips = explode(',', preg_replace('/\s+/', '', $config['cnf_restrictip']));
         if (is_array($ips)) {
@@ -36,22 +34,22 @@ class IpblockedMiddleware
             }
         }
 
-        if (!\Session::has('lang')) {
+        if (! \Session::has('lang')) {
             \Session::put('lang', $config['cnf_lang']);
         }
 
         app()->setLocale(\Session::get('lang'));
         if (\Auth::check()) {
-            if (!\Session::has('uid')) {
-                $session = array(
-                    'gid'       => Auth::user()->group_id,
-                    'uid'       => Auth::user()->id,
-                    'eid'       => Auth::user()->email,
-                    'll'        => Auth::user()->last_login,
-                    'fid'       =>  Auth::user()->contact,
-                    'username'  =>  Auth::user()->username ,
-                    'join'      =>  Auth::user()->created_at
-                );
+            if (! \Session::has('uid')) {
+                $session = [
+                    'gid' => Auth::user()->group_id,
+                    'uid' => Auth::user()->id,
+                    'eid' => Auth::user()->email,
+                    'll' => Auth::user()->last_login,
+                    'fid' => Auth::user()->contact,
+                    'username' => Auth::user()->username,
+                    'join' => Auth::user()->created_at,
+                ];
                 //  \Session::put('gid',Auth::user()->group_id);
                 session($session);
             }

@@ -11,36 +11,35 @@ function schedule_reamaze_call_log()
         ->orderBy('start_time', 'desc')
         ->get();
 
-
     foreach ($cdr as $call) {
         $formatted_number = za_number_format($call->caller_id_number);
-        if (!$formatted_number) {
+        if (! $formatted_number) {
             $formatted_number = $call->caller_id_number;
         }
-        $body = "Duration: ".$call->duration_mins;
+        $body = 'Duration: '.$call->duration_mins;
         $account = \DB::table('crm_accounts')->where('status', '!=', 'Deleted')->where('phone', $call->caller_id_number)->get()->first();
 
-        if (!$account) {
+        if (! $account) {
             $account = \DB::table('crm_accounts')->where('status', '!=', 'Deleted')->where('contact_phone_1', $call->caller_id_number)->get()->first();
         }
 
-        if (!$account) {
+        if (! $account) {
             $account = \DB::table('crm_accounts')->where('status', '!=', 'Deleted')->where('contact_phone_2', $call->caller_id_number)->get()->first();
         }
-        if (!$account) {
+        if (! $account) {
             $account = \DB::table('crm_accounts')->where('status', '!=', 'Deleted')->where('contact_phone_3', $call->caller_id_number)->get()->first();
         }
         $name = 'from number';
         if ($account) {
-            $body = 'Company: '. $account->company.' '.$body;
+            $body = 'Company: '.$account->company.' '.$body;
             $name = $account->company;
         }
         $post_data = [
-            'id' => "inboundcdr-".$call->id,
+            'id' => 'inboundcdr-'.$call->id,
             'body' => $body,
-            'from' => ['name' => $name,'phone' =>  $formatted_number],
-            'to' => ['name' => 'to number','phone' => "+27105007500"],
-            'created_at' => $call->start_time
+            'from' => ['name' => $name, 'phone' => $formatted_number],
+            'to' => ['name' => 'to number', 'phone' => '+27105007500'],
+            'created_at' => $call->start_time,
         ];
 
         reamaze_call_log($post_data);
@@ -68,18 +67,18 @@ function reamaze_call_log($post_data)
 
 function schedule_reamaze_import()
 {
-    $reamaze = new \Reamaze();
+    $reamaze = new \Reamaze;
     $results = $reamaze->getCoversations();
     $conversations = collect($results->conversations);
 
     if ($results->page_count > 1) {
         $total_pages = $results->page_count;
 
-        for ($i = 2;$i <= $total_pages; $i++) {
+        for ($i = 2; $i <= $total_pages; $i++) {
             $paged_results = $reamaze->getCoversations(['page' => $i]);
             $items = $paged_results->conversations;
 
-            if (!empty($items) && is_array($items) && count($items) > 0) {
+            if (! empty($items) && is_array($items) && count($items) > 0) {
                 $conversations = $conversations->merge($items);
             }
         }
@@ -110,30 +109,30 @@ function schedule_reamaze_import()
         16 => 'Staff Outbound',
         17 => 'Contact Form',
     ];
-    \DB::table('crm_reamaze')->update(['status'=> 'Archived']);
+    \DB::table('crm_reamaze')->update(['status' => 'Archived']);
 
     foreach ($conversations as $conversation) {
         $exists = \DB::table('crm_reamaze')->where('slug', $conversation->slug)->where('created_at', date('Y-m-d H:i:s', strtotime($conversation->created_at)))->count();
-        if (!$exists) {
+        if (! $exists) {
             $from_name = '';
             $from_email = '';
             $category = '';
             $smtp = '';
             $staff = '';
 
-            if (!empty($conversation->assignee) && !empty($conversation->assignee->name)) {
+            if (! empty($conversation->assignee) && ! empty($conversation->assignee->name)) {
                 $staff = $conversation->assignee->name;
             }
-            if (!empty($conversation->author) && !empty($conversation->author->name)) {
+            if (! empty($conversation->author) && ! empty($conversation->author->name)) {
                 $from_name = $conversation->author->name;
             }
-            if (!empty($conversation->author) && !empty($conversation->author->email)) {
+            if (! empty($conversation->author) && ! empty($conversation->author->email)) {
                 $from_email = $conversation->author->email;
             }
-            if (!empty($conversation->category) && !empty($conversation->category->name)) {
+            if (! empty($conversation->category) && ! empty($conversation->category->name)) {
                 $category = $conversation->category->name;
             }
-            if (!empty($conversation->external_data) && !empty($conversation->external_data->{'X-Detected-Origin'})) {
+            if (! empty($conversation->external_data) && ! empty($conversation->external_data->{'X-Detected-Origin'})) {
                 $smtp = $conversation->external_data->{'X-Detected-Origin'};
             }
             $ch = $channels[$conversation->origin];

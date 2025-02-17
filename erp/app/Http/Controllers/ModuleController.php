@@ -13,12 +13,13 @@ use Redirect;
 class ModuleController extends BaseController
 {
     use ValidatesRequests;
+
     public $data;
 
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            if (!empty(request()->admin_user_id) && empty(session('role_id'))) {
+            if (! empty(request()->admin_user_id) && empty(session('role_id'))) {
                 $user = \DB::connection('system')->table('erp_users')->where('id', request()->admin_user_id)->get()->first();
 
                 if ($user->is_deleted) {
@@ -27,7 +28,7 @@ class ModuleController extends BaseController
                     return Redirect::to('/user/login')->with('status', 'error')->with('message', 'Your Account is suspended. Please contact support.');
                 }
 
-                if (!session('instance')->customer_erp && !empty($user) && $user->active) {
+                if (! session('instance')->customer_erp && ! empty($user) && $user->active) {
                     $role = \DB::connection('system')->table('erp_user_roles')->where('id', $user->role_id)->get()->first();
 
                     if ($role->level == 'Admin') {
@@ -42,12 +43,12 @@ class ModuleController extends BaseController
 
                                 $role = \DB::connection('system')->table('erp_user_roles')->where('id', $row->role_id)->get()->first();
                                 $instance_access = get_admin_instance_access($user->username);
-                                if (!empty(session('instance')->id)) {
+                                if (! empty(session('instance')->id)) {
                                     $instance_id = session('instance')->id;
                                 } else {
                                     $instance_id = \DB::connection('system')->table('erp_instances')->where('domain_name', str_replace('https://', '', request()->root()))->pluck('id')->first();
                                 }
-                                if (!in_array($instance_id, $instance_access)) {
+                                if (! in_array($instance_id, $instance_access)) {
                                     return Redirect::to('/user/login')->with('status', 'error')->with('message', 'No Access.')->withInput();
                                 }
 
@@ -60,8 +61,8 @@ class ModuleController extends BaseController
             }
 
             if (empty(session('webform_module_id'))) {
-                if (!session()->has('user_id') || empty(session('user_id')) || !session()->has('account_id')
-                || empty(session('account_id')) || !session()->has('role_id') || empty(session('role_id'))) {
+                if (! session()->has('user_id') || empty(session('user_id')) || ! session()->has('account_id')
+                || empty(session('account_id')) || ! session()->has('role_id') || empty(session('role_id'))) {
                     \Auth::logout();
                     \Session::flush();
 
@@ -74,7 +75,7 @@ class ModuleController extends BaseController
                 return $initModel;
             }
 
-            if (!request()->ajax()) {
+            if (! request()->ajax()) {
                 session()->forget('email_result');
                 session()->forget('email_message');
                 session()->forget('email_mod_id');
@@ -85,7 +86,7 @@ class ModuleController extends BaseController
             return $next($request);
         });
 
-        if (!request()->ajax()) {
+        if (! request()->ajax()) {
             $this->middleware('globalviewdata')->only(['index', 'getEdit', 'getTransactionEdit', 'button', 'aggridReport']);
         } else {
             $this->middleware('globalviewdata')->only(['index', 'getEdit', 'getTransactionEdit', 'aggridReport']);
@@ -98,7 +99,7 @@ class ModuleController extends BaseController
         // if(is_dev()){
         //     $this->model = new \App\Models\ErpModelDev();
         // }else{
-        $this->model = new ErpModel();
+        $this->model = new ErpModel;
         // }
 
         $this->model->setMenuData($url);
@@ -118,7 +119,7 @@ class ModuleController extends BaseController
         $this->data = $this->model->info;
 
         if ($this->data['app_id'] == 14 && empty(session('sms_account_id'))) {
-            $pbx = new \FusionPBX();
+            $pbx = new \FusionPBX;
 
             return $pbx->sms_login(session('account_id'));
         }
@@ -126,7 +127,7 @@ class ModuleController extends BaseController
         session(['mod_id' => $this->data['module_id']]);
         session(['mod_conn' => $this->data['connection']]);
 
-        if (!empty(session('webform_module_id')) && session('webform_module_id') != $this->data['module_id']) {
+        if (! empty(session('webform_module_id')) && session('webform_module_id') != $this->data['module_id']) {
             session()->forget('webform_module_id');
             session()->forget('webform_id');
             session()->forget('webform_account_id');
@@ -135,7 +136,7 @@ class ModuleController extends BaseController
 
         $check_access = true;
 
-        if (!empty(session('webform_module_id'))) {
+        if (! empty(session('webform_module_id'))) {
             $check_access = false;
         }
         if (session('user_id') == 5035) {
@@ -143,7 +144,7 @@ class ModuleController extends BaseController
         }
 
         if ($check_access) {
-            if (!$this->data['access'] || $this->data['access'] == 'subscription') {
+            if (! $this->data['access'] || $this->data['access'] == 'subscription') {
                 $response = [
                     'status' => 'error',
                     'message' => 'No Access',
@@ -164,17 +165,17 @@ class ModuleController extends BaseController
     {
         session(['remove_show_deleted'.$this->data['module_id'] => 0]);
         $tab_load = 0;
-        if (!empty($request->tab_load)) {
+        if (! empty($request->tab_load)) {
             $request->request->remove('tab_load');
             $tab_load = 1;
         }
 
         session()->forget('form_builder_redirect');
 
-        if (!empty(session('show_deleted'.$this->data['module_id']))) {
+        if (! empty(session('show_deleted'.$this->data['module_id']))) {
             session(['show_deleted'.$this->data['module_id'] => 0]);
         }
-        if (!empty(request()->id)) {
+        if (! empty(request()->id)) {
             session(['show_deleted'.$this->data['module_id'] => 1]);
         }
 
@@ -193,13 +194,13 @@ class ModuleController extends BaseController
             // $default_grid_report_id = create_default_report($this->data['module_id']);
         }
 
-        if (!empty($request->app_id)) {
+        if (! empty($request->app_id)) {
             session(['app_id_lookup' => $request->app_id]);
         } else {
             session()->forget('app_id_lookup');
         }
 
-        if (!$this->data['access']['is_menu']) {
+        if (! $this->data['access']['is_menu']) {
             $response = [
                 'status' => 'error',
                 'message' => 'No List Access',
@@ -208,7 +209,7 @@ class ModuleController extends BaseController
             if (request()->ajax()) {
                 return response()->json($response);
             } else {
-                if (!empty(session('is_api_session'))) {
+                if (! empty(session('is_api_session'))) {
                     return 'No Access';
                 }
 
@@ -216,10 +217,10 @@ class ModuleController extends BaseController
             }
         }
 
-        if (!empty($request->module_id) && ('erp_module_fields' == $this->data['db_table'])) {
+        if (! empty($request->module_id) && ($this->data['db_table'] == 'erp_module_fields')) {
             update_module_config_from_schema($request->module_id);
         } else {
-            if (!$this->data['serverside_model']) {
+            if (! $this->data['serverside_model']) {
                 try {
                     $sql = $this->model->getClientSql($request);
 
@@ -269,7 +270,7 @@ class ModuleController extends BaseController
 
         $data['workspace_filter_datasource'] = [];
 
-        if (!empty($this->data['primary_role_id']) && $this->data['db_table'] == 'crm_staff_tasks' && (is_superadmin() || is_manager() || !empty(session('extra_role_id')))) {
+        if (! empty($this->data['primary_role_id']) && $this->data['db_table'] == 'crm_staff_tasks' && (is_superadmin() || is_manager() || ! empty(session('extra_role_id')))) {
             $active_role_ids = \DB::table('crm_staff_tasks')->where('is_deleted', 0)->pluck('role_id')->unique()->toArray();
             if (is_superadmin()) {
                 //  $roles = \DB::connection('default')->table('erp_user_roles')->whereIn('id',$active_role_ids)->select('id','name')->where('level','Admin')->orderBy('sort_order')->get()->toArray();
@@ -355,7 +356,7 @@ class ModuleController extends BaseController
             $data['task_in_progress'] = \DB::table('crm_staff_tasks')->where('user_id', session('user_id'))->where('is_deleted', 0)->where('progress_status', 'In Progress')->count();
         }
 
-        if (!empty($this->data['module_tooltip'])) {
+        if (! empty($this->data['module_tooltip'])) {
             $data['module_tooltip'] = $this->data['module_tooltip'];
         }
 
@@ -401,7 +402,7 @@ class ModuleController extends BaseController
 
         $data['branding_logo'] = $branding_logo;
 
-        if (!$data['serverside_model']) {
+        if (! $data['serverside_model']) {
             $count = $this->model->getTotalCount();
             if ($count > 100000) {
                 $data['serverside_model'] = 1;
@@ -409,10 +410,10 @@ class ModuleController extends BaseController
             }
         }
 
-        if (!empty($request->remove_container)) {
+        if (! empty($request->remove_container)) {
             $data['remove_container'] = 1;
         }
-        if (!empty($request->hide_toolbar)) {
+        if (! empty($request->hide_toolbar)) {
             $data['hide_toolbar'] = 1;
         }
 
@@ -432,7 +433,7 @@ class ModuleController extends BaseController
             // $favicon = \DB::connection('default')->table('erp_menu')->where('location', 'pbx')->pluck('favicon')->first();
 
             $data['is_pbx'] = true;
-        } elseif (!empty($this->data['menu']->favicon)) {
+        } elseif (! empty($this->data['menu']->favicon)) {
             $data['favicon'] = uploads_url(499).$this->data['menu']->favicon;
             $data['is_pbx'] = false;
         }
@@ -453,10 +454,10 @@ class ModuleController extends BaseController
             $data['status_btn'] = true;
         }
 
-        if ($this->data['db_table'] == 'crm_documents' && !empty($request->id)) {
+        if ($this->data['db_table'] == 'crm_documents' && ! empty($request->id)) {
             $doc = \DB::table('crm_documents')->where('id', $request->id)->get()->first();
             $link = generate_paynow_link($doc->account_id, $doc->total, true);
-            if ($link && $doc->total > 0 && ('Tax Invoice' == $doc->doctype || 'Order' == $doc->doctype) && $doc->payment_status != 'Complete') {
+            if ($link && $doc->total > 0 && ($doc->doctype == 'Tax Invoice' || $doc->doctype == 'Order') && $doc->payment_status != 'Complete') {
                 if (session('role_id') > 10) { // dont show paynow popup for admin
                     $data['payment_popup'] = 'document_popup/'.$request->id;
                 }
@@ -552,7 +553,7 @@ class ModuleController extends BaseController
             $data['module_context_builder_menu'] = \ErpMenu::build_menu('context_builder', $menu_params);
         }
 
-        if (!empty($request->from_iframe)) {
+        if (! empty($request->from_iframe)) {
             $data['hide_page_header'] = 1;
             $data['remove_container'] = 1;
             $data['is_iframe'] = 1;
@@ -560,58 +561,58 @@ class ModuleController extends BaseController
             $data['module_builder_menu'] = null;
         }
 
-        if (!empty(request()->account_id)) {
+        if (! empty(request()->account_id)) {
             $ref_account = \DB::connection('default')->table('crm_accounts')->where('id', request()->account_id)->pluck('company')->first();
-            if (!empty($ref_account)) {
+            if (! empty($ref_account)) {
                 $data['modal_ref'] = $ref_account;
             }
         }
 
-        if (!empty(request()->reseller_user)) {
+        if (! empty(request()->reseller_user)) {
             $ref_account = \DB::connection('default')->table('crm_accounts')->where('id', request()->reseller_user)->pluck('company')->first();
-            if (!empty($ref_account)) {
+            if (! empty($ref_account)) {
                 $data['modal_ref'] = $ref_account;
             }
         }
 
-        if (!empty(request()->partner_id)) {
+        if (! empty(request()->partner_id)) {
             $ref_account = \DB::connection('default')->table('crm_accounts')->where('id', request()->partner_id)->pluck('company')->first();
-            if (!empty($ref_account)) {
+            if (! empty($ref_account)) {
                 $data['modal_ref'] = $ref_account;
             }
         }
 
-        if (!empty(request()->domain_uuid)) {
+        if (! empty(request()->domain_uuid)) {
             $ref_account = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', request()->domain_uuid)->pluck('domain_name')->first();
-            if (!empty($ref_account)) {
+            if (! empty($ref_account)) {
                 $data['modal_ref'] = $ref_account;
             } else {
                 $ref_account = \DB::connection('pbx')->table('v_domains')->where('domain_name', request()->domain_uuid)->pluck('domain_name')->first();
-                if (!empty($ref_account)) {
+                if (! empty($ref_account)) {
                     $data['modal_ref'] = $ref_account;
                 }
             }
         }
 
-        if (!empty(request()->realm)) {
+        if (! empty(request()->realm)) {
             $ref_account = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', request()->realm)->pluck('domain_name')->first();
-            if (!empty($ref_account)) {
+            if (! empty($ref_account)) {
                 $data['modal_ref'] = $ref_account;
             } else {
                 $ref_account = \DB::connection('pbx')->table('v_domains')->where('domain_name', request()->realm)->pluck('domain_name')->first();
-                if (!empty($ref_account)) {
+                if (! empty($ref_account)) {
                     $data['modal_ref'] = $ref_account;
                 }
             }
         }
 
-        if (!empty(request()->user_context)) {
+        if (! empty(request()->user_context)) {
             $ref_account = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', request()->user_context)->pluck('domain_name')->first();
-            if (!empty($ref_account)) {
+            if (! empty($ref_account)) {
                 $data['modal_ref'] = $ref_account;
             } else {
                 $ref_account = \DB::connection('pbx')->table('v_domains')->where('domain_name', request()->user_context)->pluck('domain_name')->first();
-                if (!empty($ref_account)) {
+                if (! empty($ref_account)) {
                     $data['modal_ref'] = $ref_account;
                 }
             }
@@ -620,7 +621,7 @@ class ModuleController extends BaseController
             $data['note'] = $data['modal_ref'];
         }
 
-        if ($this->data['db_table'] == 'call_records_outbound_lastmonth' && !empty(session('cdr_archive_table'))) {
+        if ($this->data['db_table'] == 'call_records_outbound_lastmonth' && ! empty(session('cdr_archive_table'))) {
             $data['menu_name'] = ucwords(str_replace('_', ' ', session('cdr_archive_table')));
         }
 
@@ -640,11 +641,11 @@ class ModuleController extends BaseController
             $data['check_doctype'] = true;
         }
 
-        if (!empty($data['grid_layout_id']) && !empty($data['layout_settings'])) {
+        if (! empty($data['grid_layout_id']) && ! empty($data['layout_settings'])) {
             $data['layout_init'] = $this->aggridLayoutData($data['grid_layout_id'], $this->data['grid_id'], true);
             //dddd($data['layout_init']);
         }
-        if (!empty($data['layout_init']) && !empty($data['layout_init']['columnDefs'])) {
+        if (! empty($data['layout_init']) && ! empty($data['layout_init']['columnDefs'])) {
             $data['columnDefs'] = $data['layout_init']['columnDefs'];
         } else {
             $data['columnDefs'] = $grid->getColumns();
@@ -654,7 +655,7 @@ class ModuleController extends BaseController
 
         $data['rowClassRules'] = [];
         foreach ($data['columnDefs'] as $colDef) {
-            if (!empty($colDef['rowClassRules'])) {
+            if (! empty($colDef['rowClassRules'])) {
                 foreach ($colDef['rowClassRules'] as $k => $v) {
                     $data['rowClassRules'][$k] = $v;
                 }
@@ -744,7 +745,7 @@ class ModuleController extends BaseController
         $data['has_sort'] = false;
         $data['sort_field'] = 'sort_order';
         $data['currency_fields'] = false;
-        if ($this->data['module_id'] != 499 && !$data['serverside_model'] && session('role_level') == 'Admin') {
+        if ($this->data['module_id'] != 499 && ! $data['serverside_model'] && session('role_level') == 'Admin') {
             foreach ($data['columnDefs'] as $i => $colDef) {
                 if ($colDef['field'] == 'sort_order') {
                     $data['has_sort'] = true;
@@ -770,7 +771,7 @@ class ModuleController extends BaseController
         $data['pinned_total_cols'] = [];
         if (session('role_level') == 'Admin') {
             foreach ($this->data['module_fields'] as $i => $colDef) {
-                if (!empty($colDef['pinned_row_total'])) {
+                if (! empty($colDef['pinned_row_total'])) {
                     $data['pinned_totals'] = true;
                     $data['pinned_total_cols'][] = $colDef['field'];
                 }
@@ -781,7 +782,7 @@ class ModuleController extends BaseController
 
         $view_file = 'grid';
 
-        if (!empty($this->data['tree_data_field'])) {
+        if (! empty($this->data['tree_data_field'])) {
             foreach ($data['columnDefs'] as $i => $c) {
                 if (isset($data['columnDefs'][$i]['aggFunc'])) {
                     unset($data['columnDefs'][$i]['aggFunc']);
@@ -796,12 +797,12 @@ class ModuleController extends BaseController
 
         $data['master_detail'] = false;
 
-        if ($data['detail_module_id'] > 0 && !empty($data['detail_module_key'])) {
-            if (!empty(session('show_deleted'.$data['detail_module_id']))) {
+        if ($data['detail_module_id'] > 0 && ! empty($data['detail_module_key'])) {
+            if (! empty(session('show_deleted'.$data['detail_module_id']))) {
                 session(['show_deleted'.$data['detail_module_id'] => 0]);
             }
             $sub_grid_url = get_menu_url($data['detail_module_id']);
-            $sub_model = new ErpModel();
+            $sub_model = new ErpModel;
             $sub_model->setMenuData('detailmodule_'.$data['detail_module_id']);
 
             $sub_model_data = $sub_model->info;
@@ -821,7 +822,7 @@ class ModuleController extends BaseController
                 $data['communications_type'] = 'account';
             }
 
-            if (!empty($data['layout_init']) && !empty($data['layout_init']['detail_col_defs'])) {
+            if (! empty($data['layout_init']) && ! empty($data['layout_init']['detail_col_defs'])) {
                 $data['detail_col_defs'] = $data['layout_init']['detail_col_defs'];
             } else {
                 $data['detail_col_defs'] = $sub_grid->getColumns();
@@ -847,7 +848,7 @@ class ModuleController extends BaseController
 
             if (session('role_level') == 'Admin') {
                 foreach ($sub_model_data['module_fields'] as $i => $colDef) {
-                    if (!empty($colDef['pinned_row_total'])) {
+                    if (! empty($colDef['pinned_row_total'])) {
                         $data['detail_grid']['pinned_totals'] = true;
                         $data['detail_grid']['pinned_total_cols'][] = $colDef['field'];
                     }
@@ -863,7 +864,7 @@ class ModuleController extends BaseController
 
             $data['detail_grid']['has_sort'] = false;
             $data['detail_grid']['sort_field'] = 'sort_order';
-            if ($sub_model_data['module_id'] != 499 && !$sub_model_data['serverside_model'] && session('role_level') == 'Admin') {
+            if ($sub_model_data['module_id'] != 499 && ! $sub_model_data['serverside_model'] && session('role_level') == 'Admin') {
                 foreach ($data['detail_col_defs'] as $i => $colDef) {
                     if ($colDef['field'] == 'sort_order') {
                         $data['detail_grid']['has_sort'] = true;
@@ -872,7 +873,7 @@ class ModuleController extends BaseController
                 }
             }
 
-            if (empty($data['detail_grid']['menu_name']) && !empty($data['detail_grid']['layout_title'])) {
+            if (empty($data['detail_grid']['menu_name']) && ! empty($data['detail_grid']['layout_title'])) {
                 $data['detail_grid']['menu_name'] = $data['detail_grid']['layout_title'];
             }
 
@@ -888,10 +889,10 @@ class ModuleController extends BaseController
             $data['detail_grid']['row_styles'] = $sub_model_data['module_styles']->where('module_id', $data['detail_module_id'])->where('whole_row', 1);
 
             $detail_menu_params = [
-            'app_id' => $sub_model_data['app_id'],
-            'module_id' => $sub_model_data['module_id'],
-            'menu_id' => $sub_model_data['menu_id'],
-            'connection' => $sub_model_data['connection'],
+                'app_id' => $sub_model_data['app_id'],
+                'module_id' => $sub_model_data['module_id'],
+                'menu_id' => $sub_model_data['menu_id'],
+                'connection' => $sub_model_data['connection'],
             ];
 
             $data['detail_grid']['grid_menu_menu'] = \ErpMenu::build_menu('grid_menu', $detail_menu_params, $data['detail_module_id']);
@@ -938,7 +939,7 @@ class ModuleController extends BaseController
 
             $data['detail_grid']['rowClassRules'] = [];
             foreach ($data['detail_col_defs'] as $colDef) {
-                if (!empty($colDef['rowClassRules'])) {
+                if (! empty($colDef['rowClassRules'])) {
                     foreach ($colDef['rowClassRules'] as $k => $v) {
                         $data['detail_grid']['rowClassRules'][$k] = $v;
                     }
@@ -951,15 +952,15 @@ class ModuleController extends BaseController
         //if (is_dev()) {
         // }
 
-        if (!empty($request->iframe)) {
+        if (! empty($request->iframe)) {
             $data['iframe'] = 1;
         }
 
-        if (!empty($request->detail_field)) {
+        if (! empty($request->detail_field)) {
             $data['detail_field'] = $request->detail_field;
         }
 
-        if (!empty($request->detail_value)) {
+        if (! empty($request->detail_value)) {
             $data['detail_value'] = $request->detail_value;
         }
 
@@ -981,7 +982,7 @@ class ModuleController extends BaseController
             'current year',
         ];
 
-        if (!empty($this->data['tree_data_field'])) {
+        if (! empty($this->data['tree_data_field'])) {
             foreach ($this->data['module_fields'] as $field) {
                 if ($field['field'] == $this->data['tree_data_field']) {
                     $data['tree_data_header'] = $field['label'];
@@ -989,7 +990,7 @@ class ModuleController extends BaseController
             }
         }
 
-        if (!empty(request()->session_calendar_user_id)) {
+        if (! empty(request()->session_calendar_user_id)) {
             session(['calendar_user_id' => request()->session_calendar_user_id]);
         }
 
@@ -1006,13 +1007,13 @@ class ModuleController extends BaseController
         $data['default_values'] = [];
 
         if (session('role_level') == 'Admin') {
-            if (!empty(request()->report_id)) {
+            if (! empty(request()->report_id)) {
                 $data['grid_report_id'] = request()->report_id;
             }
 
-            if (!empty(request()->load_reports)) {
+            if (! empty(request()->load_reports)) {
                 $default_report = \DB::connection('default')->table('erp_reports')->where('module_id', $this->data['module_id'])->orderBy('default', 'desc')->orderBy('sort_order')->get()->first();
-                if (!empty($default_report) && !empty($default_report->id)) {
+                if (! empty($default_report) && ! empty($default_report->id)) {
                     $data['grid_report_id'] = $default_report->id;
                     $data['grid_report_name'] = $default_report->name;
                 }
@@ -1052,7 +1053,7 @@ class ModuleController extends BaseController
         if ($data['grid_layout_id']) {
             $layout_data = $grid->getLayout($data['grid_layout_id']);
 
-            if (!empty($layout_data) && !empty($layout_data['layout']) && !empty($layout_data['layout']->filterState)) {
+            if (! empty($layout_data) && ! empty($layout_data['layout']) && ! empty($layout_data['layout']->filterState)) {
                 $data['init_filters'] = $layout_data['layout']->filterState;
                 $data['init_layout_tracking'] = $layout_data['layout_tracking'];
             }
@@ -1069,7 +1070,7 @@ class ModuleController extends BaseController
         /// INITIAL DETAIL LAYOUT
 
         if ($data['master_detail']) {
-            if (!empty($detail_grid['grid_layout_id']) && !empty($detail_grid['layout_settings'])) {
+            if (! empty($detail_grid['grid_layout_id']) && ! empty($detail_grid['layout_settings'])) {
                 $detail_grid = $data['detail_grid'];
                 foreach ($data['detail_col_defs'] as $i => $colDef) {
                     //$data['detail_col_defs'][$i]['resizable'] = false;
@@ -1090,7 +1091,7 @@ class ModuleController extends BaseController
                 }
 
                 $settings = $detail_grid['layout_settings']['layout'];
-                if (!empty($settings) && !empty($settings->colState)) {
+                if (! empty($settings) && ! empty($settings->colState)) {
                     foreach ($settings->colState as $colIndex => $col) {
                         if (empty($col->sort)) {
                             $settings->colState[$colIndex]->sort = null;
@@ -1108,37 +1109,37 @@ class ModuleController extends BaseController
 
         $data['layout_menu_route'] = $data['menu_route'];
 
-        if (!empty($request->layout_id)) {
+        if (! empty($request->layout_id)) {
             $data['layout_name'] = $data['layout_title'];
         }
         $datefield_datasource = [
-                ['text' => 'None', 'value' => ''],
-                ['text' => 'Current Day', 'value' => 'currentDay'],
-                ['text' => 'Not Current Day', 'value' => 'notCurrentDay'],
-                ['text' => 'Current Day and before', 'value' => 'lessEqualToday'],
-                ['text' => 'Current Day and after', 'value' => 'greaterEqualToday'],
-                ['text' => 'Current Week', 'value' => 'currentWeek'],
-                ['text' => 'Current Month', 'value' => 'currentMonth'],
-                ['text' => 'Current Year', 'value' => 'currentYear'],
-                ['text' => 'Current Month Last Year', 'value' => 'currentMonthLastYear'],
-                ['text' => 'Current Month Last Three Years', 'value' => 'currentMonthLastThreeYears'],
-                ['text' => 'Next month and before', 'value' => 'previoulessEqualNextMonthsDay'],
-                ['text' => 'Last Day', 'value' => 'previousDay'],
-                ['text' => 'Last Week Day', 'value' => 'previousWeekDay'],
-                ['text' => 'Last Month', 'value' => 'lastMonth'],
-                ['text' => 'Last Month Last Three Years', 'value' => 'lastMonthLastThreeYears'],
-                ['text' => 'Last Three Days', 'value' => 'lastThreeDays'],
-                ['text' => 'Last Seven Days', 'value' => 'lastSevenDays'],
-                ['text' => 'Last Month', 'value' => 'lastMonth'],
-                ['text' => 'Last Three Months', 'value' => 'lastThreeMonths'],
-                ['text' => 'Last Six Months', 'value' => 'lastSixMonths'],
-                ['text' => 'Last Twelve Months', 'value' => 'lastTwelveMonths'],
-                ['text' => 'Not Current Month', 'value' => 'notCurrentMonth'],
-                ['text' => 'Not Last Three Days', 'value' => 'notlastThreeDays'],
-                ['text' => 'Not Last Seven Days', 'value' => 'notlastSevenDays'],
-                ['text' => 'Not Last Thirty Five Days', 'value' => 'notlastThirtyFiveDays'],
-                ['text' => 'Not Last Thirty Days', 'value' => 'notlastThirtyDays'],
-                ['text' => 'Not Last Sixty Days', 'value' => 'notlastSixtyDays'],
+            ['text' => 'None', 'value' => ''],
+            ['text' => 'Current Day', 'value' => 'currentDay'],
+            ['text' => 'Not Current Day', 'value' => 'notCurrentDay'],
+            ['text' => 'Current Day and before', 'value' => 'lessEqualToday'],
+            ['text' => 'Current Day and after', 'value' => 'greaterEqualToday'],
+            ['text' => 'Current Week', 'value' => 'currentWeek'],
+            ['text' => 'Current Month', 'value' => 'currentMonth'],
+            ['text' => 'Current Year', 'value' => 'currentYear'],
+            ['text' => 'Current Month Last Year', 'value' => 'currentMonthLastYear'],
+            ['text' => 'Current Month Last Three Years', 'value' => 'currentMonthLastThreeYears'],
+            ['text' => 'Next month and before', 'value' => 'previoulessEqualNextMonthsDay'],
+            ['text' => 'Last Day', 'value' => 'previousDay'],
+            ['text' => 'Last Week Day', 'value' => 'previousWeekDay'],
+            ['text' => 'Last Month', 'value' => 'lastMonth'],
+            ['text' => 'Last Month Last Three Years', 'value' => 'lastMonthLastThreeYears'],
+            ['text' => 'Last Three Days', 'value' => 'lastThreeDays'],
+            ['text' => 'Last Seven Days', 'value' => 'lastSevenDays'],
+            ['text' => 'Last Month', 'value' => 'lastMonth'],
+            ['text' => 'Last Three Months', 'value' => 'lastThreeMonths'],
+            ['text' => 'Last Six Months', 'value' => 'lastSixMonths'],
+            ['text' => 'Last Twelve Months', 'value' => 'lastTwelveMonths'],
+            ['text' => 'Not Current Month', 'value' => 'notCurrentMonth'],
+            ['text' => 'Not Last Three Days', 'value' => 'notlastThreeDays'],
+            ['text' => 'Not Last Seven Days', 'value' => 'notlastSevenDays'],
+            ['text' => 'Not Last Thirty Five Days', 'value' => 'notlastThirtyFiveDays'],
+            ['text' => 'Not Last Thirty Days', 'value' => 'notlastThirtyDays'],
+            ['text' => 'Not Last Sixty Days', 'value' => 'notlastSixtyDays'],
         ];
         $data['layout_field_filters'] = [];
         $fields = collect($this->data['module_fields'])->pluck('field')->toArray();
@@ -1162,7 +1163,7 @@ class ModuleController extends BaseController
         }
 
         $data['hide_toolbar_items'] = 0;
-        if (!empty($request->hide_toolbar_items)) {
+        if (! empty($request->hide_toolbar_items)) {
             $data['hide_toolbar_items'] = 1;
         }
 
@@ -1187,7 +1188,7 @@ class ModuleController extends BaseController
             return view('__app.grids.'.$view_file, $data);
         } else {
             $this->model->setMenuData($this->data['menu_route']);
-            if (!empty(request()->id)) {
+            if (! empty(request()->id)) {
                 session(['show_deleted'.$this->data['module_id'] => 1]);
             } else {
                 session(['show_deleted'.$this->data['module_id'] => 0]);
@@ -1211,14 +1212,14 @@ class ModuleController extends BaseController
             //dd($data['row_data'][0]);
             //set tree data field unique
 
-            if (!empty($this->data['tree_data_key']) && !empty($this->data['tree_data_field'])) {
+            if (! empty($this->data['tree_data_key']) && ! empty($this->data['tree_data_field'])) {
                 $data['tree_data'] = true;
                 $data['row_data'] = rowdata_hierarchy($data['row_data'], $this->data['module_id']);
             }
             if (is_dev()) {
             }
             $data['hide_toolbar_items'] = 0;
-            if (!empty($request->hide_toolbar_items)) {
+            if (! empty($request->hide_toolbar_items)) {
                 $data['hide_toolbar_items'] = 1;
             }
 
@@ -1230,11 +1231,11 @@ class ModuleController extends BaseController
             }
             if (is_dev()) {
                 //dd($data);
-              //$view_file = 'dev.grid';
+                //$view_file = 'dev.grid';
             }
             if (is_dev()) {
                 //  return view('velzon.grid', $data);
-            //dd($data['columnDefs']);
+                //dd($data['columnDefs']);
             }
 
             if (session('role_level') != 'Admin') {
@@ -1244,7 +1245,7 @@ class ModuleController extends BaseController
                 }
             }
 
-            if ($this->data['module_id'] == 1944 && !is_superadmin()) {
+            if ($this->data['module_id'] == 1944 && ! is_superadmin()) {
                 $data['has_sort'] = 0;
                 if (isset($data['detail_grid'])) {
                     $data['detail_grid']['has_sort'] = 0;
@@ -1261,16 +1262,16 @@ class ModuleController extends BaseController
             }
 
             $display_field = $this->data['db_module_fields']->where('display_field', 1)->pluck('field')->first();
-            if (!$display_field) {
+            if (! $display_field) {
                 $display_field = $this->data['db_module_fields']->where('field', 'name')->pluck('field')->first();
             }
-            if (!$display_field) {
+            if (! $display_field) {
                 $display_field = $this->data['db_module_fields']->where('field', 'title')->pluck('field')->first();
             }
-            if (!$display_field) {
+            if (! $display_field) {
                 $display_field = $this->data['module']->tree_data_field;
             }
-            if (!$display_field) {
+            if (! $display_field) {
                 $display_field = $this->data['db_key'];
             }
             $data['primary_field_name'] = $display_field;
@@ -1284,16 +1285,16 @@ class ModuleController extends BaseController
 
     public function miniGrid(Request $request)
     {
-        if (!empty($request->tab_load)) {
+        if (! empty($request->tab_load)) {
             $request->request->remove('tab_load');
         }
 
         session()->forget('form_builder_redirect');
 
-        if (!empty(session('show_deleted'.$this->data['module_id']))) {
+        if (! empty(session('show_deleted'.$this->data['module_id']))) {
             session(['show_deleted'.$this->data['module_id'] => 0]);
         }
-        if (!empty(request()->id)) {
+        if (! empty(request()->id)) {
             session(['show_deleted'.$this->data['module_id'] => 1]);
         }
 
@@ -1312,13 +1313,13 @@ class ModuleController extends BaseController
             // $default_grid_report_id = create_default_report($this->data['module_id']);
         }
 
-        if (!empty($request->app_id)) {
+        if (! empty($request->app_id)) {
             session(['app_id_lookup' => $request->app_id]);
         } else {
             session()->forget('app_id_lookup');
         }
 
-        if (!$this->data['access']['is_menu']) {
+        if (! $this->data['access']['is_menu']) {
             $response = [
                 'status' => 'error',
                 'message' => 'No List Access',
@@ -1327,7 +1328,7 @@ class ModuleController extends BaseController
             if (request()->ajax()) {
                 return response()->json($response);
             } else {
-                if (!empty(session('is_api_session'))) {
+                if (! empty(session('is_api_session'))) {
                     return 'No Access';
                 }
 
@@ -1335,10 +1336,10 @@ class ModuleController extends BaseController
             }
         }
 
-        if (!empty($request->module_id) && ('erp_module_fields' == $this->data['db_table'])) {
+        if (! empty($request->module_id) && ($this->data['db_table'] == 'erp_module_fields')) {
             update_module_config_from_schema($request->module_id);
         } else {
-            if (!$this->data['serverside_model']) {
+            if (! $this->data['serverside_model']) {
                 try {
                     $sql = $this->model->getClientSql($request);
                     $data = \DB::connection($this->data['connection'])->select($sql.' limit 1');
@@ -1364,7 +1365,7 @@ class ModuleController extends BaseController
             $branding_logo = settings_url().$branding_logo;
         }
 
-        if (!$branding_logo) {
+        if (! $branding_logo) {
             $branding_logo = '';
         }
         //$pbx_logo = \DB::connection('default')->table('erp_instances')->where('id', session('instance')->id)->pluck('pbx_logo')->first();
@@ -1379,7 +1380,7 @@ class ModuleController extends BaseController
 
         $data['branding_logo'] = $branding_logo;
 
-        if (!$data['serverside_model']) {
+        if (! $data['serverside_model']) {
             $count = $this->model->getTotalCount();
             if ($count > 100000) {
                 $data['serverside_model'] = 1;
@@ -1387,10 +1388,10 @@ class ModuleController extends BaseController
             }
         }
 
-        if (!empty($request->remove_container)) {
+        if (! empty($request->remove_container)) {
             $data['remove_container'] = 1;
         }
-        if (!empty($request->hide_toolbar)) {
+        if (! empty($request->hide_toolbar)) {
             $data['hide_toolbar'] = 1;
         }
 
@@ -1410,7 +1411,7 @@ class ModuleController extends BaseController
             // $favicon = \DB::connection('default')->table('erp_menu')->where('location', 'pbx')->pluck('favicon')->first();
 
             $data['is_pbx'] = true;
-        } elseif (!empty($this->data['menu']->favicon)) {
+        } elseif (! empty($this->data['menu']->favicon)) {
             $data['favicon'] = uploads_url(499).$this->data['menu']->favicon;
             $data['is_pbx'] = false;
         }
@@ -1431,10 +1432,10 @@ class ModuleController extends BaseController
             $data['status_btn'] = true;
         }
 
-        if ($this->data['db_table'] == 'crm_documents' && !empty($request->id)) {
+        if ($this->data['db_table'] == 'crm_documents' && ! empty($request->id)) {
             $doc = \DB::table('crm_documents')->where('id', $request->id)->get()->first();
             $link = generate_paynow_link($doc->account_id, $doc->total, true);
-            if ($link && $doc->total > 0 && ('Tax Invoice' == $doc->doctype || 'Order' == $doc->doctype) && $doc->payment_status != 'Complete') {
+            if ($link && $doc->total > 0 && ($doc->doctype == 'Tax Invoice' || $doc->doctype == 'Order') && $doc->payment_status != 'Complete') {
                 if (session('role_id') > 10) { // dont show paynow popup for admin
                     $data['payment_popup'] = 'document_popup/'.$request->id;
                 }
@@ -1527,7 +1528,7 @@ class ModuleController extends BaseController
             $data['module_context_builder_menu'] = \ErpMenu::build_menu('context_builder', $menu_params);
         }
 
-        if (!empty($request->from_iframe)) {
+        if (! empty($request->from_iframe)) {
             $data['hide_page_header'] = 1;
             $data['remove_container'] = 1;
             $data['is_iframe'] = 1;
@@ -1535,58 +1536,58 @@ class ModuleController extends BaseController
             $data['module_builder_menu'] = null;
         }
 
-        if (!empty(request()->account_id)) {
+        if (! empty(request()->account_id)) {
             $ref_account = \DB::connection('default')->table('crm_accounts')->where('id', request()->account_id)->pluck('company')->first();
-            if (!empty($ref_account)) {
+            if (! empty($ref_account)) {
                 $data['modal_ref'] = $ref_account;
             }
         }
 
-        if (!empty(request()->reseller_user)) {
+        if (! empty(request()->reseller_user)) {
             $ref_account = \DB::connection('default')->table('crm_accounts')->where('id', request()->reseller_user)->pluck('company')->first();
-            if (!empty($ref_account)) {
+            if (! empty($ref_account)) {
                 $data['modal_ref'] = $ref_account;
             }
         }
 
-        if (!empty(request()->partner_id)) {
+        if (! empty(request()->partner_id)) {
             $ref_account = \DB::connection('default')->table('crm_accounts')->where('id', request()->partner_id)->pluck('company')->first();
-            if (!empty($ref_account)) {
+            if (! empty($ref_account)) {
                 $data['modal_ref'] = $ref_account;
             }
         }
 
-        if (!empty(request()->domain_uuid)) {
+        if (! empty(request()->domain_uuid)) {
             $ref_account = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', request()->domain_uuid)->pluck('domain_name')->first();
-            if (!empty($ref_account)) {
+            if (! empty($ref_account)) {
                 $data['modal_ref'] = $ref_account;
             } else {
                 $ref_account = \DB::connection('pbx')->table('v_domains')->where('domain_name', request()->domain_uuid)->pluck('domain_name')->first();
-                if (!empty($ref_account)) {
+                if (! empty($ref_account)) {
                     $data['modal_ref'] = $ref_account;
                 }
             }
         }
 
-        if (!empty(request()->realm)) {
+        if (! empty(request()->realm)) {
             $ref_account = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', request()->realm)->pluck('domain_name')->first();
-            if (!empty($ref_account)) {
+            if (! empty($ref_account)) {
                 $data['modal_ref'] = $ref_account;
             } else {
                 $ref_account = \DB::connection('pbx')->table('v_domains')->where('domain_name', request()->realm)->pluck('domain_name')->first();
-                if (!empty($ref_account)) {
+                if (! empty($ref_account)) {
                     $data['modal_ref'] = $ref_account;
                 }
             }
         }
 
-        if (!empty(request()->user_context)) {
+        if (! empty(request()->user_context)) {
             $ref_account = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', request()->user_context)->pluck('domain_name')->first();
-            if (!empty($ref_account)) {
+            if (! empty($ref_account)) {
                 $data['modal_ref'] = $ref_account;
             } else {
                 $ref_account = \DB::connection('pbx')->table('v_domains')->where('domain_name', request()->user_context)->pluck('domain_name')->first();
-                if (!empty($ref_account)) {
+                if (! empty($ref_account)) {
                     $data['modal_ref'] = $ref_account;
                 }
             }
@@ -1595,7 +1596,7 @@ class ModuleController extends BaseController
             $data['note'] = $data['modal_ref'];
         }
 
-        if ($this->data['db_table'] == 'call_records_outbound_lastmonth' && !empty(session('cdr_archive_table'))) {
+        if ($this->data['db_table'] == 'call_records_outbound_lastmonth' && ! empty(session('cdr_archive_table'))) {
             $data['menu_name'] = ucwords(str_replace('_', ' ', session('cdr_archive_table')));
         }
 
@@ -1615,11 +1616,11 @@ class ModuleController extends BaseController
             $data['check_doctype'] = true;
         }
 
-        if (!empty($data['grid_layout_id']) && !empty($data['layout_settings'])) {
+        if (! empty($data['grid_layout_id']) && ! empty($data['layout_settings'])) {
             $data['layout_init'] = $this->aggridLayoutData($data['grid_layout_id'], $this->data['grid_id'], true);
             //dddd($data['layout_init']);
         }
-        if (!empty($data['layout_init']) && !empty($data['layout_init']['columnDefs'])) {
+        if (! empty($data['layout_init']) && ! empty($data['layout_init']['columnDefs'])) {
             $data['columnDefs'] = $data['layout_init']['columnDefs'];
         } else {
             $data['columnDefs'] = $grid->getColumns();
@@ -1630,7 +1631,7 @@ class ModuleController extends BaseController
 
         $data['rowClassRules'] = [];
         foreach ($data['columnDefs'] as $colDef) {
-            if (!empty($colDef['rowClassRules'])) {
+            if (! empty($colDef['rowClassRules'])) {
                 foreach ($colDef['rowClassRules'] as $k => $v) {
                     $data['rowClassRules'][$k] = $v;
                 }
@@ -1682,7 +1683,7 @@ class ModuleController extends BaseController
         $data['has_sort'] = false;
         $data['sort_field'] = 'sort_order';
         $data['currency_fields'] = false;
-        if ($this->data['module_id'] != 499 && !$data['serverside_model'] && session('role_level') == 'Admin') {
+        if ($this->data['module_id'] != 499 && ! $data['serverside_model'] && session('role_level') == 'Admin') {
             foreach ($data['columnDefs'] as $i => $colDef) {
                 if ($colDef['field'] == 'sort_order') {
                     $data['has_sort'] = true;
@@ -1694,7 +1695,7 @@ class ModuleController extends BaseController
         $data['pinned_total_cols'] = [];
         if (session('role_level') == 'Admin') {
             foreach ($this->data['module_fields'] as $i => $colDef) {
-                if (!empty($colDef['pinned_row_total'])) {
+                if (! empty($colDef['pinned_row_total'])) {
                     $data['pinned_totals'] = true;
                     $data['pinned_total_cols'][] = $colDef['field'];
                 }
@@ -1706,12 +1707,12 @@ class ModuleController extends BaseController
         $view_file = 'grid';
         $data['master_detail'] = false;
 
-        if ($data['detail_module_id'] > 0 && !empty($data['detail_module_key'])) {
-            if (!empty(session('show_deleted'.$data['detail_module_id']))) {
+        if ($data['detail_module_id'] > 0 && ! empty($data['detail_module_key'])) {
+            if (! empty(session('show_deleted'.$data['detail_module_id']))) {
                 session(['show_deleted'.$data['detail_module_id'] => 0]);
             }
             $sub_grid_url = get_menu_url($data['detail_module_id']);
-            $sub_model = new ErpModel();
+            $sub_model = new ErpModel;
             $sub_model->setMenuData('detailmodule_'.$data['detail_module_id']);
 
             $sub_model_data = $sub_model->info;
@@ -1731,7 +1732,7 @@ class ModuleController extends BaseController
                 $data['communications_type'] = 'account';
             }
 
-            if (!empty($data['layout_init']) && !empty($data['layout_init']['detail_col_defs'])) {
+            if (! empty($data['layout_init']) && ! empty($data['layout_init']['detail_col_defs'])) {
                 $data['detail_col_defs'] = $data['layout_init']['detail_col_defs'];
             } else {
                 $data['detail_col_defs'] = $sub_grid->getColumns();
@@ -1755,7 +1756,7 @@ class ModuleController extends BaseController
 
             if (session('role_level') == 'Admin') {
                 foreach ($sub_model_data['module_fields'] as $i => $colDef) {
-                    if (!empty($colDef['pinned_row_total'])) {
+                    if (! empty($colDef['pinned_row_total'])) {
                         $data['detail_grid']['pinned_totals'] = true;
                         $data['detail_grid']['pinned_total_cols'][] = $colDef['field'];
                     }
@@ -1771,7 +1772,7 @@ class ModuleController extends BaseController
 
             $data['detail_grid']['has_sort'] = false;
             $data['detail_grid']['sort_field'] = 'sort_order';
-            if ($sub_model_data['module_id'] != 499 && !$sub_model_data['serverside_model'] && session('role_level') == 'Admin') {
+            if ($sub_model_data['module_id'] != 499 && ! $sub_model_data['serverside_model'] && session('role_level') == 'Admin') {
                 foreach ($data['detail_col_defs'] as $i => $colDef) {
                     if ($colDef['field'] == 'sort_order') {
                         $data['detail_grid']['has_sort'] = true;
@@ -1780,7 +1781,7 @@ class ModuleController extends BaseController
                 }
             }
 
-            if (empty($data['detail_grid']['menu_name']) && !empty($data['detail_grid']['layout_title'])) {
+            if (empty($data['detail_grid']['menu_name']) && ! empty($data['detail_grid']['layout_title'])) {
                 $data['detail_grid']['menu_name'] = $data['detail_grid']['layout_title'];
             }
 
@@ -1796,10 +1797,10 @@ class ModuleController extends BaseController
             $data['detail_grid']['row_styles'] = $sub_model_data['module_styles']->where('module_id', $data['detail_module_id'])->where('whole_row', 1);
 
             $detail_menu_params = [
-            'app_id' => $sub_model_data['app_id'],
-            'module_id' => $sub_model_data['module_id'],
-            'menu_id' => $sub_model_data['menu_id'],
-            'connection' => $sub_model_data['connection'],
+                'app_id' => $sub_model_data['app_id'],
+                'module_id' => $sub_model_data['module_id'],
+                'menu_id' => $sub_model_data['menu_id'],
+                'connection' => $sub_model_data['connection'],
             ];
 
             $data['detail_grid']['grid_menu_menu'] = \ErpMenu::build_menu('grid_menu', $detail_menu_params, $data['detail_module_id']);
@@ -1847,7 +1848,7 @@ class ModuleController extends BaseController
 
             $data['detail_grid']['rowClassRules'] = [];
             foreach ($data['detail_col_defs'] as $colDef) {
-                if (!empty($colDef['rowClassRules'])) {
+                if (! empty($colDef['rowClassRules'])) {
                     foreach ($colDef['rowClassRules'] as $k => $v) {
                         $data['detail_grid']['rowClassRules'][$k] = $v;
                     }
@@ -1860,15 +1861,15 @@ class ModuleController extends BaseController
         //if (is_dev()) {
         // }
 
-        if (!empty($request->iframe)) {
+        if (! empty($request->iframe)) {
             $data['iframe'] = 1;
         }
 
-        if (!empty($request->detail_field)) {
+        if (! empty($request->detail_field)) {
             $data['detail_field'] = $request->detail_field;
         }
 
-        if (!empty($request->detail_value)) {
+        if (! empty($request->detail_value)) {
             $data['detail_value'] = $request->detail_value;
         }
 
@@ -1890,7 +1891,7 @@ class ModuleController extends BaseController
             'current year',
         ];
 
-        if (!empty($this->data['tree_data_field'])) {
+        if (! empty($this->data['tree_data_field'])) {
             foreach ($this->data['module_fields'] as $field) {
                 if ($field['field'] == $this->data['tree_data_field']) {
                     $data['tree_data_header'] = $field['label'];
@@ -1898,7 +1899,7 @@ class ModuleController extends BaseController
             }
         }
 
-        if (!empty(request()->session_calendar_user_id)) {
+        if (! empty(request()->session_calendar_user_id)) {
             session(['calendar_user_id' => request()->session_calendar_user_id]);
         }
 
@@ -1915,13 +1916,13 @@ class ModuleController extends BaseController
         $data['default_values'] = [];
 
         if (session('role_level') == 'Admin') {
-            if (!empty(request()->report_id)) {
+            if (! empty(request()->report_id)) {
                 $data['grid_report_id'] = request()->report_id;
             }
 
-            if (!empty(request()->load_reports)) {
+            if (! empty(request()->load_reports)) {
                 $default_report = \DB::connection('default')->table('erp_reports')->where('module_id', $this->data['module_id'])->orderBy('default', 'desc')->orderBy('sort_order')->get()->first();
-                if (!empty($default_report) && !empty($default_report->id)) {
+                if (! empty($default_report) && ! empty($default_report->id)) {
                     $data['grid_report_id'] = $default_report->id;
                     $data['grid_report_name'] = $default_report->name;
                 }
@@ -1961,7 +1962,7 @@ class ModuleController extends BaseController
         if ($data['grid_layout_id']) {
             $layout_data = $grid->getLayout($data['grid_layout_id']);
 
-            if (!empty($layout_data) && !empty($layout_data['layout']) && !empty($layout_data['layout']->filterState)) {
+            if (! empty($layout_data) && ! empty($layout_data['layout']) && ! empty($layout_data['layout']->filterState)) {
                 $data['init_filters'] = $layout_data['layout']->filterState;
                 $data['init_layout_tracking'] = $layout_data['layout_tracking'];
             }
@@ -1978,7 +1979,7 @@ class ModuleController extends BaseController
         /// INITIAL DETAIL LAYOUT
 
         if ($data['master_detail']) {
-            if (!empty($detail_grid['grid_layout_id']) && !empty($detail_grid['layout_settings'])) {
+            if (! empty($detail_grid['grid_layout_id']) && ! empty($detail_grid['layout_settings'])) {
                 $detail_grid = $data['detail_grid'];
                 foreach ($data['detail_col_defs'] as $i => $colDef) {
                     //$data['detail_col_defs'][$i]['resizable'] = false;
@@ -1999,7 +2000,7 @@ class ModuleController extends BaseController
                 }
 
                 $settings = $detail_grid['layout_settings']['layout'];
-                if (!empty($settings) && !empty($settings->colState)) {
+                if (! empty($settings) && ! empty($settings->colState)) {
                     foreach ($settings->colState as $colIndex => $col) {
                         if (empty($col->sort)) {
                             $settings->colState[$colIndex]->sort = null;
@@ -2018,39 +2019,39 @@ class ModuleController extends BaseController
 
         $data['layout_menu_route'] = $data['menu_route'];
 
-        if (!empty($request->layout_id)) {
+        if (! empty($request->layout_id)) {
             $data['layout_name'] = $data['layout_title'];
         }
 
         $datefield_datasource = [
-                ['text' => 'None', 'value' => ''],
-                ['text' => 'Current Day', 'value' => 'currentDay'],
-                ['text' => 'Not Current Day', 'value' => 'notCurrentDay'],
-                ['text' => 'Current Day and before', 'value' => 'lessEqualToday'],
-                ['text' => 'Current Day and after', 'value' => 'greaterEqualToday'],
-                ['text' => 'Current Week', 'value' => 'currentWeek'],
-                ['text' => 'Current Month', 'value' => 'currentMonth'],
-                ['text' => 'Current Year', 'value' => 'currentYear'],
-                ['text' => 'Current Month Last Year', 'value' => 'currentMonthLastYear'],
-                ['text' => 'Current Month Last Three Years', 'value' => 'currentMonthLastThreeYears'],
+            ['text' => 'None', 'value' => ''],
+            ['text' => 'Current Day', 'value' => 'currentDay'],
+            ['text' => 'Not Current Day', 'value' => 'notCurrentDay'],
+            ['text' => 'Current Day and before', 'value' => 'lessEqualToday'],
+            ['text' => 'Current Day and after', 'value' => 'greaterEqualToday'],
+            ['text' => 'Current Week', 'value' => 'currentWeek'],
+            ['text' => 'Current Month', 'value' => 'currentMonth'],
+            ['text' => 'Current Year', 'value' => 'currentYear'],
+            ['text' => 'Current Month Last Year', 'value' => 'currentMonthLastYear'],
+            ['text' => 'Current Month Last Three Years', 'value' => 'currentMonthLastThreeYears'],
 
-                ['text' => 'Next month and before', 'value' => 'previoulessEqualNextMonthsDay'],
-                ['text' => 'Last Day', 'value' => 'previousDay'],
-                ['text' => 'Last Week Day', 'value' => 'previousWeekDay'],
-                ['text' => 'Last Month', 'value' => 'lastMonth'],
-                ['text' => 'Last Month Last Three Years', 'value' => 'lastMonthLastThreeYears'],
-                ['text' => 'Last Three Days', 'value' => 'lastThreeDays'],
-                ['text' => 'Last Seven Days', 'value' => 'lastSevenDays'],
-                ['text' => 'Last Month', 'value' => 'lastMonth'],
-                ['text' => 'Last Three Months', 'value' => 'lastThreeMonths'],
-                ['text' => 'Last Six Months', 'value' => 'lastSixMonths'],
-                ['text' => 'Last Twelve Months', 'value' => 'lastTwelveMonths'],
-                ['text' => 'Not Current Month', 'value' => 'notCurrentMonth'],
-                ['text' => 'Not Last Three Days', 'value' => 'notlastThreeDays'],
-                ['text' => 'Not Last Seven Days', 'value' => 'notlastSevenDays'],
-                ['text' => 'Not Last Thirty Five Days', 'value' => 'notlastThirtyFiveDays'],
-                ['text' => 'Not Last Thirty Days', 'value' => 'notlastThirtyDays'],
-                ['text' => 'Not Last Sixty Days', 'value' => 'notlastSixtyDays'],
+            ['text' => 'Next month and before', 'value' => 'previoulessEqualNextMonthsDay'],
+            ['text' => 'Last Day', 'value' => 'previousDay'],
+            ['text' => 'Last Week Day', 'value' => 'previousWeekDay'],
+            ['text' => 'Last Month', 'value' => 'lastMonth'],
+            ['text' => 'Last Month Last Three Years', 'value' => 'lastMonthLastThreeYears'],
+            ['text' => 'Last Three Days', 'value' => 'lastThreeDays'],
+            ['text' => 'Last Seven Days', 'value' => 'lastSevenDays'],
+            ['text' => 'Last Month', 'value' => 'lastMonth'],
+            ['text' => 'Last Three Months', 'value' => 'lastThreeMonths'],
+            ['text' => 'Last Six Months', 'value' => 'lastSixMonths'],
+            ['text' => 'Last Twelve Months', 'value' => 'lastTwelveMonths'],
+            ['text' => 'Not Current Month', 'value' => 'notCurrentMonth'],
+            ['text' => 'Not Last Three Days', 'value' => 'notlastThreeDays'],
+            ['text' => 'Not Last Seven Days', 'value' => 'notlastSevenDays'],
+            ['text' => 'Not Last Thirty Five Days', 'value' => 'notlastThirtyFiveDays'],
+            ['text' => 'Not Last Thirty Days', 'value' => 'notlastThirtyDays'],
+            ['text' => 'Not Last Sixty Days', 'value' => 'notlastSixtyDays'],
         ];
         $data['layout_field_filters'] = [];
         $fields = collect($this->data['module_fields'])->pluck('field')->toArray();
@@ -2073,7 +2074,7 @@ class ModuleController extends BaseController
         }
 
         $data['hide_toolbar_items'] = 0;
-        if (!empty($request->hide_toolbar_items)) {
+        if (! empty($request->hide_toolbar_items)) {
             $data['hide_toolbar_items'] = 1;
         }
 
@@ -2087,7 +2088,7 @@ class ModuleController extends BaseController
         }
 
         $view_file = 'mini_grid';
-        if (!empty($request->chart_container)) {
+        if (! empty($request->chart_container)) {
             $data['chart_container'] = $request->chart_container;
         }
         if ($data['serverside_model']) {
@@ -2098,7 +2099,7 @@ class ModuleController extends BaseController
             return view('__app.grids.'.$view_file, $data);
         } else {
             $this->model->setMenuData($this->data['menu_route']);
-            if (!empty(request()->id)) {
+            if (! empty(request()->id)) {
                 session(['show_deleted'.$this->data['module_id'] => 1]);
             } else {
                 session(['show_deleted'.$this->data['module_id'] => 0]);
@@ -2122,13 +2123,13 @@ class ModuleController extends BaseController
             //dd($data['row_data'][0]);
             //set tree data field unique
 
-            if (!empty($this->data['tree_data_key']) && !empty($this->data['tree_data_field'])) {
+            if (! empty($this->data['tree_data_key']) && ! empty($this->data['tree_data_field'])) {
                 $data['tree_data'] = true;
                 $data['row_data'] = rowdata_hierarchy($data['row_data'], $this->data['module_id']);
                 //dd($data['row_data'][0]->hierarchy);
             }
             $data['hide_toolbar_items'] = 0;
-            if (!empty($request->hide_toolbar_items)) {
+            if (! empty($request->hide_toolbar_items)) {
                 $data['hide_toolbar_items'] = 1;
             }
 
@@ -2146,7 +2147,7 @@ class ModuleController extends BaseController
                 }
             }
 
-            if ($this->data['module_id'] == 1944 && !is_superadmin()) {
+            if ($this->data['module_id'] == 1944 && ! is_superadmin()) {
                 $data['has_sort'] = 0;
                 if (isset($data['detail_grid'])) {
                     $data['detail_grid']['has_sort'] = 0;
@@ -2194,14 +2195,14 @@ class ModuleController extends BaseController
             $filter_state = (array) json_decode(json_encode($layout_state->filterState), true);
         }
 
-        $request_object = new \Illuminate\Http\Request();
+        $request_object = new \Illuminate\Http\Request;
         $request_object->setMethod('POST');
         $request_object->request->add(['kanban_sql' => 1]);
         $request_object->request->add(['rowGroupCols' => []]);
         $request_object->request->add(['valueCols' => []]);
         $request_object->request->add(['groupKeys' => []]);
 
-        if (!empty($request->where) && !empty($request->where[0]) && !empty($request->where[0]['value'])) {
+        if (! empty($request->where) && ! empty($request->where[0]) && ! empty($request->where[0]['value'])) {
             $request_object->request->add(['search' => $request->where[0]['value']]);
         }
 
@@ -2224,7 +2225,7 @@ class ModuleController extends BaseController
         } else {
             $request_object->request->add(['filterModel' => []]);
         }
-        if (!empty($layout_state->searchtext) && $layout_state->searchtext != ' ') {
+        if (! empty($layout_state->searchtext) && $layout_state->searchtext != ' ') {
             $request_object->request->add(['search' => $layout_state->searchtext]);
         }
         $sql = $this->model->getClientSql($request_object);
@@ -2249,7 +2250,7 @@ class ModuleController extends BaseController
 
     public function linkedModules(Request $request)
     {
-        if (!empty($request->selected_rows)) {
+        if (! empty($request->selected_rows)) {
             $response = [];
             $id = $request->selected_rows[0][$this->data['db_key']];
             $row = (object) $this->model->getRow($id);
@@ -2292,6 +2293,7 @@ class ModuleController extends BaseController
         //  aa($data);
         $values = collect($data)->pluck($request->search_key)->unique()->filter()->toArray();
         $values = array_values($values);
+
         // aa($request->search_key);
         // aa($values);
         return response()->json($values);
@@ -2320,7 +2322,7 @@ class ModuleController extends BaseController
         //aa($sql);
         $data = $grid->formatAgGridData($data);
 
-        if (!empty($this->data['tree_data_key']) && !empty($this->data['tree_data_field'])) {
+        if (! empty($this->data['tree_data_key']) && ! empty($this->data['tree_data_field'])) {
             $data = rowdata_hierarchy($data, $this->data['module_id']);
         }
 
@@ -2339,7 +2341,7 @@ class ModuleController extends BaseController
         $this->model->setMenuData($this->data['menu_route']);
         $sql = $this->model->getClientSql($request);
 
-        if (!empty($request->row_id)) {
+        if (! empty($request->row_id)) {
             $sql_arr = explode(' where ', strtolower($sql));
             $query = $sql_arr[0].' where '.$this->data['db_table'].'.'.$this->data['db_key'].'="'.$request->row_id.'"';
 
@@ -2400,16 +2402,16 @@ class ModuleController extends BaseController
     {
         $request = request();
 
-        if (!empty($request->grid_reference)) {
+        if (! empty($request->grid_reference)) {
             $grid_ref = $request->grid_reference;
         }
-        if (!empty($request->layout_id)) {
+        if (! empty($request->layout_id)) {
             $layout_id = $request->layout_id;
         }
 
         $views_menu = \Erp::gridViews($this->data['menu_id'], $this->data['module_id'], $grid_ref, $layout_id);
 
-        if (!$layout_id || !empty($request->menu_only)) {
+        if (! $layout_id || ! empty($request->menu_only)) {
             $response = ['menu' => json_encode($views_menu)];
 
             return response()->json($response);
@@ -2423,7 +2425,7 @@ class ModuleController extends BaseController
 
         if ($data['pivotState'] && $data['pivotState']->colState) {
             foreach ($data['pivotState']->colState as $col) {
-                if (!empty($col->aggFunc)) {
+                if (! empty($col->aggFunc)) {
                     foreach ($data['layout']->colState as $i => $lcol) {
                         if ($lcol->colId == $col->colId) {
                             $data['layout']->colState[$i]->aggFunc = $col->aggFunc;
@@ -2457,7 +2459,7 @@ class ModuleController extends BaseController
 
         $settings = $data['layout'];
 
-        if (!empty($settings) && !empty($settings->colState)) {
+        if (! empty($settings) && ! empty($settings->colState)) {
             foreach ($settings->colState as $i => $colstate) {
                 if ($config->layout_type == 'Layout') {
                     $settings->colState[$i]->rowGroup = false;
@@ -2465,7 +2467,7 @@ class ModuleController extends BaseController
                     if (str_contains($colstate->colId, 'ag-Grid-AutoColumn')) {
                         $settings->colState[$i]->rowGroup = true;
                         $settings->colState[$i]->rowGroupIndex = $i;
-                    } elseif (!empty($colstate->rowGroup)) {
+                    } elseif (! empty($colstate->rowGroup)) {
                         if ($colstate->rowGroup == 'true') {
                             $settings->colState[$i]->rowGroup = true;
                             $settings->colState[$i]->rowGroupIndex = intval($colstate->rowGroupIndex);
@@ -2483,8 +2485,8 @@ class ModuleController extends BaseController
                     if ($has_sort_field) {
                         if ($colstate->colId == 'sort_order') {
                             // $settings->colState[$i]->sort = 'asc';
-                       // $settings->colState[$i]->sortIndex = '0';
-                       // $settings->colState[$i]->hide = 'true';
+                            // $settings->colState[$i]->sortIndex = '0';
+                            // $settings->colState[$i]->hide = 'true';
                         } else {
                             $settings->colState[$i]->sort = '';
                             $settings->colState[$i]->sortIndex = '';
@@ -2502,9 +2504,9 @@ class ModuleController extends BaseController
         // To add a column to the grid you either add it as a row group column or a value column. Setting visibility on a column has no impact when in pivot mode.
 
         $toggle_deleted_rows = 0;
-        $remove_show_deleted = (!empty(session('remove_show_deleted'.$this->data['module_id']))) ? session('remove_show_deleted'.$this->data['module_id']) : 0;
+        $remove_show_deleted = (! empty(session('remove_show_deleted'.$this->data['module_id']))) ? session('remove_show_deleted'.$this->data['module_id']) : 0;
         $new_remove_show_deleted = 0;
-        if (!empty($settings) && !empty($settings->filterState)) {
+        if (! empty($settings) && ! empty($settings->filterState)) {
             foreach ($settings->filterState as $colIndex => $val) {
                 if ($val->filterType == 'set' && $val->values[0] == '') {
                     $settings->filterState[$colIndex]->values[0] = null;
@@ -2513,28 +2515,28 @@ class ModuleController extends BaseController
             //remove show deleted session if filter set
 
             foreach ($settings->filterState as $colIndex => $val) {
-                if ($colIndex == 'is_deleted' && !empty($val) && !empty($val->values)) {
+                if ($colIndex == 'is_deleted' && ! empty($val) && ! empty($val->values)) {
                     $new_remove_show_deleted = 1;
                     session(['remove_show_deleted'.$this->data['module_id'] => 1]);
                 }
-                if ($colIndex == 'status' && !empty($val) && in_array($val->type, ['equals', 'contains']) && $val->filter == 'Deleted') {
+                if ($colIndex == 'status' && ! empty($val) && in_array($val->type, ['equals', 'contains']) && $val->filter == 'Deleted') {
                     session(['remove_show_deleted'.$this->data['module_id'] => 1]);
                     $new_remove_show_deleted = 1;
                 }
             }
         }
-        if ($remove_show_deleted && !$new_remove_show_deleted) {
+        if ($remove_show_deleted && ! $new_remove_show_deleted) {
             session(['remove_show_deleted'.$this->data['module_id'] => 0]);
         }
 
         if ($new_remove_show_deleted != $remove_show_deleted) {
             $toggle_deleted_rows = 1;
         }
-        if (!empty($config->aggrid_state) && str_contains($config->aggrid_state, '"rowGroup":"true"')) {
+        if (! empty($config->aggrid_state) && str_contains($config->aggrid_state, '"rowGroup":"true"')) {
             $config->name .= ' Report';
         }
 
-        if (!empty($this->data['tree_data_field'])) {
+        if (! empty($this->data['tree_data_field'])) {
             foreach ($data['columnDefs'] as $i => $c) {
                 if (isset($data['columnDefs'][$i]['aggFunc'])) {
                     unset($data['columnDefs'][$i]['aggFunc']);
@@ -2545,7 +2547,7 @@ class ModuleController extends BaseController
             }
         }
 
-        if ($this->data['layout_tracking_per_user'] && !empty($request->assigned_user_id)) {
+        if ($this->data['layout_tracking_per_user'] && ! empty($request->assigned_user_id)) {
             $assigned_user_id = $request->assigned_user_id;
 
             // add assigned user filter
@@ -2560,7 +2562,7 @@ class ModuleController extends BaseController
             }
 
             if ($user_field_name) {
-                if (!$filter_state) {
+                if (! $filter_state) {
                     $filter_state = [];
                 }
                 $username = \DB::connection('system')->table('erp_users')->where('id', $assigned_user_id)->pluck('full_name')->first();
@@ -2592,7 +2594,7 @@ class ModuleController extends BaseController
             $detail_layout_data = $grid->getDetailLayout($layout_id);
             $detail_settings = $detail_layout_data['layout'];
 
-            $sub_model = new ErpModel();
+            $sub_model = new ErpModel;
             $sub_model->setMenuData('detailmodule_'.$this->data['detail_module_id']);
 
             $sub_model_data = $sub_model->info;
@@ -2611,7 +2613,7 @@ class ModuleController extends BaseController
             foreach ($data['detail_col_defs'] as $i => $colDef) {
                 //$data['detail_col_defs'][$i]['resizable'] = false;
 
-                if (!$has_sort_field && $colDef['field'] == 'sort_order') {
+                if (! $has_sort_field && $colDef['field'] == 'sort_order') {
                     // remove row pinning
                     $data['detail_col_defs'][$i]['pinned'] = false;
                     $has_sort_field = true;
@@ -2629,7 +2631,7 @@ class ModuleController extends BaseController
             }
 
             $sort_field = 'sort_order';
-            if (!empty($detail_settings) && !empty($detail_settings->colState)) {
+            if (! empty($detail_settings) && ! empty($detail_settings->colState)) {
                 foreach ($detail_settings->colState as $colIndex => $col) {
                     if ($col->colId == 'is_deleted') {
                         $detail_settings->colState[$colIndex]->hide = 'true';
@@ -2652,7 +2654,7 @@ class ModuleController extends BaseController
                         $detail_settings->colState[$colIndex]->sort = null;
                     }
 
-                    if (!empty($col->rowGroup)) {
+                    if (! empty($col->rowGroup)) {
                         foreach ($data['detail_col_defs'] as $j => $def) {
                             if ($col->colId == $def['field']) {
                                 $data['detail_col_defs'][$j]['rowGroup'] = true;
@@ -2678,7 +2680,7 @@ class ModuleController extends BaseController
                 }
             }
 
-            if (!empty($detail_settings) && !empty($detail_settings->filterState)) {
+            if (! empty($detail_settings) && ! empty($detail_settings->filterState)) {
                 foreach ($detail_settings->filterState as $colIndex => $val) {
                     if ($val->filterType == 'set' && $val->values[0] == '') {
                         $detail_settings->filterState[$colIndex]->values[0] = null;
@@ -2712,12 +2714,13 @@ class ModuleController extends BaseController
             } else {
                 $layout = \DB::connection('default')->table('erp_grid_views')->where('id', $layout_id)->get();
             }
-            if (isset($layout->colState))
+            if (isset($layout->colState)) {
                 $colState = json_decode(json_encode($layout->colState), true);
+            }
             $request->query_string = json_decode(json_encode($request->query_string));
 
             $has_grouping = false;
-            if (!empty($colState)) {
+            if (! empty($colState)) {
                 foreach ($colState as $key => $col) {
                     if ($col->rowGroup === 'true') {
                         $has_grouping = true;
@@ -2728,7 +2731,7 @@ class ModuleController extends BaseController
                 \DB::connection('default')->table('erp_grid_views')->where('id', $layout_id)->update(['layout_type' => 'Report', 'chart_model' => '']);
                 $request->layout_type = 'Report';
             }
-            if ($request->layout_type != 'Layout' && !$has_grouping) {
+            if ($request->layout_type != 'Layout' && ! $has_grouping) {
                 \DB::connection('default')->table('erp_grid_views')->where('id', $layout_id)->update(['layout_type' => 'Layout', 'chart_model' => '']);
                 $request->layout_type = 'Layout';
             }
@@ -2737,14 +2740,14 @@ class ModuleController extends BaseController
             //aa($request->layout_type );
 
             //Copy non-custom layouts to other instances
-            if (!empty($request->save_as_duplicate) && $request->save_as_duplicate === 'true') {
+            if (! empty($request->save_as_duplicate) && $request->save_as_duplicate === 'true') {
                 $copy_layout = \DB::connection('default')->table('erp_grid_views')->where('id', $request->layout_id)->get()->first();
                 $grid_views = \DB::connection('default')->table('erp_grid_views')
-                ->where('module_id', $copy_layout->module_id)
-                ->where('is_deleted', 0)
-                ->orderby('global_default', 'desc')
-                ->orderby('sort_order')
-                ->get();
+                    ->where('module_id', $copy_layout->module_id)
+                    ->where('is_deleted', 0)
+                    ->orderby('global_default', 'desc')
+                    ->orderby('sort_order')
+                    ->get();
 
                 foreach ($grid_views as $i => $view) {
                     \DB::connection('default')->table('erp_grid_views')->where('id', $view->id)->update(['sort_order' => $i]);
@@ -2754,9 +2757,9 @@ class ModuleController extends BaseController
 
                 $data = (array) $copy_layout;
                 \DB::connection('default')->table('erp_grid_views')
-                ->where('module_id', $data['module_id'])
-                ->where('sort_order', '<=', $data['sort_order'])
-                ->decrement('sort_order');
+                    ->where('module_id', $data['module_id'])
+                    ->where('sort_order', '<=', $data['sort_order'])
+                    ->decrement('sort_order');
                 //$data['layout_type'] = 'Layout';
                 // $data['track_layout'] = 0;
 
@@ -2771,7 +2774,7 @@ class ModuleController extends BaseController
 
             if ($request->layout_type == 'Report') {
                 if ($layout_id) {
-                    if (!empty($request->chart_model) && $request->chart_model != '[]') {
+                    if (! empty($request->chart_model) && $request->chart_model != '[]') {
                         \DB::connection('default')->table('erp_grid_views')->where('id', $layout_id)->update(['layout_type' => 'Report', 'chart_model' => $request->chart_model]);
                     } else {
                         \DB::connection('default')->table('erp_grid_views')->where('id', $layout_id)->update(['layout_type' => 'Report', 'chart_model' => '']);
@@ -2794,7 +2797,7 @@ class ModuleController extends BaseController
             }
 
             $layout_type = \DB::connection('default')->table('erp_grid_views')->where('id', $layout_id)->pluck('layout_type')->first();
-            if (!empty($request->query_string)) {
+            if (! empty($request->query_string)) {
                 foreach ($request->query_string as $field) {
                     $joinfield = 'join_'.$field;
                     unset($layout->filterState->$field);
@@ -2822,7 +2825,7 @@ class ModuleController extends BaseController
                 $sort_field = 'sort_order';
             }
 
-            if ($layout_type == 'Layout' && !empty($sort_field) && !empty($colState)) {
+            if ($layout_type == 'Layout' && ! empty($sort_field) && ! empty($colState)) {
                 // colstate = json_decode$colState);
                 foreach ($colState as $key => $col) {
                     if ($col->colId == $sort_field) {
@@ -2842,7 +2845,7 @@ class ModuleController extends BaseController
 
             // remove workspace filter dropdown from layout state
             if ($this->data['module_id'] == 2018) { //Workboard
-                if (!empty($layout->filterState) && !empty($layout->filterState->join_role_id)) {
+                if (! empty($layout->filterState) && ! empty($layout->filterState->join_role_id)) {
                     unset($layout->filterState->join_role_id);
                 }
             }
@@ -2859,7 +2862,7 @@ class ModuleController extends BaseController
                 } elseif ($has_sort_field) {
                     $sort_field = 'sort_order';
                 }
-                if ($layout_type == 'Layout' && $sort_field == '' && !empty($detail_layout['colState'])) {
+                if ($layout_type == 'Layout' && $sort_field == '' && ! empty($detail_layout['colState'])) {
                     foreach ($detail_layout['colState'] as $key => $col) {
                         if ($col->colId == $sort_field) {
                             $detail_layout['colState'][$key]['sort'] = 'asc';
@@ -2880,10 +2883,10 @@ class ModuleController extends BaseController
             }
 
             //update main instance layout
-            if (!is_main_instance() && (is_superadmin() || is_dev())) {
+            if (! is_main_instance() && (is_superadmin() || is_dev())) {
                 $layout = \DB::connection('default')->table('erp_grid_views')->where('id', $layout_id)->get()->first();
 
-                if ($layout->main_instance_id && !$layout->custom) {
+                if ($layout->main_instance_id && ! $layout->custom) {
                     $copy_data = $data;
                     unset($copy_data['id']);
                     unset($copy_data['main_instance_id']);
@@ -3025,11 +3028,12 @@ class ModuleController extends BaseController
             update_instances_layout($layout_id);
             module_log(526, $layout_id, 'layoutsaved'); //Layouts
             $data = ['status' => 'success', 'message' => 'Layout saved', 'layout_id' => $layout_id, 'menu' => json_encode($views_menu), 'name' => $grid_view->name, 'layout_type' => $grid_view->layout_type, 'track_layout' => $grid_view->track_layout, 'show_on_dashboard' => $grid_view->show_on_dashboard];
-            if (!empty($request->detail_layout)) {
+            if (! empty($request->detail_layout)) {
                 $layout_data = $this->aggridLayoutData($layout_id, $request->grid_id, true);
                 $data['detail_col_defs'] = $layout_data['detail_col_defs'];
                 $data['detail_settings'] = $layout_data['detail_settings'];
             }
+
             return $data;
         } catch (\Throwable $ex) {
         }
@@ -3038,19 +3042,19 @@ class ModuleController extends BaseController
     public function aggridCommunicationsPanel(Request $request)
     {
         try {
-            if (!empty($request->selected_rows)) {
+            if (! empty($request->selected_rows)) {
                 $response = [];
                 $id = $request->selected_rows[0][$this->data['db_key']];
                 $row = (object) $this->model->getRow($id);
 
                 $module_links = [];
                 foreach ($this->data['module_fields'] as $field) {
-                    if (!empty($row->{$field['field']}) && $field['field_type'] == 'select_module') {
+                    if (! empty($row->{$field['field']}) && $field['field_type'] == 'select_module') {
                         if ($field['field'] == 'partner_id' && $row->{$field['field']} == 1) {
                             continue;
                         }
 
-                        if ($field['field'] == 'pricelist_id' && !empty($row->partner_id) && $row->partner_id != 1) {
+                        if ($field['field'] == 'pricelist_id' && ! empty($row->partner_id) && $row->partner_id != 1) {
                             $module_id = 509;
                         } elseif ($field['field'] == 'pricelist_id') {
                             $module_id = 802;
@@ -3073,12 +3077,12 @@ class ModuleController extends BaseController
                     if ($this->data['connection'] == 'pbx' || $this->data['connection'] == 'pbx_cdr') {
                         $keys = array_keys($request->selected_rows[0]);
 
-                        if (in_array('domain_uuid', $keys) && !empty($request->selected_rows[0]['domain_uuid'])) {
+                        if (in_array('domain_uuid', $keys) && ! empty($request->selected_rows[0]['domain_uuid'])) {
                             $account_id = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $request->selected_rows[0]['domain_uuid'])->where('erp', session('instance')->directory)->pluck('account_id')->first();
-                        } elseif (in_array('join_domain_uuid', $keys) && !empty($request->selected_rows[0]['join_domain_uuid'])) {
+                        } elseif (in_array('join_domain_uuid', $keys) && ! empty($request->selected_rows[0]['join_domain_uuid'])) {
                             $account_id = \DB::connection('pbx')->table('v_domains')->where('domain_name', $request->selected_rows[0]['join_domain_uuid'])->where('erp', session('instance')->directory)->pluck('account_id')->first();
                         }
-                        if (in_array('domain_name', $keys) && !empty($request->selected_rows[0]['domain_name'])) {
+                        if (in_array('domain_name', $keys) && ! empty($request->selected_rows[0]['domain_name'])) {
                             $account_id = \DB::connection('pbx')->table('v_domains')->where('domain_name', $request->selected_rows[0]['domain_name'])->where('erp', session('instance')->directory)->pluck('account_id')->first();
                         }
                     } elseif ($this->data['db_table'] == 'crm_accounts') {
@@ -3091,7 +3095,7 @@ class ModuleController extends BaseController
 
                     if ($account_id) {
                         $account = dbgetaccount($account_id);
-                        if (!$account) {
+                        if (! $account) {
                             $account = (object) [];
                         }
                         $account->call_profits = 'none';
@@ -3132,28 +3136,28 @@ class ModuleController extends BaseController
                         $response['id'] = $account_id;
 
                         $last_inbound_call = \DB::connection('default')
-                    ->table('erp_communication_lines')
-                    ->select('created_at')
-                    ->where('type', 'Outbound Call')
-                    ->where('account_id', 12)
-                    ->where('call_account_id', $account_id)
-                    ->orderby('created_at', 'desc')->pluck('created_at')->first();
+                            ->table('erp_communication_lines')
+                            ->select('created_at')
+                            ->where('type', 'Outbound Call')
+                            ->where('account_id', 12)
+                            ->where('call_account_id', $account_id)
+                            ->orderby('created_at', 'desc')->pluck('created_at')->first();
 
-                        if (!empty($last_inbound_call)) {
+                        if (! empty($last_inbound_call)) {
                             $account->last_inbound_call = date('d M Y, H:i', strtotime($last_inbound_call));
                         } else {
                             $account->last_inbound_call = '';
                         }
 
                         $last_outbound_call = \DB::connection('default')
-                    ->table('erp_communication_lines')
-                    ->select('created_at')
-                    ->where('type', 'Inbound Call')
-                    ->where('account_id', 12)
-                    ->where('call_account_id', $account_id)
-                    ->orderby('created_at', 'desc')->pluck('created_at')->first();
+                            ->table('erp_communication_lines')
+                            ->select('created_at')
+                            ->where('type', 'Inbound Call')
+                            ->where('account_id', 12)
+                            ->where('call_account_id', $account_id)
+                            ->orderby('created_at', 'desc')->pluck('created_at')->first();
 
-                        if (!empty($last_outbound_call)) {
+                        if (! empty($last_outbound_call)) {
                             $account->last_outbound_call = date('d M Y, H:i', strtotime($last_outbound_call));
                         } else {
                             $account->last_outbound_call = '';
@@ -3247,7 +3251,7 @@ class ModuleController extends BaseController
                 $i = 1;
                 while (in_array($alias, $table_aliases)) {
                     $alias .= $table_name_slice[$i];
-                    ++$i;
+                    $i++;
                 }
             }
             if (str_contains($table, 'call_records')) {
@@ -3270,7 +3274,7 @@ class ModuleController extends BaseController
             foreach ($query_data['db_columns'] as $i => $col) {
                 $col_arr = explode('.', $col);
                 if ($table == $col_arr[0]) {
-                    if (!in_array($col_arr[1], $cols_added)) {
+                    if (! in_array($col_arr[1], $cols_added)) {
                         $cols_added[] = $col_arr[1];
                         $label = $col_arr[1];
                     } else {
@@ -3346,7 +3350,7 @@ class ModuleController extends BaseController
                     $i = 1;
                     while (in_array($alias, $table_aliases)) {
                         $alias .= $table_name_slice[$i];
-                        ++$i;
+                        $i++;
                     }
                 }
                 if (str_contains($table, 'call_records')) {
@@ -3373,7 +3377,7 @@ class ModuleController extends BaseController
                 foreach ($query_data['db_columns'] as $i => $col) {
                     $col_arr = explode('.', $col);
                     if ($table == $col_arr[0]) {
-                        if (!in_array($col_arr[1], $cols_added)) {
+                        if (! in_array($col_arr[1], $cols_added)) {
                             $cols_added[] = $col_arr[1];
                             $label = $col_arr[1];
                         } else {
@@ -3390,14 +3394,14 @@ class ModuleController extends BaseController
                             $hide = true;
                         }
                         $colDef = [
-                        'field' => $sql_label,
-                        'headerName' => ucwords($label),
-                        'hide' => $hide,
-                        'type' => 'defaultField',
-                        //'aggFunc' => 'value',
-                        'resizable' => true,
-                    ];
-                        if (!empty($report->column_headers)) {
+                            'field' => $sql_label,
+                            'headerName' => ucwords($label),
+                            'hide' => $hide,
+                            'type' => 'defaultField',
+                            //'aggFunc' => 'value',
+                            'resizable' => true,
+                        ];
+                        if (! empty($report->column_headers)) {
                             $column_headers = json_decode($report->column_headers);
                             foreach ($column_headers as $key => $val) {
                                 if ($key == $colDef['field']) {
@@ -3408,16 +3412,16 @@ class ModuleController extends BaseController
 
                         if (in_array($col_arr[1], $decimal_columns[$col_arr[0]])) {
                             $colDef['type'] = 'currencyField';
-                        // $colDef['aggFunc'] = 'sum';
+                            // $colDef['aggFunc'] = 'sum';
                         } elseif (in_array($col_arr[1], $int_columns[$col_arr[0]])) {
                             $colDef['type'] = 'intField';
-                        // $colDef['aggFunc'] = 'sum';
+                            // $colDef['aggFunc'] = 'sum';
                         } elseif (in_array($col_arr[1], $datetime_columns[$col_arr[0]])) {
                             $colDef['type'] = 'dateField';
-                        // $colDef['aggFunc'] = 'sum';
+                            // $colDef['aggFunc'] = 'sum';
                         } elseif (in_array($col_arr[1], $date_columns[$col_arr[0]])) {
                             $colDef['type'] = 'dateField';
-                        // $colDef['aggFunc'] = 'sum';
+                            // $colDef['aggFunc'] = 'sum';
                         } else {
                             $colDef['allowedAggFuncs'] = ['value'];
                         }
@@ -3460,14 +3464,14 @@ class ModuleController extends BaseController
             $report_data['colDefs'] = $colDefs;
             $report_data['report_id'] = $id;
             $report_data['name'] = $report->name;
-            if (!$report_data['serverside_model']) {
+            if (! $report_data['serverside_model']) {
                 try {
                     $report_data['row_data'] = \DB::connection($report->connection)->select($report->sql_query);
                 } catch (\Throwable $ex) {
                     exception_log($ex);
                     // retry build report sql, if columns changed
                     try {
-                        $erp_reports = new \ErpReports();
+                        $erp_reports = new \ErpReports;
                         $erp_reports->setErpConnection(session('instance')->db_connection);
                         $sql = $erp_reports->reportSQL($report->id);
                         \DB::connection($connection)->table('erp_reports')->where('id', $report->id)->update(['sql_query' => $sql]);
@@ -3475,6 +3479,7 @@ class ModuleController extends BaseController
                         $report_data['row_data'] = \DB::connection($report->connection)->select($report->sql_query);
                     } catch (\Throwable $ex) {
                         exception_log($ex);
+
                         // rebuild failed, return error
                         return json_alert('SQL error', 'error');
                     }
@@ -3529,7 +3534,7 @@ class ModuleController extends BaseController
 
         $state = json_decode($state);
 
-        if (!empty($state->colState)) {
+        if (! empty($state->colState)) {
             foreach ($state->colState as $i => $col) {
                 foreach ($col as $k => $v) {
                     if ($v == 'false') {
@@ -3596,7 +3601,7 @@ class ModuleController extends BaseController
                 'field_type' => $request->field_type,
                 'report_id' => $report_id,
             ];
-            if (!empty($request->id)) {
+            if (! empty($request->id)) {
                 \DB::connection('default')->table('erp_report_calculated_fields')->where('id', $request->id)->update($data);
 
                 return response()->json(['id' => $request->id]);
@@ -3618,7 +3623,7 @@ class ModuleController extends BaseController
     {
         $views_menu = \Erp::gridViews($this->data['menu_id'], $this->data['module_id'], $request->grid_reference, $request->layout_id);
 
-        if (!$request->layout_id || !empty($request->menu_only)) {
+        if (! $request->layout_id || ! empty($request->menu_only)) {
             $response = ['menu' => json_encode($views_menu)];
 
             return response()->json($response);
@@ -3643,11 +3648,11 @@ class ModuleController extends BaseController
 
         $grid = new \ErpGrid($this->data);
 
-        if (empty($request->where) && !empty($request_arr) && is_array($request_arr) && isset($request_arr[0]['isComplex'])) {
+        if (empty($request->where) && ! empty($request_arr) && is_array($request_arr) && isset($request_arr[0]['isComplex'])) {
             $request->where = $request_arr;
         }
 
-        if (empty($request->requiresCounts) && 'notequal' == $request->where[0]['operator']) {
+        if (empty($request->requiresCounts) && $request->where[0]['operator'] == 'notequal') {
             $ajax_data = (object) [
                 'result' => [],
                 'count' => 0,
@@ -3655,15 +3660,15 @@ class ModuleController extends BaseController
             echo json_encode($ajax_data);
         } else {
             $params = [
-                'search' => (!empty($request->search)) ? $request->search : '',
-                'fstart' => intval((!empty($request->skip)) ? $request->skip : 0),
-                'flimit' => intval((!empty($request->take)) ? $request->take : 10),
-                'gridsort' => (!empty($request->sorted)) ? $request->sorted : '',
-                'gridfilter' => (!empty($request->where)) ? $request->where : '',
-                'grid_layout_id' => (!empty($request->grid_layout_id)) ? $request->grid_layout_id : '',
+                'search' => (! empty($request->search)) ? $request->search : '',
+                'fstart' => intval((! empty($request->skip)) ? $request->skip : 0),
+                'flimit' => intval((! empty($request->take)) ? $request->take : 10),
+                'gridsort' => (! empty($request->sorted)) ? $request->sorted : '',
+                'gridfilter' => (! empty($request->where)) ? $request->where : '',
+                'grid_layout_id' => (! empty($request->grid_layout_id)) ? $request->grid_layout_id : '',
             ];
 
-            if (!empty($request->is_export)) {
+            if (! empty($request->is_export)) {
                 $params['is_export'] = 1;
             }
 
@@ -3672,7 +3677,7 @@ class ModuleController extends BaseController
             //preview filter limit, send filter field with and group by
             /*https://www.syncfusion.com/forums/120056/how-do-you-send-additional-data-to-the-server-on-a-filterchoicerequest-when-using-an*/
 
-            if (!empty($request->groupby)) {
+            if (! empty($request->groupby)) {
                 $grid_fields = $grid->getFields();
                 foreach ($grid_fields as $field) {
                     if ($request->groupby == $field['field']) {
@@ -3680,7 +3685,7 @@ class ModuleController extends BaseController
                     }
                 }
             }
-            if (!empty($params['groupby_field'])) {
+            if (! empty($params['groupby_field'])) {
                 $params['flimit'] = 'All';
             }
 
@@ -3693,8 +3698,8 @@ class ModuleController extends BaseController
             $ajax_data->count = $total_rows;
 
             $preview_array = [];
-            if (empty($params['groupby_field']) && !empty($request->where) && empty($request->where[0]['condition'])) {
-                if (!empty($request->requiresCounts) && true == $request->requiresCounts) {
+            if (empty($params['groupby_field']) && ! empty($request->where) && empty($request->where[0]['condition'])) {
+                if (! empty($request->requiresCounts) && $request->requiresCounts == true) {
                     $ajax_data = (object) [
                         'results' => $ajax_data->result,
                         'count' => count($ajax_data->result),
@@ -3704,8 +3709,8 @@ class ModuleController extends BaseController
                 }
 
                 return response()->json($ajax_data);
-            } elseif (!empty($params['groupby_field'])) {
-                if (!empty($request->requiresCounts) && true == $request->requiresCounts) {
+            } elseif (! empty($params['groupby_field'])) {
+                if (! empty($request->requiresCounts) && $request->requiresCounts == true) {
                     $ajax_data = (object) [
                         'result' => $ajax_data->result,
                         'count' => count($ajax_data->result),
@@ -3734,10 +3739,10 @@ class ModuleController extends BaseController
         $account_type = $request->segment(3);
         $id = (is_numeric($request->segment(4))) ? $request->segment(4) : null;
 
-        if (!$account_type) {
+        if (! $account_type) {
             return [];
         }
-        if (!$id) {
+        if (! $id) {
             return [];
         }
 
@@ -3790,7 +3795,7 @@ class ModuleController extends BaseController
 
                 if ($result instanceof \Illuminate\Http\JsonResponse) {
                     return $result;
-                } elseif (!is_array($result) || empty($result['id'])) {
+                } elseif (! is_array($result) || empty($result['id'])) {
                     return response()->json(['status' => 'warning', 'message' => $result]);
                 }
 
@@ -3816,7 +3821,7 @@ class ModuleController extends BaseController
                 $result = $erp->save($data);
                 if ($result instanceof \Illuminate\Http\JsonResponse) {
                     return $result;
-                } elseif (!is_array($result) || empty($result['id'])) {
+                } elseif (! is_array($result) || empty($result['id'])) {
                     return response()->json(['status' => 'warning', 'message' => $result]);
                 }
                 $contact_id = $result['id'];
@@ -3841,17 +3846,17 @@ class ModuleController extends BaseController
     {
         $id = (is_numeric($request->segment(3))) ? $request->segment(3) : null;
 
-        if (!$id) {
+        if (! $id) {
             return [];
         }
 
         return \DB::connection('default')->table('erp_module_notes')
-        ->select('erp_module_notes.*', 'erp_users.full_name as username')
-        ->join('erp_users', 'erp_users.id', '=', 'erp_module_notes.created_by')
-        ->where('module_id', $this->data['module_id'])
-        ->where('row_id', $id)
-        ->where('erp_module_notes.is_deleted', 0)
-        ->orderBy('created_at', 'desc')->get();
+            ->select('erp_module_notes.*', 'erp_users.full_name as username')
+            ->join('erp_users', 'erp_users.id', '=', 'erp_module_notes.created_by')
+            ->where('module_id', $this->data['module_id'])
+            ->where('row_id', $id)
+            ->where('erp_module_notes.is_deleted', 0)
+            ->orderBy('created_at', 'desc')->get();
     }
 
     public function addRecordNote(Request $request)
@@ -3922,15 +3927,15 @@ class ModuleController extends BaseController
     public function getRecordFiles(Request $request)
     {
         $id = (is_numeric($request->segment(3))) ? $request->segment(3) : null;
-        if (!$id) {
+        if (! $id) {
             return [];
         }
         $files = \DB::connection('default')->table('erp_module_files')
-        ->select('erp_module_files.*', 'erp_users.full_name as username')
-        ->join('erp_users', 'erp_users.id', '=', 'erp_module_files.created_by')
-        ->where('module_id', $this->data['module_id'])
-        ->where('row_id', $id)
-        ->orderBy('created_at')->get();
+            ->select('erp_module_files.*', 'erp_users.full_name as username')
+            ->join('erp_users', 'erp_users.id', '=', 'erp_module_files.created_by')
+            ->where('module_id', $this->data['module_id'])
+            ->where('row_id', $id)
+            ->orderBy('created_at')->get();
 
         $filePath = uploads_path($this->data['module_id']);
         $fileUrl = uploads_url($this->data['module_id']);
@@ -3945,7 +3950,7 @@ class ModuleController extends BaseController
     {
         $row_id = $request->row_id;
 
-        $module_id = (!empty($request->module_id)) ? $request->module_id : $this->data['module_id'];
+        $module_id = (! empty($request->module_id)) ? $request->module_id : $this->data['module_id'];
         if ($request->communications_type == 'pbx') {
             $row_id = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $row_id)->pluck('account_id')->first();
             $module_id = 343;
@@ -3963,7 +3968,7 @@ class ModuleController extends BaseController
             $file_extension = $file->getClientOriginalExtension();
 
             $destinationPath = uploads_path($module_id);
-            if (!is_dir($destinationPath)) {
+            if (! is_dir($destinationPath)) {
                 mkdir($destinationPath);
             }
             $filename = $file->getClientOriginalName();
@@ -4005,29 +4010,29 @@ class ModuleController extends BaseController
     public function getRecordChangeLog(Request $request)
     {
         $id = (is_numeric($request->segment(3))) ? $request->segment(3) : null;
-        if (!$id) {
+        if (! $id) {
             return [];
         }
 
         $rows = \DB::connection('default')->table('erp_module_log')
-        ->select('erp_module_log.*', 'erp_users.full_name as username')
-        ->join('erp_users', 'erp_users.id', '=', 'erp_module_log.created_by')
-        ->where('module_id', $this->data['module_id'])
-        ->where('row_id', $id)
-        ->where('action', '!=', 'updated')
-        ->orderBy('id', 'desc')
-        ->get()->unique('action');
+            ->select('erp_module_log.*', 'erp_users.full_name as username')
+            ->join('erp_users', 'erp_users.id', '=', 'erp_module_log.created_by')
+            ->where('module_id', $this->data['module_id'])
+            ->where('row_id', $id)
+            ->where('action', '!=', 'updated')
+            ->orderBy('id', 'desc')
+            ->get()->unique('action');
         $row_values = $rows->values();
 
         $updates = \DB::connection('default')->table('erp_module_log')
-        ->select('erp_module_log.*', 'erp_users.full_name as username')
-        ->join('erp_users', 'erp_users.id', '=', 'erp_module_log.created_by')
-        ->where('module_id', $this->data['module_id'])
-        ->where('row_id', $id)
-        ->where('action', 'updated')
-        ->orderBy('id', 'desc')
-        ->limit(5)
-        ->get();
+            ->select('erp_module_log.*', 'erp_users.full_name as username')
+            ->join('erp_users', 'erp_users.id', '=', 'erp_module_log.created_by')
+            ->where('module_id', $this->data['module_id'])
+            ->where('row_id', $id)
+            ->where('action', 'updated')
+            ->orderBy('id', 'desc')
+            ->limit(5)
+            ->get();
 
         $data = [];
         foreach ($updates as $r) {
@@ -4044,7 +4049,7 @@ class ModuleController extends BaseController
     {
         $id = (is_numeric($request->segment(3))) ? $request->segment(3) : null;
 
-        if (!$this->data['access']['is_view']) {
+        if (! $this->data['access']['is_view']) {
             if ($request->ajax()) {
                 return response()->json(['status' => 'error', 'message' => 'No Access']);
             } else {
@@ -4104,7 +4109,7 @@ class ModuleController extends BaseController
         //$data = $form->getForm($row);
         $data = $this->data;
         $data['allow_edit'] = 0;
-        if (1 == $this->data['access']['is_edit']) {
+        if ($this->data['access']['is_edit'] == 1) {
             $data['allow_edit'] = 1;
             $data['form_record_id'] = $id;
         }
@@ -4139,14 +4144,14 @@ class ModuleController extends BaseController
                     unset($data['form_data'][$field['field']]);
                 }
 
-                if (($field['field_type'] == 'file' || $field['field_type'] == 'image') && !empty($data['form_data'][$field['field']])) {
+                if (($field['field_type'] == 'file' || $field['field_type'] == 'image') && ! empty($data['form_data'][$field['field']])) {
                     $remove_files = false;
                     $destinationPath = uploads_path($this->data['module_id']);
 
                     $file_names = explode(',', $data['form_data'][$field['field']]);
                     $files = [];
                     foreach ($file_names as $file_name) {
-                        if (!empty($file_name)) {
+                        if (! empty($file_name)) {
                             $file_path = $destinationPath.'/'.$file_name;
                             if (file_exists($file_path)) {
                                 $files[] = $file_name;
@@ -4175,6 +4180,7 @@ class ModuleController extends BaseController
 
             return view('__app.forms.module_form', $data);
         }
+
         //dd($data);
         return view('__app.components.form', $data);
     }
@@ -4188,7 +4194,7 @@ class ModuleController extends BaseController
         //  }
         // aa($request->all());
         session()->forget('event_db_record');
-        if (!str_contains(url()->previous(), session('menu_route'))) {
+        if (! str_contains(url()->previous(), session('menu_route'))) {
             $request->attributes->add(['test_attr' => 1]);
         }
 
@@ -4196,10 +4202,10 @@ class ModuleController extends BaseController
         session()->forget('item_ajax');
         session()->forget('product_ajax');
         session()->forget('voice_rates_ajax');
-        if ($this->data['db_table'] == 'crm_pricelist_items' && !empty($request->id)) {
+        if ($this->data['db_table'] == 'crm_pricelist_items' && ! empty($request->id)) {
             $item = \DB::connection('default')->table('crm_pricelist_items')->where('id', $request->id)->get()->first();
             $product_id = $item->product_id;
-            if (!in_array($item->pricelist_id, [1, 2])) {
+            if (! in_array($item->pricelist_id, [1, 2])) {
                 $disable_reseller_markup = \DB::connection('default')->table('crm_products')->where('id', $product_id)->pluck('disable_reseller_markup')->first();
 
                 if ($disable_reseller_markup) {
@@ -4219,11 +4225,11 @@ class ModuleController extends BaseController
 
         $id = $form->form_id;
         $webform = false;
-        if (!empty(session('webform_module_id'))) {
+        if (! empty(session('webform_module_id'))) {
             $webform = true;
         }
 
-        if (!empty(session('webform_module_id')) && session('webform_module_id') != $this->data['module_id']) {
+        if (! empty(session('webform_module_id')) && session('webform_module_id') != $this->data['module_id']) {
             $webform = false;
             session()->forget('webform_module_id');
             session()->forget('webform_id');
@@ -4234,16 +4240,16 @@ class ModuleController extends BaseController
         if (empty(session('webform_module_id'))) {
             $allow_access = true;
 
-            if (!$id) {
-                if (0 == $this->data['access']['is_add']) {
+            if (! $id) {
+                if ($this->data['access']['is_add'] == 0) {
                     $allow_access = false;
                 }
             } else {
-                if (0 == $this->data['access']['is_edit']) {
+                if ($this->data['access']['is_edit'] == 0) {
                     $allow_access = false;
                 }
             }
-            if (!$allow_access) {
+            if (! $allow_access) {
                 if ($request->ajax()) {
                     return response()->json(['status' => 'error', 'message' => 'No Access']);
                 } else {
@@ -4254,7 +4260,7 @@ class ModuleController extends BaseController
             if ($id) {
                 $record_access = $this->model->singleRecordAccess($id);
 
-                if (!$record_access) {
+                if (! $record_access) {
                     if ($request->ajax()) {
                         return response()->json(['status' => 'error', 'message' => 'No Record Access']);
                     } else {
@@ -4270,7 +4276,7 @@ class ModuleController extends BaseController
         $row = $this->model->getRow($id);
         if ($webform || $use_syncfusion) {
             $data = $form->getForm($row);
-        //aa($data['form_html']);
+            //aa($data['form_html']);
         } else {
             $data = $this->data;
         }
@@ -4280,7 +4286,7 @@ class ModuleController extends BaseController
         $data['module_fields_url'] = get_menu_url_from_table('erp_module_fields');
         $data['form_description'] = str_replace([PHP_EOL, "'"], ['<br>', ''], $data['form_description']);
         $data['id'] = $id;
-        if (!empty($request->is_iframe)) {
+        if (! empty($request->is_iframe)) {
             $data['hide_page_header'] = 1;
             $data['remove_container'] = 1;
         }
@@ -4295,29 +4301,29 @@ class ModuleController extends BaseController
         }
         $name_field = $this->data['db_module_fields']->where('label', 'Name')->pluck('field')->first();
 
-        if (!empty($name_field) && !empty($row) && !empty($row[$name_field])) {
+        if (! empty($name_field) && ! empty($row) && ! empty($row[$name_field])) {
             $data['form_title'] .= ' - '.$row[$name_field];
-        } elseif (!empty($row) && !empty($row['company'])) {
+        } elseif (! empty($row) && ! empty($row['company'])) {
             $data['form_title'] .= ' - '.$row['company'];
-        } elseif (!empty($row) && !empty($row['code'])) {
+        } elseif (! empty($row) && ! empty($row['code'])) {
             $data['form_title'] .= ' - '.$row['code'];
-        } elseif (!empty($row) && !empty($row['title'])) {
+        } elseif (! empty($row) && ! empty($row['title'])) {
             $data['form_title'] .= ' - '.$row['title'];
-        } elseif (!empty($row) && !empty($row['name'])) {
+        } elseif (! empty($row) && ! empty($row['name'])) {
             $data['form_title'] .= ' - '.$row['name'];
-        } elseif (!empty($row) && !empty($row['field'])) {
+        } elseif (! empty($row) && ! empty($row['field'])) {
             $data['form_title'] .= ' - '.$row['field'];
-        } elseif (!empty($row) && !empty($row['id'])) {
+        } elseif (! empty($row) && ! empty($row['id'])) {
             $data['form_title'] .= ' - Edit';
         }
 
         $formio = false;
-        if (!$webform) {
+        if (! $webform) {
             $form_id = formio_get_form_id($this->data['module_id']);
             if ($form_id) {
                 $form_config = \DB::connection('default')->table('erp_forms')->where('id', $form_id)->get()->first();
             }
-            if (!$use_syncfusion) {
+            if (! $use_syncfusion) {
                 $formio = true;
             }
         }
@@ -4330,7 +4336,7 @@ class ModuleController extends BaseController
 
         // aa($webform);
 
-        if (!$webform && $formio && $form_id && $form_config) {
+        if (! $webform && $formio && $form_id && $form_config) {
             $data['form_id'] = $form_id;
             $data['form_readonly'] = false;
 
@@ -4342,12 +4348,12 @@ class ModuleController extends BaseController
                 $form_type = 'add';
             }
 
-            if (check_access('1') && !empty(request()->form_role_id)) {
+            if (check_access('1') && ! empty(request()->form_role_id)) {
                 $form_type = 'view';
                 $data['form_readonly'] = true;
             }
 
-            if (empty($id) && !empty($request->filter_model)) {
+            if (empty($id) && ! empty($request->filter_model)) {
                 session(['filter_model' => json_decode($request->filter_model)]);
             } else {
                 session(['filter_model' => null]);
@@ -4355,9 +4361,9 @@ class ModuleController extends BaseController
 
             //LINK GRID LAYOUT TO FORM
 
-            if ($this->data['auto_form'] && !empty($request->layout_id)) {
+            if ($this->data['auto_form'] && ! empty($request->layout_id)) {
                 $k = $data['form_json'];
-                if (!empty($request->detail_layout)) {
+                if (! empty($request->detail_layout)) {
                     $updated_form_json = formio_updated_tabs_from_layout($this->data['module_id'], $request->layout_id, $this->data['module_fields'], true);
                 } else {
                     $updated_form_json = formio_updated_tabs_from_layout($this->data['module_id'], $request->layout_id, $this->data['module_fields']);
@@ -4397,14 +4403,14 @@ class ModuleController extends BaseController
                     unset($data['form_data'][$field['field']]);
                 }
 
-                if (($field['field_type'] == 'file' || $field['field_type'] == 'image') && !empty($data['form_data'][$field['field']])) {
+                if (($field['field_type'] == 'file' || $field['field_type'] == 'image') && ! empty($data['form_data'][$field['field']])) {
                     $remove_files = false;
                     $destinationPath = uploads_path($this->data['module_id']);
 
                     $file_names = explode(',', $data['form_data'][$field['field']]);
                     $files = [];
                     foreach ($file_names as $file_name) {
-                        if (!empty($file_name)) {
+                        if (! empty($file_name)) {
                             $file_path = $destinationPath.'/'.$file_name;
                             if (file_exists($file_path)) {
                                 $files[] = $file_name;
@@ -4431,9 +4437,9 @@ class ModuleController extends BaseController
                     $data['name_field'] = $field['field'];
                 }
             }
-            $data['popup_form'] = (!empty($request->popup_form_field)) ? 1 : 0;
-            $data['popup_form_field'] = (!empty($request->popup_form_field)) ? $request->popup_form_field : '';
-            $data['popup_form_module_id'] = (!empty($request->popup_form_module_id)) ? $request->popup_form_module_id : '';
+            $data['popup_form'] = (! empty($request->popup_form_field)) ? 1 : 0;
+            $data['popup_form_field'] = (! empty($request->popup_form_field)) ? $request->popup_form_field : '';
+            $data['popup_form_module_id'] = (! empty($request->popup_form_module_id)) ? $request->popup_form_module_id : '';
             if (session('role_level') == 'Admin') {
                 $data['select_fields'] = collect($data['db_module_fields'])->where('field', '!=', 'created_by')->where('field', '!=', 'updated_by')->where('field_type', 'select_module')->where('opt_module_id', '>', 0);
             }
@@ -4450,10 +4456,10 @@ class ModuleController extends BaseController
             $data['context_tabs'] = ['General', 'Other'];
         }
 
-        if (!in_array('General', $data['context_tabs'])) {
+        if (! in_array('General', $data['context_tabs'])) {
             $data['context_tabs'][] = 'General';
         }
-        if (!in_array('Other', $data['context_tabs'])) {
+        if (! in_array('Other', $data['context_tabs'])) {
             $data['context_tabs'][] = 'Other';
         }
         $data['context_tabs'][] = 'New Tab';
@@ -4466,11 +4472,11 @@ class ModuleController extends BaseController
         //pricelist_set_discounts();
         $doctable = 'crm_documents';
         $doclinestable = 'crm_document_lines';
-        if ('crm_supplier_documents' == $this->data['db_table']) {
+        if ($this->data['db_table'] == 'crm_supplier_documents') {
             $doctable = 'crm_supplier_documents';
             $doclinestable = 'crm_supplier_document_lines';
         }
-        if ('crm_supplier_import_documents' == $this->data['db_table']) {
+        if ($this->data['db_table'] == 'crm_supplier_import_documents') {
             $doctable = 'crm_supplier_import_documents';
             $doclinestable = 'crm_supplier_import_document_lines';
         }
@@ -4479,12 +4485,12 @@ class ModuleController extends BaseController
             $this->data['cdr_destinations'] = ['all', 'mobile all', 'mobile cellc', 'mobile mtn', 'mobile vodacom', 'mobile telkom', 'fixed telkom', 'fixed other fixed liquid', 'fixed tollfree', 'fixed sharecall'];
         }
 
-        if (!empty($id)) {
+        if (! empty($id)) {
             $row = (object) $this->model->getRow($id);
             if ($row) {
                 $doctype = \DB::table('acc_doctypes')->where('doctype', $row->doctype)->get()->first();
 
-                if (!$doctype->editable) {
+                if (! $doctype->editable) {
                     if ($request->ajax()) {
                         return response()->json(['status' => 'error', 'message' => 'Document type cannot be edited.']);
                     } else {
@@ -4492,7 +4498,7 @@ class ModuleController extends BaseController
                     }
                 }
 
-                if ('crm_supplier_documents' == $this->data['db_table'] || 'crm_supplier_import_documents' == $this->data['db_table']) {
+                if ($this->data['db_table'] == 'crm_supplier_documents' || $this->data['db_table'] == 'crm_supplier_import_documents') {
                     $account_id = $row->supplier_id;
                 } else {
                     $account_id = $row->account_id;
@@ -4505,7 +4511,7 @@ class ModuleController extends BaseController
                     ->get();
 
                 $this->data['document'] = $row;
-                if (!empty($lines) && count($lines) > 0) {
+                if (! empty($lines) && count($lines) > 0) {
                     $this->data['document_lines'] = sort_product_rows($lines);
                 } else {
                     $this->data['document_lines'] = [(object) $this->model->getColumnTable($doclinestable)];
@@ -4541,11 +4547,11 @@ class ModuleController extends BaseController
         }
 
         $this->data['exchange_rate'] = $this->data['document']->exchange_rate;
-        if ('21' == session('role_id')) {
+        if (session('role_id') == '21') {
             $account_id = session('account_id');
-        } elseif ('11' == session('role_id') && !empty($request->account_id) && is_parent_of($request->account_id) && $request->account_id != 'session_account_id') {
+        } elseif (session('role_id') == '11' && ! empty($request->account_id) && is_parent_of($request->account_id) && $request->account_id != 'session_account_id') {
             $account_id = $request->account_id;
-        } elseif (session('role_level') == 'Admin' && !empty($request->account_id)) {
+        } elseif (session('role_level') == 'Admin' && ! empty($request->account_id)) {
             if ($request->account_id == 'session_account_id') {
                 $account_id = session('account_id');
             } else {
@@ -4556,7 +4562,7 @@ class ModuleController extends BaseController
             }
         }
 
-        if (!empty($request->buy_product_id) && !empty($request->account_id)) {
+        if (! empty($request->buy_product_id) && ! empty($request->account_id)) {
             $this->data['document_lines'][0]->product_id = $request->buy_product_id;
             if (session('role_level') == 'Admin') {
                 $account = dbgetaccount($account_id);
@@ -4568,11 +4574,11 @@ class ModuleController extends BaseController
         }
 
         $this->data['document_currency'] = 'ZAR';
-        if ('crm_supplier_import_documents' == $this->data['db_table']) {
+        if ($this->data['db_table'] == 'crm_supplier_import_documents') {
             $this->data['import_shipments'] = \DB::table('crm_import_shipments')->orderBy('shipment_date', 'desc')->orderBy('id', 'desc')->get();
         }
-        if (!empty($account_id)) {
-            if ('crm_supplier_documents' == $this->data['db_table'] || 'crm_supplier_import_documents' == $this->data['db_table']) {
+        if (! empty($account_id)) {
+            if ($this->data['db_table'] == 'crm_supplier_documents' || $this->data['db_table'] == 'crm_supplier_import_documents') {
                 $account = dbgetsupplier($account_id);
                 $this->data['account_id'] = $account->id;
                 $this->data['document_currency'] = get_supplier_currency($account_id);
@@ -4585,12 +4591,12 @@ class ModuleController extends BaseController
             $this->data['account_id'] = $account->id;
             $this->data['account_type'] = $account->type;
             $this->data['partner_id'] = $account->partner_id;
-            if ('crm_supplier_documents' == $this->data['db_table'] || 'crm_supplier_import_documents' == $this->data['db_table']) {
+            if ($this->data['db_table'] == 'crm_supplier_documents' || $this->data['db_table'] == 'crm_supplier_import_documents') {
                 $partner = dbgetaccount(1);
             } else {
                 $partner = dbgetaccount($account->partner_id);
             }
-            if ('crm_supplier_documents' == $this->data['db_table'] || 'crm_supplier_import_documents' == $this->data['db_table']) {
+            if ($this->data['db_table'] == 'crm_supplier_documents' || $this->data['db_table'] == 'crm_supplier_import_documents') {
                 $this->data['vat_enabled'] = ($account->taxable) ? 1 : 0;
             } else {
                 $this->data['vat_enabled'] = ($account->currency == 'USD') ? 0 : $partner->vat_enabled;
@@ -4603,9 +4609,9 @@ class ModuleController extends BaseController
                 $this->data['bank_details'] = '';
             }
             $this->data['customers'] = json_encode(['text' => $account->company, 'value' => $account->id]);
-            if ('crm_supplier_documents' == $this->data['db_table']) {
+            if ($this->data['db_table'] == 'crm_supplier_documents') {
                 $this->data['products'] = get_transaction_products($account_id, 'supplier');
-            } elseif ('crm_supplier_import_documents' == $this->data['db_table']) {
+            } elseif ($this->data['db_table'] == 'crm_supplier_import_documents') {
                 $this->data['products'] = get_transaction_products($account_id, 'supplier', true);
             } else {
                 $this->data['products'] = get_transaction_products($account_id, 'account');
@@ -4613,10 +4619,10 @@ class ModuleController extends BaseController
         } else {
             $this->data['account_type'] = '';
 
-            if ('11' == session('role_id')) {
+            if (session('role_id') == '11') {
                 $this->data['partner_id'] = 1;
                 $partner = dbgetaccount(1);
-            } elseif ('21' == session('role_id')) {
+            } elseif (session('role_id') == '21') {
                 $this->data['partner_id'] = session('parent_id');
                 $partner = dbgetaccount(session('parent_id'));
             } else {
@@ -4631,16 +4637,16 @@ class ModuleController extends BaseController
             } else {
                 $this->data['bank_details'] = '';
             }
-            if ('crm_supplier_documents' == $this->data['db_table']) {
+            if ($this->data['db_table'] == 'crm_supplier_documents') {
                 $this->data['products'] = get_transaction_products(1, 'supplier');
-            } elseif ('crm_supplier_import_documents' == $this->data['db_table']) {
+            } elseif ($this->data['db_table'] == 'crm_supplier_import_documents') {
                 $this->data['products'] = get_transaction_products(1, 'supplier', true);
             } else {
                 $this->data['products'] = [];
             }
         }
 
-        if (check_access('11') || session('role_level') == 'Admin' && 'supplierdocuments' != $this->data['name']) {
+        if (check_access('11') || session('role_level') == 'Admin' && $this->data['name'] != 'supplierdocuments') {
             if (check_access('11')) {
                 $accounts = \DB::table('crm_accounts')
                     ->select('id', 'company', 'type', 'payment_method', 'currency')
@@ -4669,7 +4675,7 @@ class ModuleController extends BaseController
         }
 
         if (session('role_level') == 'Admin') {
-            if ('crm_supplier_documents' == $this->data['db_table'] || 'crm_supplier_import_documents' == $this->data['db_table']) {
+            if ($this->data['db_table'] == 'crm_supplier_documents' || $this->data['db_table'] == 'crm_supplier_import_documents') {
                 $suppliers = \DB::table('crm_suppliers')
                     ->select('id', 'company', 'taxable', \DB::raw('"Supplier" as type'), 'currency')
                     ->where('status', '!=', 'Deleted')
@@ -4684,18 +4690,18 @@ class ModuleController extends BaseController
             }
         }
 
-        if ('21' == session('role_id')) {
+        if (session('role_id') == '21') {
             $list_accounts = \DB::table('crm_accounts')->where('id', session('account_id'))->get();
         }
 
         $this->data['accounts'] = $list_accounts;
 
         $this->data['shipping_companies'] = \DB::table('crm_suppliers')
-                    ->select('id', 'company', 'taxable', \DB::raw('"Supplier" as type'), \DB::raw('"ZAR" as currency'))
-                    ->where('status', '!=', 'Deleted')
-                    ->where('shipping_company', 1)
-                    ->orderBy('company')
-                    ->get();
+            ->select('id', 'company', 'taxable', \DB::raw('"Supplier" as type'), \DB::raw('"ZAR" as currency'))
+            ->where('status', '!=', 'Deleted')
+            ->where('shipping_company', 1)
+            ->orderBy('company')
+            ->get();
 
         $this->data['logo'] = '';
 
@@ -4704,15 +4710,15 @@ class ModuleController extends BaseController
         }
 
         $this->data['is_supplier'] = 0;
-        if ('crm_supplier_documents' == $this->data['db_table']) {
+        if ($this->data['db_table'] == 'crm_supplier_documents') {
             $this->data['is_supplier'] = 1;
         }
-        if ('crm_supplier_import_documents' == $this->data['db_table']) {
+        if ($this->data['db_table'] == 'crm_supplier_import_documents') {
             $this->data['is_supplier'] = 1;
         }
 
         $doctype_query = \DB::table('acc_doctypes');
-        if ('crm_supplier_documents' == $this->data['db_table']) {
+        if ($this->data['db_table'] == 'crm_supplier_documents') {
             $doctype_query->where('doctype', '!=', 'Supplier Invoice');
         } else {
             $doctype_query->whereNotIn('doctype', ['Tax Invoice', 'Credit Note', 'Credit Note Draft']);
@@ -4738,35 +4744,35 @@ class ModuleController extends BaseController
         if (empty($this->data['doctype'])) {
             $doctypes = collect($this->data['doctypes'])->toArray();
             $this->data['doctype'] = $default_doctype;
-            if (!in_array($default_doctype, $doctypes)) {
+            if (! in_array($default_doctype, $doctypes)) {
                 $this->data['doctype'] = $doctypes[0];
             }
         }
 
-        if (!empty($request->buy_product_id) && !empty($request->account_id)) {
+        if (! empty($request->buy_product_id) && ! empty($request->account_id)) {
             $this->data['doctype'] = 'Order';
         }
-        if ('Credit Note' == $this->data['doctype']) {
+        if ($this->data['doctype'] == 'Credit Note') {
             $this->data['doctypes'] = ['Credit Note'];
         }
 
-        if ('Tax Invoice' == $this->data['doctype']) {
+        if ($this->data['doctype'] == 'Tax Invoice') {
             $this->data['doctypes'] = ['Tax Invoice'];
         }
 
-        if ('Credit Note Draft' == $this->data['doctype']) {
+        if ($this->data['doctype'] == 'Credit Note Draft') {
             $this->data['doctypes'] = ['Credit Note Draft'];
-            if (!empty($request->approve) && check_access('1')) {
+            if (! empty($request->approve) && check_access('1')) {
                 $this->data['doctype'] = 'Credit Note';
                 $this->data['document']->doctype = 'Credit Note';
             }
         }
 
         if (is_superadmin()) {
-            if (!in_array('Tax Invoice', $this->data['doctypes'])) {
+            if (! in_array('Tax Invoice', $this->data['doctypes'])) {
                 $this->data['doctypes'][] = 'Tax Invoice';
             }
-            if (!in_array('Credit Note', $this->data['doctypes'])) {
+            if (! in_array('Credit Note', $this->data['doctypes'])) {
                 $this->data['doctypes'][] = 'Credit Note';
             }
         }
@@ -4781,7 +4787,7 @@ class ModuleController extends BaseController
         }
 
         if (is_superadmin() || is_dev()) {
-            if (!empty($this->data['document']->salesman_id)) {
+            if (! empty($this->data['document']->salesman_id)) {
                 $this->data['salesman_ids'] = \DB::table('erp_users')->where('account_id', 1)->where('is_deleted', 0)->orwhere('id', $this->data['document']->salesman_id)->get();
             } else {
                 $this->data['salesman_ids'] = \DB::table('erp_users')->where('account_id', 1)->where('is_deleted', 0)->get();
@@ -4823,15 +4829,15 @@ class ModuleController extends BaseController
         $this->data['categories'] = get_transaction_categories();
         $this->data['categories_usd'] = get_transaction_categories_usd();
         $active_product_ids = \DB::table('crm_products as products')
-        ->select('products.*', 'category.id as category_id', 'category.name as category', 'category.department as department')
-        ->join('crm_product_categories as category', 'products.product_category_id', '=', 'category.id')
-        ->where('products.status', 'Enabled')
-        ->where('category.is_deleted', 0)
-        ->where('category.not_for_sale', 0)
-        ->where('products.not_for_sale', 0)
-        ->orderBy('category.sort_order')
-        ->orderBy('products.sort_order')
-        ->pluck('id')->toArray();
+            ->select('products.*', 'category.id as category_id', 'category.name as category', 'category.department as department')
+            ->join('crm_product_categories as category', 'products.product_category_id', '=', 'category.id')
+            ->where('products.status', 'Enabled')
+            ->where('category.is_deleted', 0)
+            ->where('category.not_for_sale', 0)
+            ->where('products.not_for_sale', 0)
+            ->orderBy('category.sort_order')
+            ->orderBy('products.sort_order')
+            ->pluck('id')->toArray();
 
         $bundle_details = \DB::table('crm_product_bundle_details')->whereIn('product_id', $active_product_ids)->get();
         $bundle_ids = $bundle_details->pluck('product_bundle_id')->unique()->toArray();
@@ -4860,7 +4866,7 @@ class ModuleController extends BaseController
         }
         $this->data['remove_tax_fields'] = get_admin_setting('remove_tax_fields');
 
-        if ('crm_supplier_documents' == $this->data['db_table'] || 'crm_supplier_import_documents' == $this->data['db_table']) {
+        if ($this->data['db_table'] == 'crm_supplier_documents' || $this->data['db_table'] == 'crm_supplier_import_documents') {
             $this->data['ledger_accounts'] = \DB::table('acc_ledger_accounts')->where('is_deleted', 0)->get();
         }
         if (is_dev()) {
@@ -4879,11 +4885,11 @@ class ModuleController extends BaseController
         $rules = [];
         foreach ($forms as $form) {
             if ($form['required']) {
-                if ('email' == $form['field_type']) {
+                if ($form['field_type'] == 'email') {
                     $rules[$form['field']] = 'email';
-                } elseif ('integer' == $form['field_type'] || 'currency' == $form['field_type']) {
+                } elseif ($form['field_type'] == 'integer' || $form['field_type'] == 'currency') {
                     $rules[$form['field']] = 'numeric';
-                } elseif ('date' == $form['field_type'] || 'datetime' == $form['field_type']) {
+                } elseif ($form['field_type'] == 'date' || $form['field_type'] == 'datetime') {
                     $rules[$form['field']] = 'date';
                 } else {
                     $rules[$form['field']] = 'required';
@@ -4896,7 +4902,7 @@ class ModuleController extends BaseController
 
     public function getImport(Request $request)
     {
-        if (!$this->data['access']['is_import']) {
+        if (! $this->data['access']['is_import']) {
             if ($request->ajax()) {
                 return response()->json(['status' => 'error', 'message' => 'No Access']);
             } else {
@@ -4917,7 +4923,7 @@ class ModuleController extends BaseController
             unset($data['import']);
             unset($data['_token']);
 
-            if (!$this->data['access']['is_import']) {
+            if (! $this->data['access']['is_import']) {
                 if ($request->ajax()) {
                     return response()->json(['status' => 'error', 'message' => 'No Access']);
                 } else {
@@ -4936,13 +4942,13 @@ class ModuleController extends BaseController
 
             $filename = file_name_formatted($filename);
 
-            if (!str_ends_with($filename, '.xlsx')) {
+            if (! str_ends_with($filename, '.xlsx')) {
                 return json_alert('File needs to be xlsx format.', 'error');
             }
 
             $uploadSuccess = $file->move(uploads_path($this->data['module_id']), $filename);
 
-            if (!$uploadSuccess) {
+            if (! $uploadSuccess) {
                 return json_alert('Upload Failed!', 'error');
             }
 
@@ -4955,9 +4961,9 @@ class ModuleController extends BaseController
             shell_exec('chmod 777 '.uploads_path($this->data['module_id']).$filename);
 
             $usd_exchange = convert_currency_usd_to_zar(1);
-            $records = (new FastExcel())->import(uploads_path($this->data['module_id']).$filename, function ($line) use ($db, $data, $usd_exchange) {
+            $records = (new FastExcel)->import(uploads_path($this->data['module_id']).$filename, function ($line) use ($data, $usd_exchange) {
                 $line = array_change_key_case($line, CASE_LOWER);
-                if (!empty($data) && is_array($data) && count($data) > 0) {
+                if (! empty($data) && is_array($data) && count($data) > 0) {
                     foreach ($data as $k => $v) {
                         $line[$k] = $v;
                     }
@@ -4969,22 +4975,22 @@ class ModuleController extends BaseController
                 }
 
                 if ($this->data['module_id'] == 739) {
-                    if (!empty($line['call_time'])) {
+                    if (! empty($line['call_time'])) {
                         $line['call_time'] = $line['call_time']->format('Y-m-d H:i:s');
                     }
 
-                    if (!empty($line['charged_time'])) {
+                    if (! empty($line['charged_time'])) {
                         $line['charged_time'] = $line['charged_time']->format('H:i:s');
                     }
 
-                    if (!empty($line['duration']) && empty($line['duration_minutes'])) {
+                    if (! empty($line['duration']) && empty($line['duration_minutes'])) {
                         $line['duration_minutes'] = $line['duration'] / 60;
                     }
-                    if (empty($line['duration']) && empty(!$line['duration_minutes'])) {
+                    if (empty($line['duration']) && empty(! $line['duration_minutes'])) {
                         $line['duration'] = $line['duration_minutes'] * 60;
                     }
 
-                    if (!empty($line['destination'])) {
+                    if (! empty($line['destination'])) {
                         $line['description'] = $line['destination'];
                     }
                     if (isset($line['destination'])) {
@@ -5021,7 +5027,7 @@ class ModuleController extends BaseController
                     }
 
                     if ($data['gateway'] == 'FIRSTNET') {
-                        if ('0' == substr($line['destination_id'], 0, 1)) {
+                        if (substr($line['destination_id'], 0, 1) == '0') {
                             $line['destination_id'] = substr($line['destination_id'], 1);
                             $line['destination_id'] = '27'.$line['destination_id'];
                         }
@@ -5049,21 +5055,21 @@ class ModuleController extends BaseController
                         $line['currency'] = 'usd';
                     }
 
-                    if (!empty($line['country'])) {
+                    if (! empty($line['country'])) {
                         $line['country'] = strtolower($line['country']);
                     }
 
-                    if (!empty($line['destination'])) {
+                    if (! empty($line['destination'])) {
                         $line['destination'] = strtolower($line['destination']);
                     }
 
-                    if (!empty($line['currency']) && $line['currency'] == 'usd') {
+                    if (! empty($line['currency']) && $line['currency'] == 'usd') {
                         $line['cost'] = $line['cost'] * $usd_exchange;
                         unset($line['currency']);
                     }
 
                     unset($line['gateway']);
-                    if (!empty($line['destination_id']) && is_numeric($line['destination_id'])) {
+                    if (! empty($line['destination_id']) && is_numeric($line['destination_id'])) {
                         $line['cost'] = str_replace(',', '.', $line['cost']);
                         if (empty($line['cost'])) {
                             $line['cost'] = 0;
@@ -5072,11 +5078,11 @@ class ModuleController extends BaseController
                         // $exists = \DB::connection('pbx')->table('p_rates_complete')->where('gateway_uuid', $line['gateway_uuid'])->where('destination_id', $line['destination_id'])->count();
 
                         // if (!$exists) {
-                            \DB::connection('pbx')->table('p_rates_complete')->insertOrIgnore($line);
+                        \DB::connection('pbx')->table('p_rates_complete')->insertOrIgnore($line);
                         // } else {
                         //     \DB::connection('pbx')->table('p_rates_complete')->where('gateway_uuid', $line['gateway_uuid'])->where('destination_id', $line['destination_id'])->update($line);
                         // }
-                    } elseif (!empty($line['destination_id']) && !is_numeric($line['destination_id'])) {
+                    } elseif (! empty($line['destination_id']) && ! is_numeric($line['destination_id'])) {
                         /*
                             SOUTH AFRICA	GNT	Neotel Geographic
                             SOUTH AFRICA	GRNTL	Neotel Local
@@ -5089,42 +5095,42 @@ class ModuleController extends BaseController
                         */
                         if ($line['destination_id'] == 'GNT') {
                             $destination_lines = \DB::connection('pbx')->table('p_rates_destinations')
-                        ->where('country', strtolower($line['country']))->where('destination', 'like', '%neotel%')->get();
+                                ->where('country', strtolower($line['country']))->where('destination', 'like', '%neotel%')->get();
                         }
 
                         if ($line['destination_id'] == 'GTK') {
                             $destination_lines = \DB::connection('pbx')->table('p_rates_destinations')
-                        ->where('country', strtolower($line['country']))->where('destination', 'fixed telkom')->get();
+                                ->where('country', strtolower($line['country']))->where('destination', 'fixed telkom')->get();
                         }
                         if ($line['destination_id'] == 'MCC') {
                             $destination_lines = \DB::connection('pbx')->table('p_rates_destinations')
-                        ->where('country', strtolower($line['country']))->where('destination', 'mobile cellc')->get();
+                                ->where('country', strtolower($line['country']))->where('destination', 'mobile cellc')->get();
                         }
                         if ($line['destination_id'] == 'MMTN') {
                             $destination_lines = \DB::connection('pbx')->table('p_rates_destinations')
-                        ->where('country', strtolower($line['country']))->where('destination', 'mobile mtn')->get();
+                                ->where('country', strtolower($line['country']))->where('destination', 'mobile mtn')->get();
                         }
                         if ($line['destination_id'] == 'MTK') {
                             $destination_lines = \DB::connection('pbx')->table('p_rates_destinations')
-                        ->where('country', strtolower($line['country']))->where('destination', 'mobile telkom')->get();
+                                ->where('country', strtolower($line['country']))->where('destination', 'mobile telkom')->get();
                         }
                         if ($line['destination_id'] == 'MVC') {
                             $destination_lines = \DB::connection('pbx')->table('p_rates_destinations')
-                        ->where('country', strtolower($line['country']))->where('destination', 'mobile vodacom')->get();
+                                ->where('country', strtolower($line['country']))->where('destination', 'mobile vodacom')->get();
                         }
 
                         if ($line['destination_id'] == 'VG') {
                             // fixed other
                             $local_destinations = ['fixed telkom', 'fixed liquid', 'mobile cellc', 'mobile mtn', 'mobile vodacom', 'fixed tollfree', 'fixed sharecall', 'mobile telkom'];
                             $destination_lines = \DB::connection('pbx')->table('p_rates_destinations')
-                            ->where('country', 'south africa')
-                            ->where('id', 'not like', '2786%')
-                            ->whereNotIn('destination', ['fixed tollfree', 'fixed sharecall'])
-                            ->whereNotIn('destination', $local_destinations)
-                            ->get();
+                                ->where('country', 'south africa')
+                                ->where('id', 'not like', '2786%')
+                                ->whereNotIn('destination', ['fixed tollfree', 'fixed sharecall'])
+                                ->whereNotIn('destination', $local_destinations)
+                                ->get();
                         }
 
-                        if (!empty($destination_lines)) {
+                        if (! empty($destination_lines)) {
                             $destination_line_ids = collect($destination_lines)->pluck('id')->toArray();
                             \DB::connection('pbx')->table('p_rates_complete')->where('gateway_uuid', $line_data['gateway_uuid'])->whereIn('destination_id', $destination_line_ids)->delete();
                             $network_lines = [];
@@ -5141,19 +5147,19 @@ class ModuleController extends BaseController
                                 \DB::connection('pbx')->table('p_rates_complete')->insertOrIgnore($chunk->toArray());
                             }
                         }
-                    } elseif (!empty($line['destination_type'])) {
+                    } elseif (! empty($line['destination_type'])) {
                         if ($line['destination_type'] == 'mobile') {
                             $destination_lines = \DB::connection('pbx')->table('p_rates_destinations')
-                        ->where('country', strtolower($line['country']))->where('destination', 'like', '%mobile%')->get();
+                                ->where('country', strtolower($line['country']))->where('destination', 'like', '%mobile%')->get();
                         }
 
                         if ($line['destination_type'] == 'fixed') {
                             $destination_lines = \DB::connection('pbx')->table('p_rates_destinations')
-                        ->where('country', strtolower($line['country']))->where('destination', 'not like', '%mobile%')->get();
+                                ->where('country', strtolower($line['country']))->where('destination', 'not like', '%mobile%')->get();
                         }
                         if ($line['destination_type'] == 'all') {
                             $destination_lines = \DB::connection('pbx')->table('p_rates_destinations')
-                        ->where('country', strtolower($line['country']))->get();
+                                ->where('country', strtolower($line['country']))->get();
                         }
                         unset($line['destination_type']);
                         foreach ($destination_lines as $destination_line) {
@@ -5164,7 +5170,7 @@ class ModuleController extends BaseController
                             // international rates
                             $exists = \DB::connection('pbx')->table('p_rates_complete')->where('gateway_uuid', $line_data['gateway_uuid'])->where('destination_id', $line_data['destination_id'])->count();
 
-                            if (!$exists) {
+                            if (! $exists) {
                                 \DB::connection('pbx')->table('p_rates_complete')->insert($line_data);
                             } else {
                                 \DB::connection('pbx')->table('p_rates_complete')->where('gateway_uuid', $line_data['gateway_uuid'])->where('destination_id', $line_data['destination_id'])->update($line_data);
@@ -5219,7 +5225,7 @@ class ModuleController extends BaseController
             }
         }
 
-        if (!$field) {
+        if (! $field) {
             return '';
         }
 
@@ -5238,6 +5244,7 @@ class ModuleController extends BaseController
         $form->setRow($row);
 
         $form_data = $form->getFormField($field, true);
+
         //  aa($form_data);
         return $form_data['form_html'].'<script>'.$form_data['form_script'].'</script>';
     }
@@ -5245,7 +5252,7 @@ class ModuleController extends BaseController
     public function postSaveCell(Request $request)
     {
         $field_type = $this->data['db_module_fields']->where('field', $request->field)->pluck('field_type')->first();
-        if (!empty($request->value)) {
+        if (! empty($request->value)) {
             if ($field_type == 'date') {
                 $request->value = date('Y-m-d', strtotime(str_replace('(South Africa Standard Time)', '', $request->value)));
             }
@@ -5262,7 +5269,7 @@ class ModuleController extends BaseController
         }
         $row[$cell] = $request->value;
 
-        $request_object = new \Illuminate\Http\Request();
+        $request_object = new \Illuminate\Http\Request;
         $request_object->setMethod('POST');
         $request_object->request->add($row);
         $request_object->request->add(['post_save_cell' => 1]);
@@ -5323,7 +5330,7 @@ class ModuleController extends BaseController
             }
         }
 
-        $request_object = new \Illuminate\Http\Request();
+        $request_object = new \Illuminate\Http\Request;
         $request_object->setMethod('POST');
         $request_object->request->add($row);
 
@@ -5359,17 +5366,17 @@ class ModuleController extends BaseController
             // $formio = true;
 
             $new_record = 1;
-            if (!empty($request->id)) {
+            if (! empty($request->id)) {
                 $new_record = 0;
             }
 
             $detail_edit = false;
-            if (!empty($request->detail_edit)) {
+            if (! empty($request->detail_edit)) {
                 $detail_edit = true;
                 $request->request->remove('detail_edit');
             }
 
-            if (!empty($request->emailonly)) {
+            if (! empty($request->emailonly)) {
                 email_document_pdf($request->id);
 
                 return json_alert('Document Emailed');
@@ -5377,7 +5384,7 @@ class ModuleController extends BaseController
 
             $form_id = $this->data['db_key'];
             session(['menu_route' => $this->data['menu_route']]);
-            if ('id' == $form_id || str_contains($form_id, '_id')) {
+            if ($form_id == 'id' || str_contains($form_id, '_id')) {
                 $id = (is_numeric($request->input($form_id))) ? $request->input($form_id) : null;
             } else {
                 $id = $request->input($form_id);
@@ -5385,17 +5392,17 @@ class ModuleController extends BaseController
 
             if (empty(session('webform_module_id'))) {
                 $allow_access = true;
-                if (!$id) {
-                    if (0 == $this->data['access']['is_add']) {
+                if (! $id) {
+                    if ($this->data['access']['is_add'] == 0) {
                         $allow_access = false;
                     }
                 } else {
-                    if (0 == $this->data['access']['is_edit']) {
+                    if ($this->data['access']['is_edit'] == 0) {
                         $allow_access = false;
                     }
                 }
 
-                if (!empty($request->post_save_cell)) {
+                if (! empty($request->post_save_cell)) {
                     $allow_access = 1;
                     $request->request->remove('post_save_cell');
                 }
@@ -5412,7 +5419,7 @@ class ModuleController extends BaseController
                     //$request->request->remove('insert_at_id');
                 }
 
-                if (!$allow_access) {
+                if (! $allow_access) {
                     if ($request->ajax()) {
                         return response()->json(['status' => 'error', 'message' => 'No Access']);
                     } else {
@@ -5421,35 +5428,35 @@ class ModuleController extends BaseController
                 }
             }
             $settings = [];
-            if ('crm_supplier_import_documents' == $this->data['db_table'] || 'crm_supplier_documents' == $this->data['db_table'] || 'crm_documents' == $this->data['db_table']) {
+            if ($this->data['db_table'] == 'crm_supplier_import_documents' || $this->data['db_table'] == 'crm_supplier_documents' || $this->data['db_table'] == 'crm_documents') {
                 $settings = ['validate_document' => true];
             }
 
-            if ($this->data['edit_approval'] && session('role_level') == 'Admin' && !is_superadmin()) {
+            if ($this->data['edit_approval'] && session('role_level') == 'Admin' && ! is_superadmin()) {
                 $display_field = \DB::connection('default')->table('erp_module_fields')->where('module_id', $this->data['module_id'])->where('display_field', 1)->pluck('field')->first();
                 $reference = '';
                 if ($this->data['module_id'] == 1837) {
                     $cashbook_name = \DB::table('acc_cashbook')->where('id', $request->cashbook_id)->pluck('name')->first();
-                    if (!empty($id)) {
+                    if (! empty($id)) {
                         $title = $cashbook_name.' Edit '.$request->{$display_field};
                     } else {
                         $title = $cashbook_name.' Add '.$request->{$display_field};
                     }
                     $reference = $trx->total;
-                    if (!empty($request->account_id)) {
+                    if (! empty($request->account_id)) {
                         $name = \DB::table('crm_accounts')->where('id', $request->account_id)->pluck('company')->first();
                         $reference .= ' '.$name;
                     }
-                    if (!empty($request->supplier_id)) {
+                    if (! empty($request->supplier_id)) {
                         $name = \DB::table('crm_suppliers')->where('id', $request->supplier_id)->pluck('company')->first();
                         $reference .= ' '.$name;
                     }
-                    if (!empty($request->ledger_account_id)) {
+                    if (! empty($request->ledger_account_id)) {
                         $name = \DB::table('acc_ledger_accounts')->where('id', $request->ledger_account_id)->pluck('name')->first();
                         $reference .= ' '.$name;
                     }
                 } else {
-                    if (!empty($id)) {
+                    if (! empty($id)) {
                         $title = $this->data['name'].' Edit '.$request->{$display_field};
                     } else {
                         $title = $this->data['name'].' Add '.$request->{$display_field};
@@ -5464,7 +5471,7 @@ class ModuleController extends BaseController
                     'requested_by' => get_user_id_default(),
                     'post_data' => json_encode($request->all()),
                 ];
-                (new \DBEvent())->setTable('crm_approvals')->save($data);
+                (new \DBEvent)->setTable('crm_approvals')->save($data);
 
                 return json_alert('Submitted for approval');
             }
@@ -5499,10 +5506,10 @@ class ModuleController extends BaseController
 
             if ($result instanceof \Illuminate\Http\JsonResponse) {
                 return $result;
-            } elseif (!is_array($result) || empty($result['id'])) {
+            } elseif (! is_array($result) || empty($result['id'])) {
                 return response()->json(['status' => 'warning', 'message' => $result]);
             }
-            if (!empty(session('webform_module_id'))) {
+            if (! empty(session('webform_module_id'))) {
                 if (session('troubleshooter_form') || session('webform_module_id') == 580) {
                     return response()->json(['status' => 'success', 'message' => 'Thank you for your submission.', 'row_id' => $result['id']]);
                 } else {
@@ -5545,7 +5552,7 @@ class ModuleController extends BaseController
                     return json_alert('Saved.', 'success', ['reload_grid_config' => 'reload_grid_config'.$refresh_module_id]);
                 } elseif ($this->data['module_id'] == '761') {
                     $response = ['status' => 'success', 'message' => 'Record Saved.', 'reload_conditional_styles' => true, 'module_id' => $refresh_module_id];
-                } elseif ($this->data['module_id'] == '526' && !empty($request->module_id)) {
+                } elseif ($this->data['module_id'] == '526' && ! empty($request->module_id)) {
                     $view = \DB::table('erp_grid_views')->where('id', $result['id'])->get()->first();
                     $beforesave_row = session('event_db_record');
 
@@ -5554,7 +5561,7 @@ class ModuleController extends BaseController
                     } else {
                         $response = ['status' => 'success', 'message' => 'Record Saved.', 'callback_function' => 'get_sidebar_data'.$beforesave_row->module_id, 'row_id' => $result['id']];
                     }
-                } elseif ($this->data['module_id'] == '488' && !empty($request->module_report)) {
+                } elseif ($this->data['module_id'] == '488' && ! empty($request->module_report)) {
                     $report_url = get_report_link($result['id']);
                     $response = ['status' => 'success', 'message' => 'Record Saved.', 'new_tab' => $report_url, 'row_id' => $result['id']];
                 } elseif ($this->data['module_id'] == '488') {
@@ -5576,7 +5583,7 @@ class ModuleController extends BaseController
                         'close_dialog' => 1,
                     ];
 
-                    if (!empty($master_module_id)) {
+                    if (! empty($master_module_id)) {
                         $response['master_module_id'] = $master_module_id;
                     }
                 }
@@ -5589,7 +5596,7 @@ class ModuleController extends BaseController
                     $response['grid_refresh'] = 1;
                 }
 
-                if (!empty($request->popup_form_field)) {
+                if (! empty($request->popup_form_field)) {
                     $response['callback_function_data'] = 'update_formio_val'.$request->popup_form_module_id;
                     $response['formio_field'] = $request->popup_form_field;
                 }
@@ -5612,7 +5619,7 @@ class ModuleController extends BaseController
         }
         $record_access = $this->model->singleRecordAccess($request->id);
 
-        if (!$this->data['access']['is_approve'] || !$record_access) {
+        if (! $this->data['access']['is_approve'] || ! $record_access) {
             return response()->json(['status' => 'error', 'message' => 'No Access']);
         }
 
@@ -5624,7 +5631,7 @@ class ModuleController extends BaseController
         //if(is_dev()){
         //   $manager_admin = false;
         //}
-        if (!$manager_admin && in_array($document->doctype, $manager_approve_doctypes)) {
+        if (! $manager_admin && in_array($document->doctype, $manager_approve_doctypes)) {
             \DB::table('crm_documents')->where('id', $request->id)->update(['approval_requested_by' => session('user_id')]);
             process_document_approvals();
 
@@ -5648,23 +5655,23 @@ class ModuleController extends BaseController
             }
         }
 
-        if (($document->doctype == 'Quotation' || $document->doctype == 'Order' || $document->doctype == 'Tax Invoice') && $document->custom_prices && !$document->custom_prices_approved) {
+        if (($document->doctype == 'Quotation' || $document->doctype == 'Order' || $document->doctype == 'Tax Invoice') && $document->custom_prices && ! $document->custom_prices_approved) {
             return json_alert('Document cannot be converted, custom prices needs to be approved', 'error');
         }
 
-        $allow_approve = ((!is_superadmin() && !in_array($document->doctype, $manager_approve_doctypes)) || is_superadmin() || is_manager());
+        $allow_approve = ((! is_superadmin() && ! in_array($document->doctype, $manager_approve_doctypes)) || is_superadmin() || is_manager());
 
-        if (!$allow_approve) {
+        if (! $allow_approve) {
             return json_alert('No approval access', 'error');
         }
 
-        $lines_table = ('crm_supplier_documents' == $this->data['db_table']) ? 'crm_supplier_document_lines' : 'crm_document_lines';
+        $lines_table = ($this->data['db_table'] == 'crm_supplier_documents') ? 'crm_supplier_document_lines' : 'crm_document_lines';
         $document_lines = \DB::table($lines_table)->where('document_id', $document->id)->get();
         $document_lines = sort_product_rows($document_lines);
 
         $transaction_request = (array) $document;
         unset($transaction_request['contract_period']);
-        if (!str_contains($this->data['db_table'], 'supplier')) {
+        if (! str_contains($this->data['db_table'], 'supplier')) {
             $transaction_request['docdate'] = date('Y-m-d');
         }
 
@@ -5678,7 +5685,7 @@ class ModuleController extends BaseController
                 $transaction_request['contract_period'][$index] = $line->contract_period;
                 $transaction_request['domain_tld'][$index] = $line->domain_tld;
             }
-            if (!empty($line->cdr_destination)) {
+            if (! empty($line->cdr_destination)) {
                 $transaction_request['cdr_destination'][$index] = $line->cdr_destination;
             }
         }
@@ -5689,7 +5696,7 @@ class ModuleController extends BaseController
 
                 return json_alert('Document created.');
             }
-            if (!empty($document->billing_type) || 1 == $document->subscription_created) {
+            if (! empty($document->billing_type) || $document->subscription_created == 1) {
                 return json_alert('Already Provisioned.', 'warning');
             }
             if (date('Y-m-01') == date('Y-m-01', strtotime($document->docdate))) {
@@ -5699,7 +5706,7 @@ class ModuleController extends BaseController
             }
             provision_auto($request->id);
             $transaction_request['doctype'] = 'Tax Invoice';
-            $request_object = new \Illuminate\Http\Request();
+            $request_object = new \Illuminate\Http\Request;
             $request_object->setMethod('POST');
             foreach ($transaction_request as $key => $value) {
                 $request_object->request->add([$key => $value]);
@@ -5711,9 +5718,9 @@ class ModuleController extends BaseController
             return $result;
         }
 
-        if ('Quotation' == $document->doctype) {
+        if ($document->doctype == 'Quotation') {
             $transaction_request['doctype'] = 'Order';
-            $request_object = new \Illuminate\Http\Request();
+            $request_object = new \Illuminate\Http\Request;
             $request_object->setMethod('POST');
             foreach ($transaction_request as $key => $value) {
                 $request_object->request->add([$key => $value]);
@@ -5724,9 +5731,9 @@ class ModuleController extends BaseController
             return $this->postSave($request_object);
         }
 
-        if ('Credit Note Draft' == $document->doctype) {
+        if ($document->doctype == 'Credit Note Draft') {
             $transaction_request['doctype'] = 'Credit Note';
-            $request_object = new \Illuminate\Http\Request();
+            $request_object = new \Illuminate\Http\Request;
             $request_object->setMethod('POST');
             foreach ($transaction_request as $key => $value) {
                 $request_object->request->add([$key => $value]);
@@ -5737,9 +5744,9 @@ class ModuleController extends BaseController
             return $this->postSave($request_object);
         }
 
-        if ('Supplier Order' == $document->doctype) {
+        if ($document->doctype == 'Supplier Order') {
             $transaction_request['doctype'] = 'Supplier Invoice';
-            $request_object = new \Illuminate\Http\Request();
+            $request_object = new \Illuminate\Http\Request;
             $request_object->setMethod('POST');
 
             foreach ($transaction_request as $key => $value) {
@@ -5756,7 +5763,7 @@ class ModuleController extends BaseController
     {
         $record_access = $this->model->singleRecordAccess($request->id);
 
-        if (!$this->data['access']['is_add'] || !$record_access) {
+        if (! $this->data['access']['is_add'] || ! $record_access) {
             return response()->json(['status' => 'error', 'message' => 'No Access']);
         }
 
@@ -5771,7 +5778,7 @@ class ModuleController extends BaseController
         $newData = ['module_id' => $this->data['module_id']];
         $master_module_id = \DB::connection('default')->table('erp_cruds')->where('detail_module_id', $this->data['module_id'])->pluck('id')->first();
 
-        if (!empty($master_module_id)) {
+        if (! empty($master_module_id)) {
             $newData['master_module_id'] = $master_module_id;
         }
         if ($this->data['module_id'] == '488' || $this->data['module_id'] == '526' || $this->data['module_id'] == '799') {
@@ -5791,7 +5798,7 @@ class ModuleController extends BaseController
     {
         session(['menu_route' => $this->data['menu_route']]);
         $record_access = $this->model->singleRecordAccess($id);
-        if (!$this->data['access']['is_delete'] || !$record_access) {
+        if (! $this->data['access']['is_delete'] || ! $record_access) {
             return response()->json(['status' => 'error', 'message' => 'No Access2']);
         }
 
@@ -5802,7 +5809,7 @@ class ModuleController extends BaseController
                 return json_alert('Domain name is linked to hosting, please cancel hosting subscription.', 'error');
             }
 
-            if (!empty($sub->to_cancel)) {
+            if (! empty($sub->to_cancel)) {
                 return json_alert('Subscription already cancelled.', 'error');
             }
             if ($sub->status == 'Deleted') {
@@ -5834,7 +5841,7 @@ class ModuleController extends BaseController
         $id = $request->id;
         session(['menu_route' => $this->data['menu_route']]);
         $record_access = $this->model->singleRecordAccess($request->id);
-        if (!$this->data['access']['is_delete'] || !$record_access) {
+        if (! $this->data['access']['is_delete'] || ! $record_access) {
             return response()->json(['status' => 'error', 'message' => 'No Access']);
         }
 
@@ -5859,16 +5866,16 @@ class ModuleController extends BaseController
             module_log(334, $request->id, 'cancelled', 'Cancel reason: '.$request->delete_reason);
         }
 
-        if (is_superadmin() && !empty($request->manager_delete)) {
-            $request_object = new \Illuminate\Http\Request();
+        if (is_superadmin() && ! empty($request->manager_delete)) {
+            $request_object = new \Illuminate\Http\Request;
             $request_object->setMethod('POST');
             $request_object->request->add(['id' => $id]);
             $request_object->request->add(['manager_override' => 1]);
             $request_object->request->add(['from_cancel' => 1]);
 
             return $this->postDelete($request_object);
-        } elseif (is_superadmin() && !empty($request->manager_override)) {
-            $request_object = new \Illuminate\Http\Request();
+        } elseif (is_superadmin() && ! empty($request->manager_override)) {
+            $request_object = new \Illuminate\Http\Request;
             $request_object->setMethod('POST');
             $request_object->request->add(['id' => $id]);
             $request_object->request->add(['manager_override' => 1]);
@@ -5877,7 +5884,7 @@ class ModuleController extends BaseController
         }
 
         try {
-            $request_object = new \Illuminate\Http\Request();
+            $request_object = new \Illuminate\Http\Request;
             $request_object->setMethod('POST');
             $request_object->request->add(['id' => $id]);
 
@@ -5904,7 +5911,7 @@ class ModuleController extends BaseController
 
             $record_access = $this->model->singleRecordAccess($request->id);
 
-            if (!$this->data['access']['is_delete'] || !$record_access) {
+            if (! $this->data['access']['is_delete'] || ! $record_access) {
                 return response()->json(['status' => 'error', 'message' => 'No Access']);
             }
             $id = $request->id;
@@ -5928,7 +5935,7 @@ class ModuleController extends BaseController
                 $cancellation_period = get_admin_setting('cancellation_schedule');
 
                 if ($row->status == 'Pending' || $cancellation_period == 'Immediately') {
-                    $erp_subscriptions = new \ErpSubs();
+                    $erp_subscriptions = new \ErpSubs;
                     $result = $erp_subscriptions->deleteSubscription($id);
                     if ($result !== true) {
                         return json_alert($result, 'error');
@@ -5936,7 +5943,7 @@ class ModuleController extends BaseController
 
                     return json_alert('Subscription deleted.');
                 } else {
-                    $erp_subscriptions = new \ErpSubs();
+                    $erp_subscriptions = new \ErpSubs;
                     $result = $erp_subscriptions->cancel($id);
                     if ($result !== true) {
                         return json_alert($result, 'error');
@@ -5956,7 +5963,7 @@ class ModuleController extends BaseController
 
                     $account = dbgetaccount($request->id);
                     if ($account->partner_id == 1) {
-                        (new \DBEvent())->setAccountAging($request->id);
+                        (new \DBEvent)->setAccountAging($request->id);
                     }
 
                     // if customer has no subscriptions and balance delete
@@ -5998,7 +6005,7 @@ class ModuleController extends BaseController
                         if (is_superadmin() || $account->cancel_approved) {
                             \DB::table('crm_accounts')->where('id', $account->id)->update(['cancel_approved' => 1]);
                             if ($account->type == 'lead') {
-                                $request_object = new \Illuminate\Http\Request();
+                                $request_object = new \Illuminate\Http\Request;
                                 $request_object->setMethod('POST');
                                 $request_object->request->add(['id' => $id]);
 
@@ -6020,7 +6027,7 @@ class ModuleController extends BaseController
                             }
                         } else {
                             $exists = \DB::table('crm_approvals')->where('title', 'like', 'Account Cancel%')->where('module_id', 343)->where('row_id', $account->id)->count();
-                            if (!$exists) {
+                            if (! $exists) {
                                 $name = $account->company;
                                 $data = [
                                     'module_id' => 343,
@@ -6029,7 +6036,7 @@ class ModuleController extends BaseController
                                     'processed' => 0,
                                     'requested_by' => get_user_id_default(),
                                 ];
-                                (new \DBEvent())->setTable('crm_approvals')->save($data);
+                                (new \DBEvent)->setTable('crm_approvals')->save($data);
 
                                 module_log(343, $id, 'cancel request', 'Account cancel request');
                             }
@@ -6038,7 +6045,7 @@ class ModuleController extends BaseController
                         }
                     } else {
                         if ($account->type == 'lead') {
-                            $request_object = new \Illuminate\Http\Request();
+                            $request_object = new \Illuminate\Http\Request;
                             $request_object->setMethod('POST');
                             $request_object->request->add(['id' => $id]);
 
@@ -6072,7 +6079,7 @@ class ModuleController extends BaseController
             return response()->json(['status' => 'error', 'message' => 'No Access']);
         }
 
-        if (!$this->data['access']['is_delete'] || !$record_access) {
+        if (! $this->data['access']['is_delete'] || ! $record_access) {
             return response()->json(['status' => 'error', 'message' => 'No Access']);
         }
 
@@ -6092,7 +6099,7 @@ class ModuleController extends BaseController
         $id = $request->id;
         if (is_superadmin() && ($this->data['db_table'] == 'crm_accounts' || $this->data['db_table'] == 'sub_services')) {
             if ($this->data['db_table'] == 'sub_services') {
-                $erp_subscriptions = new \ErpSubs();
+                $erp_subscriptions = new \ErpSubs;
                 $result = $erp_subscriptions->deleteSubscription($id, true);
                 if ($result !== true) {
                     return json_alert($result, 'error');
@@ -6120,14 +6127,14 @@ class ModuleController extends BaseController
                 $this->initModel($request->segment(1));
             }
             session(['menu_route' => $this->data['menu_route']]);
-            if (!is_superadmin() && !is_manager()) {
+            if (! is_superadmin() && ! is_manager()) {
                 $record_access = $this->model->singleRecordAccess($request->id);
-                if (!$this->data['access']['is_delete'] || !$record_access) {
+                if (! $this->data['access']['is_delete'] || ! $record_access) {
                     return response()->json(['status' => 'error', 'message' => 'No Access']);
                 }
             }
             $manager_override = false;
-            if (!empty($request->manager_override) && is_superadmin()) {
+            if (! empty($request->manager_override) && is_superadmin()) {
                 //   $manager_override = true;
             }
             $id = $request->id;
@@ -6147,7 +6154,7 @@ class ModuleController extends BaseController
                     }
                     */
 
-                    if (!$superadmin_delete_approval) {
+                    if (! $superadmin_delete_approval) {
                         $requires_delete_approval = 0;
                     }
                 }
@@ -6168,18 +6175,18 @@ class ModuleController extends BaseController
             if ($requires_delete_approval) {
                 $approved = \DB::connection('default')->table('crm_approvals')->where('module_id', $this->data['module_id'])->where('row_id', $id)->where('approved', 1)->count();
 
-                if (!$approved) {
+                if (! $approved) {
                     $e = \DB::connection('default')->table('crm_approvals')->where('module_id', $this->data['module_id'])->where('row_id', $id)->where('title', 'like', '%Delete%')->count();
-                    if (!$e) {
+                    if (! $e) {
                         $display_field = \DB::connection('default')->table('erp_module_fields')->where('module_id', $this->data['module_id'])->where('display_field', 1)->pluck('field')->first();
                         $display_val = '';
-                        if (!empty($display_field)) {
+                        if (! empty($display_field)) {
                             $display_val = \DB::connection($this->data['connection'])->table($this->data['db_table'])->where('id', $id)->pluck($display_field)->first();
                             if ($display_field != 'company') {
                                 $has_company_field = \DB::connection('default')->table('erp_module_fields')->where('module_id', $this->data['module_id'])->where('field', 'company')->count();
                                 if ($has_company_field) {
                                     $company_val = \DB::connection($this->data['connection'])->table($this->data['db_table'])->where('id', $id)->pluck('company')->first();
-                                    if (!empty($company_val)) {
+                                    if (! empty($company_val)) {
                                         $display_val .= ' '.$company_val;
                                     }
                                 }
@@ -6198,7 +6205,7 @@ class ModuleController extends BaseController
                             'processed' => 0,
                             'requested_by' => get_user_id_default(),
                         ];
-                        (new \DBEvent())->setTable('crm_approvals')->save($data);
+                        (new \DBEvent)->setTable('crm_approvals')->save($data);
 
                         return json_alert('Submitted for approval.', 'warning');
                     } else {
@@ -6208,7 +6215,7 @@ class ModuleController extends BaseController
             }
 
             if ($this->data['db_table'] == 'sub_services') { // subscriptions
-                $erp_subscriptions = new \ErpSubs();
+                $erp_subscriptions = new \ErpSubs;
                 $result = $erp_subscriptions->deleteSubscription($id);
                 if ($result === true) {
                     return json_alert('Subscription deleted.', 'success');
@@ -6254,21 +6261,21 @@ class ModuleController extends BaseController
                     }
                     $newData['refresh_master_grid'] = 1;
                     $newData['reload_grid_config'] = 'reload_grid_config'.$refresh_module_id;
-                } elseif (!empty($request->from_cancel)) {
+                } elseif (! empty($request->from_cancel)) {
                     $newData['close_dialog'] = 1;
                 }
                 if ($this->data['module_id'] == '1875') {
                     $newData['reload_grid_config'] = 'guides_accordion_refresh';
                 }
-                if (!empty($master_module_id)) {
+                if (! empty($master_module_id)) {
                     $newData['master_module_id'] = $master_module_id;
                 }
 
-                if (!empty($master_module_id)) {
+                if (! empty($master_module_id)) {
                     $newData['master_module_id'] = $master_module_id;
                 }
 
-                if (!empty($request->from_cancel)) {
+                if (! empty($request->from_cancel)) {
                     $newData['close_dialog'] = 1;
                 }
                 $newData['grid_refresh'] = 1;
@@ -6289,7 +6296,7 @@ class ModuleController extends BaseController
 
     public function postSort(Request $request)
     {
-        if ('isp_data_ip_ranges' == $this->data['db_table']) {
+        if ($this->data['db_table'] == 'isp_data_ip_ranges') {
             $ips = \DB::table('isp_data_ip_ranges')->get();
             $ip_list = [];
             foreach ($ips as $ip) {
@@ -6302,14 +6309,14 @@ class ModuleController extends BaseController
             foreach ($ip_list as $i => $r) {
                 \DB::table('isp_data_ip_ranges')->where('id', $r['id'])->update(['sort_order' => $i]);
             }
-        } elseif ('erp_form_events' == $this->data['db_table']) {
+        } elseif ($this->data['db_table'] == 'erp_form_events') {
             $row_module_id = \DB::table('erp_form_events')->where('id', $request->start_id)->pluck('module_id')->first();
             $start_sort = \DB::table('erp_form_events')->where('id', $request->start_id)->pluck('sort_order')->first();
             $target_sort = \DB::table('erp_form_events')->where('id', $request->target_id)->pluck('sort_order')->first();
             $first_sort = \DB::table('erp_form_events')->where('module_id', $row_module_id)->orderby('sort_order')->pluck('sort_order')->first();
             $last_sort = \DB::table('erp_form_events')->where('module_id', $row_module_id)->orderby('sort_order')->pluck('sort_order')->last();
 
-            if ($target_sort == $first_sort || 0 == $target_sort) {
+            if ($target_sort == $first_sort || $target_sort == 0) {
                 \DB::table('erp_form_events')->where('module_id', $row_module_id)->increment('sort_order');
                 \DB::table('erp_form_events')->where('id', $request->start_id)->update(['sort_order' => $target_sort]);
             } elseif ($target_sort == $last_sort) {
@@ -6327,27 +6334,27 @@ class ModuleController extends BaseController
 
             $sort_order = 0;
 
-            if (!empty($product_tabs) && count($product_tabs) > 0) {
+            if (! empty($product_tabs) && count($product_tabs) > 0) {
                 foreach ($product_tabs as $tab) {
                     $fields = \DB::table('erp_form_events')->where('module_id', $row_module_id)->where('type', $tab)->orderby('sort_order')->get();
 
                     foreach ($fields as $field) {
                         \DB::table('erp_form_events')->where('id', $field->id)->update(['sort_order' => $sort_order]);
-                        ++$sort_order;
+                        $sort_order++;
                     }
                 }
                 $fields = \DB::table('erp_form_events')->where('module_id', $row_module_id)->where('type', '')->orderby('sort_order')->get();
 
                 foreach ($fields as $field) {
                     \DB::table('erp_form_events')->where('id', $field->id)->update(['sort_order' => $sort_order]);
-                    ++$sort_order;
+                    $sort_order++;
                 }
             } else {
                 $fields = \DB::table('erp_form_events')->where('module_id', $row_module_id)->orderby('sort_order')->get();
 
                 foreach ($fields as $field) {
                     \DB::table('erp_form_events')->where('id', $field->id)->update(['sort_order' => $sort_order]);
-                    ++$sort_order;
+                    $sort_order++;
                 }
             }
 
@@ -6355,14 +6362,14 @@ class ModuleController extends BaseController
             foreach ($rows as $i => $r) {
                 \DB::table('erp_form_events')->where('id', $r->id)->update(['sort_order' => $i]);
             }
-        } elseif ('v_menu_items' == $this->data['db_table']) {
+        } elseif ($this->data['db_table'] == 'v_menu_items') {
             \DB::connection('pbx')->table('v_menu_items')->whereNull('menu_item_order')->update(['menu_item_order' => 0]);
             $start_sort = \DB::connection('pbx')->table('v_menu_items')->where('menu_item_uuid', $request->start_id)->pluck('menu_item_order')->first();
             $target_sort = \DB::connection('pbx')->table('v_menu_items')->where('menu_item_uuid', $request->target_id)->pluck('menu_item_order')->first();
             $first_sort = \DB::connection('pbx')->table('v_menu_items')->orderby('menu_item_order')->pluck('menu_item_order')->first();
             $last_sort = \DB::connection('pbx')->table('v_menu_items')->orderby('menu_item_order')->pluck('menu_item_order')->last();
 
-            if ($target_sort == $first_sort || 0 == $target_sort) {
+            if ($target_sort == $first_sort || $target_sort == 0) {
                 \DB::connection('pbx')->table('v_menu_items')->increment('menu_item_order');
                 \DB::connection('pbx')->table('v_menu_items')->where('menu_item_uuid', $request->start_id)->update(['menu_item_order' => $target_sort]);
             } elseif ($target_sort == $last_sort) {
@@ -6380,15 +6387,15 @@ class ModuleController extends BaseController
             $parent_uuids[] = '0438b504-8613-7887-c420-c837ffb20cb1';
             $menu_item_order = 0;
 
-            if (!empty($parent_uuids) && count($parent_uuids) > 0) {
+            if (! empty($parent_uuids) && count($parent_uuids) > 0) {
                 foreach ($parent_uuids as $parent_uuid) {
                     \DB::connection('pbx')->table('v_menu_items')->where('menu_item_uuid', $parent_uuid)->update(['menu_item_order' => $menu_item_order]);
-                    ++$menu_item_order;
+                    $menu_item_order++;
                     $fields = \DB::connection('pbx')->table('v_menu_items')->where('menu_item_parent_uuid', $parent_uuid)->orderby('menu_item_order')->get();
 
                     foreach ($fields as $field) {
                         \DB::connection('pbx')->table('v_menu_items')->where('menu_item_uuid', $field->menu_item_uuid)->update(['menu_item_order' => $menu_item_order]);
-                        ++$menu_item_order;
+                        $menu_item_order++;
                     }
                 }
             } else {
@@ -6396,18 +6403,18 @@ class ModuleController extends BaseController
 
                 foreach ($fields as $field) {
                     \DB::connection('pbx')->table('v_menu_items')->where('menu_item_uuid', $field->menu_item_uuid)->update(['menu_item_order' => $menu_item_order]);
-                    ++$menu_item_order;
+                    $menu_item_order++;
                 }
             }
-        } elseif ('erp_menu' == $this->data['db_table']) {
-        } elseif ('erp_module_fields' == $this->data['db_table']) {
+        } elseif ($this->data['db_table'] == 'erp_menu') {
+        } elseif ($this->data['db_table'] == 'erp_module_fields') {
             $row_module_id = \DB::table('erp_module_fields')->where('id', $request->start_id)->pluck('module_id')->first();
             $start_sort = \DB::table('erp_module_fields')->where('id', $request->start_id)->pluck('sort_order')->first();
             $target_sort = \DB::table('erp_module_fields')->where('id', $request->target_id)->pluck('sort_order')->first();
             $first_sort = \DB::table('erp_module_fields')->where('module_id', $row_module_id)->orderby('sort_order')->pluck('sort_order')->first();
             $last_sort = \DB::table('erp_module_fields')->where('module_id', $row_module_id)->orderby('sort_order')->pluck('sort_order')->last();
 
-            if ($target_sort == $first_sort || 0 == $target_sort) {
+            if ($target_sort == $first_sort || $target_sort == 0) {
                 \DB::table('erp_module_fields')->where('module_id', $row_module_id)->increment('sort_order');
                 \DB::table('erp_module_fields')->where('id', $request->start_id)->update(['sort_order' => $target_sort]);
             } elseif ($target_sort == $last_sort) {
@@ -6425,50 +6432,50 @@ class ModuleController extends BaseController
 
             $sort_order = 0;
 
-            if (!empty($field_tabs) && count($field_tabs) > 0) {
+            if (! empty($field_tabs) && count($field_tabs) > 0) {
                 foreach ($field_tabs as $tab) {
                     $fields = \DB::table('erp_module_fields')->where('module_id', $row_module_id)->where('visible', '!=', 'None')->where('tab', $tab)->orderby('sort_order')->get();
 
                     foreach ($fields as $field) {
                         \DB::table('erp_module_fields')->where('id', $field->id)->update(['sort_order' => $sort_order]);
-                        ++$sort_order;
+                        $sort_order++;
                     }
                     $hidden_fields = \DB::table('erp_module_fields')->where('module_id', $row_module_id)->where('visible', 'None')->where('tab', $tab)->orderby('sort_order')->get();
 
                     foreach ($hidden_fields as $field) {
                         \DB::table('erp_module_fields')->where('id', $field->id)->update(['sort_order' => $sort_order]);
-                        ++$sort_order;
+                        $sort_order++;
                     }
                 }
                 $fields = \DB::table('erp_module_fields')->where('module_id', $row_module_id)->where('tab', '')->orderby('sort_order')->get();
 
                 foreach ($fields as $field) {
                     \DB::table('erp_module_fields')->where('id', $field->id)->update(['sort_order' => $sort_order]);
-                    ++$sort_order;
+                    $sort_order++;
                 }
             } else {
                 $fields = \DB::table('erp_module_fields')->where('module_id', $row_module_id)->where('visible', '!=', 'None')->orderby('sort_order')->get();
 
                 foreach ($fields as $field) {
                     \DB::table('erp_module_fields')->where('id', $field->id)->update(['sort_order' => $sort_order]);
-                    ++$sort_order;
+                    $sort_order++;
                 }
                 $hidden_fields = \DB::table('erp_module_fields')->where('module_id', $row_module_id)->where('visible', 'None')->orderby('sort_order')->get();
 
                 foreach ($fields as $field) {
                     \DB::table('erp_module_fields')->where('id', $field->id)->update(['sort_order' => $sort_order]);
-                    ++$sort_order;
+                    $sort_order++;
                 }
             }
 
             formio_create_form_from_db($row_module_id, true);
-        } elseif ('crm_aggregate_cards' == $this->data['db_table']) {
+        } elseif ($this->data['db_table'] == 'crm_aggregate_cards') {
             $id = $request->start_id;
             $replace_id = $request->target_id;
             $start_order = \DB::connection($this->data['connection'])->table($this->data['db_table'])->where($this->data['db_key'], $request->start_id)->pluck('sort_order')->first();
             $target_order = \DB::connection($this->data['connection'])->table($this->data['db_table'])->where($this->data['db_key'], $request->target_id)->pluck('sort_order')->first();
 
-            if (null == $target_order) {
+            if ($target_order == null) {
                 $target_order = 0;
             }
 
@@ -6486,19 +6493,19 @@ class ModuleController extends BaseController
             $i = 0;
             foreach ($module_ids as $module_id) {
                 $rows = \DB::table($this->data['db_table'])->where('module_id', $module_id)->orderBy('sort_order')->get();
-                foreach ($rows as  $r) {
+                foreach ($rows as $r) {
                     \DB::table($this->data['db_table'])->where('id', $r->id)->update(['sort_order' => $i]);
-                    ++$i;
+                    $i++;
                 }
             }
-        } elseif ('crm_workflow_tracking' == $this->data['db_table']) {
+        } elseif ($this->data['db_table'] == 'crm_workflow_tracking') {
             $row_module_id = \DB::table($this->data['db_table'])->where('id', $request->start_id)->pluck('module_id')->first();
             $start_sort = \DB::table($this->data['db_table'])->where('id', $request->start_id)->pluck('sort_order')->first();
             $target_sort = \DB::table($this->data['db_table'])->where('id', $request->target_id)->pluck('sort_order')->first();
             $first_sort = \DB::table($this->data['db_table'])->where('module_id', $row_module_id)->orderby('sort_order')->pluck('sort_order')->first();
             $last_sort = \DB::table($this->data['db_table'])->where('module_id', $row_module_id)->orderby('sort_order')->pluck('sort_order')->last();
 
-            if ($target_sort == $first_sort || 0 == $target_sort) {
+            if ($target_sort == $first_sort || $target_sort == 0) {
                 \DB::table($this->data['db_table'])->where('module_id', $row_module_id)->increment('sort_order');
                 \DB::table($this->data['db_table'])->where('id', $request->start_id)->update(['sort_order' => $target_sort]);
             } elseif ($target_sort == $last_sort) {
@@ -6521,19 +6528,19 @@ class ModuleController extends BaseController
                     $rows = \DB::table($this->data['db_table'])->where('role_id', $role_id)->where('module_id', $module_id)->orderBy('sort_order')->get();
 
                     foreach ($rows as $r) {
-                        ++$i;
+                        $i++;
                         \DB::table($this->data['db_table'])->where('id', $r->id)->update(['sort_order' => $i]);
                     }
                 }
             }
-        } elseif ('erp_grid_buttons' == $this->data['db_table']) {
+        } elseif ($this->data['db_table'] == 'erp_grid_buttons') {
             $row_module_id = \DB::table('erp_grid_buttons')->where('id', $request->start_id)->pluck('module_id')->first();
             $start_sort = \DB::table('erp_grid_buttons')->where('id', $request->start_id)->pluck('sort_order')->first();
             $target_sort = \DB::table('erp_grid_buttons')->where('id', $request->target_id)->pluck('sort_order')->first();
             $first_sort = \DB::table('erp_grid_buttons')->where('module_id', $row_module_id)->orderby('sort_order')->pluck('sort_order')->first();
             $last_sort = \DB::table('erp_grid_buttons')->where('module_id', $row_module_id)->orderby('sort_order')->pluck('sort_order')->last();
 
-            if ($target_sort == $first_sort || 0 == $target_sort) {
+            if ($target_sort == $first_sort || $target_sort == 0) {
                 \DB::table('erp_grid_buttons')->where('module_id', $row_module_id)->increment('sort_order');
                 \DB::table('erp_grid_buttons')->where('id', $request->start_id)->update(['sort_order' => $target_sort]);
             } elseif ($target_sort == $last_sort) {
@@ -6551,12 +6558,12 @@ class ModuleController extends BaseController
             foreach ($rows as $i => $r) {
                 \DB::table($this->data['db_table'])->where('id', $r->id)->update(['sort_order' => $i]);
             }
-        } elseif ('v_dialplans' == $this->data['db_table']) {
+        } elseif ($this->data['db_table'] == 'v_dialplans') {
             $id = $request->start_id;
             $replace_id = $request->target_id;
             $start_order = \DB::table($this->data['db_table'])->where($this->data['db_key'], $request->start_id)->pluck('dialplan_order')->first();
             $target_order = \DB::table($this->data['db_table'])->where($this->data['db_key'], $request->target_id)->pluck('dialplan_order')->first();
-            if (null == $target_order) {
+            if ($target_order == null) {
                 $target_order = 0;
             }
             if ($start_order >= $target_order) {
@@ -6571,14 +6578,14 @@ class ModuleController extends BaseController
             $fields = \DB::table($this->data['db_table'])->orderby('dialplan_order')->get();
             foreach ($fields as $field) {
                 \DB::table($this->data['db_table'])->where('id', $field->id)->update(['dialplan_order' => $sort_order]);
-                ++$sort_order;
+                $sort_order++;
             }
-        } elseif ('v_dialplan_details' == $this->data['db_table']) {
+        } elseif ($this->data['db_table'] == 'v_dialplan_details') {
             $id = $request->start_id;
             $replace_id = $request->target_id;
             $start_order = \DB::table($this->data['db_table'])->where($this->data['db_key'], $request->start_id)->pluck('dialplan_detail_order')->first();
             $target_order = \DB::table($this->data['db_table'])->where($this->data['db_key'], $request->target_id)->pluck('dialplan_detail_order')->first();
-            if (null == $target_order) {
+            if ($target_order == null) {
                 $target_order = 0;
             }
             if ($start_order >= $target_order) {
@@ -6593,15 +6600,15 @@ class ModuleController extends BaseController
             $fields = \DB::table($this->data['db_table'])->orderby('dialplan_detail_order')->get();
             foreach ($fields as $field) {
                 \DB::table($this->data['db_table'])->where('id', $field->id)->update(['dialplan_detail_order' => $sort_order]);
-                ++$sort_order;
+                $sort_order++;
             }
-        } elseif ('hd_customer_faqs' == $this->data['db_table']) {
+        } elseif ($this->data['db_table'] == 'hd_customer_faqs') {
             $start_sort = \DB::table('hd_customer_faqs')->where('id', $request->start_id)->pluck('sort_order')->first();
             $target_sort = \DB::table('hd_customer_faqs')->where('id', $request->target_id)->pluck('sort_order')->first();
             $first_sort = \DB::table('hd_customer_faqs')->orderby('sort_order')->pluck('sort_order')->first();
             $last_sort = \DB::table('hd_customer_faqs')->orderby('sort_order')->pluck('sort_order')->last();
 
-            if ($target_sort == $first_sort || 0 == $target_sort) {
+            if ($target_sort == $first_sort || $target_sort == 0) {
                 \DB::table('hd_customer_faqs')->increment('sort_order');
                 \DB::table('hd_customer_faqs')->where('id', $request->start_id)->update(['sort_order' => $target_sort]);
             } elseif ($target_sort == $last_sort) {
@@ -6619,36 +6626,36 @@ class ModuleController extends BaseController
 
             $sort_order = 0;
 
-            if (!empty($types) && count($types) > 0) {
+            if (! empty($types) && count($types) > 0) {
                 foreach ($types as $type) {
                     $fields = \DB::table('hd_customer_faqs')->where('type', $type)->orderby('sort_order')->get();
 
                     foreach ($fields as $field) {
                         \DB::table('hd_customer_faqs')->where('id', $field->id)->update(['sort_order' => $sort_order]);
-                        ++$sort_order;
+                        $sort_order++;
                     }
                 }
                 $fields = \DB::table('hd_customer_faqs')->where('type', '')->orderby('sort_order')->get();
 
                 foreach ($fields as $field) {
                     \DB::table('hd_customer_faqs')->where('id', $field->id)->update(['sort_order' => $sort_order]);
-                    ++$sort_order;
+                    $sort_order++;
                 }
             } else {
                 $fields = \DB::table('hd_customer_faqs')->orderby('sort_order')->get();
 
                 foreach ($fields as $field) {
                     \DB::table('hd_customer_faqs')->where('id', $field->id)->update(['sort_order' => $sort_order]);
-                    ++$sort_order;
+                    $sort_order++;
                 }
             }
-        } elseif ('crm_server_management' == $this->data['db_table']) {
+        } elseif ($this->data['db_table'] == 'crm_server_management') {
             $start_sort = \DB::table('crm_server_management')->where('id', $request->start_id)->pluck('sort_order')->first();
             $target_sort = \DB::table('crm_server_management')->where('id', $request->target_id)->pluck('sort_order')->first();
             $first_sort = \DB::table('crm_server_management')->orderby('sort_order')->pluck('sort_order')->first();
             $last_sort = \DB::table('crm_server_management')->orderby('sort_order')->pluck('sort_order')->last();
 
-            if ($target_sort == $first_sort || 0 == $target_sort) {
+            if ($target_sort == $first_sort || $target_sort == 0) {
                 \DB::table('crm_server_management')->increment('sort_order');
                 \DB::table('crm_server_management')->where('id', $request->start_id)->update(['sort_order' => $target_sort]);
             } elseif ($target_sort == $last_sort) {
@@ -6666,37 +6673,37 @@ class ModuleController extends BaseController
 
             $sort_order = 0;
 
-            if (!empty($departments) && count($departments) > 0) {
+            if (! empty($departments) && count($departments) > 0) {
                 foreach ($departments as $department) {
                     $fields = \DB::table('crm_server_management')->where('department', $department)->orderby('sort_order')->get();
 
                     foreach ($fields as $field) {
                         \DB::table('crm_server_management')->where('id', $field->id)->update(['sort_order' => $sort_order]);
-                        ++$sort_order;
+                        $sort_order++;
                     }
                 }
                 $fields = \DB::table('crm_server_management')->where('department', '')->orderby('sort_order')->get();
 
                 foreach ($fields as $field) {
                     \DB::table('crm_server_management')->where('id', $field->id)->update(['sort_order' => $sort_order]);
-                    ++$sort_order;
+                    $sort_order++;
                 }
             } else {
                 $fields = \DB::table('crm_server_management')->orderby('sort_order')->get();
 
                 foreach ($fields as $field) {
                     \DB::table('crm_server_management')->where('id', $field->id)->update(['sort_order' => $sort_order]);
-                    ++$sort_order;
+                    $sort_order++;
                 }
             }
-        } elseif ('acc_ledger_accounts' == $this->data['db_table']) {
+        } elseif ($this->data['db_table'] == 'acc_ledger_accounts') {
             $id = $request->start_id;
             $replace_id = $request->target_id;
             $start_order = \DB::connection($this->data['connection'])->table($this->data['db_table'])->where($this->data['db_key'], $request->start_id)->pluck('sort_order')->first();
             $target_order = \DB::connection($this->data['connection'])->table($this->data['db_table'])->where($this->data['db_key'], $request->target_id)->pluck('sort_order')->first();
             $categories = \DB::connection($this->data['connection'])->table('acc_ledger_account_categories')->orderBy('sort_order')->get();
 
-            if (null == $target_order) {
+            if ($target_order == null) {
                 $target_order = 0;
             }
 
@@ -6719,7 +6726,7 @@ class ModuleController extends BaseController
                 $rows = \DB::connection($this->data['connection'])->table($this->data['db_table'])->where('ledger_account_category_id', $category->id)->orderby('sort_order')->get();
                 foreach ($rows as $row) {
                     \DB::connection($this->data['connection'])->table($this->data['db_table'])->where('id', $row->id)->update(['sort_order' => $i]);
-                    ++$i;
+                    $i++;
                 }
             }
         } else {
@@ -6728,7 +6735,7 @@ class ModuleController extends BaseController
             $start_order = \DB::connection($this->data['connection'])->table($this->data['db_table'])->where($this->data['db_key'], $request->start_id)->pluck('sort_order')->first();
             $target_order = \DB::connection($this->data['connection'])->table($this->data['db_table'])->where($this->data['db_key'], $request->target_id)->pluck('sort_order')->first();
 
-            if (null == $target_order) {
+            if ($target_order == null) {
                 $target_order = 0;
             }
 
@@ -6742,7 +6749,7 @@ class ModuleController extends BaseController
 
             \DB::connection($this->data['connection'])->table($this->data['db_table'])->where($this->data['db_key'], $id)->update(['sort_order' => $target_order]);
 
-            if ('crm_products' == $this->data['db_table'] || 'crm_product_categories' == $this->data['db_table']) {
+            if ($this->data['db_table'] == 'crm_products' || $this->data['db_table'] == 'crm_product_categories') {
                 update_products_and_categories_sort();
             }
 
@@ -6753,7 +6760,7 @@ class ModuleController extends BaseController
                 $rows = \DB::table($this->data['db_table'])->where('is_deleted', 0)->orderBy('sort_order')->get();
                 foreach ($rows as $r) {
                     \DB::table($this->data['db_table'])->where('id', $r->id)->update(['sort_order' => $i]);
-                    ++$i;
+                    $i++;
                 }
                 /*
                 $rows = \DB::table($this->data['db_table'])->where('is_deleted',1)->orderBy('sort_order')->get();
@@ -6831,7 +6838,7 @@ class ModuleController extends BaseController
         try {
             if ($button->require_grid_id && $grid_id) {
                 $request->request->add(['id' => $grid_id]);
-            } elseif ($button->require_grid_id && !$grid_id) {
+            } elseif ($button->require_grid_id && ! $grid_id) {
                 return response()->json(['status' => 'error', 'message' => 'Select a Record']);
             }
             $request->request->add(['db_table' => $this->data['db_table']]);
@@ -6844,7 +6851,7 @@ class ModuleController extends BaseController
             session(['mod_id' => $button->render_module_id]);
             session(['mod_conn' => $button_conn]);
 
-            if (1 == $button->in_iframe && 1 == $request->segment(5)) {
+            if ($button->in_iframe == 1 && $request->segment(5) == 1) {
                 $data['menu_name'] = $button->menu_name;
 
                 $data['iframe_url'] = '/'.$request->segment(1).'/'.$request->segment(2).'/'.$request->segment(3).'/'.$request->segment(4);
@@ -6856,12 +6863,12 @@ class ModuleController extends BaseController
                 return view('__app.components.iframe', $data);
             }
 
-            if (!empty($button->module_id) || (!empty($button->url) && $button->url != '#')) {
+            if (! empty($button->module_id) || (! empty($button->url) && $button->url != '#')) {
                 return button_menu_redirect($button, $request);
             } else {
                 $function = $button->ajax_function_name;
 
-                if (!function_exists($function)) {
+                if (! function_exists($function)) {
                     debug_email('Button function missing: '.$button->menu_name, 'Button function missing: '.$button->menu_name.PHP_EOL.'Button id: '.$button_id);
                     if ($request->ajax()) {
                         return response()->json(['status' => 'error', 'message' => 'An error occurred']);
@@ -6876,13 +6883,13 @@ class ModuleController extends BaseController
                     $newData = ['row_id' => $grid_id, 'module_id' => $this->data['module_id']];
                     $master_module_id = \DB::connection('default')->table('erp_cruds')->where('detail_module_id', $this->data['module_id'])->pluck('id')->first();
 
-                    if (!empty($master_module_id)) {
+                    if (! empty($master_module_id)) {
                         $newData['master_module_id'] = $master_module_id;
                     }
                     $data = $response->getData(true);
 
                     $data = array_merge($data, $newData);
-                    if (!empty($data['row_id']) && !empty($grid_id)) {
+                    if (! empty($data['row_id']) && ! empty($grid_id)) {
                         $data['row_id'] = $grid_id;
                     }
                     $response->setData($data);
@@ -6896,11 +6903,11 @@ class ModuleController extends BaseController
             exception_email($ex, 'Button function '.$button->menu_name);
 
             $insert_data = [
-            'created_date' => date('Y-m-d H:i:s'),
-            'type' => 'button',
-            'action' => 'button id: '.$button->id.' name:'.$button->menu_name.' function:'.$button->ajax_function_name,
-            'result' => str_replace(PHP_EOL, ' ', $error),
-            'success' => 0,
+                'created_date' => date('Y-m-d H:i:s'),
+                'type' => 'button',
+                'action' => 'button id: '.$button->id.' name:'.$button->menu_name.' function:'.$button->ajax_function_name,
+                'result' => str_replace(PHP_EOL, ' ', $error),
+                'success' => 0,
             ];
 
             \DB::connection('default')->table('erp_system_log')->insert($insert_data);
@@ -6918,7 +6925,7 @@ class ModuleController extends BaseController
             // confirm password
             $credentials = ['username' => \Auth::user()->username, 'password' => $request->password];
 
-            if (!\Auth::validate($credentials)) {
+            if (! \Auth::validate($credentials)) {
                 return json_alert('Password does not match', 'warning');
             }
 
@@ -6927,12 +6934,12 @@ class ModuleController extends BaseController
             if ($this->data['db_table'] == 'sub_services') { // subscriptions
                 $id = $request->subscription_id;
                 $record_access = $this->model->singleRecordAccess($id);
-                if (!$this->data['access']['is_delete'] || !$record_access) {
+                if (! $this->data['access']['is_delete'] || ! $record_access) {
                     return response()->json(['status' => 'error', 'message' => 'No Access']);
                 }
 
                 if ($request->action == 'delete') {
-                    $erp_subscriptions = new \ErpSubs();
+                    $erp_subscriptions = new \ErpSubs;
                     $result = $erp_subscriptions->deleteSubscription($id);
                     if ($result === true) {
                         return json_alert('Subscription deleted');
@@ -6942,7 +6949,7 @@ class ModuleController extends BaseController
                 }
 
                 if ($request->action == 'cancel') {
-                    $erp_subscriptions = new \ErpSubs();
+                    $erp_subscriptions = new \ErpSubs;
                     $result = $erp_subscriptions->cancel($id);
                     if ($result !== true) {
                         return $result;
@@ -6953,7 +6960,7 @@ class ModuleController extends BaseController
             } elseif ($this->data['db_table'] == 'crm_accounts') { // accounts
                 $id = $request->account_id;
                 $record_access = $this->model->singleRecordAccess($id);
-                if (!$this->data['access']['is_delete'] || !$record_access) {
+                if (! $this->data['access']['is_delete'] || ! $record_access) {
                     return response()->json(['status' => 'error', 'message' => 'No Access']);
                 }
 
@@ -6978,7 +6985,7 @@ class ModuleController extends BaseController
                             } else {
                                 $account_has_fibre = \DB::connection('default')->table('sub_services')->where('provision_type', 'fibre')->where('status', '!=', 'Deleted')->where('account_id', $id)->count();
                                 $cancel_date = date('Y-m-t', strtotime('+1 month'));
-                                if (date('Y-m-d') < date('Y-m-25') && !$account_has_fibre) {
+                                if (date('Y-m-d') < date('Y-m-25') && ! $account_has_fibre) {
                                     $cancel_date = date('Y-m-t');
                                 }
                                 \DB::table('crm_accounts')->where('id', $id)->update(['account_status' => 'Cancelled', 'cancel_date' => $cancel_date]);

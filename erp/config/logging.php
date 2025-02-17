@@ -34,20 +34,19 @@ return [
     |
     */
 
-
     'channels' => [
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['rollbar','single'],
+            'channels' => ['rollbar', 'single'],
             'ignore_exceptions' => false,
             'path' => storage_path('logs/debug.log'),
         ],
 
         'rollbar' => [
-                    'driver' => 'monolog',
-                    'handler' => \Rollbar\Laravel\MonologHandler::class,
-                    'access_token' => env('ROLLBAR_TOKEN'),
-                    'level' => 'debug',
+            'driver' => 'monolog',
+            'handler' => \Rollbar\Laravel\MonologHandler::class,
+            'access_token' => env('ROLLBAR_TOKEN'),
+            'level' => 'debug',
         ],
         'debug' => [
             'driver' => 'monolog',
@@ -55,7 +54,6 @@ return [
             'access_token' => env('ROLLBAR_TOKEN'),
             'level' => 'debug',
         ],
-
 
         'info' => [
             'driver' => 'monolog',

@@ -17,7 +17,6 @@ class AddForeignKeysToCrmProductsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

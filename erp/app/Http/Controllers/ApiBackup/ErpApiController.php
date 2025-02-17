@@ -11,8 +11,11 @@ use Validator;
 class ErpApiController extends BaseController
 {
     protected $request; // request as an attribute of the controllers
+
     protected $token;
+
     protected $account;
+
     protected $debug_numbers;
 
     public function __construct(Request $request)
@@ -20,17 +23,17 @@ class ErpApiController extends BaseController
         $this->debug_numbers = ['0813334444', '0824119555'];
         $this->request = $request; // Request becomes available for all the controller functions that call $this->request
         $this->middleware(function ($request, $next) {
-            if ('App\\Http\\Controllers\\ErpApiController@documentation' != \Route::getCurrentRoute()->getActionName()) {
+            if (\Route::getCurrentRoute()->getActionName() != 'App\\Http\\Controllers\\ErpApiController@documentation') {
                 $appkeys = ['$2y$10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O', 'opFldG94bgQudpVyciFpbG9gLp3vo5'];
-                if (empty($request->key) || !in_array($request->key, $appkeys)) {
+                if (empty($request->key) || ! in_array($request->key, $appkeys)) {
                     // return api_error('Invalid API Key');
                 }
 
-                if ('App\\Http\\Controllers\\ErpApiController@getLogin' != \Route::getCurrentRoute()->getActionName()
-                && 'App\\Http\\Controllers\\ErpApiController@postSignup' != \Route::getCurrentRoute()->getActionName()
-                && 'App\\Http\\Controllers\\ErpApiController@postSMSToken' != \Route::getCurrentRoute()->getActionName()) {
+                if (\Route::getCurrentRoute()->getActionName() != 'App\\Http\\Controllers\\ErpApiController@getLogin'
+                && \Route::getCurrentRoute()->getActionName() != 'App\\Http\\Controllers\\ErpApiController@postSignup'
+                && \Route::getCurrentRoute()->getActionName() != 'App\\Http\\Controllers\\ErpApiController@postSMSToken') {
                     $validation = $this->validateToken();
-                    if (true !== $validation) {
+                    if ($validation !== true) {
                         return api_error($validation);
                     }
 
@@ -204,7 +207,7 @@ class ErpApiController extends BaseController
         } catch (\Throwable $ex) {
             exception_log($ex);
             $post_arr = (array) $this->request->all();
-            if (!str_contains($ex->getMessage(), 'The string supplied did not seem to be a phone number.')) {
+            if (! str_contains($ex->getMessage(), 'The string supplied did not seem to be a phone number.')) {
                 exception_email($ex, 'API error token phone number '.date('Y-m-d H:i'), $post_arr);
             }
 
@@ -213,7 +216,7 @@ class ErpApiController extends BaseController
 
         try {
             $user = \DB::connection('default')->table('erp_users')->where('erp_app_number', $number)->get()->first();
-            if (!$user) {
+            if (! $user) {
                 return api_error('Phone number not found. Already have an account? Call us to link your number to your account.');
             }
             $account_id = $user->account_id;
@@ -247,8 +250,11 @@ class ErpApiController extends BaseController
     {
         /**
          * @api {post} api/postsignup postSignup
+         *
          * @apiVersion 1.0.0
+         *
          * @apiName postSignup
+         *
          * @apiGroup Auth
          *
          * @apiParam {String} key appkey
@@ -257,7 +263,9 @@ class ErpApiController extends BaseController
          * @apiParam {String} email (required)
          * @apiParam {String} company (optional)
          * @apiParam {String} reseller_code (optional)
+         *
          * @apiSampleRequest http://ct.versaflow.io/erp_api/postsignup
+         *
          * @apiSuccess (HTTP 200) {String} message
          *
          * @apiSuccessExample Success-Response:
@@ -275,6 +283,7 @@ class ErpApiController extends BaseController
          *       "status": "FAILURE",
          *       "message": "Name required."
          *     }
+         *
          * @apiError (HTTP 400) FieldRequired
          *
          * @apiErrorExample Error-Response:
@@ -328,6 +337,7 @@ class ErpApiController extends BaseController
          *       "status": "FAILURE",
          *       "message": "Account could not be created."
          *     }
+         *
          * @apiError (HTTP 500) Exception-Response
          *
          * @apiErrorExample Exception-Response:
@@ -356,7 +366,7 @@ class ErpApiController extends BaseController
          *     }
          */
         $test_numbers = ['0743141193'];
-        if (!empty($this->request->mobile_number)) {
+        if (! empty($this->request->mobile_number)) {
             try {
                 $phone = $this->request->mobile_number;
                 $number = phone($phone, ['ZA', 'US', 'Auto']);
@@ -373,7 +383,7 @@ class ErpApiController extends BaseController
             } catch (\Throwable $ex) {
                 exception_log($ex);
                 $post_arr = (array) $this->request->all();
-                if (!str_contains($ex->getMessage(), 'Number does not match the provided countries')) {
+                if (! str_contains($ex->getMessage(), 'Number does not match the provided countries')) {
                     exception_email($ex, 'API error token phone number '.date('Y-m-d H:i'), $post_arr);
                 }
 
@@ -420,7 +430,7 @@ class ErpApiController extends BaseController
                 'signup_data' => json_encode($post_data),
             ];
             \DB::connection('default')->table('erp_user_api')->insert($insert_data);
-            if (!in_array($post_data->mobile_number, $this->debug_numbers)) {
+            if (! in_array($post_data->mobile_number, $this->debug_numbers)) {
                 $result = queue_sms(1, $post_data->mobile_number, 'Unlimited Mobile Verification Code - '.$verification_code, 1, 1);
             }
 
@@ -522,34 +532,34 @@ class ErpApiController extends BaseController
     public function getVehicledbDropdowns()
     {
         try {
-            $search = (!empty($this->request->search)) ? $this->request->search : '';
-            $make = (!empty($this->request->make)) ? urldecode($this->request->make) : '';
-            $model = (!empty($this->request->model)) ? urldecode($this->request->model) : '';
-            $sub_type = (!empty($this->request->sub_type)) ? urldecode($this->request->sub_type) : '';
-            $year = (!empty($this->request->year)) ? $this->request->year : '';
+            $search = (! empty($this->request->search)) ? $this->request->search : '';
+            $make = (! empty($this->request->make)) ? urldecode($this->request->make) : '';
+            $model = (! empty($this->request->model)) ? urldecode($this->request->model) : '';
+            $sub_type = (! empty($this->request->sub_type)) ? urldecode($this->request->sub_type) : '';
+            $year = (! empty($this->request->year)) ? $this->request->year : '';
 
             $query = \DB::connection('default')->table('crm_vehicle_models');
             $query->select('make', 'model', 'sub_type', \DB::raw('SUBSTRING(intro_date,1,4) as year'));
 
-            if (!empty($search)) {
+            if (! empty($search)) {
                 $query->whereRaw('(LOWER(make) LIKE "%'.strtolower($search).'%" or  LOWER(model) LIKE "%'.strtolower($search).'%")');
                 $query->orderBy('make');
                 $query->orderBy('model');
             }
-            if (!empty($make)) {
+            if (! empty($make)) {
                 $query->whereRaw('(LOWER(make) LIKE "%'.strtolower($make).'%")');
                 $query->orderBy('make');
             }
-            if (!empty($model)) {
+            if (! empty($model)) {
                 $query->whereRaw('(LOWER(model) LIKE "%'.strtolower($model).'%")');
                 $query->orderBy('model');
             }
-            if (!empty($sub_type)) {
+            if (! empty($sub_type)) {
                 $query->whereRaw('(LOWER(sub_type) LIKE "%'.strtolower($sub_type).'%")');
                 $query->orderBy('sub_type');
             }
 
-            if (!empty($year)) {
+            if (! empty($year)) {
                 $query->where('intro_date', 'LIKE', $year.'%');
                 $query->orderBy('year', 'desc');
             }
@@ -577,37 +587,37 @@ class ErpApiController extends BaseController
     public function getVehicledbVehicles()
     {
         try {
-            $search = (!empty($this->request->search)) ? $this->request->search : '';
+            $search = (! empty($this->request->search)) ? $this->request->search : '';
 
-            $make = (!empty($this->request->make)) ? urldecode($this->request->make) : '';
-            $model = (!empty($this->request->model)) ? urldecode($this->request->model) : '';
-            $sub_type = (!empty($this->request->sub_type)) ? urldecode($this->request->sub_type) : '';
-            $year = (!empty($this->request->year)) ? $this->request->year : '';
+            $make = (! empty($this->request->make)) ? urldecode($this->request->make) : '';
+            $model = (! empty($this->request->model)) ? urldecode($this->request->model) : '';
+            $sub_type = (! empty($this->request->sub_type)) ? urldecode($this->request->sub_type) : '';
+            $year = (! empty($this->request->year)) ? $this->request->year : '';
 
-            $page = (!empty($this->request->page)) ? $this->request->page : 0;
-            $limit = (!empty($this->request->limit)) ? $this->request->limit : 500;
+            $page = (! empty($this->request->page)) ? $this->request->page : 0;
+            $limit = (! empty($this->request->limit)) ? $this->request->limit : 500;
             $offset = ($page) ? $page * $limit : 0;
             $query = \DB::connection('default')->table('crm_vehicle_models');
 
-            if (!empty($search)) {
+            if (! empty($search)) {
                 $query->whereRaw('(LOWER(make) LIKE "%'.strtolower($search).'%" or  LOWER(model) LIKE "%'.strtolower($search).'%")');
                 $query->orderBy('make');
                 $query->orderBy('model');
             }
-            if (!empty($make)) {
+            if (! empty($make)) {
                 $query->whereRaw('(LOWER(make) LIKE "%'.strtolower($make).'%")');
                 $query->orderBy('make');
             }
-            if (!empty($model)) {
+            if (! empty($model)) {
                 $query->whereRaw('(LOWER(model) LIKE "%'.strtolower($model).'%")');
                 $query->orderBy('model');
             }
-            if (!empty($sub_type)) {
+            if (! empty($sub_type)) {
                 $query->whereRaw('(LOWER(sub_type) LIKE "%'.strtolower($sub_type).'%")');
                 $query->orderBy('sub_type');
             }
 
-            if (!empty($year)) {
+            if (! empty($year)) {
                 $query->where('intro_date', 'LIKE', $year.'%');
                 $query->orderBy('year', 'desc');
             }
@@ -691,7 +701,7 @@ class ErpApiController extends BaseController
                 return api_error('Reference is required');
             }
             $result = create_vehicledb_invoice($this->account->id, $this->request->amount, $this->request->qty, $this->request->reference);
-            if (!$result) {
+            if (! $result) {
                 return api_error('Invoice could not be created');
             }
 
@@ -770,16 +780,16 @@ class ErpApiController extends BaseController
                 return Redirect::back()->with('status', 'error')->with('message','Maintenance: Login unavailable');
                 }
                 */
-                if ('0' == $row->active) {
+                if ($row->active == '0') {
                     \Auth::logout();
 
                     return Redirect::to('/user/login')->with('status', 'error')->with('message', 'Your Account is suspended. Please contact support.')->withInput();
-                } elseif ('2' == $row->active) {
+                } elseif ($row->active == '2') {
                     // Blocked users
                     \Auth::logout();
 
                     return Redirect::to('/user/login')->with('status', 'error')->with('message', 'Your Account is blocked.')->withInput();
-                } elseif ('1' == $row->active) {
+                } elseif ($row->active == '1') {
                     $account = dbgetaccount($row->account_id);
 
                     if (empty($account)) {
@@ -788,7 +798,7 @@ class ErpApiController extends BaseController
                         return Redirect::to('/user/login')->with('status', 'error')->with('message', 'Account not found.')->withInput();
                     }
 
-                    if ('Deleted' == $account->status) {
+                    if ($account->status == 'Deleted') {
                         \Auth::logout();
 
                         return Redirect::to('/user/login')->with('status', 'error')->with('message', 'Account not found.')->withInput();
@@ -800,14 +810,14 @@ class ErpApiController extends BaseController
                     //   }
 
                     $reseller = dbgetaccount($account->partner_id);
-                    if (empty($reseller) || 'Deleted' == $reseller->status) {
+                    if (empty($reseller) || $reseller->status == 'Deleted') {
                         \Auth::logout();
 
                         return Redirect::to('/user/login')->with('status', 'error')->with('message', 'Invalid Reseller Account.')->withInput();
                     }
 
                     $group_exists = \DB::table('erp_user_roles')->where('id', $row->role_id)->count();
-                    if (!$group_exists) {
+                    if (! $group_exists) {
                         \Auth::logout();
 
                         return Redirect::to('/user/login')->with('status', 'error')->with('message', 'Invalid Access.')->withInput();
@@ -815,9 +825,9 @@ class ErpApiController extends BaseController
 
                     \DB::table('erp_users')->where('id', '=', $row->id)->update(['last_login' => date('Y-m-d H:i:s')]);
 
-                    if ('Deleted' != $account->status) {
+                    if ($account->status != 'Deleted') {
                         /* Set Lang if available */
-                        if (!is_null($request->input('language'))) {
+                        if (! is_null($request->input('language'))) {
                             $session['lang'] = $request->input('language');
                         } else {
                             $session['lang'] = $this->config['cnf_lang'];
@@ -830,7 +840,7 @@ class ErpApiController extends BaseController
                         session(['is_api_session' => true]);
                     }
 
-                    if (!empty(session('role_id'))) {
+                    if (! empty(session('role_id'))) {
                         if (empty($default_page) && session('role_level') == 'Admin') {
                             $default_page = 'dashboard';
                         }
@@ -848,7 +858,7 @@ class ErpApiController extends BaseController
                             }
                         }
 
-                        if (!empty($this->request->redirect_to)) {
+                        if (! empty($this->request->redirect_to)) {
                             return Redirect::to('/'.$this->request->redirect_to);
                         } else {
                             return Redirect::to('/'.$default_page);
@@ -893,7 +903,7 @@ class ErpApiController extends BaseController
             }
             \DB::connection('default')->table('erp_users')->where('id', $user->id)->update(['verification_code' => $verification_code]);
 
-            if (!in_array($post_data->erp_app_number, $this->debug_numbers)) {
+            if (! in_array($post_data->erp_app_number, $this->debug_numbers)) {
                 if ($hashkey == '') {
                     $result = queue_sms(1, $user->erp_app_number, 'ERP Verification Code: '.$verification_code, 1, 1);
                 } else {
@@ -917,12 +927,12 @@ class ErpApiController extends BaseController
             $post_data = json_decode($signup_data->signup_data);
             $token = $signup_data->api_token;
             $company = $post_data->name;
-            if (!empty($post_data->company)) {
+            if (! empty($post_data->company)) {
                 $company = $post_data->company;
             }
 
-            $account = new \stdClass();
-            if (!empty($post_data->reseller_code)) {
+            $account = new \stdClass;
+            if (! empty($post_data->reseller_code)) {
                 $account->partner_id = \DB::table('crm_account_partner_settings')->where('afriphone_signup_code', $post_data->reseller_code)->pluck('account_id')->first();
             }
             if (empty($account->partner_id)) {
@@ -933,18 +943,18 @@ class ErpApiController extends BaseController
             $account->contact = $post_data->name;
             $account->notification_type = 'sms';
 
-            if (!empty($post_data->mobile_number)) {
+            if (! empty($post_data->mobile_number)) {
                 $account->phone = $post_data->mobile_number;
             }
 
-            if (!empty($post_data->email)) {
+            if (! empty($post_data->email)) {
                 $account->notification_type = 'email';
                 $account->email = $post_data->email;
             }
 
             $account_id = create_customer($account, 'customer');
 
-            if (!$account_id) {
+            if (! $account_id) {
                 return api_abort('Account could not be created');
             }
 
@@ -1134,11 +1144,11 @@ class ErpApiController extends BaseController
             return 'Account does not exists, create a new account';
         }
 
-        if (!in_array($account->type, ['reseller_user', 'reseller', 'customer'])) {
+        if (! in_array($account->type, ['reseller_user', 'reseller', 'customer'])) {
             return 'Invalid account type';
         }
 
-        if ('Enabled' != $account->status) {
+        if ($account->status != 'Enabled') {
             return 'Account '.strtolower($account->status);
         }
 

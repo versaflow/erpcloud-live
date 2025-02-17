@@ -26,7 +26,6 @@ class CreateErpCommunicationsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

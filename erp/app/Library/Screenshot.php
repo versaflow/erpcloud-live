@@ -1,12 +1,9 @@
 <?php
 
 use Spatie\Browsershot\Browsershot as Browsershot;
-use Spatie\Image\Image;
-use Spatie\Image\Manipulations;
-use Symfony\Component\Process\Process;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
-use Spatie\Browsershot\Exceptions\CouldNotTakeBrowsershot;
 use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\Process;
 
 class Screenshot extends Browsershot
 {
@@ -74,7 +71,7 @@ class Screenshot extends Browsershot
 
     public function downloadExcel()
     {
-        $temporaryDirectory = (new TemporaryDirectory())->create();
+        $temporaryDirectory = (new TemporaryDirectory)->create();
 
         try {
             $command = $this->createDownloadCommand($temporaryDirectory->path());

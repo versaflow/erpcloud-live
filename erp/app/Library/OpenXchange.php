@@ -25,10 +25,15 @@ class OpenXChange
         Company, Given name, Telephone business 1, Cellular telephone 1, Email 1
     */
     public $server_ip;
+
     public $ssh_user;
+
     public $ssh_pass;
+
     public $ox_user;
+
     public $ox_pass;
+
     public $client;
 
     public function __construct()
@@ -40,7 +45,7 @@ class OpenXChange
         $this->ox_pass = 'Ao@147896';
 
         $ssh = new \phpseclib\Net\SSH2($this->server_ip);
-        if (!$ssh->login($this->ssh_user, $this->ssh_pass)) {
+        if (! $ssh->login($this->ssh_user, $this->ssh_pass)) {
             abort('500', 'SSH connection failed');
         }
         $this->client = $ssh;

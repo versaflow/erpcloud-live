@@ -65,7 +65,7 @@ Route::post('supplier_cdr_import', function () {
         \Schema::connection('pbx_cdr')->dropIfExists($gateway_copy_table);
     }
     $new_table = $gateway_copy_table;
-    if (!empty(request('currentmonth'))) {
+    if (! empty(request('currentmonth'))) {
         $table = 'call_records_outbound';
     } else {
         $table = 'call_records_outbound_lastmonth';
@@ -78,7 +78,7 @@ Route::post('supplier_cdr_import', function () {
     if ($gateway == 'BITCO') {
         \DB::connection('pbx_cdr')->table($gateway_compare_table)->where('gateway', $gateway)->where('call_date', 'LIKE', date('Y-m').'%')->delete();
         \DB::connection('pbx_cdr')->table($gateway_compare_table)->where('gateway', $gateway)->where('call_date', 'LIKE', date('Y-m', strtotime('-1 month')).'%')->delete();
-    } elseif (!empty(request('currentmonth'))) {
+    } elseif (! empty(request('currentmonth'))) {
         \DB::connection('pbx_cdr')->table($gateway_compare_table)->where('gateway', $gateway)->where('call_date', 'LIKE', date('Y-m').'%')->delete();
     } else {
         \DB::connection('pbx_cdr')->table($gateway_compare_table)->where('gateway', $gateway)->where('call_date', 'LIKE', date('Y-m', strtotime('-1 month')).'%')->delete();
@@ -86,7 +86,7 @@ Route::post('supplier_cdr_import', function () {
     //\DB::connection('pbx_cdr')->table('vox_cdr')->truncate();
     //return false;
 
-    $csv = (new Rap2hpoutre\FastExcel\FastExcel())->import($import_file);
+    $csv = (new Rap2hpoutre\FastExcel\FastExcel)->import($import_file);
     foreach ($csv as $line) {
         if ($gateway == 'VOX') {
             $cost = trim(str_replace('R', '', $line['BillCost']));
@@ -95,20 +95,20 @@ Route::post('supplier_cdr_import', function () {
             }
 
             $data = [
-            'call_date' => $line['CallConnected'],
-            'caller_id_number' => trim($line['CallSource']),
-            'callee_id_number' => trim($line['DialledNumber']),
-            'supplier_duration' => $line['Seconds'],
-            'supplier_rate' => 0,
-            'supplier_destination' => $line['Description'],
-            'supplier_cost' => $cost,
-            'record_exists' => 0,
-            'cdr_duration' => 0,
-            'cdr_cost' => 0,
-            'cost_match' => 0,
-            'duration_match' => 0,
-            'cdr_rate' => 0,
-            'gateway' => $gateway,
+                'call_date' => $line['CallConnected'],
+                'caller_id_number' => trim($line['CallSource']),
+                'callee_id_number' => trim($line['DialledNumber']),
+                'supplier_duration' => $line['Seconds'],
+                'supplier_rate' => 0,
+                'supplier_destination' => $line['Description'],
+                'supplier_cost' => $cost,
+                'record_exists' => 0,
+                'cdr_duration' => 0,
+                'cdr_cost' => 0,
+                'cost_match' => 0,
+                'duration_match' => 0,
+                'cdr_rate' => 0,
+                'gateway' => $gateway,
             ];
         }
 
@@ -119,20 +119,20 @@ Route::post('supplier_cdr_import', function () {
             }
 
             $data = [
-            'call_date' => $line['Setup Time'],
-            'callee_id_number' => $line['CLD'],
-            'caller_id_number' => $line['CLI'],
-            'supplier_duration' => $line['Duration, sec'],
-            'supplier_rate' => $line['Minute Rate'],
-            'supplier_destination' => $line['Description'],
-            'supplier_cost' => $cost,
-            'record_exists' => 0,
-            'cdr_duration' => 0,
-            'cdr_cost' => 0,
-            'cost_match' => 0,
-            'duration_match' => 0,
-            'cdr_rate' => 0,
-            'gateway' => $gateway,
+                'call_date' => $line['Setup Time'],
+                'callee_id_number' => $line['CLD'],
+                'caller_id_number' => $line['CLI'],
+                'supplier_duration' => $line['Duration, sec'],
+                'supplier_rate' => $line['Minute Rate'],
+                'supplier_destination' => $line['Description'],
+                'supplier_cost' => $cost,
+                'record_exists' => 0,
+                'cdr_duration' => 0,
+                'cdr_cost' => 0,
+                'cost_match' => 0,
+                'duration_match' => 0,
+                'cdr_rate' => 0,
+                'gateway' => $gateway,
             ];
         }
 
@@ -143,20 +143,20 @@ Route::post('supplier_cdr_import', function () {
             }
 
             $data = [
-            'call_date' => $line['Date'],
-            'callee_id_number' => $line['Destination Number'],
-            'caller_id_number' => str_replace('+', '', $line['Source Number']),
-            'supplier_duration' => $line['Duration'],
-            'supplier_rate' => 0,
-            'supplier_destination' => '',
-            'supplier_cost' => $cost,
-            'record_exists' => 0,
-            'cdr_duration' => 0,
-            'cdr_cost' => 0,
-            'cost_match' => 0,
-            'duration_match' => 0,
-            'cdr_rate' => 0,
-            'gateway' => $gateway,
+                'call_date' => $line['Date'],
+                'callee_id_number' => $line['Destination Number'],
+                'caller_id_number' => str_replace('+', '', $line['Source Number']),
+                'supplier_duration' => $line['Duration'],
+                'supplier_rate' => 0,
+                'supplier_destination' => '',
+                'supplier_cost' => $cost,
+                'record_exists' => 0,
+                'cdr_duration' => 0,
+                'cdr_cost' => 0,
+                'cost_match' => 0,
+                'duration_match' => 0,
+                'cdr_rate' => 0,
+                'gateway' => $gateway,
             ];
         }
 
@@ -176,10 +176,10 @@ Route::post('supplier_cdr_import', function () {
     // rate not set on file
     if ($gateway == 'VOX' || $gateway == 'BITCO') {
         \DB::connection('pbx_cdr')->table($gateway_compare_table)
-        ->where('gateway', $gateway)
-        ->where('supplier_duration', '>', 0)
-        ->where('supplier_cost', '>', 0)
-        ->update(['supplier_rate' => \DB::raw('(supplier_cost/supplier_duration)*60')]);
+            ->where('gateway', $gateway)
+            ->where('supplier_duration', '>', 0)
+            ->where('supplier_cost', '>', 0)
+            ->update(['supplier_rate' => \DB::raw('(supplier_cost/supplier_duration)*60')]);
     }
 
     $sql = 'UPDATE '.$gateway_compare_table.'
@@ -306,7 +306,7 @@ Route::get('supportboard_ticket', function () {
 
 Route::get('pbx_registrations', function () {
     if (is_superadmin()) {
-        $pbx = new FusionPBX();
+        $pbx = new FusionPBX;
         $results = $pbx->portalCmd('portal_registrations');
         $rows = json_decode($results);
         foreach ($rows as $row) {
@@ -358,12 +358,12 @@ Route::get('monthly_billing_approval/{encoded_token?}', function ($encoded_token
             $credit_rental_account_ids = \DB::table('crm_rental_leases')->whereIn('rental_space_id', $credit_rental_space_ids)->where('status', '!=', 'Deleted')->pluck('account_id')->toArray();
 
             $cloudtelecoms_invoice_ids = \DB::table('crm_documents')
-            ->where('reversal_id', 0)
-            ->whereIn('account_id', $credit_rental_account_ids)
-            ->where('docdate', $billing->billing_date)
-            ->where('doctype', 'Tax Invoice')
-            ->where('billing_type', 'Monthly')
-            ->pluck('id')->toArray();
+                ->where('reversal_id', 0)
+                ->whereIn('account_id', $credit_rental_account_ids)
+                ->where('docdate', $billing->billing_date)
+                ->where('doctype', 'Tax Invoice')
+                ->where('billing_type', 'Monthly')
+                ->pluck('id')->toArray();
             foreach ($cloudtelecoms_invoice_ids as $invoice_ids) {
                 create_credit_note_from_invoice($invoice_ids);
             }
@@ -411,7 +411,7 @@ Route::get('renewal_billing_approval/{encoded_token?}', function ($encoded_token
         //    return 'Billing cannot be changed mid month';
     }
 
-    if (!empty($decoded_data['approve']) && $decoded_data['approve'] == 1) {
+    if (! empty($decoded_data['approve']) && $decoded_data['approve'] == 1) {
         \DB::table('crm_documents')->where('docdate', $billing->billing_date)->where('billing_type', 'Renewal')->where('reversal_id', 0)->whereIn('doctype', ['Quotation', 'Order'])->update(['doctype' => 'Tax Invoice']);
 
         if (session('instance')->id == 2) {
@@ -420,12 +420,12 @@ Route::get('renewal_billing_approval/{encoded_token?}', function ($encoded_token
             $credit_rental_account_ids = \DB::table('crm_rental_leases')->whereIn('rental_space_id', $credit_rental_space_ids)->where('status', '!=', 'Deleted')->pluck('account_id')->toArray();
 
             $cloudtelecoms_invoice_ids = \DB::table('crm_documents')
-            ->where('reversal_id', 0)
-            ->whereIn('account_id', $credit_rental_account_ids)
-            ->where('docdate', $billing->billing_date)
-            ->where('doctype', 'Tax Invoice')
-            ->where('billing_type', 'Renewal')
-            ->pluck('id')->toArray();
+                ->where('reversal_id', 0)
+                ->whereIn('account_id', $credit_rental_account_ids)
+                ->where('docdate', $billing->billing_date)
+                ->where('doctype', 'Tax Invoice')
+                ->where('billing_type', 'Renewal')
+                ->pluck('id')->toArray();
             foreach ($cloudtelecoms_invoice_ids as $invoice_ids) {
                 create_credit_note_from_invoice($invoice_ids);
             }
@@ -441,13 +441,10 @@ Route::get('renewal_billing_approval/{encoded_token?}', function ($encoded_token
     }
 });
 
-Route::any('leads_kanban', function () {
-});
+Route::any('leads_kanban', function () {});
 
-Route::any('leads_kanban_data', function () {
-});
-Route::any('leads_kanban_update', function () {
-});
+Route::any('leads_kanban_data', function () {});
+Route::any('leads_kanban_update', function () {});
 
 Route::any('layout_email/{layout_id?}', function ($layout_id) {
     export_layout($layout_id);
@@ -520,7 +517,7 @@ Route::any('layout_tracking_enable/{layout_id?}', function ($layout_id) {
         } else {
             if (is_superadmin()) {
                 $dashboard_sort_order = \DB::connection('default')->table('erp_grid_views')->max('dashboard_sort_order');
-                ++$dashboard_sort_order;
+                $dashboard_sort_order++;
 
                 $layout = \DB::connection('default')->table('erp_grid_views')->where('id', $layout_id)->get()->first();
                 // aa($layout);
@@ -563,9 +560,9 @@ Route::any('layout_convert_to_report/{layout_id?}', function ($layout_id) {
     if (session('role_level') == 'Admin') {
         $data = ['layout_type' => 'Report'];
         $layout = \DB::table('erp_grid_views')->where('id', $layout_id)->get()->first();
-        if (!empty($layout->aggrid_state)) {
+        if (! empty($layout->aggrid_state)) {
             $layout_state = json_decode($layout->aggrid_state);
-            if (!empty($layout_state->colState)) {
+            if (! empty($layout_state->colState)) {
                 foreach ($layout_state->colState as $i => $colstate) {
                     $layout_state->colState[$i]->hide = 'true';
                 }
@@ -604,7 +601,7 @@ Route::any('update_yodlee_accounts', function () {
 
         $accounts = $y->getAccounts();
 
-        if (!empty($accounts) && !empty($accounts->account)) {
+        if (! empty($accounts) && ! empty($accounts->account)) {
             foreach ($accounts->account as $account) {
                 $data = [
                     'id' => $account->id,
@@ -681,9 +678,9 @@ Route::any('pbx_gateway_beforesave/{gateway_uuid?}/{volume_numbers_required?}/{t
                 $num_extensions = \DB::connection('pbx')->table('v_extensions')->where('domain_uuid', $volume_domain->domain_uuid)->count();
                 $numbers_per_domain = $numbers_per_gateway * $num_extensions;
                 $allocated_count = \DB::connection('pbx')->table('p_phone_numbers')
-                ->where('status', 'Enabled')
-                ->where('domain_uuid', $volume_domain->domain_uuid)
-                ->where('gateway_uuid', $gateway->gateway_uuid)->count();
+                    ->where('status', 'Enabled')
+                    ->where('domain_uuid', $volume_domain->domain_uuid)
+                    ->where('gateway_uuid', $gateway->gateway_uuid)->count();
                 if ($allocated_count < $numbers_per_domain) {
                     throw new \ErrorException('Not enough numbers allocated to volume domains.');
                 }
@@ -714,7 +711,7 @@ Route::any('pbx_gateway_restart/{gateway_uuid?}/{token?}', function ($gateway_uu
     $token = Erp::decode($token);
     if ($token == 'cloudpbx'.date('Ymd')) {
         $gateway = \DB::connection('pbx')->table('v_gateways')->where('gateway_uuid', $gateway_uuid)->get()->first();
-        $pbx = new FusionPBX();
+        $pbx = new FusionPBX;
 
         $gateway_profile = $gateway->profile;
 
@@ -730,12 +727,12 @@ Route::any('pbx_gateway_restart/{gateway_uuid?}/{token?}', function ($gateway_uu
 Route::any('pbx_gateway_status/{token?}', function ($token) {
     $token = Erp::decode($token);
     if ($token == 'cloudpbx'.date('Ymd')) {
-        $pbx = new FusionPBX();
+        $pbx = new FusionPBX;
 
         $result = $pbx->portalCmd('portal_sofia_status_gateway');
         // RESTART GATEWAYS
         $gateways_restarted = false;
-        if (!empty($result) && !str_starts_with($result, 'SSH')) {
+        if (! empty($result) && ! str_starts_with($result, 'SSH')) {
             $xml = simplexml_load_string($result, 'SimpleXMLElement', LIBXML_NOCDATA);
 
             $json = json_encode($xml);
@@ -775,12 +772,12 @@ Route::any('flexmonster_export/{report_id}/{format?}', function ($report_id, $fo
         return json_alert('Query Error', 'query_error', ['id' => $report_id, 'html' => '']);
     }
 
-    if (!$invalid_query && (empty($result) || (is_array($result) && count($result) == 0))) {
+    if (! $invalid_query && (empty($result) || (is_array($result) && count($result) == 0))) {
         return json_alert('Report query does not return any results', 'empty_error', ['id' => $report_id, 'html' => '']);
     }
     $storage_name = session('instance')->id.'/'.$report_id.'.'.$format;
     $exists = \Storage::disk('reports')->exists($storage_name);
-    if ($exists && !$report->fds) {
+    if ($exists && ! $report->fds) {
         \Storage::disk('reports')->delete($storage_name);
     }
     flexmonster_export($report_id);
@@ -819,7 +816,7 @@ Route::any('flexmonster_report_html/{report_id?}/{company_id?}', function ($repo
         return json_alert('Query Error', 'query_error', ['id' => $report_id, 'html' => '']);
     }
 
-    if (!$invalid_query && (empty($result) || (is_array($result) && count($result) == 0))) {
+    if (! $invalid_query && (empty($result) || (is_array($result) && count($result) == 0))) {
         return json_alert('Report query does not return any results', 'empty_error', ['id' => $report_id, 'html' => '']);
     }
 
@@ -856,7 +853,7 @@ Route::get('download_product_stocktake_file', function () {
     $products = \DB::table('crm_products')->select('code', 'name', \DB::raw('"" as qty_on_hand'))->where('type', 'Stock')->where('status', 'Enabled')->orderBy('sort_order')->get()->toArray();
     $products = json_decode(json_encode($products), true);
 
-    $export = new App\Exports\CollectionExport();
+    $export = new App\Exports\CollectionExport;
     $export->setData($products);
 
     Excel::store($export, session('instance')->directory.'/'.$file_name, 'downloads');
@@ -896,21 +893,21 @@ Route::get('flowchart_edit2/{id?}', function ($id) {
 Route::post('diagram_save', 'IntegrationsController@diagramSave');
 
 Route::get('gateway_start/{gateway_uuid?}', function ($gateway_uuid) {
-    if (!is_superadmin()) {
+    if (! is_superadmin()) {
         return json_alert('No Access', 'error');
     }
 
-    $pbx = new FusionPBX();
+    $pbx = new FusionPBX;
     $result = $pbx->portalCmd('portal_gateway_start');
 
     return json_alert($result);
 });
 Route::get('gateway_stop/{gateway_uuid?}', function ($gateway_uuid) {
-    if (!is_superadmin()) {
+    if (! is_superadmin()) {
         return json_alert('No Access', 'error');
     }
 
-    $pbx = new FusionPBX();
+    $pbx = new FusionPBX;
     $gateway_profile = \DB::connection('pbx')->table('v_gateways')->where('gateway_uuid', $gateway_uuid)->pluck('profile')->first();
     if ($gateway_profile == 'external') {
         $pbx->portalCmd('portal_gateway_external_stop', $gateway_uuid);
@@ -942,8 +939,7 @@ Route::get('dbninja', function () {
     }
 });
 
-Route::get('nfig', function () {
-});
+Route::get('nfig', function () {});
 
 Route::post('exportcdrbygateway', 'IntegrationsController@exportCdrByGateway');
 
@@ -959,6 +955,7 @@ Route::get('download_wholesale_pricelist', function () {
     $file_name = export_pricelist(1);
     //  ddd($file_name);
     $file_path = attachments_path().$file_name;
+
     //  ddd($file_path);
     return response()->download($file_path, $file_name);
 });
@@ -967,6 +964,7 @@ Route::get('download_pricelist/{id?}/{type?}', function ($id, $type) {
     $file_name = export_pricelist($id);
     // aa($file_name);
     $file_path = attachments_path().$file_name;
+
     // aa($file_path);
     return response()->download($file_path, $file_name);
 });
@@ -986,7 +984,7 @@ Route::get('download_retail_rate_complete', function () {
 });
 
 Route::get('download_retail_rates', function () {
-    if (!empty(session('pbx_domain')) && session('pbx_domain') != '156.0.96.60' && (session('pbx_domain_level') === true || check_access('21'))) {
+    if (! empty(session('pbx_domain')) && session('pbx_domain') != '156.0.96.60' && (session('pbx_domain_level') === true || check_access('21'))) {
         $file_name = export_partner_rates_summary(session('pbx_ratesheet_id'));
         $file_path = attachments_path().$file_name;
     } else {
@@ -1046,7 +1044,7 @@ Route::any('get_email_logo.png/{account_id?}', function ($account_id = false) {
 
     $partner_settings = \DB::connection('default')->table('crm_account_partner_settings')->where('account_id', $partner_id)->get()->first();
 
-    if (!session('instance')) {
+    if (! session('instance')) {
         $hostname = str_replace(['http://', 'https://'], '', request()->root());
         $instance = \DB::connection('system')->table('erp_instances')->where('domain_name', $hostname)->orwhere('alias', $hostname)->get()->first();
         $instance_dir = $instance->db_connection;
@@ -1056,7 +1054,7 @@ Route::any('get_email_logo.png/{account_id?}', function ($account_id = false) {
 
     $settings_path = uploads_settings_path();
 
-    if (!empty($partner_settings->logo) && file_exists($settings_path.$partner_settings->logo)) {
+    if (! empty($partner_settings->logo) && file_exists($settings_path.$partner_settings->logo)) {
         $email_logo = \DB::connection('default')->table('crm_account_partner_settings')->where('account_id', $partner_id)->pluck('logo')->first();
     } else {
         $email_logo = '';
@@ -1081,7 +1079,7 @@ Route::any('get_email_logo/{account_id?}', function ($account_id = 0) {
 
     $settings_path = uploads_settings_path();
 
-    if (!empty($partner_settings->logo) && file_exists($settings_path.$partner_settings->logo)) {
+    if (! empty($partner_settings->logo) && file_exists($settings_path.$partner_settings->logo)) {
         $email_logo = \DB::connection('default')->table('crm_account_partner_settings')->where('account_id', $partner_id)->pluck('logo')->first();
     } else {
         $email_logo = '';
@@ -1176,8 +1174,7 @@ Route::any('c9pbx_dev', function () {
     }
 });
 
-Route::any('c9dev', function () {
-});
+Route::any('c9dev', function () {});
 
 Route::any('lte_simswop', 'IntegrationsController@lteSimswop');
 Route::any('clear_callee_id_number', 'IntegrationsController@clearCalleeIDNumber');
@@ -1198,7 +1195,7 @@ Route::any('pbx_number_import', 'IntegrationsController@pbxNumberImport');
 Route::any('domains_import', 'IntegrationsController@domainsImport');
 
 Route::any('download_invoice/{type?}/{id?}', function ($type, $id) {
-    if (!empty(session('invoice_list')) && session('invoice_list') === true) {
+    if (! empty(session('invoice_list')) && session('invoice_list') === true) {
         if ($type == 'supplier_documents') {
             $invoice_file = \DB::table('crm_supplier_documents')->where('id', $id)->pluck('invoice_file')->first();
 
@@ -1230,7 +1227,7 @@ Route::any('pbx_test_call_form/{number}', function ($number) {
 Route::any('pbx_call/{number}/{account_id?}', function ($number, $account_id = 1) {
     if (session('role_level') == 'Admin') {
         $result = pbx_call($number, $account_id);
-        if (true === $result) {
+        if ($result === true) {
             return json_alert('Call sent to PBX');
         } else {
             return json_alert($result, 'error');
@@ -1271,7 +1268,7 @@ Route::get('check_fail2ban/{account_id?}', function ($account_id = 0) {
 Route::post('check_fail2ban', 'IntegrationsController@checkFail2Ban');
 
 Route::get('flush_fail2ban', function () {
-    $pbx = new FusionPBX();
+    $pbx = new FusionPBX;
     $result = $pbx->flushFail2Ban();
     if (empty($result)) {
         return redirect()->back()->with('status', 'success')->with('message', 'Flush Complete.');
@@ -1329,7 +1326,7 @@ Route::any('integrations/payfast_button/{account_id?}/{amount?}/{redirect?}', fu
     $item_name = urlencode($reseller->company.' Services');
     $redirect_url = 'https://www.payfast.co.za/eng/process?cmd=_paynow&receiver='.$payment_option->payfast_id.'&item_name='.$item_name.'&amount='.currency($amount);
 
-    if (!$redirect) {
+    if (! $redirect) {
         return $redirect_url;
     }
 
@@ -1337,7 +1334,7 @@ Route::any('integrations/payfast_button/{account_id?}/{amount?}/{redirect?}', fu
 });
 
 Route::any('integrations/payfast_get_signature/{account_id?}/{amount?}', function ($account_id, $amount) {
-    $payfast = new Payfast();
+    $payfast = new Payfast;
     $customer = dbgetaccount($account_id);
     $reseller = dbgetaccount($customer->partner_id);
 
@@ -1365,7 +1362,7 @@ Route::any('iframe/{menu_slug?}', function ($menu_slug) {
         return redirect()->back()->with('message', 'Invalid URL')->with('status', 'error');
     }
 
-    if (!str_contains($menu->url, 'http://') && function_exists($menu->url)) {
+    if (! str_contains($menu->url, 'http://') && function_exists($menu->url)) {
         $function = $menu->url;
         $data = [];
         $data['hide_page_header'] = 1;
@@ -1396,7 +1393,7 @@ Route::any('iframe_edit/{menu_slug?}', function ($menu_slug) {
         return redirect()->back()->with('message', 'Invalid URL')->with('status', 'error');
     }
 
-    if (!str_contains($menu->url, 'http://') && function_exists($menu->url)) {
+    if (! str_contains($menu->url, 'http://') && function_exists($menu->url)) {
         $function = $menu->url.'/edit';
         $data = [];
         $data['hide_page_header'] = 1;
@@ -1422,7 +1419,7 @@ Route::any('iframe_edit/{menu_slug?}', function ($menu_slug) {
 });
 
 Route::get('pbx/{title?}', function ($title = false) {
-    if (empty(session('pbx_domain')) || !$title) {
+    if (empty(session('pbx_domain')) || ! $title) {
         return redirect()->to('/');
     }
     $title = str_replace('_', ' ', $title);
@@ -1470,8 +1467,8 @@ Route::get('pbx_menuedit/{id?}', function ($id = false) {
 Route::get('pbx_menu_route_old/{menu_item_uuid?}/{module_id?}/{id?}', function ($menu_item_uuid, $module_id = 0, $row_id = 0) {
     try {
         $menu_item = \DB::connection('pbx')->table('v_menu_items')
-        ->where('menu_item_uuid', $menu_item_uuid)
-        ->get()->first();
+            ->where('menu_item_uuid', $menu_item_uuid)
+            ->get()->first();
         $menu_item_link = $menu_item->menu_item_link;
 
         update_pbx_group_permissions();
@@ -1500,9 +1497,9 @@ Route::get('pbx_menu_route_old/{menu_item_uuid?}/{module_id?}/{id?}', function (
                 return redirect()->back()->with('Invalid Account Id');
             }
             $pbx_row = \DB::connection('pbx')->table('v_users as vu')
-            ->join('v_domains as vd', 'vd.domain_uuid', '=', 'vu.domain_uuid')
-            ->where('vd.account_id', $account_id)
-            ->get()->first();
+                ->join('v_domains as vd', 'vd.domain_uuid', '=', 'vu.domain_uuid')
+                ->where('vd.account_id', $account_id)
+                ->get()->first();
         } else {
             if (session('role_level') == 'Admin') {
                 $pbx_row = (object) [];
@@ -1532,14 +1529,14 @@ Route::get('pbx_menu_route_old/{menu_item_uuid?}/{module_id?}/{id?}', function (
 Route::get('pbx_menu_route/{menu_item_uuid?}/{module_id?}/{id?}', function ($menu_item_uuid, $module_id = 0, $row_id = 0) {
     try {
         $menu_item = \DB::connection('pbx')->table('v_menu_items')
-        ->where('menu_item_uuid', $menu_item_uuid)
-        ->get()->first();
+            ->where('menu_item_uuid', $menu_item_uuid)
+            ->get()->first();
         $menu_item_link = $menu_item->menu_item_link;
 
         update_pbx_group_permissions();
 
         $item_uuids = ['65c7b855-10e5-4cd3-a391-b3b6ab8eada9', 'bc96d773-ee57-0cdd-c3ac-2d91aba61b55'];
-        if (in_array($menu_item->menu_item_uuid, $item_uuids) || in_array($menu_item->menu_item_parent_uuid, $item_uuids) && !empty($module_id)) {
+        if (in_array($menu_item->menu_item_uuid, $item_uuids) || in_array($menu_item->menu_item_parent_uuid, $item_uuids) && ! empty($module_id)) {
             if (empty($module_id) || empty($row_id)) {
                 return redirect()->back()->with('Invalid Id');
             }
@@ -1562,9 +1559,9 @@ Route::get('pbx_menu_route/{menu_item_uuid?}/{module_id?}/{id?}', function ($men
                 return redirect()->back()->with('Invalid Account Id');
             }
             $pbx_row = \DB::connection('pbx')->table('v_users as vu')
-            ->join('v_domains as vd', 'vd.domain_uuid', '=', 'vu.domain_uuid')
-            ->where('vd.account_id', $account_id)
-            ->get()->first();
+                ->join('v_domains as vd', 'vd.domain_uuid', '=', 'vu.domain_uuid')
+                ->where('vd.account_id', $account_id)
+                ->get()->first();
         } else {
             if (session('role_level') == 'Admin') {
                 $pbx_row = (object) [];
@@ -1606,8 +1603,8 @@ Route::get('pbx_menu_route/{menu_item_uuid?}/{module_id?}/{id?}', function ($men
 
 Route::get('airtime_history_account/{account_id?}', function ($account_id) {
     $domain_uuid = \DB::connection('pbx')->table('v_domains')
-    ->where('account_id', $account_id)
-    ->pluck('domain_uuid')->first();
+        ->where('account_id', $account_id)
+        ->pluck('domain_uuid')->first();
 
     $url = get_menu_url_from_module_id(589).'?domain_uuid='.$domain_uuid;
 
@@ -1617,9 +1614,9 @@ Route::get('airtime_history_account/{account_id?}', function ($account_id) {
 Route::get('pbx_login/{account_id?}', function ($account_id) {
     update_pbx_group_permissions();
     $pbx_row = \DB::connection('pbx')->table('v_users as vu')
-    ->join('v_domains as vd', 'vd.domain_uuid', '=', 'vu.domain_uuid')
-    ->where('vd.account_id', $account_id)
-    ->get()->first();
+        ->join('v_domains as vd', 'vd.domain_uuid', '=', 'vu.domain_uuid')
+        ->where('vd.account_id', $account_id)
+        ->get()->first();
 
     if ($pbx_row->api_key && $pbx_row->domain_name) {
         $url = 'http://'.$pbx_row->domain_name.'/app/extensions/extensions.php?key='.$pbx_row->api_key;
@@ -1629,10 +1626,10 @@ Route::get('pbx_login/{account_id?}', function ($account_id) {
 });
 
 Route::get('pbx_panel_login/{account_id?}', function ($account_id = null) {
-    $pbx = new FusionPBX();
+    $pbx = new FusionPBX;
     $pbx->pbx_login($account_id);
 
-    if (!empty(request()->query('return_to'))) {
+    if (! empty(request()->query('return_to'))) {
         return redirect()->to(request()->query('return_to'));
     }
 
@@ -1642,6 +1639,7 @@ Route::get('pbx_panel_login/{account_id?}', function ($account_id = null) {
 Route::get('pbx_admin_login', function () {
     if (is_superadmin()) {
         $url = 'http://156.0.96.60/app/extensions/extensions.php?key=e2e4e9a0-c678-45a2-97a2-e24f9f2481fa';
+
         //$url = 'https://pbx.cloudtools.co.za/core/user_settings/user_dashboard.php?key=c41db17b-c29d-42a9-8776-6f1397359d04';
         return redirect()->to($url);
     }
@@ -1652,8 +1650,8 @@ Route::get('pbx_admin_iframe', function () {
         //$url = 'http://156.0.96.60/core/user_settings/user_dashboard.php?key=e2e4e9a0-c678-45a2-97a2-e24f9f2481fa';
         $url = 'https://pbx.cloudtools.co.za/app/extensions/extensions.php?key=c41db17b-c29d-42a9-8776-6f1397359d04';
         $data = [
-        'menu_name' => 'PBX Admin',
-        'iframe_url' => $url,
+            'menu_name' => 'PBX Admin',
+            'iframe_url' => $url,
         ];
 
         return view('__app.components.iframe', $data);
@@ -1687,7 +1685,7 @@ Route::get('pbx_debug', function () {
 });
 
 Route::get('sms_panel_login/{account_id?}', function ($account_id = null) {
-    $pbx = new FusionPBX();
+    $pbx = new FusionPBX;
 
     return $pbx->sms_login($account_id);
 });
@@ -1711,62 +1709,62 @@ Route::get('host_2', function () {
 Route::get('manage_service/{id?}', function ($id) {
     $sub = \DB::table('sub_services')->where('id', $id)->get()->first();
 
-    if ('hosting' == $sub->provision_type || 'domain_name' == $sub->provision_type || 'sitebuilder' == $sub->provision_type) {
+    if ($sub->provision_type == 'hosting' || $sub->provision_type == 'domain_name' || $sub->provision_type == 'sitebuilder') {
         $domain = \DB::table('isp_host_websites')->where('domain', $sub->detail)->get()->first();
 
         return redirect()->to('hosting_login/'.$sub->account_id.'/'.$domain->id);
     }
 
-    if ('lte_sim_card' == $sub->provision_type) {
+    if ($sub->provision_type == 'lte_sim_card') {
         $menu_name = get_menu_url_from_table('isp_data_lte_vodacom_accounts');
 
         return redirect()->to($menu_name.'?subscription_id='.$request->id);
     }
-    if ('mtn_lte_sim_card' == $sub->provision_type) {
+    if ($sub->provision_type == 'mtn_lte_sim_card') {
         $menu_name = get_menu_url_from_table('isp_data_lte_axxess_accounts');
 
         return redirect()->to($menu_name.'?subscription_id='.$request->id);
     }
-    if ('telkom_lte_sim_card' == $sub->provision_type) {
+    if ($sub->provision_type == 'telkom_lte_sim_card') {
         $menu_name = get_menu_url_from_table('isp_data_lte_axxess_accounts');
 
         return redirect()->to($menu_name.'?subscription_id='.$request->id);
     }
-    if ('iptv' == $sub->provision_type || 'iptv_global' == $sub->provision_type) {
+    if ($sub->provision_type == 'iptv' || $sub->provision_type == 'iptv_global') {
         $menu_name = get_menu_url_from_table('isp_data_iptv');
 
         return redirect()->to($menu_name.'?subscription_id='.$request->id);
     }
-    if ('fibre' == $sub->provision_type) {
+    if ($sub->provision_type == 'fibre') {
         $menu_name = get_menu_url_from_table('isp_data_fibre');
 
         return redirect()->to($menu_name.'?subscription_id='.$request->id);
     }
 
-    if ('airtime_prepaid' == $sub->provision_type || 'airtime_unlimited' == $sub->provision_type || 'airtime_contract' == $sub->provision_type) {
+    if ($sub->provision_type == 'airtime_prepaid' || $sub->provision_type == 'airtime_unlimited' || $sub->provision_type == 'airtime_contract') {
         $menu_name = get_menu_url_from_table('v_domains');
-        $pbx = new FusionPBX();
+        $pbx = new FusionPBX;
         $pbx->pbx_login($sub->account_id);
         $domain_name = \DB::connection('pbx')->table('v_domains')->where('account_id', $sub->account_id)->pluck('domain_name')->first();
 
         return redirect()->to($menu_name.'?domain_name='.$domain_name);
     }
-    if ('phone_number' == $sub->provision_type) {
+    if ($sub->provision_type == 'phone_number') {
         $menu_name = get_menu_url_from_table('p_phone_numbers');
-        $pbx = new FusionPBX();
+        $pbx = new FusionPBX;
         $pbx->pbx_login($sub->account_id);
 
         return redirect()->to($menu_name.'?number='.$sub->detail);
     }
-    if ('pbx_extension' == $sub->provision_type || 'sip_trunk' == $sub->provision_type) {
+    if ($sub->provision_type == 'pbx_extension' || $sub->provision_type == 'sip_trunk') {
         $menu_name = get_menu_url_from_table('v_extensions');
-        $pbx = new FusionPBX();
+        $pbx = new FusionPBX;
         $pbx->pbx_login($sub->account_id);
 
         return redirect()->to($menu_name.'?extension='.$sub->detail);
     }
 
-    if ('bulk_sms' == $sub->provision_type || 'bulk_sms_prepaid' == $sub->provision_type) {
+    if ($sub->provision_type == 'bulk_sms' || $sub->provision_type == 'bulk_sms_prepaid') {
         return redirect()->to('sms_panel/'.$sub->account_id);
     }
 });
@@ -1775,7 +1773,7 @@ Route::get('hosting_login/{account_id?}/{domain_id?}', function ($account_id, $d
     if (session('role_level') == 'Admin' || (session('account_id') == $account_id || parent_of($account_id))) {
         $domain = \DB::connection('default')->table('isp_host_websites')->where('id', $domain_id)->get()->first();
 
-        if (!$domain) {
+        if (! $domain) {
             return redirect()->back()->with('message', 'No Access')->with('status', 'error');
         }
         $product_package = \DB::table('crm_products')->where('id', $domain->product_id)->pluck('provision_package')->first();
@@ -1808,12 +1806,12 @@ Route::get('sitebuilder_panel/{account_id?}/{domain_id?}', function ($account_id
     if (is_superadmin() || (session('account_id') == $account_id || parent_of($account_id))) {
         $domain = \DB::connection('default')->table('isp_host_websites')->where('id', $domain_id)->where('sitebuilder', 1)->get()->first();
 
-        if (!$domain) {
+        if (! $domain) {
             return redirect()->back()->with('message', 'No Access')->with('status', 'error');
         }
 
         // redirect to /admin.php?key=1
-        $ix = new Interworx();
+        $ix = new Interworx;
         $ix->setDomain($domain->domain);
         $url = $ix->getSitebuilderAutoLoginUrl();
 
@@ -1893,7 +1891,7 @@ Route::any('reamaze_log_call', 'IntegrationsController@reamazeLogCall');
 
 Route::get('registration_failures_cmd_ajax', function () {
     if (session('role_level') == 'Admin') {
-        if (!empty(request()->domain_name)) {
+        if (! empty(request()->domain_name)) {
             $cmd = 'cat /var/log/freeswitch/freeswitch.log | grep failure | grep '.request()->domain_name;
         } else {
             $cmd = 'cat /var/log/freeswitch/freeswitch.log | grep failure ';
@@ -1920,11 +1918,11 @@ Route::get('registration_failures_cmd', function () {
 });
 
 Route::get('download_pbx_recordings/{domain_name?}', function ($domain_name = false) {
-    if (!empty(request()->domain_uuid)) {
+    if (! empty(request()->domain_uuid)) {
         $domain_name = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', request()->domain_uuid)->pluck('domain_name')->first();
     }
 
-    if (!empty(request()->domain_name)) {
+    if (! empty(request()->domain_name)) {
         $domain_name = request()->domain_name;
     }
 
@@ -1935,7 +1933,7 @@ Route::get('download_pbx_recordings/{domain_name?}', function ($domain_name = fa
     $product_id = 996; // pbxextrec
     $account_id = \DB::connection('pbx')->table('v_domains')->where('domain_name', $domain_name)->pluck('account_id')->first();
     $recording_subscription = \DB::connection('default')->table('sub_services')->where('account_id', $account_id)->where('product_id', $product_id)->where('status', '!=', 'Deleted')->count();
-    if (!$recording_subscription) {
+    if (! $recording_subscription) {
         return json_alert('No active extension recording subscription found', 'warning');
     }
 
@@ -1945,28 +1943,28 @@ Route::get('download_pbx_recordings/{domain_name?}', function ($domain_name = fa
     }
     $ssh = new \phpseclib\Net\SSH2('pbx.cloudtools.co.za');
 
-    if (!$ssh->login('root', 'Ahmed777')) {
+    if (! $ssh->login('root', 'Ahmed777')) {
         return json_alert('Unavailable', 'error');
     }
     $cdr_type = 'outbound';
     $cdr_count = \DB::connection('pbx_cdr')->table('call_records_'.$cdr_type)
-    ->where('domain_name', $domain_name)
-    ->where('recording_file', '>', '')
-    ->where('hangup_time', '>=', date('Y-m-d', strtotime('-7 days')))
-    ->count();
-    if (!$cdr_count) {
+        ->where('domain_name', $domain_name)
+        ->where('recording_file', '>', '')
+        ->where('hangup_time', '>=', date('Y-m-d', strtotime('-7 days')))
+        ->count();
+    if (! $cdr_count) {
         return json_alert('No recordings found', 'error');
     }
     $cdr = \DB::connection('pbx_cdr')->table('call_records_'.$cdr_type)
-    ->where('domain_name', $domain_name)
-    ->where('recording_file', '>', '')
-    ->where('hangup_time', '>=', date('Y-m-d', strtotime('-7 days')))
-    ->get();
+        ->where('domain_name', $domain_name)
+        ->where('recording_file', '>', '')
+        ->where('hangup_time', '>=', date('Y-m-d', strtotime('-7 days')))
+        ->get();
 
     $pbx_recordings_path = \Storage::disk('pbx_recordings')->path('');
 
     $zip_filename = $domain_name.'_'.date('Ymd').'_'.$cdr_type.'_recordings.zip';
-    $zip = new ZipArchive();
+    $zip = new ZipArchive;
     $delete_items = [];
     if (true === ($zip->open($zip_filename, ZipArchive::CREATE | ZipArchive::OVERWRITE))) {
         foreach ($cdr as $c) {
@@ -2033,7 +2031,7 @@ Route::get('download_document/{document_id?}', function ($document_id) {
 Route::get('download_documents/{account_id?}', function ($account_id) {
     $account = dbgetaccount($account_id);
     $zip_filename = $account->company.' documents.zip';
-    $zip = new ZipArchive();
+    $zip = new ZipArchive;
     $documents = \DB::table('crm_documents')->where('account_id', $account_id)->get();
     if (true === ($zip->open($zip_filename, ZipArchive::CREATE | ZipArchive::OVERWRITE))) {
         foreach ($documents as $doc) {
@@ -2055,5 +2053,4 @@ Route::get('download_documents/{account_id?}', function ($account_id) {
     }
 });
 
-Route::get('download_vat_reports/{vat_id?}', function ($vat_id) {
-});
+Route::get('download_vat_reports/{vat_id?}', function ($vat_id) {});

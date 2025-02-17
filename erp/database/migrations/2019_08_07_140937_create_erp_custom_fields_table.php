@@ -19,7 +19,6 @@ class CreateErpCustomFieldsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

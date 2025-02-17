@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ModuleManager extends Model
 {
     protected $table = 'erp_cruds';
+
     protected $primaryKey = 'id';
 
     public function __construct()
@@ -54,7 +55,8 @@ class ModuleManager extends Model
             set_db_connection();
 
             return $fields;
-        } catch (\Throwable $ex) {  exception_log($ex);
+        } catch (\Throwable $ex) {
+            exception_log($ex);
             $error = $ex->getMessage().' '.$ex->getFile().':'.$ex->getLine();
             exception_log($error);
             exception_log($ex->getTraceAsString());
@@ -88,17 +90,15 @@ class ModuleManager extends Model
         $field_data['field_type'] = $field_data['type'];
         unset($field_data['type']);
 
-      
         if (empty($field_data->id)) {
             $field_data = (array) $field_data;
 
             $field_data['alias'] = $db_table;
 
-            if ('id' == $field_data['field']) {
+            if ($field_data['field'] == 'id') {
                 $field_data['field_type'] = 'hidden';
                 $field_data['visible'] = 'Add and Edit';
             }
-
 
             //$field_data['access'] = 1;
             \DB::table('erp_module_fields')->insert($field_data);
@@ -106,14 +106,12 @@ class ModuleManager extends Model
             $field_id = $field_data->id;
             unset($field_data->id);
             $field_data = (array) $field_data;
-            if ('id' == $field_data['field']) {
+            if ($field_data['field'] == 'id') {
                 $field_data['field_type'] = 'hidden';
                 $field_data['visible'] = 'Add and Edit';
             }
 
             $field_data['alias'] = $db_table;
-
-
 
             \DB::table('erp_module_fields')->where('id', $field_id)->update($field_data);
         }

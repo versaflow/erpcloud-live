@@ -27,7 +27,6 @@ class CreateAccPaymentsCopyTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

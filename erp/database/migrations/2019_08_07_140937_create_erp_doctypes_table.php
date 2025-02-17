@@ -24,7 +24,6 @@ class CreateErpDoctypesTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

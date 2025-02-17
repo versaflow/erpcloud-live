@@ -26,7 +26,6 @@ class CreateAccSupplierPaymentsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

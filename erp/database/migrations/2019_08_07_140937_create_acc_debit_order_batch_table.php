@@ -25,7 +25,6 @@ class CreateAccDebitOrderBatchTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

@@ -29,7 +29,6 @@ class CreateCrmInternalTasksTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

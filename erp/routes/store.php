@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 Route::any('store', 'StoreController@index');
 Route::any('store/cart', 'StoreController@cart');

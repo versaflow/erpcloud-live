@@ -15,8 +15,11 @@ function button_mailbox_test_connection($request)
 
         //Connect to the IMAP Server
         $client->connect();
+
         return json_alert('Connection valid');
-    } catch (\Throwable $ex) {  exception_log($ex);
+    } catch (\Throwable $ex) {
+        exception_log($ex);
+
         return json_alert(ucfirst($ex->getMessage()), 'error');
     }
 }

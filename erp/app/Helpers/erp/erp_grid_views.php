@@ -39,17 +39,17 @@ function schedule_export_layouts()
 
 function export_layout($layout_id)
 {
-    if (!is_dev()) {
+    if (! is_dev()) {
         return false;
     }
-    if (!in_array(session('instance')->id, [1, 2, 11])) {
+    if (! in_array(session('instance')->id, [1, 2, 11])) {
         return false;
     }
     $layout = \DB::table('erp_grid_views')->where('id', $layout_id)->get()->first();
 
     $module = \DB::table('erp_cruds')->where('id', $layout->module_id)->get()->first();
     $total_fields = \DB::table('erp_module_fields')->where('module_id', $layout->module_id)->whereIn('field_type', ['currency', 'decimal', 'integer'])->pluck('label')->toArray();
-    $model = new \App\Models\ErpModel();
+    $model = new \App\Models\ErpModel;
     $model->setModelData($layout->module_id);
 
     $grid_data = $model->info;
@@ -76,7 +76,7 @@ function export_layout($layout_id)
     $sort_fields = collect($layout_state->colState);
 
     $sort_fields = collect($layout_state->colState)->where('sortIndex', '!=', '')->sortBy('sortIndex');
-    if (!empty($sort_fields) && count($sort_fields) > 0) {
+    if (! empty($sort_fields) && count($sort_fields) > 0) {
         foreach ($sort_fields as $col) {
             if ($col->sortIndex != '') {
                 $sortModel[] = [
@@ -87,7 +87,7 @@ function export_layout($layout_id)
         }
     }
 
-    $request_object = new \Illuminate\Http\Request();
+    $request_object = new \Illuminate\Http\Request;
     $request_object->setMethod('POST');
     $request_object->request->add(['return_all_rows' => 1]);
     $request_object->request->add(['startRow' => 0]);
@@ -101,7 +101,7 @@ function export_layout($layout_id)
     } else {
         $request_object->request->add(['filterModel' => []]);
     }
-    if (!empty($layout_state->searchtext) && $layout_state->searchtext != ' ') {
+    if (! empty($layout_state->searchtext) && $layout_state->searchtext != ' ') {
         $request_object->request->add(['search' => $layout_state->searchtext]);
     }
 
@@ -125,7 +125,7 @@ function export_layout($layout_id)
                             if ($field_type == 'boolean' && $v) {
                                 $v = 'Yes';
                             }
-                            if ($field_type == 'boolean' && !$v) {
+                            if ($field_type == 'boolean' && ! $v) {
                                 $v = 'No';
                             }
                             $excel_data[$i][$label] = $v;
@@ -142,7 +142,7 @@ function export_layout($layout_id)
     if (file_exists($file_path)) {
         unlink($file_path);
     }
-    $export = new App\Exports\CollectionExport();
+    $export = new App\Exports\CollectionExport;
     $export->setTotalFields($total_fields);
     $export->setData($excel_data);
 
@@ -166,7 +166,7 @@ function export_layout($layout_id)
 function generate_all_records_layout($module_id)
 {
     $exists = \DB::table('erp_grid_views')->where('module_id', $module_id)->where('name', 'All Records')->count();
-    if (!$exists) {
+    if (! $exists) {
         $data = [
             'group' => 'Default',
             'module_id' => $module_id,
@@ -226,11 +226,11 @@ function afterdelete_grid_views_set_default($request)
         ->where('module_id', $request->module_id)
         ->where('global_default', 1)
         ->count();
-    if (!$default_set) {
+    if (! $default_set) {
         \DB::table('erp_grid_views')
-        ->where('module_id', $request->module_id)
-        ->where('name', 'All Records')
-        ->update(['global_default' => 1]);
+            ->where('module_id', $request->module_id)
+            ->where('name', 'All Records')
+            ->update(['global_default' => 1]);
     }
 
     /*
@@ -269,7 +269,7 @@ function remove_timestamp_fields_from_layouts($layout_id = false)
         if ($state->colState && is_array($state->colState) && count($state->colState) > 0) {
             foreach ($state->colState as $i => $col) {
                 if (in_array($col->colId, ['created_at', 'created_by', 'updated_at', 'updated_by'])) {
-                    if (!isset($state->filterState->{$col->colId})) {
+                    if (! isset($state->filterState->{$col->colId})) {
                         $state->colState[$i]->hide = true;
                     }
                 }

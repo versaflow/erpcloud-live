@@ -13,7 +13,7 @@ function beforesave_check_pbx_subscription_type($request)
             return 'Domain name required.';
         }
         if ($domain_name != '156.0.96.60') {
-            if (!doesDomainResolve($domain_name)) {
+            if (! doesDomainResolve($domain_name)) {
                 return 'Domain name is not active yet. DNS is still propagating.';
             }
         }
@@ -31,7 +31,7 @@ function doesDomainResolve($domain)
     }
 
     // Optional: Using checkdnsrr to further verify the domain resolution
-    if (!checkdnsrr($domain, 'A') && !checkdnsrr($domain, 'AAAA')) {
+    if (! checkdnsrr($domain, 'A') && ! checkdnsrr($domain, 'AAAA')) {
         return false;
     }
 
@@ -44,14 +44,14 @@ function fusionpbx_edit_curl($url, $query_id, $post_data, $admin_request = false
         unset($post_data['id']);
     }
 
-    $client = new GuzzleHttp\Client();
+    $client = new GuzzleHttp\Client;
     $params['headers'] = ['erp_aftersave' => 1];
 
-    if (!empty($post_data['domain_uuid']) && !$admin_request) {
+    if (! empty($post_data['domain_uuid']) && ! $admin_request) {
         $pbx_row = \DB::connection('pbx')->table('v_users as vu')
-        ->join('v_domains as vd', 'vd.domain_uuid', '=', 'vu.domain_uuid')
-        ->where('vd.domain_uuid', $post_data['domain_uuid'])
-        ->get()->first();
+            ->join('v_domains as vd', 'vd.domain_uuid', '=', 'vu.domain_uuid')
+            ->where('vd.domain_uuid', $post_data['domain_uuid'])
+            ->get()->first();
         $domain_name = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $post_data['domain_uuid'])->pluck('domain_name')->first();
         $url = str_replace('156.0.96.60', $domain_name, $url);
         $key = $pbx_row->api_key;
@@ -68,25 +68,25 @@ function fusionpbx_edit_curl($url, $query_id, $post_data, $admin_request = false
     aa($response);
 
     $result = $response->getBody()->getContents();
-    $found = preg_match('/\{([^}]*)\}/',$result, $results);
+    $found = preg_match('/\{([^}]*)\}/', $result, $results);
     $result = stripslashes($results[0]);
     // aa($result);
     $result = json_decode($result, false);
 
-    if (!$result || !$result->status) {
+    if (! $result || ! $result->status) {
         $return = json_alert('PBX Aftersave error', 'error');
     } elseif ($result->status != 'success') {
         $return = json_alert($result->message, 'warning');
     }
 
-    if (!empty($return)) {
+    if (! empty($return)) {
         return $return;
     }
 }
 
 function beforesave_check_extension_length($request)
 {
-    if (!is_numeric($request->extension) || empty($request->extension) || strlen($request->extension) != 3) {
+    if (! is_numeric($request->extension) || empty($request->extension) || strlen($request->extension) != 3) {
         return 'Invalid extension';
     }
 }
@@ -101,10 +101,10 @@ function aftersave_extension_curl($request)
         //update subscription
         $account_id = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $ext->domain_uuid)->pluck('account_id')->first();
         \DB::connection('default')->table('sub_services')
-        ->where('account_id', $account_id)
-        ->where('provision_type', 'pbx_extension')
-        ->where('detail', $beforesave_row->extension)
-        ->update(['detail' => $ext->extension]);
+            ->where('account_id', $account_id)
+            ->where('provision_type', 'pbx_extension')
+            ->where('detail', $beforesave_row->extension)
+            ->update(['detail' => $ext->extension]);
     }
 
     /*
@@ -138,7 +138,7 @@ function aftersave_phone_numbers_curl($request)
     if ($domain_uuid) {
         $domain_name = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $domain_uuid)->pluck('domain_name')->first();
         if ($domain_name) {
-            $pbx = new \FusionPBX();
+            $pbx = new \FusionPBX;
             $pbx->portalCmd('delete_cache_item', 'dialplan:'.$domain_name);
         }
     }
@@ -155,34 +155,34 @@ function aftersave_recordings_curl($request)
     try {
         $recording_uuid = $request->id;
         $recording = \DB::connection('pbx')->table('v_recordings')
-        ->select('v_recordings.*', 'v_domains.domain_name', 'v_domains.account_id')
-        ->join('v_domains', 'v_domains.domain_uuid', '=', 'v_recordings.domain_uuid')
-        ->where('recording_uuid', $recording_uuid)
-        ->get()->first();
+            ->select('v_recordings.*', 'v_domains.domain_name', 'v_domains.account_id')
+            ->join('v_domains', 'v_domains.domain_uuid', '=', 'v_recordings.domain_uuid')
+            ->where('recording_uuid', $recording_uuid)
+            ->get()->first();
 
-        if (!empty($request->id) && empty($request->recording_uuid)) {
+        if (! empty($request->id) && empty($request->recording_uuid)) {
             $request->request->add(['recording_uuid' => $request->id]);
         }
         $recording_name = $recording->recording_name;
-        if (empty($recording_name) && !empty($request->recording_name)) {
+        if (empty($recording_name) && ! empty($request->recording_name)) {
             $recording_name = $request->recording_name;
         }
         $recordings_folder = '/var/lib/freeswitch/recordings/'.$recording->domain_name;
         $cmd = 'mkdir -p '.$recordings_folder.' && chmod 777 '.$recordings_folder;
         $permissions_result = Erp::ssh('pbx.cloudtools.co.za', 'root', 'Ahmed777', $cmd);
 
-        if (!$request->use_text_to_speech) {
+        if (! $request->use_text_to_speech) {
             aa($request->all());
             aa($recording);
             aa($recording_uuid);
             $file = public_path().'/uploads/telecloud/1991/'.$recording->recording_filename;
             $recording_filename = $recording->recording_filename;
-            if (!str_contains($recording->recording_filename, $recording->account_id)) {
+            if (! str_contains($recording->recording_filename, $recording->account_id)) {
                 \DB::connection('pbx')->table('v_recordings')->where('recording_uuid', $recording_uuid)->update(['recording_filename' => $recording->account_id.$recording->recording_filename]);
 
                 $upfile = public_path().'/uploads/telecloud/1991/'.$recording->recording_filename;
                 $file = public_path().'/uploads/telecloud/1991/'.$recording->account_id.$recording->recording_filename;
-                if (!file_exists($file) && file_exists($upfile)) {
+                if (! file_exists($file) && file_exists($upfile)) {
                     File::move($upfile, $file);
                 }
                 $recording_filename = $recording->account_id.$recording->recording_filename;
@@ -204,6 +204,7 @@ function aftersave_recordings_curl($request)
         exception_log($ex);
         if (str_contains($ex->getMessage(), 'Could not resolve host')) {
             \DB::connection('pbx')->table('v_recordings')->where('recording_uuid', $recording_uuid)->delete();
+
             return 'Pbx domain name not active. DNS busy propagating';
         }
 

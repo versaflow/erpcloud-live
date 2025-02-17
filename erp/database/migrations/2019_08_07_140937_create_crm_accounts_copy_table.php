@@ -67,7 +67,6 @@ class CreateCrmAccountsCopyTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

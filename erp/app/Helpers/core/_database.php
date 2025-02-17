@@ -7,9 +7,9 @@ function test_connection($name)
     } catch (\Exception $e) {
         return false;
     }
+
     return true;
 }
-
 
 function schema_clone_db_table($new_table, $table, $conn = 'default')
 {
@@ -18,37 +18,38 @@ function schema_clone_db_table($new_table, $table, $conn = 'default')
     \DB::connection($conn)->statement('INSERT '.$new_table.' SELECT * FROM '.$table);
 }
 
-function schema_clone_db_table_from_db($sourceConnection,$destinationConnection,$sourceTable, $copy_data = false){
+function schema_clone_db_table_from_db($sourceConnection, $destinationConnection, $sourceTable, $copy_data = false)
+{
 
     $destinationTable = $sourceTable;
-    if(Schema::connection($destinationConnection)->hasTable($sourceTable)){
-        return false;    
+    if (Schema::connection($destinationConnection)->hasTable($sourceTable)) {
+        return false;
     }
     // Get the table columns and their properties from the source table
     $tableColumns = Schema::connection($sourceConnection)->getColumnListing($sourceTable);
     $tableProperties = [];
-    
+
     foreach ($tableColumns as $column) {
         $columnDetails = Schema::connection($sourceConnection)->getColumnType($sourceTable, $column);
         $tableProperties[$column] = $columnDetails;
     }
-    
+
     // Create the new table in the destination database with the same schema
     Schema::connection($destinationConnection)->create($destinationTable, function ($table) use ($tableProperties) {
         foreach ($tableProperties as $column => $type) {
             $table->$type($column);
         }
-    });    
-    
-    if($copy_data){
+    });
+
+    if ($copy_data) {
         // Get the data from the source table
         $data = DB::connection($sourceConnection)->table($sourceTable)->get();
-        
+
         // Insert the data into the destination table
         foreach ($data as $row) {
-            DB::connection($destinationConnection)->table($destinationTable)->insert((array)$row);
+            DB::connection($destinationConnection)->table($destinationTable)->insert((array) $row);
         }
-    
+
     }
 }
 
@@ -65,7 +66,7 @@ function erp_db($name)
 function dbgetaccounts($type = '')
 {
     $type = strtolower($type);
-    if ('reseller' != $type) {
+    if ($type != 'reseller') {
         return \DB::table('crm_accounts')->where('type', $type)->orderby('id')->get();
     } else {
         return \DB::table('crm_accounts')
@@ -79,7 +80,7 @@ function dbgetaccountcell($id, $field)
 {
     $account = dbgetaccount($id);
 
-    if (!empty($account->$field)) {
+    if (! empty($account->$field)) {
         return $account->$field;
     }
 
@@ -93,19 +94,20 @@ function dbgetsubaccounts($id)
     foreach ($account_ids as $account_id) {
         $accounts[] = dbgetaccount($account_id);
     }
+
     return $accounts;
 }
 
 function dbgetaccount($id, $conn = 'default')
 {
     $type = \DB::connection($conn)->table('crm_accounts')->where('id', $id)->pluck('type')->first();
-    
-    if ('customer' == $type || 'reseller_user' == $type) {
+
+    if ($type == 'customer' || $type == 'reseller_user') {
         $account = \DB::connection($conn)->table('crm_accounts')
             ->select('*', 'crm_accounts.id as id')
             ->leftJoin('isp_voice_pbx_domains', 'isp_voice_pbx_domains.account_id', '=', 'crm_accounts.id')
             ->where('crm_accounts.id', $id)->get()->first();
-    } elseif ('reseller' == $type) {
+    } elseif ($type == 'reseller') {
         if ($id == 1) {
             $account = \DB::connection($conn)->table('crm_accounts')
                 ->select('*', 'crm_accounts.id as id')
@@ -172,11 +174,11 @@ function dbgetcell($table, $wherefield, $wherevalue, $getfield)
 function dbset($table, $wherefield, $wherevalue, $data)
 {
     $cols = get_columns_from_schema($table);
-    if(in_array('updated_by',$cols) && empty($data['updated_by'])){
-       $data['updated_by'] = get_user_id_default(); 
+    if (in_array('updated_by', $cols) && empty($data['updated_by'])) {
+        $data['updated_by'] = get_user_id_default();
     }
-    if(in_array('updated_at',$cols) && empty($data['updated_at'])){
-       $data['updated_at'] = date('Y-m-d H:i:s');
+    if (in_array('updated_at', $cols) && empty($data['updated_at'])) {
+        $data['updated_at'] = date('Y-m-d H:i:s');
     }
     $module = \DB::connection('default')->table('erp_cruds')->where('db_table', $table)->get()->first();
     if ($module && $module->id) {
@@ -186,17 +188,18 @@ function dbset($table, $wherefield, $wherevalue, $data)
     } else {
         $result = \DB::table($table)->where($wherefield, $wherevalue)->update($data);
     }
+
     return $result;
 }
 
 function dbupdate($table, $wheredata, $data)
 {
     $cols = get_columns_from_schema($table);
-    if(in_array('updated_by',$cols) && empty($data['updated_by'])){
-       $data['updated_by'] = get_user_id_default(); 
+    if (in_array('updated_by', $cols) && empty($data['updated_by'])) {
+        $data['updated_by'] = get_user_id_default();
     }
-    if(in_array('updated_at',$cols) && empty($data['updated_at'])){
-       $data['updated_at'] = date('Y-m-d H:i:s');
+    if (in_array('updated_at', $cols) && empty($data['updated_at'])) {
+        $data['updated_at'] = date('Y-m-d H:i:s');
     }
     $module = \DB::connection('default')->table('erp_cruds')->where('db_table', $table)->get()->first();
     if ($module && $module->id) {
@@ -206,17 +209,18 @@ function dbupdate($table, $wheredata, $data)
     } else {
         $result = \DB::table($table)->where($wheredata)->update($data);
     }
+
     return $result;
 }
 
 function dbinsert($table, $data, $conn = 'default')
 {
     $cols = get_columns_from_schema($table, null, $conn);
-    if(in_array('created_by',$cols) && empty($data['created_by'])){
-       $data['created_by'] = get_user_id_default(); 
+    if (in_array('created_by', $cols) && empty($data['created_by'])) {
+        $data['created_by'] = get_user_id_default();
     }
-    if(in_array('created_at',$cols) && empty($data['created_at'])){
-       $data['created_at'] = date('Y-m-d H:i:s');
+    if (in_array('created_at', $cols) && empty($data['created_at'])) {
+        $data['created_at'] = date('Y-m-d H:i:s');
     }
     $id = \DB::table($table)->insertGetId($data);
     if ($id > 0) {
@@ -224,6 +228,7 @@ function dbinsert($table, $data, $conn = 'default')
         if ($module && $module->id) {
             module_log($module->id, $id, 'created');
         }
+
         return $id;
     } else {
         return false;
@@ -292,21 +297,21 @@ function pbxinsert($table, $data)
 function pbxdelete($table, $wherefield, $wherevalue)
 {
     $result = \DB::connection('pbx')->table($table)->where($wherefield, $wherevalue)->delete();
+
     return $result;
 }
 
-
 function getoptions($table, $id, $display, $entry_by_only = 0, $account_id = '', $where = '', $lookup_sort = '', $lookup_default_val = '', $filter_function = '')
 {
-    if ('' == $account_id) {
+    if ($account_id == '') {
         $account_id = session('account_id');
     }
 
     $display = explode('|', $display);
     $html = '<option value=""> </option>';
     $account_id_script = '';
-    if (1 == $entry_by_only) {
-        if ('crm_accounts' == $table) {
+    if ($entry_by_only == 1) {
+        if ($table == 'crm_accounts') {
             $account_id_script = ' and id in (select id from crm_accounts where partner_id = '.session('account_id').") and status='Enabled'";
         } else {
             $account_id_script = ' and account_id in (select id from crm_accounts  where id = '.session('account_id')." and status='Enabled')";
@@ -316,40 +321,40 @@ function getoptions($table, $id, $display, $entry_by_only = 0, $account_id = '',
     if ($where > '') {
         $where = ' and '.$where.' ';
     }
-    if (3 == count($display)) {
-        $order_by = (!empty($lookup_sort)) ? ' order by '.$lookup_sort : ' order by '.$display[0].','.$display[1].','.$display[2];
+    if (count($display) == 3) {
+        $order_by = (! empty($lookup_sort)) ? ' order by '.$lookup_sort : ' order by '.$display[0].','.$display[1].','.$display[2];
         $options = \DB::select('select * from '.$table.' where 1=1 '.$where.$account_id_script.$order_by);
-    } elseif (2 == count($display)) {
-        $order_by = (!empty($lookup_sort)) ? ' order by '.$lookup_sort : ' order by '.$display[0].','.$display[1];
+    } elseif (count($display) == 2) {
+        $order_by = (! empty($lookup_sort)) ? ' order by '.$lookup_sort : ' order by '.$display[0].','.$display[1];
         $options = \DB::select('select * from '.$table.' where 1=1 '.$where.$account_id_script.$order_by);
     } else {
-        $order_by = (!empty($lookup_sort)) ? ' order by '.$lookup_sort : ' order by '.$display[0];
+        $order_by = (! empty($lookup_sort)) ? ' order by '.$lookup_sort : ' order by '.$display[0];
         $options = \DB::select('select * from '.$table.' where 1=1 '.$where.$account_id_script.$order_by);
     }
 
-    if (!empty($filter_function) && function_exists($filter_function)) {
+    if (! empty($filter_function) && function_exists($filter_function)) {
         $options = $filter_function($options);
     }
 
     if ($options) {
         foreach ($options as $option) {
-            $selected = (!empty($lookup_default_val) && !empty($option->$id) && $option->$id == $lookup_default_val) ? ' selected="selected"' : '';
+            $selected = (! empty($lookup_default_val) && ! empty($option->$id) && $lookup_default_val == $option->$id) ? ' selected="selected"' : '';
             if ($selected) {
-                $show_balance = ('crm_accounts' == $table) ? ' ('.get_debtor_balance($option->$id).') ' : '';
+                $show_balance = ($table == 'crm_accounts') ? ' ('.get_debtor_balance($option->$id).') ' : '';
             }
 
-            if ('module_id' == $display[0]) {
+            if ($display[0] == 'module_id') {
                 $option->{$display[0]} = \DB::table('erp_cruds')->where('id', $option->{$display[0]})->pluck('name')->first();
             }
-            if ('module_id' == $display[1]) {
+            if ($display[1] == 'module_id') {
                 $option->{$display[1]} = \DB::table('erp_cruds')->where('id', $option->{$display[1]})->pluck('name')->first();
             }
-            if ('module_id' == $display[2]) {
+            if ($display[2] == 'module_id') {
                 $option->{$display[2]} = \DB::table('erp_cruds')->where('id', $option->{$display[2]})->pluck('name')->first();
             }
-            if (3 == count($display)) {
+            if (count($display) == 3) {
                 $html .= '<option value='.$option->$id.$selected.'>'.$option->{$display[0]}.' - '.$option->{$display[1]}.' - '.$option->{$display[2]}.$show_balance.'</option>';
-            } elseif (2 == count($display)) {
+            } elseif (count($display) == 2) {
                 $html .= '<option value='.$option->$id.$selected.'>'.$option->{$display[0]}.' - '.$option->{$display[1]}.$show_balance.'</option>';
             } else {
                 $html .= '<option value='.$option->$id.$selected.'>'.$option->{$display[0]}.$show_balance.'</option>';
@@ -363,80 +368,79 @@ function getoptions($table, $id, $display, $entry_by_only = 0, $account_id = '',
 function duplicate_row($table, $id, $copy_field = 'name')
 {
     try {
-        if ('crm_products' == $table) {
+        if ($table == 'crm_products') {
             $copy_field = 'code';
         }
-        if ('isp_host_erp_websites' == $table) {
+        if ($table == 'isp_host_erp_websites') {
             $copy_field = 'domain';
         }
-        if ('isp_host_websites' == $table) {
+        if ($table == 'isp_host_websites') {
             $copy_field = 'domain';
         }
 
-        if ('erp_users' == $table) {
+        if ($table == 'erp_users') {
             $copy_field = 'username';
         }
 
         $cols = get_columns_from_schema($table);
-        if (!in_array($copy_field, $cols)) {
+        if (! in_array($copy_field, $cols)) {
             $copy_field = '';
         }
 
         $module = \DB::connection('default')->table('erp_cruds')->where('db_table', $table)->get()->first();
-        $exclude_fields = \DB::connection('default')->table('erp_module_fields')->where('module_id', $module->id)->where('exclude_duplicate',1)->pluck('field')->toArray();
+        $exclude_fields = \DB::connection('default')->table('erp_module_fields')->where('module_id', $module->id)->where('exclude_duplicate', 1)->pluck('field')->toArray();
         $exclude_fields[] = $module->db_key;
         $key_field = $module->db_key;
         $conn = $module->connection;
 
         $row = \DB::connection($conn)->table($table)->where($key_field, $id)->get()->first();
-        if (!empty($row)) {
+        if (! empty($row)) {
             unset($row->{$key_field});
 
-
-            if (!empty($copy_field)) {
+            if (! empty($copy_field)) {
                 $row->$copy_field .= '_copy';
             }
 
             $data = (array) $row;
-            if(isset($data['created_at'])){
+            if (isset($data['created_at'])) {
                 $data['created_at'] = date('Y-m-d H:i:s');
             }
-            if (!empty($row->main_instance_id)) {
+            if (! empty($row->main_instance_id)) {
                 unset($data['main_instance_id']);
             }
-
 
             if (str_contains($key_field, 'uuid')) {
                 $data[$key_field] = pbx_uuid($table, $key_field);
                 \DB::connection($conn)->table($table)->insert($data);
+
                 return json_alert('Duplicated');
-            } elseif ('crm_staff_tasks' == $table) {
+            } elseif ($table == 'crm_staff_tasks') {
                 $project_id = $id;
-                $project =  \DB::connection('default')->table('crm_staff_tasks')->where('id', $project_id)->get()->first();
-                if($project->type == 'Layout' || $project->type == 'Report'){
-                return json_alert('Processes cannot be duplicated','error');
+                $project = \DB::connection('default')->table('crm_staff_tasks')->where('id', $project_id)->get()->first();
+                if ($project->type == 'Layout' || $project->type == 'Report') {
+                    return json_alert('Processes cannot be duplicated', 'error');
                 }
                 $data = (array) $project;
                 $data['name'] .= ' copy';
-                foreach($exclude_fields as $field){
+                foreach ($exclude_fields as $field) {
                     unset($data[$field]);
                 }
-               
+
                 $copy_project_id = \DB::connection('default')->table('crm_staff_tasks')->insertGetId($data);
-                
+
                 return json_alert('Duplicated');
-            }  elseif ('crm_product_bundles' == $table) {
+            } elseif ($table == 'crm_product_bundles') {
                 $bundle_id = $id;
-                $bundle =  \DB::connection('default')->table('crm_product_bundles')->where('id', $bundle_id)->get()->first();
+                $bundle = \DB::connection('default')->table('crm_product_bundles')->where('id', $bundle_id)->get()->first();
                 $data = (array) $bundle;
                 $data['name'] .= ' copy';
                 unset($data['id']);
                 unset($data['default_bundle']);
-                
-                foreach($exclude_fields as $field){
+
+                foreach ($exclude_fields as $field) {
                     unset($data[$field]);
                 }
-               
+
                 $copy_bundle_id = \DB::connection('default')->table('crm_product_bundles')->insertGetId($data);
                 $bundle_details = \DB::connection('default')->table('crm_product_bundle_details')->where('product_bundle_id', $bundle_id)->get();
                 foreach ($bundle_details as $r) {
@@ -445,19 +449,20 @@ function duplicate_row($table, $id, $copy_field = 'name')
                     unset($data['id']);
                     \DB::connection('default')->table('crm_product_bundle_details')->insert($data);
                 }
+
                 return json_alert('Duplicated');
-            } elseif ('crm_pricelists' == $table) {
+            } elseif ($table == 'crm_pricelists') {
                 $pricelist_id = $id;
-                $ratesheet =  \DB::connection('default')->table('crm_pricelists')->where('id', $pricelist_id)->get()->first();
+                $ratesheet = \DB::connection('default')->table('crm_pricelists')->where('id', $pricelist_id)->get()->first();
                 $data = (array) $ratesheet;
                 $data['name'] .= ' copy';
                 unset($data['id']);
                 unset($data['default_pricelist']);
-                
-                foreach($exclude_fields as $field){
+
+                foreach ($exclude_fields as $field) {
                     unset($data[$field]);
                 }
-               
+
                 $copy_pricelist_id = \DB::connection('default')->table('crm_pricelists')->insertGetId($data);
                 $rates = \DB::connection('default')->table('crm_pricelist_items')->where('pricelist_id', $pricelist_id)->get();
                 foreach ($rates as $r) {
@@ -466,9 +471,10 @@ function duplicate_row($table, $id, $copy_field = 'name')
                     unset($data['id']);
                     \DB::connection('default')->table('crm_pricelist_items')->insert($data);
                 }
+
                 return json_alert('Duplicated');
-            } elseif ('crm_documents' == $table) {
-                $header =  \DB::connection('default')->table('crm_documents')->where('id', $id)->get()->first();
+            } elseif ($table == 'crm_documents') {
+                $header = \DB::connection('default')->table('crm_documents')->where('id', $id)->get()->first();
                 $data = (array) $header;
                 unset($data['id']);
                 unset($data['doc_no']);
@@ -479,12 +485,12 @@ function duplicate_row($table, $id, $copy_field = 'name')
                 $data['doctype'] = 'Quotation';
                 $data['docdate'] = date('Y-m-d');
                 $data['docdate_month'] = date('Y-m-01');
-                
-                foreach($exclude_fields as $field){
+
+                foreach ($exclude_fields as $field) {
                     unset($data[$field]);
                 }
                 $document_id = \DB::connection('default')->table('crm_documents')->insertGetId($data);
-                
+
                 $lines = \DB::connection('default')->table('crm_document_lines')->where('document_id', $id)->groupBy('product_id')->get();
                 foreach ($lines as $r) {
                     $data = (array) $r;
@@ -492,18 +498,19 @@ function duplicate_row($table, $id, $copy_field = 'name')
                     unset($data['id']);
                     \DB::connection('default')->table('crm_document_lines')->insert($data);
                 }
+
                 return json_alert('Duplicated');
-            } elseif ('p_rates_partner' == $table) {
+            } elseif ($table == 'p_rates_partner') {
                 $ratesheet_id = $id;
-                $ratesheet =  \DB::connection('pbx')->table('p_rates_partner')->where('id', $ratesheet_id)->get()->first();
+                $ratesheet = \DB::connection('pbx')->table('p_rates_partner')->where('id', $ratesheet_id)->get()->first();
                 $data = (array) $ratesheet;
                 $data['name'] .= ' copy';
                 unset($data['id']);
-                
-                foreach($exclude_fields as $field){
+
+                foreach ($exclude_fields as $field) {
                     unset($data[$field]);
                 }
-               
+
                 $copy_ratesheet_id = \DB::connection('pbx')->table('p_rates_partner')->insertGetId($data);
                 $rates = \DB::connection('pbx')->table('p_rates_partner_items')->where('ratesheet_id', $ratesheet_id)->get();
                 foreach ($rates as $r) {
@@ -512,8 +519,9 @@ function duplicate_row($table, $id, $copy_field = 'name')
                     unset($data['id']);
                     \DB::connection('pbx')->table('p_rates_partner_items')->insert($data);
                 }
+
                 return json_alert('Duplicated');
-            }  elseif ('erp_user_roles' == $table) {
+            } elseif ($table == 'erp_user_roles') {
                 $insert_id = DB::table($table)->insertGetId($data);
                 $permissions = \DB::table('erp_menu_role_access')->where('role_id', $id)->get();
                 foreach ($permissions as $permission) {
@@ -529,12 +537,12 @@ function duplicate_row($table, $id, $copy_field = 'name')
                     $d['role_id'] = $insert_id;
                     \DB::table('erp_forms')->insert($d);
                 }
+
                 return json_alert('Duplicated');
-            } elseif ('erp_cruds' == $table) {
-                $data['slug'] = strtolower(str_replace(['_',' '], '-', string_clean($data['name'])));
- 
-                
-                foreach($exclude_fields as $field){
+            } elseif ($table == 'erp_cruds') {
+                $data['slug'] = strtolower(str_replace(['_', ' '], '-', string_clean($data['name'])));
+
+                foreach ($exclude_fields as $field) {
                     unset($data[$field]);
                 }
                 $insert_id = DB::table($table)->insertGetId($data);
@@ -552,7 +560,7 @@ function duplicate_row($table, $id, $copy_field = 'name')
                     $permission_data['module_id'] = $insert_id;
                     \DB::table('erp_forms')->insert($permission_data);
                 }
-                
+
                 $grid_styles = \DB::table('erp_grid_styles')->where('module_id', $id)->get();
                 foreach ($grid_styles as $grid_style) {
                     $grid_style_data = (array) $grid_style;
@@ -560,7 +568,7 @@ function duplicate_row($table, $id, $copy_field = 'name')
                     $grid_style_data['module_id'] = $insert_id;
                     \DB::table('erp_grid_styles')->insert($grid_style_data);
                 }
-                
+
                 $layouts = \DB::table('erp_grid_views')->where('module_id', $id)->get();
                 foreach ($layouts as $layout) {
                     $layout_data = (array) $layout;
@@ -570,7 +578,7 @@ function duplicate_row($table, $id, $copy_field = 'name')
                     $layout_data['track_layout'] = 0;
                     $layout_data['show_on_dashboard'] = 0;
                     unset($layout_data['duration']);
-                   
+
                     unset($layout_data['timer_status']);
                     unset($layout_data['global_default']);
                     unset($layout_data['role_default']);
@@ -586,7 +594,7 @@ function duplicate_row($table, $id, $copy_field = 'name')
                     $event_data['module_id'] = $insert_id;
                     \DB::table('erp_form_events')->insert($event_data);
                 }
-                
+
                 $menus = \DB::table('erp_menu')->where('module_id', $id)->get();
                 foreach ($menus as $menu) {
                     $menu_data = (array) $menu;
@@ -601,14 +609,14 @@ function duplicate_row($table, $id, $copy_field = 'name')
                         \DB::table('erp_menu_role_access')->insert($permission_data);
                     }
                 }
-                
+
                 $buttons = \DB::table('erp_menu')->where('render_module_id', $id)->get();
                 foreach ($buttons as $button) {
                     $button_data = (array) $button;
                     unset($button_data['id']);
                     $button_data['render_module_id'] = $insert_id;
                     $menu_insert_id = \DB::table('erp_menu')->insertGetId($button_data);
-               
+
                     $permissions = \DB::table('erp_menu_role_access')->where('menu_id', $button->id)->get();
                     foreach ($permissions as $permission) {
                         $permission_data = (array) $permission;
@@ -617,13 +625,13 @@ function duplicate_row($table, $id, $copy_field = 'name')
                         \DB::table('erp_menu_role_access')->insert($permission_data);
                     }
                 }
-              
+
                 cache_clear();
+
                 return json_alert('Duplicated');
-            }elseif ('erp_menu' == $table) {
-                
-                
-                foreach($exclude_fields as $field){
+            } elseif ($table == 'erp_menu') {
+
+                foreach ($exclude_fields as $field) {
                     unset($data[$field]);
                 }
                 $insert_id = DB::table($table)->insertGetId($data);
@@ -635,73 +643,75 @@ function duplicate_row($table, $id, $copy_field = 'name')
                     \DB::table('erp_menu_role_access')->insert($permission_data);
                 }
 
-                
                 cache_clear();
+
                 return json_alert('Duplicated');
-            } elseif ('crm_ad_campaigns' == $table) {
+            } elseif ($table == 'crm_ad_campaigns') {
                 unset($data['facebook_campaign_id']);
                 unset($data['form_id']);
                 $insert_id = DB::table($table)->insertGetId($data);
+
                 return json_alert('Duplicated');
-            } elseif ('crm_newsletters' == $table) {
+            } elseif ($table == 'crm_newsletters') {
                 $data['sent_test'] = 0;
                 $data['sent_to_customers'] = 0;
-                
-                foreach($exclude_fields as $field){
+
+                foreach ($exclude_fields as $field) {
                     unset($data[$field]);
                 }
                 $insert_id = DB::table($table)->insertGetId($data);
+
                 return json_alert('Duplicated');
-            } elseif ('erp_forms' == $table) {
-                
-                
+            } elseif ($table == 'erp_forms') {
+
                 $data['role_id'] = 1;
                 $data['default'] = 0;
-                foreach($exclude_fields as $field){
+                foreach ($exclude_fields as $field) {
                     unset($data[$field]);
                 }
                 $insert_id = DB::table($table)->insertGetId($data);
+
                 return json_alert('Duplicated');
-            } elseif ('erp_grid_views' == $table) {
+            } elseif ($table == 'erp_grid_views') {
                 $data['global_default'] = 0;
                 $data['track_layout'] = 0;
                 $data['show_on_dashboard'] = 0;
                 unset($data['duration']);
-               
+
                 unset($data['timer_status']);
                 unset($data['global_default']);
                 unset($data['role_default']);
                 unset($data['system_layout']);
                 unset($data['main_instance_id']);
-                
-                foreach($exclude_fields as $field){
+
+                foreach ($exclude_fields as $field) {
                     unset($data[$field]);
                 }
-             
+
                 $data['export_layout_frequency'] = 'None';
                 $insert_id = DB::table($table)->insertGetId($data);
-                
+
                 return json_alert('Duplicated');
-            } elseif ('erp_reports' == $table) {
+            } elseif ($table == 'erp_reports') {
                 $insert_id = DB::table($table)->insertGetId($data);
-                $update =[];
+                $update = [];
                 $update['report_config'] = str_replace('_'.$id, '_'.$insert_id, $data['report_config']);
-                
+
                 \DB::table($table)->where('id', $insert_id)->update($update);
 
-
                 return json_alert('Duplicated');
-            } elseif ('erp_users' == $table) {
+            } elseif ($table == 'erp_users') {
                 unset($data['password']);
                 unset($data['pbx_extension']);
-                
-                foreach($exclude_fields as $field){
+
+                foreach ($exclude_fields as $field) {
                     unset($data[$field]);
                 }
                 $insert_id = DB::table($table)->insertGetId($data);
+
                 return json_alert('Duplicated');
-            }else {
-                $db = new DBEvent();
+            } else {
+                $db = new DBEvent;
                 unset($data['website_id']);
                 if ($table == 'sub_activation_plans') {
                     $data['step'] = 1000;
@@ -710,15 +720,15 @@ function duplicate_row($table, $id, $copy_field = 'name')
                     $data['field'] .= '_copy';
                     $data['label'] .= ' Copy';
                 }
-                
-                foreach($exclude_fields as $field){
+
+                foreach ($exclude_fields as $field) {
                     unset($data[$field]);
                 }
-                $result =  $db->setTable($table)->save($data);
+                $result = $db->setTable($table)->save($data);
 
                 if ($result instanceof \Illuminate\Http\JsonResponse) {
                     return $result;
-                } elseif (!is_array($result) || empty($result['id'])) {
+                } elseif (! is_array($result) || empty($result['id'])) {
                     return response()->json(['status' => 'error', 'message' => $result]);
                 }
                 if ($result['id']) {
@@ -730,7 +740,8 @@ function duplicate_row($table, $id, $copy_field = 'name')
                 }
             }
         }
-    } catch (\Throwable $ex) {  exception_log($ex);
+    } catch (\Throwable $ex) {
+        exception_log($ex);
         exception_email($ex, 'Duplicate Failed');
 
         return json_alert('Duplicate Failed', 'error');
@@ -785,7 +796,7 @@ function module_has_menu($modules)
     $linked_modules = \DB::table('erp_menu')->pluck('module_id')->toArray();
     $arr = [];
     foreach ($modules as $module) {
-        if (!in_array($module->module_id, $linked_modules)) {
+        if (! in_array($module->module_id, $linked_modules)) {
             $arr[] = $module;
         }
     }
@@ -798,11 +809,12 @@ function get_db_connections()
     $list = [];
     $conns = Config::get('database');
     foreach ($conns['connections'] as $name => $c) {
-        if ('system' == $name) {
+        if ($name == 'system') {
             continue;
         }
         $list[] = $name;
     }
+
     return $list;
 }
 
@@ -816,7 +828,7 @@ function get_instance_connection()
     $list = [];
     $conns = Config::get('database');
     foreach ($conns['connections'] as $name => $c) {
-        if ('default' == $name) {
+        if ($name == 'default') {
             return $c;
         }
     }
@@ -827,7 +839,7 @@ function get_main_connection()
     $list = [];
     $conns = Config::get('database');
     foreach ($conns['connections'] as $name => $c) {
-        if ('system' == $name) {
+        if ($name == 'system') {
             return $c;
         }
     }
@@ -842,14 +854,13 @@ function db_conn_exists($db_conn)
 
 function set_db_connection($conn = false)
 {
-    if (!$conn) {
+    if (! $conn) {
         $conn = 'default';
     }
     $current_conn = DB::getDefaultConnection();
     if ($current_conn == $conn) {
         return true;
     }
-
 
     $conns = get_db_connections();
     if (in_array($conn, $conns)) {
@@ -863,27 +874,26 @@ function set_db_connection($conn = false)
 
 function schedule_optimize_tables()
 {
-    if(!is_main_instance()){
+    if (! is_main_instance()) {
         return false;
     }
-    
-   
-    $conns = ['telecloud','eldooffice','moviemagic'];
+
+    $conns = ['telecloud', 'eldooffice', 'moviemagic'];
     foreach ($conns as $c) {
-       
+
         $tables = get_tables_from_schema($c);
         foreach ($tables as $t) {
-            \DB::connection($c)->statement("OPTIMIZE TABLE ".$t);
+            \DB::connection($c)->statement('OPTIMIZE TABLE '.$t);
         }
     }
 }
 
 function admin_user_login($user_id, $instance_id = false)
 {
-    if (!$instance_id) {
+    if (! $instance_id) {
         $instance_id = session('instance')->id;
     }
-    if (!$instance_id) {
+    if (! $instance_id) {
         $instance_id = 1;
     }
 
@@ -904,12 +914,13 @@ function admin_user_login($user_id, $instance_id = false)
     }
 }
 
-function schedule_log_slow_queries(){
-    
-    if(is_main_instance()){
-        $rows = \DB::connection('core')->select("SELECT * FROM mysql.slow_log where start_time >= '".date('Y-m-d',strtotime('-1 day'))."%'");
-     
-        foreach($rows as $row){
+function schedule_log_slow_queries()
+{
+
+    if (is_main_instance()) {
+        $rows = \DB::connection('core')->select("SELECT * FROM mysql.slow_log where start_time >= '".date('Y-m-d', strtotime('-1 day'))."%'");
+
+        foreach ($rows as $row) {
             $data = (array) $row;
             \DB::table('erp_slow_queries')->insert($data);
         }

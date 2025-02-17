@@ -2,7 +2,7 @@
 
 function afterdelete_delete_yodlee_account($request)
 {
-    $y = new Yodlee();
+    $y = new Yodlee;
     $user = str_replace('_', '', session('instance')->directory);
     $y->setLoginName($user);
     $result = $y->deleteAccount($request->id);
@@ -18,22 +18,22 @@ function button_yodlee_link_account($request)
 
     $data['accounts'] = [];
     $accounts = $y->getAccounts();
-    if (!empty($accounts) && !empty($accounts->account)) {
+    if (! empty($accounts) && ! empty($accounts->account)) {
         foreach ($accounts->account as $acc) {
             $data['accounts'][] = $acc;
         }
     }
     $data['access_token'] = $y->token->accessToken;
     $data['fastlink_url'] = $y->fastlink_url;
-    
+
     return view('__app.button_views.yodlee_link_account', $data);
 }
 
 function button_yodlee_import_transactions()
 {
-    
+
     return json_alert('Yodlee Not Active');
-    $y = new Yodlee();
+    $y = new Yodlee;
 
     $user = str_replace('_', '', session('instance')->directory);
 
@@ -41,24 +41,24 @@ function button_yodlee_import_transactions()
 
     $accounts = $y->getProviderAccounts();
 
-    if (!empty($accounts->providerAccount) && is_array($accounts->providerAccount)) {
+    if (! empty($accounts->providerAccount) && is_array($accounts->providerAccount)) {
         foreach ($accounts->providerAccount as $account) {
             $result = $y->updateProviderAccounts($account->id);
         }
     }
     //sleep(5);
-   
-    
+
     $y->import(date('Y-m-d', strtotime('-4 days')), date('Y-m-d'));
-   // $y->import('2022-12-17', date('Y-m-d'));
+    // $y->import('2022-12-17', date('Y-m-d'));
 
     allocate_bank_transactions();
+
     return json_alert('Done');
 }
 
 function button_yodlee_view_transactions()
 {
-    $y = new Yodlee();
+    $y = new Yodlee;
     $user = str_replace('_', '', session('instance')->directory);
 
     $y->setLoginName($user);
@@ -69,8 +69,8 @@ function button_yodlee_view_transactions()
     $table .= '</thead>';
     $table .= '<tbody>';
     $transactions = $y->getTransactionsFromDate(date('Y-m-d', strtotime('- 2 months')));
-   
-    if (!empty($transactions) && !empty($transactions->transaction)) {
+
+    if (! empty($transactions) && ! empty($transactions->transaction)) {
         $transactions = $transactions->transaction;
         foreach ($transactions as $trx) {
             $table .= '<tr><td>'.$trx->transactionDate.'</td><td>'.$trx->baseType.'</td><td>'.$trx->description->original.'</td><td>'.$trx->amount->amount.'</td><td>'.$trx->amount->currency.'</td><td>'.$trx->status.'</td><td>'.$trx->runningBalance->currency.'</td></tr>';
@@ -82,7 +82,7 @@ function button_yodlee_view_transactions()
 function button_yodlee_update($request)
 {
     $user = str_replace('_', '', session('instance')->directory);
-    $y = new Yodlee();
+    $y = new Yodlee;
     $y->setLoginName($user);
     $accounts = $y->getProviderAccounts();
     foreach ($accounts->providerAccount as $account) {
@@ -97,8 +97,8 @@ function button_yodlee_update($request)
 
 function schedule_yodlee_import_transactions()
 {
-    if (date("l") != 'Sunday') {
-        $y = new Yodlee();
+    if (date('l') != 'Sunday') {
+        $y = new Yodlee;
 
         $cashbook_bank_ids = \DB::table('acc_cashbook')->where('yodlee_account_id', '>', '')->pluck('id')->toArray();
         $total_transactions = \DB::table('acc_cashbook_transactions')->whereIn('cashbook_id', $cashbook_bank_ids)->count();
@@ -128,48 +128,8 @@ function schedule_yodlee_import_transactions()
     }
 }
 
-function button_yodlee_update_account_data($request){
-    $y = new Yodlee('production');
-    $user = str_replace('_', '', session('instance')->db_connection);
-
-    $y->setLoginName($user);
-    $provider_accounts = $y->getProviderAccounts();
-
-    $accounts = $y->getAccounts();
-    if(!empty($accounts) && !empty($accounts->account)){
-    foreach ($accounts->account as $account) {
-        $data = [
-            'id' => $account->id,
-            'provider_account_id' => $account->providerAccountId,
-            'account_name' => $account->accountName,
-            'account_status' => $account->accountStatus,
-            'account_number' => $account->accountNumber,
-            'provider_id' => $account->providerId,
-            'provider_name' => $account->providerName,
-            'created_date' => date('Y-m-d H:i', strtotime($account->createdDate)),
-            'additional_status' => $account->dataset[0]->additionalStatus,
-            'update_eligibility' => $account->dataset[0]->updateEligibility,
-            'last_updated' => date('Y-m-d H:i', strtotime($account->dataset[0]->lastUpdated)),
-            'last_update_attempt' => date('Y-m-d H:i', strtotime($account->dataset[0]->lastUpdateAttempt)),
-            'next_update_scheduled' => date('Y-m-d H:i', strtotime($account->dataset[0]->nextUpdateScheduled)),
-            'currency' => $account->currentBalance->currency,
-        ];
-        \DB::table('acc_yodlee_accounts')->updateOrInsert(['id'=>$account->id], $data);
-    }
-    }
-    return json_alert('Done');
-}
-
-
-function schedule_yodlee_update_accounts()
+function button_yodlee_update_account_data($request)
 {
-    $yodlee_status = '';
-    
-    $yodlee_count = \DB::table('acc_cashbook')->where('status','Enabled')->where('yodlee_account_id','>','')->count();
-    if(!$yodlee_count){
-    //return true;    
-    }
-
     $y = new Yodlee('production');
     $user = str_replace('_', '', session('instance')->db_connection);
 
@@ -177,8 +137,7 @@ function schedule_yodlee_update_accounts()
     $provider_accounts = $y->getProviderAccounts();
 
     $accounts = $y->getAccounts();
-   
-    if(!empty($accounts) && !empty($accounts->account)){
+    if (! empty($accounts) && ! empty($accounts->account)) {
         foreach ($accounts->account as $account) {
             $data = [
                 'id' => $account->id,
@@ -196,14 +155,55 @@ function schedule_yodlee_update_accounts()
                 'next_update_scheduled' => date('Y-m-d H:i', strtotime($account->dataset[0]->nextUpdateScheduled)),
                 'currency' => $account->currentBalance->currency,
             ];
-           
-            \DB::table('acc_yodlee_accounts')->updateOrInsert(['id'=>$account->id], $data);
-            
+            \DB::table('acc_yodlee_accounts')->updateOrInsert(['id' => $account->id], $data);
         }
     }
 
+    return json_alert('Done');
+}
 
-    if (!empty($provider_accounts) && !empty($provider_accounts->providerAccount)) {
+function schedule_yodlee_update_accounts()
+{
+    $yodlee_status = '';
+
+    $yodlee_count = \DB::table('acc_cashbook')->where('status', 'Enabled')->where('yodlee_account_id', '>', '')->count();
+    if (! $yodlee_count) {
+        //return true;
+    }
+
+    $y = new Yodlee('production');
+    $user = str_replace('_', '', session('instance')->db_connection);
+
+    $y->setLoginName($user);
+    $provider_accounts = $y->getProviderAccounts();
+
+    $accounts = $y->getAccounts();
+
+    if (! empty($accounts) && ! empty($accounts->account)) {
+        foreach ($accounts->account as $account) {
+            $data = [
+                'id' => $account->id,
+                'provider_account_id' => $account->providerAccountId,
+                'account_name' => $account->accountName,
+                'account_status' => $account->accountStatus,
+                'account_number' => $account->accountNumber,
+                'provider_id' => $account->providerId,
+                'provider_name' => $account->providerName,
+                'created_date' => date('Y-m-d H:i', strtotime($account->createdDate)),
+                'additional_status' => $account->dataset[0]->additionalStatus,
+                'update_eligibility' => $account->dataset[0]->updateEligibility,
+                'last_updated' => date('Y-m-d H:i', strtotime($account->dataset[0]->lastUpdated)),
+                'last_update_attempt' => date('Y-m-d H:i', strtotime($account->dataset[0]->lastUpdateAttempt)),
+                'next_update_scheduled' => date('Y-m-d H:i', strtotime($account->dataset[0]->nextUpdateScheduled)),
+                'currency' => $account->currentBalance->currency,
+            ];
+
+            \DB::table('acc_yodlee_accounts')->updateOrInsert(['id' => $account->id], $data);
+
+        }
+    }
+
+    if (! empty($provider_accounts) && ! empty($provider_accounts->providerAccount)) {
         foreach ($provider_accounts->providerAccount as $provider_account) {
             $last_updated = date('Y-m-d', strtotime($provider_account->dataset[0]->lastUpdated));
 
@@ -223,7 +223,6 @@ function schedule_yodlee_update_accounts()
         }
     }
 
-
     if ($yodlee_status > '') {
         $data = [
             'yodlee_status' => $yodlee_status,
@@ -232,11 +231,9 @@ function schedule_yodlee_update_accounts()
         erp_process_notification(1, $data);
     }
 
-
-
-    if (date("l") != 'Sunday') {
+    if (date('l') != 'Sunday') {
         $accounts = $y->getProviderAccounts();
-        if (!empty($accounts->providerAccount)) {
+        if (! empty($accounts->providerAccount)) {
             foreach ($accounts->providerAccount as $account) {
                 if (date('Y-m-d') > date('Y-m-d', strtotime($account->dataset[0]->nextUpdateScheduled))) {
                     $y->updateProviderAccounts($account->id);

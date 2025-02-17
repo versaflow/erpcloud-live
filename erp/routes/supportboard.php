@@ -1,60 +1,61 @@
 <?php
 
-Route::get('support',function(){
-   
+Route::get('support', function () {
+
     $data['menu_name'] = 'Helpdesk';
     $data['module_id'] = 500;
     $data['is_supportboard'] = 1;
-    
+
     $user_id = session('user_id');
     //if($user_id == 3696){
     //    $user_id = 1;
     //}
-    $user = \DB::table('erp_users')->where('id',$user_id)->where('is_deleted',0)->get()->first();
-   
-    if($user && !empty($user->webmail_email) && !empty($user->webmail_password)){
+    $user = \DB::table('erp_users')->where('id', $user_id)->where('is_deleted', 0)->get()->first();
+
+    if ($user && ! empty($user->webmail_email) && ! empty($user->webmail_password)) {
         $data['email'] = $user->webmail_email;
         $data['password'] = $user->webmail_password;
     }
-   //dd($data);
-    return view('integrations.supportboard',$data);
+
+    //dd($data);
+    return view('integrations.supportboard', $data);
 })->middleware('globalviewdata');
 
-Route::get('supportboard_view',function(){
+Route::get('supportboard_view', function () {
     $data = supportboard_view_data();
     $data['menu_name'] = 'Support Board';
     $data['module_id'] = 500;
     //$data['grid_id'] = 1;
-    
-    return view('integrations.supportboard_view',$data);
+
+    return view('integrations.supportboard_view', $data);
 })->middleware('globalviewdata');
 
-Route::get('supportboard_view_data',function(){
+Route::get('supportboard_view_data', function () {
     return supportboard_view_data_ajax(request()->all());
 });
 
-Route::get('supportboard_email_piping',function(){
-   
-    require('/home/teleclou/helpdesk.telecloud.co.za/html/include/functions.php');
+Route::get('supportboard_email_piping', function () {
+
+    require '/home/teleclou/helpdesk.telecloud.co.za/html/include/functions.php';
     sb_email_piping(true);
 });
 
-Route::get('supportboard_send_reply/{id?}',function($conversation_id){
-    return view('integrations.supportboard_message',['conversation_id' => $conversation_id]);
+Route::get('supportboard_send_reply/{id?}', function ($conversation_id) {
+    return view('integrations.supportboard_message', ['conversation_id' => $conversation_id]);
 });
 
-Route::post('supportboard_send_reply',function(){
+Route::post('supportboard_send_reply', function () {
     /*SB PHP API*/
-    try{
-        require('/home/teleclou/helpdesk.telecloud.co.za/html/include/functions.php');
+    try {
+        require '/home/teleclou/helpdesk.telecloud.co.za/html/include/functions.php';
         $conversation_id = request('conversation_id');
         $message = request('message');
-        if(empty($conversation_id)){
-            return json_alert('Conversation id required.','warning');
+        if (empty($conversation_id)) {
+            return json_alert('Conversation id required.', 'warning');
         }
-        
-        if(empty($message)){
-            return json_alert('Message required.','warning');
+
+        if (empty($message)) {
+            return json_alert('Message required.', 'warning');
         }
         /*
         sender_id Required	The ID of the user who sends the message.
@@ -66,19 +67,19 @@ Route::post('supportboard_send_reply',function(){
         queue	Set it to true if the queue is active in Settings > Miscellaneous > Queue. Default: false.
         recipient_id	The ID of the user who receive the message. Use this attribute to get the user language.
         */
-        $erp_user_email = \DB::connection('default')->table('erp_users')->where('id',session('user_id'))->pluck('email')->first();
-        $sb_user_id = \DB::connection('supportboard')->table('sb_users')->where('email',$erp_user_email)->whereIn('user_type',['agent','admin'])->pluck('id')->first();
-        if(!$sb_user_id){
-            return json_alert('Agent user id not found','warning');
+        $erp_user_email = \DB::connection('default')->table('erp_users')->where('id', session('user_id'))->pluck('email')->first();
+        $sb_user_id = \DB::connection('supportboard')->table('sb_users')->where('email', $erp_user_email)->whereIn('user_type', ['agent', 'admin'])->pluck('id')->first();
+        if (! $sb_user_id) {
+            return json_alert('Agent user id not found', 'warning');
         }
-        
+
         $conversation = \DB::connection('supportboard')->table('sb_conversations')->where('id', $conversation_id)->get()->first();
-        
-        if(empty($conversation->user_id)){
-            return json_alert('User id required.','warning');
+
+        if (empty($conversation->user_id)) {
+            return json_alert('User id required.', 'warning');
         }
         $user_id = $sb_user_id;
-       
+
         $attachments = [];
         $conversation_status = 1;
         $payload = [];
@@ -86,25 +87,24 @@ Route::post('supportboard_send_reply',function(){
         $recipient_id = $conversation->user_id;
         // aa(request()->all());
         // aa(request('attachments'));
-        if(!empty(request('attachments'))){
+        if (! empty(request('attachments'))) {
             $destinationPath = public_path('supportboard');
             $destinationUrl = url('supportboard');
-            foreach(request('attachments') as $file){
+            foreach (request('attachments') as $file) {
                 $filename = $file->getClientOriginalName();
-               
+
                 $filename = $conversation_id.str_replace([' ', ','], '_', $filename);
                 $uploadSuccess = $file->move($destinationPath, $filename);
-                $attachments[] = [$filename,$destinationUrl.'/'.$filename];
+                $attachments[] = [$filename, $destinationUrl.'/'.$filename];
             }
         }
-        
-        
-      
+
         $response = sb_send_message($user_id, $conversation_id, $message, $attachments, $conversation_status, $payload, $queue, $recipient_id);
         // aa($response);
         // return json_alert('Message sent');
-    }catch(\Throwable $ex){
+    } catch (\Throwable $ex) {
         exception_log($ex->getMessage());
-        return json_alert('Message could not be sent, please contact admin.','warning');
+
+        return json_alert('Message could not be sent, please contact admin.', 'warning');
     }
 });

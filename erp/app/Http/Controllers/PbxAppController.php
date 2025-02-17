@@ -11,8 +11,11 @@ use Illuminate\Routing\Controller as BaseController;
 class PbxAppController extends BaseController
 {
     protected $request; // request as an attribute of the controllers
+
     protected $token;
+
     protected $account;
+
     protected $debug_numbers;
 
     public function __construct(Request $request)
@@ -23,21 +26,21 @@ class PbxAppController extends BaseController
         // LOG INCOMMING Reques
 
         $this->middleware(function ($request, $next) {
-            if ('App\\Http\\Controllers\\Api\\ErpApiController@documentation' != \Route::getCurrentRoute()->getActionName()) {
+            if (\Route::getCurrentRoute()->getActionName() != 'App\\Http\\Controllers\\Api\\ErpApiController@documentation') {
                 $appkeys = ['$2y$10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O'];
-                if (empty($request->key) || !in_array($request->key, $appkeys)) {
+                if (empty($request->key) || ! in_array($request->key, $appkeys)) {
                     return api_error('Invalid API Key');
                 }
 
                 $currentRoute = \Route::getCurrentRoute()->getActionName();
 
-                if ('App\\Http\\Controllers\\PbxAppController@postSignInExtension' != \Route::getCurrentRoute()->getActionName()
-                && 'App\\Http\\Controllers\\Api\\PbxAppController@getLogin' != \Route::getCurrentRoute()->getActionName()
-                && 'App\\Http\\Controllers\\PbxAppController@postSignup' != \Route::getCurrentRoute()->getActionName()
-                && 'App\\Http\\Controllers\\PbxAppController@postFeedback' != \Route::getCurrentRoute()->getActionName()
-                && 'App\\Http\\Controllers\\PbxAppController@postSMSToken' != \Route::getCurrentRoute()->getActionName()) {
+                if (\Route::getCurrentRoute()->getActionName() != 'App\\Http\\Controllers\\PbxAppController@postSignInExtension'
+                && \Route::getCurrentRoute()->getActionName() != 'App\\Http\\Controllers\\Api\\PbxAppController@getLogin'
+                && \Route::getCurrentRoute()->getActionName() != 'App\\Http\\Controllers\\PbxAppController@postSignup'
+                && \Route::getCurrentRoute()->getActionName() != 'App\\Http\\Controllers\\PbxAppController@postFeedback'
+                && \Route::getCurrentRoute()->getActionName() != 'App\\Http\\Controllers\\PbxAppController@postSMSToken') {
                     $validation = $this->validateToken();
-                    if (true !== $validation) {
+                    if ($validation !== true) {
                         return api_error($validation);
                     }
 
@@ -316,7 +319,7 @@ class PbxAppController extends BaseController
         try {
             $extension = \DB::connection('pbx')->table('v_extensions')->where('mobile_app_number', $number)->get()->first();
             $account_id = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $extension->domain_uuid)->pluck('account_id')->first();
-            if (!$extension->mobile_app_number) {
+            if (! $extension->mobile_app_number) {
                 return api_error('Phone number not found. Already have an account? Call us to link your number to your account.');
             }
             $this->setManagerExtension($extension);
@@ -653,8 +656,11 @@ class PbxAppController extends BaseController
     {
         /**
          * @api {post} api/postsignup postSignup
+         *
          * @apiVersion 1.0.0
+         *
          * @apiName postSignup
+         *
          * @apiGroup Auth
          *
          * @apiParam {String} key appkey
@@ -663,7 +669,9 @@ class PbxAppController extends BaseController
          * @apiParam {String} email (required)
          * @apiParam {String} company (optional)
          * @apiParam {String} reseller_code (optional)
+         *
          * @apiSampleRequest http://cloudtools.versaflow.io/api/postsignup
+         *
          * @apiSuccess (HTTP 200) {String} message
          *
          * @apiSuccessExample Success-Response:
@@ -682,6 +690,7 @@ class PbxAppController extends BaseController
          *       "status": "FAILURE",
          *       "message": "Name required."
          *     }
+         *
          * @apiError (HTTP 400) FieldRequired
          *
          * @apiErrorExample Error-Response:
@@ -735,6 +744,7 @@ class PbxAppController extends BaseController
          *       "status": "FAILURE",
          *       "message": "Account could not be created."
          *     }
+         *
          * @apiError (HTTP 500) Exception-Response
          *
          * @apiErrorExample Exception-Response:
@@ -772,7 +782,7 @@ class PbxAppController extends BaseController
          *     }
          */
         $test_numbers = ['0743141193'];
-        if (!empty($this->request->mobile_number)) {
+        if (! empty($this->request->mobile_number)) {
             try {
                 $phone = $this->request->mobile_number;
 
@@ -790,7 +800,7 @@ class PbxAppController extends BaseController
             } catch (\Throwable $ex) {
                 exception_log($ex);
                 $post_arr = (array) $this->request->all();
-                if (!str_contains($ex->getMessage(), 'Number does not match the provided countries')) {
+                if (! str_contains($ex->getMessage(), 'Number does not match the provided countries')) {
                     exception_email($ex, 'API error token phone number '.date('Y-m-d H:i'), $post_arr);
                 }
 
@@ -842,17 +852,17 @@ class PbxAppController extends BaseController
             // ];
 
             $insert_data = [
-            'created_at' => date('Y-m-d H:i:s'),
-            'mobile_number' => $post_data->mobile_number,
-            'code' => $verification_code,
-            'verified' => 0,
-            'api_token' => $token,
-            'signup_data' => json_encode($post_data),
-        ];
+                'created_at' => date('Y-m-d H:i:s'),
+                'mobile_number' => $post_data->mobile_number,
+                'code' => $verification_code,
+                'verified' => 0,
+                'api_token' => $token,
+                'signup_data' => json_encode($post_data),
+            ];
 
             \DB::connection('pbx')->table('p_app_verification')->insert($insert_data);
 
-            if (!in_array($post_data->mobile_number, $this->debug_numbers)) {
+            if (! in_array($post_data->mobile_number, $this->debug_numbers)) {
                 $result = queue_sms(12, $post_data->mobile_number, 'Unlimited Mobile Verification Code - '.$verification_code, 1, 1);
             }
 
@@ -907,7 +917,7 @@ class PbxAppController extends BaseController
 
         try {
             $id = $this->account->id;
-            if (!$id) {
+            if (! $id) {
                 return api_error('Account id not set.');
             }
             if ($id == 12) {
@@ -925,7 +935,7 @@ class PbxAppController extends BaseController
             }
             $account = dbgetaccount($id);
             if ($account->partner_id == 1) {
-                (new \DBEvent())->setAccountAging($id);
+                (new \DBEvent)->setAccountAging($id);
             }
             \DB::connection('pbx')->table('v_extensions')->where('extension_uuid', $this->extension->extension_uuid)->update(['mobile_app_number' => null]);
 
@@ -1011,7 +1021,7 @@ class PbxAppController extends BaseController
                 return api_error('Account already deleted.');
             }
             $cancelled = \DB::table('crm_accounts')->where(['id' => $id, 'account_status' => 'Cancelled'])->count();
-            if (!$cancelled) {
+            if (! $cancelled) {
                 return api_error('Cancellation stopped.');
             }
             $cancelled = \DB::table('crm_accounts')->where('id', $id)->where('status', '!=', 'Deleted')->where('account_status', 'Cancelled')->count();
@@ -1130,7 +1140,7 @@ class PbxAppController extends BaseController
             }
             \DB::connection('pbx')->table('v_extensions')->where('id', $extension->id)->update(['verification_code' => $verification_code]);
 
-            if (!in_array($post_data->mobile_app_number, $this->debug_numbers)) {
+            if (! in_array($post_data->mobile_app_number, $this->debug_numbers)) {
                 if ($hashkey == '') {
                     $result = queue_sms(12, $extension->mobile_app_number, 'Unlimited Mobile Verification Code: '.$verification_code, 1, 1);
                 } else {
@@ -1156,12 +1166,12 @@ class PbxAppController extends BaseController
             $token = $signup_data->api_token;
 
             $company = $post_data->name;
-            if (!empty($post_data->company)) {
+            if (! empty($post_data->company)) {
                 $company = $post_data->company;
             }
 
-            $account = new \stdClass();
-            if (!empty($post_data->reseller_code)) {
+            $account = new \stdClass;
+            if (! empty($post_data->reseller_code)) {
                 $account->partner_id = \DB::table('crm_account_partner_settings')
                     ->where('afriphone_signup_code', $post_data->reseller_code)
                     ->pluck('account_id')
@@ -1177,18 +1187,18 @@ class PbxAppController extends BaseController
             $account->notification_type = 'sms';
             $account->lead_score = 'Hot';
 
-            if (!empty($post_data->mobile_number)) {
+            if (! empty($post_data->mobile_number)) {
                 $account->phone = $post_data->mobile_number;
             }
 
-            if (!empty($post_data->email)) {
+            if (! empty($post_data->email)) {
                 $account->notification_type = 'email';
                 $account->email = $post_data->email;
             }
 
             $account_id = create_customer($account, 'customer');
 
-            if (!$account_id) {
+            if (! $account_id) {
                 return api_abort('Account could not be created');
             }
 
@@ -1198,7 +1208,7 @@ class PbxAppController extends BaseController
                 ->where('id', $verification_id)
                 ->update(['domain_name' => $pbx_domain]);
 
-            if (!$pbx_domain) {
+            if (! $pbx_domain) {
                 return api_abort('PBX add failed. DNS create failed');
             }
 
@@ -1213,7 +1223,7 @@ class PbxAppController extends BaseController
 
             $extension = provision_pbx_extension_default($account);
 
-            if (!$extension) {
+            if (! $extension) {
                 return api_abort('Extension could not be created');
             }
 
@@ -1411,24 +1421,24 @@ class PbxAppController extends BaseController
             $extensions = \DB::connection('pbx')->table('v_extensions')->where('domain_uuid', $domain_uuid)->orderby('extension')->get();
             foreach ($extensions as $ext) {
                 $routing_options[] = ['extension' => $ext->extension, 'label' => 'Extension - '.$ext->extension];
-                ++$i;
+                $i++;
             }
             $ring_groups = \DB::connection('pbx')->table('v_ring_groups')->where('domain_uuid', $domain_uuid)->orderby('ring_group_extension')->get();
             foreach ($ring_groups as $ext) {
                 $routing_options[] = ['extension' => $ext->ring_group_extension, 'label' => 'Ring Group - '.$ext->ring_group_name.' '.$ext->ring_group_extension];
-                ++$i;
+                $i++;
             }
 
             $ivr_menus = \DB::connection('pbx')->table('v_ivr_menus')->where('domain_uuid', $domain_uuid)->orderby('ivr_menu_extension')->get();
             foreach ($ivr_menus as $ext) {
                 $routing_options[] = ['extension' => $ext->ivr_menu_extension, 'label' => 'IVR Menu - '.$ext->ivr_menu_name.' '.$ext->ivr_menu_extension];
-                ++$i;
+                $i++;
             }
 
             $ivr_menus = \DB::connection('pbx')->table('v_dialplans')->where('domain_uuid', $domain_uuid)->where('app_uuid', '4b821450-926b-175a-af93-a03c441818b1')->orderby('dialplan_number')->get();
             foreach ($ivr_menus as $ext) {
                 $routing_options[] = ['extension' => $ext->dialplan_number, 'label' => 'Time Condition - '.$ext->dialplan_name.' '.$ext->dialplan_number];
-                ++$i;
+                $i++;
             }
 
             return api_success('Routing options retrieved', ['routing_options' => $routing_options]);
@@ -1518,7 +1528,7 @@ class PbxAppController extends BaseController
                 ->where('domain_uuid', $domain_uuid)
                 ->count();
 
-            if (!$updated) {
+            if (! $updated) {
                 return api_error('Number routing update failed');
             }
 
@@ -1652,7 +1662,7 @@ class PbxAppController extends BaseController
             $domain_uuid = $this->extension->domain_uuid;
             $post_data = (object) $this->request->all();
 
-            if (!empty($post_data->enable_premium_routes)) {
+            if (! empty($post_data->enable_premium_routes)) {
                 \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $domain_uuid)->update(['enable_premium_routes' => 1]);
             } else {
                 \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $domain_uuid)->update(['enable_premium_routes' => 0]);
@@ -1729,10 +1739,10 @@ class PbxAppController extends BaseController
             $post_data = (object) $this->request->all();
             $phone_numbers = $this->getSubscribedPhoneNumbers();
 
-            $extension_to_update = (!empty($post_data->number_routing)) ? $post_data->number_routing : $this->extension->id;
+            $extension_to_update = (! empty($post_data->number_routing)) ? $post_data->number_routing : $this->extension->id;
 
             $valid_caller_id = false;
-            if (!in_array($post_data->caller_id, $phone_numbers)) {
+            if (! in_array($post_data->caller_id, $phone_numbers)) {
                 return api_error('Invalid Caller ID');
             }
 
@@ -1755,7 +1765,7 @@ class PbxAppController extends BaseController
 
                 $result = $erp->save($data);
 
-                if (!is_array($result) || empty($result['id'])) {
+                if (! is_array($result) || empty($result['id'])) {
                     $caller_id_save_error = true;
                 }
             }
@@ -1869,7 +1879,7 @@ class PbxAppController extends BaseController
                 }
                 $result = $erp->save($data);
 
-                if (!is_array($result) || empty($result['id'])) {
+                if (! is_array($result) || empty($result['id'])) {
                     $call_forward_save_error = true;
                 }
             }
@@ -1895,7 +1905,7 @@ class PbxAppController extends BaseController
         $numbers = \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid', $this->account->domain_uuid)->pluck('number')->toArray();
         $options = [];
 
-        if (!empty($numbers) && count($numbers) > 0) {
+        if (! empty($numbers) && count($numbers) > 0) {
             foreach ($numbers as $n) {
                 $options[] = $n;
             }
@@ -1909,12 +1919,16 @@ class PbxAppController extends BaseController
         // return view('__app.test.voipshop');
         /**
          * @api {get} api/getorder getOrder
+         *
          * @apiVersion 1.0.0
+         *
          * @apiName getOrder
+         *
          * @apiGroup Webviews
          *
          * @apiParam {String} key appkey
          * @apiParam {String} api_token
+         *
          * @apiSampleRequest https://cloudtools.versaflow.io/api/getorder?api_token=$2y$10$SOskLOcs1hc0ts8/ofTjN.FE.546h2opocBD085Zc0ltjqDrFdlfG&key=$2y$10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O
          *
          * @apiUse TokenRequiredError
@@ -1956,7 +1970,7 @@ class PbxAppController extends BaseController
         $product = \DB::connection('default')->table('crm_products')->where('id', $this->request->product_id)->get()->first();
 
         $provision_type = \DB::table('sub_activation_types')->where('id', $product->provision_plan_id)->pluck('name')->first();
-        if (!empty($this->request->mobile_app_number)) {
+        if (! empty($this->request->mobile_app_number)) {
             $check = check_mobile_app_number_extension($this->request->mobile_app_number);
             if ($check > '') {
                 return json_alert($check, 'warning');
@@ -1973,9 +1987,9 @@ class PbxAppController extends BaseController
             return json_alert('Select a phone number', 'warning');
         }
 
-        if (!empty($this->request->phone_number_port)) {
+        if (! empty($this->request->phone_number_port)) {
             $invoice_result = $this->createInvoice($this->request->product_id, $this->request->qty, false, $this->request->phone_number_port);
-        } elseif (!empty($this->request->phone_number)) {
+        } elseif (! empty($this->request->phone_number)) {
             $invoice_result = $this->createInvoice($this->request->product_id, $this->request->qty, $this->request->phone_number);
         } else {
             $invoice_result = $this->createInvoice($this->request->product_id, $this->request->qty);
@@ -1992,12 +2006,16 @@ class PbxAppController extends BaseController
     {
         /**
          * @api {get} api/gethelpdesk getHelpdesk
+         *
          * @apiVersion 1.0.0
+         *
          * @apiName getHelpdesk
+         *
          * @apiGroup Webviews
          *
          * @apiParam {String} key appkey
          * @apiParam {String} api_token
+         *
          * @apiSampleRequest http://cloudtools.versaflow.io/api/gethelpdesk?api_token=$2y$10$NfqNMruT8Az1ezzVYcW5TeV28p7XvBp0A7BH/GD1mbXKDoS9lCli6&key=$2y$10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O
          *
          * @apiUse TokenRequiredError
@@ -2028,12 +2046,16 @@ class PbxAppController extends BaseController
     {
         /**
          * @api {get} api/gethelpdesk getHelpdesk
+         *
          * @apiVersion 1.0.0
+         *
          * @apiName getHelpdesk
+         *
          * @apiGroup Webviews
          *
          * @apiParam {String} key appkey
          * @apiParam {String} api_token
+         *
          * @apiSampleRequest http://cloudtools.versaflow.io/api/gethelpdesk?api_token=$2y$10$NfqNMruT8Az1ezzVYcW5TeV28p7XvBp0A7BH/GD1mbXKDoS9lCli6&key=$2y$10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O
          *
          * @apiUse TokenRequiredError
@@ -2058,6 +2080,7 @@ class PbxAppController extends BaseController
         }
 
         $data['articles'] = $articles;
+
         //return response()->json($data);
         return view('_api.helpdesk', $data);
     }
@@ -2144,21 +2167,23 @@ class PbxAppController extends BaseController
         }
     }
 
-    public function getDashboard()
-    {
-    }
+    public function getDashboard() {}
 
     public function getRates()
     {
         // return view('__app.test.voiprates');
         /**
          * @api {get} api/getrates getRates
+         *
          * @apiVersion 1.0.0
+         *
          * @apiName getRates
+         *
          * @apiGroup Webviews
          *
          * @apiParam {String} key appkey
          * @apiParam {String} api_token
+         *
          * @apiSampleRequest https://cloudtools.versaflow.io/api/getrates?api_token=$2y$10$lqmYL8H3cOz2InHe1ZWDGOpLh7z0aCn.a6vSSqnkTKVZ/tGb0G8q.&key=$2y$10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O
          *
          * @apiUse TokenRequiredError
@@ -2206,7 +2231,7 @@ class PbxAppController extends BaseController
             ->get();
         $table = '<table class="table">';
         $table .= '<thead><th>Dial Code</th><th>Country</th><th>Network</th><th class="text-right">Cost per minute</th></thead><tbody>';
-        if (!empty($rates)) {
+        if (! empty($rates)) {
             foreach ($rates as $rate) {
                 $table .= '<tr><td>'.$rate->destination_id.'</td><td>'.$rate->country.'</td><td>'.$rate->destination.'</td><td class="text-right">'.currency($rate->retail_rate_zar).'</td></tr>';
             }
@@ -2219,12 +2244,16 @@ class PbxAppController extends BaseController
     {
         /**
          * @api {get} api/getcdr getCdr
+         *
          * @apiVersion 1.0.0
+         *
          * @apiName getCdr
+         *
          * @apiGroup Webviews
          *
          * @apiParam {String} key appkey
          * @apiParam {String} api_token
+         *
          * @apiSampleRequest http://cloudtools.versaflow.io/api/getcdr?api_token=$2y$10$NfqNMruT8Az1ezzVYcW5TeV28p7XvBp0A7BH/GD1mbXKDoS9lCli6&key=$2y$10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O
          *
          * @apiUse TokenRequiredError
@@ -2247,12 +2276,16 @@ class PbxAppController extends BaseController
     {
         /**
          * @api {get} api/getsubscriptions getSubscriptions
+         *
          * @apiVersion 1.0.0
+         *
          * @apiName getSubscriptions
+         *
          * @apiGroup Webviews
          *
          * @apiParam {String} key appkey
          * @apiParam {String} api_token
+         *
          * @apiSampleRequest http://cloudtools.versaflow.io/api/getsubscriptions?api_token=$2y$10$NfqNMruT8Az1ezzVYcW5TeV28p7XvBp0A7BH/GD1mbXKDoS9lCli6&key=$2y$10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O
          *
          * @apiUse TokenRequiredError
@@ -2282,12 +2315,16 @@ class PbxAppController extends BaseController
     {
         /**
          * @api {get} api/getstatement getStatement
+         *
          * @apiVersion 1.0.0
+         *
          * @apiName getStatement
+         *
          * @apiGroup Webviews
          *
          * @apiParam {String} key appkey
          * @apiParam {String} api_token
+         *
          * @apiSampleRequest http://cloudtools.versaflow.io/api/getstatement?api_token=$2y$10$NfqNMruT8Az1ezzVYcW5TeV28p7XvBp0A7BH/GD1mbXKDoS9lCli6&key=$2y$10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O
          *
          * @apiUse TokenRequiredError
@@ -2374,10 +2411,10 @@ class PbxAppController extends BaseController
             foreach ($extensions as $extension) {
                 $registered = 'false';
                 $ping_status = 'false';
-                if (!empty($extension->ping_status) && $extension->ping_status == 'Reachable') {
+                if (! empty($extension->ping_status) && $extension->ping_status == 'Reachable') {
                     $ping_status = 'true';
                 }
-                if (!empty($extension->status) && str_contains($extension->status, 'Registered')) {
+                if (! empty($extension->status) && str_contains($extension->status, 'Registered')) {
                     $registered = 'true';
                 }
 
@@ -2463,7 +2500,7 @@ class PbxAppController extends BaseController
             $password = $this->extension->password;
             $server = $this->extension->accountcode;
             $voicemail_forward = 0;
-            if (!$this->extension->forward_busy_enabled != 'true' && $this->extension->forward_no_answer_enabled != 'true' && $this->extension->forward_all_enabled != 'true') {
+            if (! $this->extension->forward_busy_enabled != 'true' && $this->extension->forward_no_answer_enabled != 'true' && $this->extension->forward_all_enabled != 'true') {
                 $voicemail_forward = 1;
             }
             $data = ['extension' => (object) [
@@ -2574,7 +2611,7 @@ class PbxAppController extends BaseController
                 ->where('domain_uuid', $this->account->domain_uuid)
                 ->where('extension', $post_data->extension)
                 ->count();
-            if (!$exists) {
+            if (! $exists) {
                 return api_error('Extension does not exists');
             }
             \DB::connection('pbx')->table('v_extensions')
@@ -2584,6 +2621,7 @@ class PbxAppController extends BaseController
             $extension = \DB::connection('pbx')->table('v_extensions')
                 ->where('domain_uuid', $this->account->domain_uuid)
                 ->where('extension', $post_data->extension)->get()->first();
+
             // set_recording_subscription($extension);
             return api_success('Recording updated.');
         } catch (\Throwable $ex) {
@@ -2767,7 +2805,7 @@ class PbxAppController extends BaseController
             $balance = \DB::connection('default')->table('sub_services')->where('status', '!=', 'Deleted')
                 ->where('account_id', $this->account->id)->where('provision_type', 'airtime_contract')->get()->first();
 
-            if (!$balance) {
+            if (! $balance) {
                 $balance = 0;
             } else {
                 $balance = currency($balance->current_usage);
@@ -2902,7 +2940,7 @@ class PbxAppController extends BaseController
         * @apiUse AccountStatusDeletedError
         */
         try {
-            if (!empty($this->request->type) && $this->request->type == 'ios') {
+            if (! empty($this->request->type) && $this->request->type == 'ios') {
                 return 'ios link';
             }
 
@@ -3010,7 +3048,7 @@ class PbxAppController extends BaseController
         */
         try {
             $post_data = (object) $this->request->all();
-            for ($i = 1; $i < 6; ++$i) {
+            for ($i = 1; $i < 6; $i++) {
                 if (empty($post_data->{'referral_'.$i})) {
                     return api_error('All referral numbers required');
                 }
@@ -3018,7 +3056,7 @@ class PbxAppController extends BaseController
 
             $invalid_numbers = [];
             $formatted_numbers = [];
-            for ($i = 1; $i < 6; ++$i) {
+            for ($i = 1; $i < 6; $i++) {
                 try {
                     $phone = $post_data->{'referral_'.$i};
                     $number = phone($phone, ['ZA', 'US', 'Auto']);
@@ -3064,7 +3102,7 @@ class PbxAppController extends BaseController
             if ($formatted_numbers_count != $unique_numbers_count) {
                 $duplicate_numbers = [];
                 foreach ($formatted_numbers as $n) {
-                    if (!in_array($n, $unique_numbers)) {
+                    if (! in_array($n, $unique_numbers)) {
                         $duplicate_numbers[] = $n;
                     }
                 }
@@ -3336,7 +3374,7 @@ class PbxAppController extends BaseController
 
     private function createInvoice($product_id, $qty, $phone_number = false, $port_number = false)
     {
-        $db = new \DBEvent();
+        $db = new \DBEvent;
         $account_id = $this->account->id;
 
         if (str_starts_with($product_id, '437')) {
@@ -3378,20 +3416,20 @@ class PbxAppController extends BaseController
 
         $result = $db->setProperties(['validate_document' => 1])->setTable('crm_documents')->save($data);
 
-        if (!is_array($result) || empty($result['id'])) {
+        if (! is_array($result) || empty($result['id'])) {
             return $result;
         }
 
         $invoice_id = $result['id'];
         if ($phone_number) {
-            $erp_subscription = new \ErpSubs();
+            $erp_subscription = new \ErpSubs;
             $erp_subscription->createSubscription($account_id, $product_id, $phone_number, $invoice_id);
             pbx_add_number($account->pabx_domain, $phone_number, 101);
             update_caller_id($account->domain_uuid);
             \DB::connection('default')->table('sub_activations')->where('invoice_id', $invoice_id)->update(['status' => 'Enabled']);
         }
 
-        if (!empty($this->request->mobile_app_number) && $provision_type == 'pbx_extension') {
+        if (! empty($this->request->mobile_app_number) && $provision_type == 'pbx_extension') {
             $number = phone($this->request->mobile_app_number, ['ZA', 'US', 'Auto']);
             $formatted_number = $number->formatForMobileDialingInCountry('ZA');
 
@@ -3400,14 +3438,14 @@ class PbxAppController extends BaseController
 
             update_caller_id($customer->domain_uuid);
             $ext = \DB::connection('pbx')->table('v_extensions')->where('extension', $extension_info['extension'])->where('domain_uuid', $customer->domain_uuid)->get()->first();
-            if (!empty($this->request->mobile_app_number)) {
+            if (! empty($this->request->mobile_app_number)) {
                 set_mobile_app_number_extension($customer->id, $formatted_number, $extension_info['extension']);
             }
 
             aftersave_extensions($ext);
             schedule_update_extension_count();
 
-            $erp_subscription = new \ErpSubs();
+            $erp_subscription = new \ErpSubs;
             $erp_subscription->createSubscription($account_id, $product_id, $extension_info['extension'], $invoice_id);
             \DB::connection('default')->table('sub_activations')->where('invoice_id', $invoice_id)->update(['status' => 'Enabled']);
 
@@ -3424,15 +3462,15 @@ class PbxAppController extends BaseController
             return 'Account does not exists, create a new account';
         }
 
-        if (!in_array($account->type, ['reseller_user', 'customer'])) {
+        if (! in_array($account->type, ['reseller_user', 'customer'])) {
             return 'Invalid account type';
         }
 
-        if (!str_contains($account->pabx_domain, 'cloudtools') && !str_contains($account->pabx_domain, 'telecloud')) {
+        if (! str_contains($account->pabx_domain, 'cloudtools') && ! str_contains($account->pabx_domain, 'telecloud')) {
             return 'Invalid pbx domain';
         }
 
-        if ('Enabled' != $account->status) {
+        if ($account->status != 'Enabled') {
             return 'Account '.strtolower($account->status);
         }
 
@@ -3465,7 +3503,7 @@ class PbxAppController extends BaseController
         if (empty($this->request->check_dns) or $this->request->check_dns == 0) {
         } elseif ($this->request->check_dns == 1) {
             $ip = gethostbyname($domain_name);
-            if (empty($ip) || !str_starts_with($ip, '156.0.96.6')) {
+            if (empty($ip) || ! str_starts_with($ip, '156.0.96.6')) {
                 return 'Domain DNS not propagated';
             }
         }
@@ -3477,7 +3515,7 @@ class PbxAppController extends BaseController
             return $validation;
         }
 
-        if (1 == $account->id) {
+        if ($account->id == 1) {
             $account = dbgetaccount(12);
         }
 
@@ -3495,8 +3533,8 @@ class PbxAppController extends BaseController
         if ($account->partner_id != 1) {
             validate_partner_pricelists($account->partner_id);
         }
-        $pabx_domain = (!empty($account->pabx_domain)) ? $account->pabx_domain : '';
-        $pabx_type = (!empty($account->pabx_type)) ? $account->pabx_type : '';
+        $pabx_domain = (! empty($account->pabx_domain)) ? $account->pabx_domain : '';
+        $pabx_type = (! empty($account->pabx_type)) ? $account->pabx_type : '';
 
         $products = \DB::table('crm_products as products')
             ->select('products.*', 'category.name as category', 'category.name as category', 'category.department as department')
@@ -3523,8 +3561,8 @@ class PbxAppController extends BaseController
             $row->code_title = ucwords(str_replace('_', ' ', $row->code));
             $row->code = ucwords(str_replace('_', ' ', $row->code)).' - '.$row->name;
 
-            if ('Bundle' == $row->type) {
-                if (1 == $account->partner_id) {
+            if ($row->type == 'Bundle') {
+                if ($account->partner_id == 1) {
                     $list_products[] = $row;
                 }
             } elseif (in_array($row->id, $pbx_extension_product_ids)) {
@@ -3535,7 +3573,7 @@ class PbxAppController extends BaseController
                 if (empty($pabx_domain)) {
                     $list_products[] = $row;
                 }
-            } elseif ('ltetopup' == $row->provision_function) {
+            } elseif ($row->provision_function == 'ltetopup') {
                 // check if customer has a lte account
                 $lte_accounts_count = \DB::table('sub_services')->where(['account_id' => $account_id, 'provision_type' => 'lte_sim_card', 'status' => 'Enabled'])->count();
                 if ($lte_accounts_count > 0) {
@@ -3568,7 +3606,7 @@ class PbxAppController extends BaseController
             $list_product->image_url = url('/uploads/telecloud/71/'.$product->upload_file);
 
             $list_product->price = currency($pricing->price);
-            if (!empty($product->activation_fee)) {
+            if (! empty($product->activation_fee)) {
                 $list_product->price = currency($product->activation_fee);
             }
             $list_product->price_tax = currency($list_product->price * 1.15);
@@ -3576,14 +3614,14 @@ class PbxAppController extends BaseController
             $list_product->full_price_tax = currency($pricing->full_price * 1.15);
             $list_product->qty = 1;
 
-            if (!empty($product->provision_plan_id)) {
+            if (! empty($product->provision_plan_id)) {
                 $list_product->provision_type = \DB::table('sub_activation_types')->where('id', $product->provision_plan_id)->pluck('name')->first();
             } else {
                 $list_product->provision_type = '';
             }
             $product_list[] = $list_product;
         }
-        if (!$select_datasource) {
+        if (! $select_datasource) {
             return $product_list;
         }
         $form_select = [];
@@ -3658,7 +3696,7 @@ class PbxAppController extends BaseController
     private function setManagerExtension($extension)
     {
         $manager_extension_set = \DB::connection('pbx')->table('v_extensions')->where('domain_uuid', $extension->domain_uuid)->where('manager_extension', 1)->count();
-        if (!$manager_extension_set) {
+        if (! $manager_extension_set) {
             \DB::connection('pbx')->table('v_extensions')->where('id', $extension->id)->update(['manager_extension' => 1]);
         }
     }

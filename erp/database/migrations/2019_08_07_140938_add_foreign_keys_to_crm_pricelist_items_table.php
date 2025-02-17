@@ -17,7 +17,6 @@ class AddForeignKeysToCrmPricelistItemsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

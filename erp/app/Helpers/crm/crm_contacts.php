@@ -1,41 +1,41 @@
 <?php
 
-function move_contacts_to_users(){
+function move_contacts_to_users()
+{
     $contacts = \DB::table('crm_account_contacts')
-    ->join('crm_accounts','crm_accounts.id','=','crm_account_contacts.account_id')
-    ->where('crm_accounts.status','!=','Deleted')
-    ->where('crm_account_contacts.type','!=','Manager')
-    ->get();
-    foreach($contacts as $contact){
-        $user = \DB::table('erp_users')->where('account_id',$contact->account_id)->get()->first();
+        ->join('crm_accounts', 'crm_accounts.id', '=', 'crm_account_contacts.account_id')
+        ->where('crm_accounts.status', '!=', 'Deleted')
+        ->where('crm_account_contacts.type', '!=', 'Manager')
+        ->get();
+    foreach ($contacts as $contact) {
+        $user = \DB::table('erp_users')->where('account_id', $contact->account_id)->get()->first();
         $data = (array) $user;
         $username = false;
-        
-        $email_in_use = \DB::table('erp_users')->where('username',$contact->email)->count();
-        if(!$email_in_use){
+
+        $email_in_use = \DB::table('erp_users')->where('username', $contact->email)->count();
+        if (! $email_in_use) {
             $username = $contact->email;
         }
-        $phone_in_use = \DB::table('erp_users')->where('username',$contact->phone)->count();
-        if(!$phone_in_use){
+        $phone_in_use = \DB::table('erp_users')->where('username', $contact->phone)->count();
+        if (! $phone_in_use) {
             $username = $contact->phone;
         }
-        
-        if($username){
+
+        if ($username) {
             $data['username'] = $username;
             $data['type'] = 'Support';
             unset($data['id']);
             $data['full_name'] = $contact->name;
-            if(empty($data['full_name'])){
+            if (empty($data['full_name'])) {
                 $data['full_name'] = $username;
             }
             $data['email'] = $contact->email;
             $data['phone'] = $contact->phone;
             \DB::table('erp_users')->insert($data);
         }
-        
+
     }
 }
-
 
 function get_account_contact_phone($account_id, $type)
 {
@@ -110,7 +110,7 @@ function schedule_invalid_contacts_sms()
 
             if ($undelivered) {
                 $exists = \DB::table('crm_invalid_contacts')->where('phone', $num)->where('account_id', $account->id)->count();
-                if (!$exists) {
+                if (! $exists) {
                     $data = [
                         'type' => 'sms',
                         'phone' => $num,
@@ -123,10 +123,6 @@ function schedule_invalid_contacts_sms()
         }
     }
 }
-
-
-
-
 
 function schedule_invalid_contacts_email()
 {
@@ -189,12 +185,11 @@ function schedule_invalid_contacts_email()
     */
 }
 
-
 function schedule_invalid_contacts_update()
 {
     \DB::table('crm_accounts')->update(['faulty_contact' => '']);
     $types = \DB::table('crm_invalid_contacts')->pluck('type')->unique()->filter()->toArray();
-    foreach($types as $type){
+    foreach ($types as $type) {
         $account_ids = \DB::table('crm_invalid_contacts')->where('processed', '')->where('type', $type)->pluck('account_id')->unique()->toArray();
         \DB::table('crm_accounts')->whereIn('id', $account_ids)->update(['faulty_contact' => $type]);
     }

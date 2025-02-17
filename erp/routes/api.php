@@ -49,7 +49,6 @@ Route::get('/api/getroutingoptions', 'PbxAppController@getRoutingOptions');
 Route::any('/api/postrouting', 'PbxAppController@postRouting');
 Route::any('/api/postreferral', 'PbxAppController@postReferral');
 
-
 Route::get('/api/getdomain', 'PbxAppController@getDomain');
 Route::any('/api/postdomainsettings', 'PbxAppController@postDomainSettings');
 
@@ -82,7 +81,6 @@ Route::any('/erp_api/getvehicledbdropdowns', 'Api\ErpApiController@getVehicledbD
 Route::any('/erp_api/postcontactform', 'Api\ErpApiController@postContactForm');
 Route::any('/erp_api/postCreditOnEvaluationFail', 'Api\ErpApiController@postCreditOnEvaluationFail');
 
-
 Route::any('/erp_api/getaccount', 'Api\ErpApiController@getAccount');
 Route::any('/erp_api/getapproutes', 'Api\ErpApiController@getAppRoutes');
 Route::get('/erp_api/getwebviewsession', 'Api\ErpApiController@getWebviewSession');
@@ -97,7 +95,6 @@ Route::any('/bulkhub_api/getaccount', 'Api\BulkhubApiController@getAccount');
 Route::any('/bulkhub_api/getapproutes', 'Api\BulkhubApiController@getAppRoutes');
 Route::get('/bulkhub_api/getwebviewsession', 'Api\BulkhubApiController@getWebviewSession');
 // BULKHUB END
-
 
 // RESTAPI START
 Route::prefix('rest_api')->group(function () {

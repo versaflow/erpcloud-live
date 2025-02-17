@@ -15,15 +15,15 @@ Route::any('subscription_migrate_form/{id?}', function ($id) {
             'subscription' => $subscription,
             'subscription_id' => $id,
             'package_amount' => $package_amount,
-            'lastmonth_rands_total' => (!empty($domain->lastmonth_total)) ? $domain->lastmonth_total : 0,
-            'lastmonth_minutes_total' => (!empty($domain->lastmonth_minutes_total)) ? $domain->lastmonth_minutes_total : 0,
+            'lastmonth_rands_total' => (! empty($domain->lastmonth_total)) ? $domain->lastmonth_total : 0,
+            'lastmonth_minutes_total' => (! empty($domain->lastmonth_minutes_total)) ? $domain->lastmonth_minutes_total : 0,
         ];
 
         return view('__app.button_views.migrate_airtime', $data);
     } else {
-        $sub = new ErpSubs();
+        $sub = new ErpSubs;
         $available_products = $sub->getAvailableMigrateProducts($id);
-        if (!is_array($available_products)) {
+        if (! is_array($available_products)) {
             return json_alert($available_products, 'warning');
         }
         if (is_array($available_products) && count($available_products) == 0) {
@@ -42,10 +42,10 @@ Route::any('subscription_migrate_form/{id?}', function ($id) {
 Route::get('telecloud_sidebar_hosting_panels', function () {
     $account_id = false;
 
-    if (!empty(request('telecloud_filter_account'))) {
+    if (! empty(request('telecloud_filter_account'))) {
         $account_id = $request->telecloud_filter_account;
     }
-    if (!empty(request('telecloud_filter_domain'))) {
+    if (! empty(request('telecloud_filter_domain'))) {
         $account_id = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', request('telecloud_filter_domain'))->pluck('account_id')->first();
     }
 
@@ -57,13 +57,13 @@ Route::get('telecloud_sidebar_hosting_panels', function () {
 Route::get('voice_settings_form', function () {
     $pbx_domain = false;
 
-    if (!empty(request('telecloud_filter_account'))) {
+    if (! empty(request('telecloud_filter_account'))) {
         $pbx_domain = \DB::connection('pbx')->table('v_domains')->where('account_id', request('telecloud_filter_account'))->get()->first();
     }
-    if (!empty(request('telecloud_filter_domain'))) {
+    if (! empty(request('telecloud_filter_domain'))) {
         $pbx_domain = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', request('telecloud_filter_domain'))->get()->first();
     }
-    if (!$pbx_domain) {
+    if (! $pbx_domain) {
         return json_alert('No domain selected', 'warning');
     }
     $data = ['telecloud_form' => 1];
@@ -111,7 +111,7 @@ Route::get('get_module_footer_cards/{module_id?}/{role_id?}', function ($module_
     }
     $incentive_footer_html = '';
 
-    if (!$role_id) {
+    if (! $role_id) {
         $role_id = session('role_id');
     }
 
@@ -139,8 +139,8 @@ Route::get('get_module_footer_cards/{module_id?}/{role_id?}', function ($module_
 Route::get('dashboard_widget_remove/{id?}', function ($id) {
     if (is_superadmin()) {
         \DB::connection('default')->table('erp_grid_views')
-        ->where('id', $id)
-        ->update(['show_on_dashboard' => 0]);
+            ->where('id', $id)
+            ->update(['show_on_dashboard' => 0]);
 
         return json_alert('Widget removed', 'success', ['callback_function' => 'remove_chart_accordion']);
     }
@@ -168,7 +168,7 @@ Route::any('content_sidebar_related_layouts/{module_id?}', function ($module_id)
 });
 
 Route::any('workboard_reports/{project_id?}', function ($project_id = false) {
-    if (!$project_id) {
+    if (! $project_id) {
         return response()->json([]);
     }
     $json = Erp::getWorkboardReports($project_id);
@@ -215,7 +215,7 @@ Route::any('get_sidebar_knowledge_base_list_view/{internal?}/{account_id?}', fun
     $response_items = [];
     $types = [];
 
-    if ($internal && !is_superadmin()) {
+    if ($internal && ! is_superadmin()) {
         return response()->json(['items' => []]);
     }
     $internal = ($internal) ? 1 : 0;
@@ -237,7 +237,7 @@ Route::any('get_sidebar_knowledge_base_list_view/{internal?}/{account_id?}', fun
             'faq_id' => $faq->id,
             'cssClass' => 'kbitem_context',
         ];
-        if (!in_array($faq->type, $types)) {
+        if (! in_array($faq->type, $types)) {
             $types[] = $faq->type;
         }
     }
@@ -269,7 +269,7 @@ Route::any('get_sidebar_knowledge_base', function () {
             'faq_id' => $faq->id,
             'cssClass' => 'kbitem',
         ];
-        if (!in_array($faq->type, $types)) {
+        if (! in_array($faq->type, $types)) {
             $types[] = $faq->type;
         }
     }
@@ -284,7 +284,7 @@ Route::any('get_sidebar_knowledge_base', function () {
                 'faq_id' => $faq->id,
                 'cssClass' => 'kbitem',
             ];
-            if (!in_array($faq->type.' Internal', $types)) {
+            if (! in_array($faq->type.' Internal', $types)) {
                 $types[] = $faq->type.' Internal';
             }
         }
@@ -318,7 +318,7 @@ Route::any('get_sidebar_module_guides/{module_id?}/{role_id?}', function ($modul
     // }
     // }
 
-    if (!$role_id) {
+    if (! $role_id) {
         $role_id = session('role_id');
     }
 
@@ -417,13 +417,13 @@ Route::any('get_sidebar_row_info/{module_id?}/{row_id?}', function ($module_id, 
 
     $deleted_at_added = false;
     $deleted_by_added = false;
-    if (in_array('deleted_by', $module_fields) && !empty($row->deleted_by)) {
+    if (in_array('deleted_by', $module_fields) && ! empty($row->deleted_by)) {
         $name = $users->where('id', $row->deleted_by)->pluck('full_name')->first();
         $time_stamp_info .= 'Deleted By: '.$name.'<br>';
         $deleted_by_added = true;
     }
 
-    if (in_array('deleted_at', $module_fields) && !empty($row->deleted_at)) {
+    if (in_array('deleted_at', $module_fields) && ! empty($row->deleted_at)) {
         $time_stamp_info .= 'Deleted At: '.$row->deleted_at.'<br>';
         $deleted_at_added = true;
     }
@@ -432,10 +432,10 @@ Route::any('get_sidebar_row_info/{module_id?}/{row_id?}', function ($module_id, 
         $delete_log = \DB::connection('default')->table('erp_module_log')->where('row_id', $row->id)->where('module_id', $module_id)->where('action', 'deleted')->get()->first();
         if ($delete_log) {
             $name = $users->where('id', $delete_log->created_by)->pluck('full_name')->first();
-            if (!$deleted_by_added) {
+            if (! $deleted_by_added) {
                 $time_stamp_info .= 'Deleted By: '.$name.'<br>';
             }
-            if (!$deleted_at_added) {
+            if (! $deleted_at_added) {
                 $time_stamp_info .= 'Deleted At: '.$delete_log->created_at.'<br>';
             }
         }
@@ -549,7 +549,7 @@ Route::any('get_sidebar_row_info/{module_id?}/{row_id?}', function ($module_id, 
             $account_info .= '<br><a href="'.$recording_file_link.'" target="_blank"><b>Call Recording - '.date('Y-m-d H:i', strtotime($last_call->created_at)).'</b></a><br>';
         }
 
-        if (!empty($account->pabx_domain)) {
+        if (! empty($account->pabx_domain)) {
             $domain_info = \DB::connection('pbx')->table('v_domains')->where('account_id', $account->id)->get()->first();
 
             $account_info .= '<b>'.$domain_info->domain_name.'</b><br>';
@@ -573,7 +573,7 @@ Route::any('get_sidebar_row_info/{module_id?}/{row_id?}', function ($module_id, 
         $kb_listview = sidebar_get_kb_listview($module_id, $row_id);
     }
 
-    if (!empty($sales_html)) {
+    if (! empty($sales_html)) {
         $account_info .= $sales_html;
     }
 
@@ -598,16 +598,16 @@ Route::any('get_sidebar_row_info/{module_id?}/{row_id?}', function ($module_id, 
 
         $total_sales = \DB::connection('default')->table('crm_document_lines')->where('product_id', $product_id)->sum('zar_sale_total');
         $monthly_sales = \DB::connection('default')->table('crm_document_lines')
-        ->join('crm_documents', 'crm_documents.id', '=', 'crm_document_lines.document_id')
-        ->where('docdate', 'like', date('Y-m').'%')
-        ->where('product_id', $product_id)->sum('zar_sale_total');
+            ->join('crm_documents', 'crm_documents.id', '=', 'crm_document_lines.document_id')
+            ->where('docdate', 'like', date('Y-m').'%')
+            ->where('product_id', $product_id)->sum('zar_sale_total');
 
         $last_sale = \DB::connection('default')->table('crm_document_lines')
-        ->select('crm_documents.docdate')
-        ->join('crm_documents', 'crm_documents.id', '=', 'crm_document_lines.document_id')
-        ->where('crm_document_lines.product_id', $product_id)
-        ->orderBy('crm_documents.docdate', 'desc')
-        ->pluck('docdate')->first();
+            ->select('crm_documents.docdate')
+            ->join('crm_documents', 'crm_documents.id', '=', 'crm_document_lines.document_id')
+            ->where('crm_document_lines.product_id', $product_id)
+            ->orderBy('crm_documents.docdate', 'desc')
+            ->pluck('docdate')->first();
 
         if (empty($total_sales)) {
             $total_sales = 0;
@@ -635,7 +635,7 @@ Route::any('get_sidebar_row_info/{module_id?}/{row_id?}', function ($module_id, 
     }
     $sidebar_files = sidebar_get_files($type, $account_id);
 
-    if (!$account_info) {
+    if (! $account_info) {
         $interactions_response_items[] = (object) ['header' => 'Notes ('.$sidebar_notes['count'].')', 'content' => $notes_html];
     }
     if ($sales_call_info) {
@@ -740,15 +740,15 @@ Route::any('get_sidebar_row_info/{module_id?}/{row_id?}', function ($module_id, 
         }
     }
 
-    if (!empty($subscriptions_accordion)) {
+    if (! empty($subscriptions_accordion)) {
         $json['subscriptions_accordion'] = $subscriptions_accordion;
     }
     $json['subscriptions_listview'] = [];
-    if (!empty($subscriptions_listview)) {
+    if (! empty($subscriptions_listview)) {
         $json['subscriptions_listview'] = $subscriptions_listview;
     }
     $json['kb_listview'] = [];
-    if (!empty($kb_listview)) {
+    if (! empty($kb_listview)) {
         $json['kb_listview'] = $kb_listview;
     }
 
@@ -777,16 +777,16 @@ Route::post('favorite_add', function () {
         $layout_id = request('layout_id');
         $data = [];
         $data['user_id'] = session('user_id');
-        if (!empty($link_url)) {
+        if (! empty($link_url)) {
             $data['title'] = $link_url;
             $data['link_url'] = 'http://'.str_replace(['http://', 'https://'], '', trim($link_url));
         }
-        if (!empty($layout_id)) {
+        if (! empty($layout_id)) {
             $layout_data = \DB::table('erp_grid_views')
-        ->select('erp_cruds.slug', 'erp_cruds.name as m_name', 'erp_grid_views.name as l_name')
-        ->join('erp_cruds', 'erp_cruds.id', '=', 'erp_grid_views.module_id')
-        ->where('erp_grid_views.id', $layout_id)
-        ->get()->first();
+                ->select('erp_cruds.slug', 'erp_cruds.name as m_name', 'erp_grid_views.name as l_name')
+                ->join('erp_cruds', 'erp_cruds.id', '=', 'erp_grid_views.module_id')
+                ->where('erp_grid_views.id', $layout_id)
+                ->get()->first();
             $data['title'] = $layout_data->m_name.' '.$layout_data->l_name;
             $data['link_url'] = url($layout_data->slug).'?layout_id='.$layout_id;
             $data['layout_id'] = $layout_id;

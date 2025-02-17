@@ -2,15 +2,15 @@
 
 function aftersave_general_journal_account_payment($request)
 {
-    if (!empty($request->account_id)) {
-        (new DBEvent())->setAccountAging($request->account_id);
+    if (! empty($request->account_id)) {
+        (new DBEvent)->setAccountAging($request->account_id);
     }
 }
 
 function afterdelete_general_journal_delete_account_payment($request)
 {
-    if (!empty($request->account_id)) {
-        (new DBEvent())->setAccountAging($request->account_id);
+    if (! empty($request->account_id)) {
+        (new DBEvent)->setAccountAging($request->account_id);
     }
 }
 
@@ -21,17 +21,16 @@ function beforesave_journal_check_ledger_accounts($request)
     }
 }
 
-
 function aftersave_journal_update_transaction_totals($request)
 {
-    if (!empty($request->transaction_id)) {
+    if (! empty($request->transaction_id)) {
         $docids = \DB::table('acc_general_journals')->where('transaction_id', $request->transaction_id)->pluck('id')->toArray();
         \DB::table('acc_ledgers')->where('doctype', 'General Journal')->whereIn('docid', $docids)->delete();
         \DB::table('acc_general_journal_transactions')->where('id', $request->transaction_id)->update(['posted' => 0]);
         \DB::table('acc_general_journals')->where('transaction_id', $request->transaction_id)->update(['posted' => 0]);
         $credit_total = \DB::table('acc_general_journals')->where('transaction_id', $request->transaction_id)->sum('credit_amount');
         $debit_total = \DB::table('acc_general_journals')->where('transaction_id', $request->transaction_id)->sum('debit_amount');
-        \DB::table('acc_general_journal_transactions')->where('id', $request->transaction_id)->update(['credit_total' => $credit_total,'debit_total' => $debit_total]);
+        \DB::table('acc_general_journal_transactions')->where('id', $request->transaction_id)->update(['credit_total' => $credit_total, 'debit_total' => $debit_total]);
     }
 }
 
@@ -45,16 +44,15 @@ function beforesave_control_accounts_allocated($request)
     }
 }
 
-
 function button_general_journal_transaction_post_journals($request)
 {
     $credit_total = \DB::table('acc_general_journals')->where('transaction_id', $request->id)->sum('credit_amount');
     $debit_total = \DB::table('acc_general_journals')->where('transaction_id', $request->id)->sum('debit_amount');
-    \DB::table('acc_general_journal_transactions')->where('id', $request->id)->update(['credit_total' => $credit_total,'debit_total' => $debit_total]);
+    \DB::table('acc_general_journal_transactions')->where('id', $request->id)->update(['credit_total' => $credit_total, 'debit_total' => $debit_total]);
 
     $trx = \DB::table('acc_general_journal_transactions')->where('id', $request->id)->get()->first();
 
-    $balance =  currency($trx->debit_total) - abs(currency($trx->credit_total)) ;
+    $balance = currency($trx->debit_total) - abs(currency($trx->credit_total));
     if (empty($trx->credit_total)) {
         return json_alert('Credit total cannot be zero. Transaction could not be posted.', 'warning');
     }
@@ -63,20 +61,20 @@ function button_general_journal_transaction_post_journals($request)
     }
 
     if ($balance != 0) {
-        return json_alert('Totals do not balance. '.$balance. ' difference.', 'warning');
+        return json_alert('Totals do not balance. '.$balance.' difference.', 'warning');
     }
     \DB::table('acc_general_journal_transactions')->where('id', $request->id)->update(['posted' => 1]);
     $journals = \DB::table('acc_general_journals')->where('transaction_id', $trx->id)->get();
 
-
     $docids = \DB::table('acc_general_journals')->where('transaction_id', $trx->id)->pluck('id')->toArray();
-    $erp = new DBEvent();
+    $erp = new DBEvent;
     $erp->setTable('acc_general_journals');
     foreach ($docids as $docid) {
         $erp->postDocument($docid);
     }
 
     $erp->postDocumentCommit();
+
     return json_alert('Transaction posted.');
 }
 
@@ -90,7 +88,6 @@ function journals_generate_header_transactions()
     $conn = 'default';
 
     $journal_dates = \DB::connection($conn)->table('acc_general_journals')->where('transaction_id', 0)->where('posted', 1)->get();
-
 
     foreach ($journal_dates as $identifier) {
         $identifier = (object) $identifier;

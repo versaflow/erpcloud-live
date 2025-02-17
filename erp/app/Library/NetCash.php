@@ -10,27 +10,34 @@ https://ws.netcash.co.za/NIWS/niws_help.svc
 class NetCash
 {
     public $service_key; // debit order service key
+
     public $account_service_key;
+
     public $software_vendor_code;
+
     public $storage_dir;
+
     public $header_record;
+
     public $key_record;
+
     public $batch_date;
+
     public $limit_id;
 
     public function __construct($batch_date = false)
     {
-        
+
         $payment_option = get_payment_option('NetCash');
-      
+
         $enabled = $payment_option->enabled;
-        if (!$enabled) {
+        if (! $enabled) {
             return false;
         }
-        $this->batch_date = (!$batch_date) ? date('YmdHi') : date('YmdHi', strtotime($batch_date));
-        $this->service_key =  $payment_option->netcash_service_key;
+        $this->batch_date = (! $batch_date) ? date('YmdHi') : date('YmdHi', strtotime($batch_date));
+        $this->service_key = $payment_option->netcash_service_key;
         $this->account_service_key = $payment_option->netcash_account_service_key;
-        $this->software_vendor_code =  $payment_option->netcash_software_vendor_code;
+        $this->software_vendor_code = $payment_option->netcash_software_vendor_code;
         $this->storage_dir = storage_path('debit_orders');
         $this->setHeaderRecord('Cloudtel'.$this->batch_date, 'Twoday', 1);
         $this->setKeyRecord([101, 102, 131, 132, 133, 134, 135, 136, 162]);
@@ -68,7 +75,7 @@ class NetCash
         6	Action date	N	CCYYMMDD
         7	Software vendor code	AN	The key issued by Sage Pay to identify the software origin of transactions. (only used by Sage Pay business partners else use default value: 24ade73c-98cf-47b3-99be-cc7b867b3080)
         */
-        if (!empty($this->action_date)) {
+        if (! empty($this->action_date)) {
             $action_date = $this->action_date;
         } else {
             $action_date = date('Ymd', strtotime('+5 day'));
@@ -105,13 +112,13 @@ class NetCash
 
     public function setTransactionRecord($debit_order, $amount)
     {
-        if ('Current' == $debit_order->bank_account_type) {
+        if ($debit_order->bank_account_type == 'Current') {
             $account_type = 1;
-        } elseif ('Savings' == $debit_order->bank_account_type) {
+        } elseif ($debit_order->bank_account_type == 'Savings') {
             $account_type = 2;
-        } elseif ('Transmisson' == $debit_order->bank_account_type) {
+        } elseif ($debit_order->bank_account_type == 'Transmisson') {
             $account_type = 3;
-        } elseif ('Bond' == $debit_order->bank_account_type) {
+        } elseif ($debit_order->bank_account_type == 'Bond') {
             $account_type = 4;
         }
         $record = "T\t";
@@ -137,7 +144,7 @@ class NetCash
             T  CUS002    X Customer  1  X Customer  2  198765  0    2060000001   200000
             F  2  310200  9999
         */
-        if (!empty($this->limit_id)) {
+        if (! empty($this->limit_id)) {
             $debit_orders = \DB::table('acc_debit_orders as d')
                 ->join('crm_accounts as a', 'a.id', '=', 'd.account_id')
                 ->select('d.*', 'a.company', 'a.balance')
@@ -146,9 +153,9 @@ class NetCash
                 ->where('a.partner_id', 1)
                 ->where('d.status', 'Enabled')
                 ->where('a.status', '!=', 'Deleted')
-                ->where('a.account_status', '!=','Cancelled')
+                ->where('a.account_status', '!=', 'Cancelled')
                 ->get();
-        } elseif (!empty($this->limit_account_id)) {
+        } elseif (! empty($this->limit_account_id)) {
             $debit_orders = \DB::table('acc_debit_orders as d')
                 ->join('crm_accounts as a', 'a.id', '=', 'd.account_id')
                 ->select('d.*', 'a.company', 'a.balance')
@@ -157,7 +164,7 @@ class NetCash
                 ->where('a.partner_id', 1)
                 ->where('d.status', 'Enabled')
                 ->where('a.status', '!=', 'Deleted')
-                ->where('a.account_status', '!=','Cancelled')
+                ->where('a.account_status', '!=', 'Cancelled')
                 ->get();
         } else {
             $debit_orders = \DB::table('acc_debit_orders as d')
@@ -167,7 +174,7 @@ class NetCash
                 ->where('a.partner_id', 1)
                 ->where('d.status', 'Enabled')
                 ->where('a.status', '!=', 'Deleted')
-                ->where('a.account_status', '!=','Cancelled')
+                ->where('a.account_status', '!=', 'Cancelled')
                 ->get();
         }
 
@@ -188,11 +195,10 @@ class NetCash
         //$sub = new \ErpSubs();
         // Transaction Records
         foreach ($debit_orders as $debit_order) {
-            (new DBEvent())->setAccountAging($debit_order->account_id);
+            (new DBEvent)->setAccountAging($debit_order->account_id);
             //$sub->updateSubscriptionsTotal($debit_order->account_id);
             $account = dbgetaccount($debit_order->account_id);
 
-            
             // if schedule set before monthly billing invoices
             /*
             $next_month_billing = \DB::table('crm_documents')
@@ -208,11 +214,11 @@ class NetCash
                 $amount = $amount + $amount_tax;
             }
             */
-            
+
             // debit orders processed after monthly billing approved
             $amount = 0;
 
-            if (!empty($this->limit_id)) {
+            if (! empty($this->limit_id)) {
                 $pending_total = \DB::table('sub_services as s')
                     ->join('crm_documents as d', 's.invoice_id', '=', 'd.id')
                     ->where('d.doctype', 'Order')
@@ -220,12 +226,12 @@ class NetCash
                     ->where('s.status', 'Pending')
                     ->sum('s.price_incl');
 
-                if (!empty($pending_total)) {
+                if (! empty($pending_total)) {
                     $amount += $pending_total;
                 }
             }
             $account_balance = account_get_full_balance($debit_order->account_id);
- 
+
             if ($account_balance < 0) {
                 $amount -= abs($account_balance);
             }
@@ -233,12 +239,11 @@ class NetCash
                 $amount += $account_balance;
             }
 
-
             if ($this->amount_limit && $this->amount_limit < $amount) {
                 $amount = $this->amount_limit;
             }
 
-            if (!empty($this->limit_account_id) && $amount <=0) {
+            if (! empty($this->limit_account_id) && $amount <= 0) {
                 $amount = 100; // debit R100 if used for activation
             }
 
@@ -246,7 +251,7 @@ class NetCash
                 $amount = currency($amount) * 100; // amount in cents;
                 $file .= $this->setTransactionRecord($debit_order, $amount);
                 $transactions_total += abs($amount);
-                ++$transactions_count;
+                $transactions_count++;
             }
         }
         // Footer Record
@@ -312,13 +317,13 @@ class NetCash
         AccountType
         */
 
-        if ('Current' == $debit_order->bank_account_type) {
+        if ($debit_order->bank_account_type == 'Current') {
             $account_type = 1;
-        } elseif ('Savings' == $debit_order->bank_account_type) {
+        } elseif ($debit_order->bank_account_type == 'Savings') {
             $account_type = 2;
-        } elseif ('Transmisson' == $debit_order->bank_account_type) {
+        } elseif ($debit_order->bank_account_type == 'Transmisson') {
             $account_type = 3;
-        } elseif ('Bond' == $debit_order->bank_account_type) {
+        } elseif ($debit_order->bank_account_type == 'Bond') {
             $account_type = 4;
         }
         $params = [
@@ -330,27 +335,27 @@ class NetCash
         $client = new \SoapClient('https://ws.netcash.co.za/NIWS/NIWS_Validation.svc?wsdl');
         $result = $client->ValidateBankAccount($params)->ValidateBankAccountResult;
 
-        if (0 == $result) {
+        if ($result == 0) {
             $validate_msg = 'Bank account details valid';
-        } elseif (1 == $result) {
+        } elseif ($result == 1) {
             $validate_msg = 'Invalid branch code';
-        } elseif (2 == $result) {
+        } elseif ($result == 2) {
             $validate_msg = 'Account number failed check digit validation';
-        } elseif (3 == $result) {
+        } elseif ($result == 3) {
             $validate_msg = 'Invalid account type';
-        } elseif (4 == $result) {
+        } elseif ($result == 4) {
             $validate_msg = 'Input data incorrect';
-        } elseif (100 == $result) {
+        } elseif ($result == 100) {
             $validate_msg = 'Authentication failed';
-        } elseif (200 == $result) {
+        } elseif ($result == 200) {
             $validate_msg = 'Web service error contact support@netcash.co.za';
         } else {
             $validate_msg = 'Unknown error.';
         }
 
-        $validated = ('Bank account details valid' == $validate_msg) ? 1 : 0;
+        $validated = ($validate_msg == 'Bank account details valid') ? 1 : 0;
 
-        return  ['validated' => $validated, 'validate_message' => $validate_msg];
+        return ['validated' => $validated, 'validate_message' => $validate_msg];
     }
 
     public function validateServiceKey()
@@ -367,7 +372,7 @@ class NetCash
 
     public function createTransactions($debit_order_batch_id)
     {
-        $db = new DBEvent();
+        $db = new DBEvent;
         $docdate = date('Y-m-d', strtotime($this->batch_date));
 
         $debit_order_batch = \DB::table('acc_debit_order_batch')->where('id', $debit_order_batch_id)->get()->first();
@@ -381,7 +386,7 @@ class NetCash
 
         $docdate = date('Y-m-d', strtotime($this->batch_date));
 
-        if (!str_contains($debit_order_batch->result, 'SUCCESSFUL')) {
+        if (! str_contains($debit_order_batch->result, 'SUCCESSFUL')) {
             return false;
         }
 
@@ -392,7 +397,7 @@ class NetCash
 
         foreach ($lines as $line) {
             $fields = explode("\t", $line);
-            if ('T' == $fields[0]) {
+            if ($fields[0] == 'T') {
                 $account_number = $fields[8];
                 $amount = currency($fields[9] / 100);
                 $account_id = \DB::table('acc_debit_orders')->where('bank_account_number', $account_number)->where('status', '!=', 'Deleted')->pluck('account_id')->first();
@@ -405,11 +410,11 @@ class NetCash
                     'debit_order_batch_id' => $debit_order_batch->id,
                     'reference' => 'Debit Order',
                     'api_status' => 'Complete',
-                    'doctype'=>'Cashbook Customer Receipt',
+                    'doctype' => 'Cashbook Customer Receipt',
                 ];
                 $exists = \DB::table('acc_cashbook_transactions')->where('account_id', $account_id)->where('debit_order_batch_id', $debit_order_batch->id)->count();
-                if (!$exists) {
-                     $db->setTable('acc_cashbook_transactions')->save($transaction);
+                if (! $exists) {
+                    $db->setTable('acc_cashbook_transactions')->save($transaction);
                 }
 
                 // email customer action date and amount
@@ -422,10 +427,8 @@ class NetCash
             }
         }
 
-
         return true;
     }
-
 
     /**** AUTHORISE DEBIT ORDER ****/
 
@@ -433,19 +436,23 @@ class NetCash
     {
         $client = new \SoapClient('https://ws.netcash.co.za/NIWS/NIWS_NIF.svc?wsdl');
         $result = $client->RetrieveUnauthorisedBatches(['ServiceKey' => $this->service_key]);
+
         return $result;
     }
 
     public function requestBatchAuthorise($guid)
     {
         $client = new \SoapClient('https://ws.netcash.co.za/NIWS/NIWS_NIF.svc?wsdl');
-        $result = $client->RequestBatchAuthorise(['ServiceKey' => $this->service_key,'BatchIndicator' => $guid, 'ReleaseFunds' => true]);
+        $result = $client->RequestBatchAuthorise(['ServiceKey' => $this->service_key, 'BatchIndicator' => $guid, 'ReleaseFunds' => true]);
+
         return $result;
     }
+
     public function requestBatchUnuthorised($guid)
     {
         $client = new \SoapClient('https://ws.netcash.co.za/NIWS/NIWS_NIF.svc?wsdl');
-        $result = $client->RequestBatchUnuthorised(['ServiceKey' => $this->service_key,'BatchIndicator' => $guid, 'ReleaseFunds' => true]);
+        $result = $client->RequestBatchUnuthorised(['ServiceKey' => $this->service_key, 'BatchIndicator' => $guid, 'ReleaseFunds' => true]);
+
         return $result;
     }
 
@@ -469,10 +476,10 @@ class NetCash
         */
         $unauthorised_batches = $this->retrieveUnauthorisedBatches();
         $batch_to_authorise = false;
-        if (!empty($unauthorised_batches) && !empty($unauthorised_batches->RetrieveUnauthorisedBatchesResult)) {
+        if (! empty($unauthorised_batches) && ! empty($unauthorised_batches->RetrieveUnauthorisedBatchesResult)) {
             $batches = [];
 
-            \DB::table('acc_debit_order_batch')->where('id', $batch_id)->update(['unauthorised_batches_result'=>$unauthorised_batches->RetrieveUnauthorisedBatchesResult]);
+            \DB::table('acc_debit_order_batch')->where('id', $batch_id)->update(['unauthorised_batches_result' => $unauthorised_batches->RetrieveUnauthorisedBatchesResult]);
             $batch_text = explode("\r\n", $unauthorised_batches->RetrieveUnauthorisedBatchesResult);
             $batch_text = collect($batch_text)->filter()->toArray();
 
@@ -494,16 +501,15 @@ class NetCash
             }
         }
 
-
         if ($batch_to_authorise) {
             $result = $this->requestBatchAuthorise($batch_to_authorise['guid']);
-            if (empty($result) || !isset($result->RequestBatchAuthoriseResult)) {
+            if (empty($result) || ! isset($result->RequestBatchAuthoriseResult)) {
                 return 'Debit order could not be authorised';
             }
-            if (!empty($result) && isset($result->RequestBatchAuthoriseResult)) {
-                \DB::table('acc_debit_order_batch')->where('id', $batch_id)->update(['request_authorise_result'=>$result->RequestBatchAuthoriseResult]);
+            if (! empty($result) && isset($result->RequestBatchAuthoriseResult)) {
+                \DB::table('acc_debit_order_batch')->where('id', $batch_id)->update(['request_authorise_result' => $result->RequestBatchAuthoriseResult]);
             }
-            if (!empty($result) && isset($result->RequestBatchAuthoriseResult) && $result->RequestBatchAuthoriseResult != 000) {
+            if (! empty($result) && isset($result->RequestBatchAuthoriseResult) && $result->RequestBatchAuthoriseResult != 000) {
                 if ($result->RequestBatchAuthoriseResult == '100') {
                     return 'Authentication failed';
                 } elseif ($result->RequestBatchAuthoriseResult == '200') {
@@ -517,7 +523,7 @@ class NetCash
                 }
             }
 
-            if (!empty($result) && isset($result->RequestBatchAuthoriseResult) && $result->RequestBatchAuthoriseResult == 000) {
+            if (! empty($result) && isset($result->RequestBatchAuthoriseResult) && $result->RequestBatchAuthoriseResult == 000) {
                 return 'Debit order authorised';
             }
         }
@@ -527,12 +533,12 @@ class NetCash
 
     public function getStatementPollingId($from_date = false)
     {
-        if (!$from_date) {
+        if (! $from_date) {
             $from_date = date('Y-m-01');
         }
         $from_date = date('Ymd', strtotime($from_date));
         $client = new \SoapClient('https://ws.netcash.co.za/NIWS/NIWS_NIF.svc?wsdl');
-        $result = $client->RequestMerchantStatement(['ServiceKey' => $this->account_service_key,'FromActionDate' => $from_date]);
+        $result = $client->RequestMerchantStatement(['ServiceKey' => $this->account_service_key, 'FromActionDate' => $from_date]);
         if ($result->RequestMerchantStatementResult == 100) {
             return '100	Authentication failure. Ensure that the service key in the method call is correct';
         }
@@ -554,27 +560,29 @@ class NetCash
     {
         $client = new \SoapClient('https://ws.netcash.co.za/NIWS/NIWS_NIF.svc?wsdl');
 
-        $result = $client->RetrieveMerchantStatement(['ServiceKey' => $this->account_service_key,'PollingId' => $polling_id]);
+        $result = $client->RetrieveMerchantStatement(['ServiceKey' => $this->account_service_key, 'PollingId' => $polling_id]);
+
         return $result;
     }
 
     public function getStatement($from_date = false)
     {
-        if (!$from_date) {
+        if (! $from_date) {
             $from_date = date('Y-m-01');
         }
         $from_date = date('Ymd', strtotime($from_date));
 
         $polling_id = $this->getStatementPollingId($from_date);
-        if (!is_numeric($polling_id)) {
+        if (! is_numeric($polling_id)) {
             return $polling_id;
         }
         sleep(2);
         $statement = $this->retrieveStatement($polling_id);
-        if ($statement->RetrieveMerchantStatementResult == "FILE NOT READY") {
+        if ($statement->RetrieveMerchantStatementResult == 'FILE NOT READY') {
             sleep(2);
             $statement = $this->retrieveStatement($polling_id);
         }
+
         return $statement;
     }
 }

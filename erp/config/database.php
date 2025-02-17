@@ -57,7 +57,7 @@ return [
             'strict' => false,
             'engine' => null,
         ],
-        
+
         'shop' => [
             'driver' => 'sqlite',
             'database' => database_path('shop.sqlite'),
@@ -125,7 +125,6 @@ return [
         //     'strict' => false,
         //     'engine' => null,
         // ],
-        
 
         'eldooffice' => [
             'driver' => 'mysql',
@@ -169,7 +168,6 @@ return [
             'engine' => null,
         ],
 
-        
         'cloudtelecoms_wordpress' => [
             'driver' => 'mysql',
             'host' => 'host2.cloudtools.co.za',
@@ -183,7 +181,6 @@ return [
             'strict' => false,
             'engine' => null,
         ],
-        
 
         'cloud_telecoms' => [
             'driver' => 'mysql',
@@ -226,7 +223,7 @@ return [
             'strict' => false,
             'engine' => null,
         ],
-        
+
         'bulkhub_wordpress' => [
             'driver' => 'mysql',
             'host' => 'host1.cloudtools.co.za',
@@ -240,7 +237,6 @@ return [
             'strict' => false,
             'engine' => null,
         ],
-        
 
         // 'hajj' => [
         //     'driver' => 'mysql',
@@ -269,12 +265,12 @@ return [
             'strict' => false,
             'engine' => null,
         ],
-        
+
         'vehicledb' => [
             'driver' => 'mysql',
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'vehicledb'), 
+            'database' => env('DB_DATABASE', 'vehicledb'),
             'username' => env('DB_USERNAME', 'vehicledb'),
             'password' => env('DB_PASSWORD', 'INY1q5pa3ROCaMU80qT2'),
             'charset' => 'utf8',
@@ -283,7 +279,7 @@ return [
             'strict' => false,
             'engine' => null,
         ],
-        
+
         // 'erpcloud' => [
         //     'driver' => 'mysql',
         //     'host' => env('DB_HOST', '127.0.0.1'),
@@ -297,13 +293,9 @@ return [
         //     'strict' => false,
         //     'engine' => null,
         // ],
-        
-
-        
 
         // EXTERNAL CONNECTIONS - START
 
-        
         'homer' => [
             'driver' => 'mysql',
             'host' => env('DB_HOST', 'homer.cloudtelecoms.co.za'),
@@ -317,7 +309,7 @@ return [
             'strict' => false,
             'engine' => null,
         ],
-        
+
         'pbx_erp' => [
             'driver' => 'mysql',
             'host' => env('DB_HOST', '156.0.96.60'),
@@ -330,7 +322,7 @@ return [
             'strict' => false,
             'engine' => null,
         ],
-        
+
         'pbx' => [
             'driver' => 'mysql',
             'host' => env('DB_HOST', '156.0.96.60'),
@@ -343,7 +335,7 @@ return [
             'strict' => false,
             'engine' => null,
         ],
-      
+
         'pbx_cdr' => [
             'driver' => 'mysql',
             'host' => env('DB_HOST', '156.0.96.60'),
@@ -437,7 +429,7 @@ return [
             'strict' => false,
             'engine' => null,
         ],
-        
+
         'helpdesk' => [
             'driver' => 'mysql',
             'host' => '127.0.0.1',
@@ -451,7 +443,6 @@ return [
             'strict' => false,
             'engine' => null,
         ],
-        
 
         'backup_server' => [
             'driver' => 'mysql',
@@ -495,10 +486,8 @@ return [
             'strict' => false,
             'engine' => null,
         ],
-        
-        
 
-/*
+        /*
         'tickets' => [
             'driver' => 'mysql',
             'database' => 'flexerpio_tenant',

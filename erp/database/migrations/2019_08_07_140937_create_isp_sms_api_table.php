@@ -24,7 +24,6 @@ class CreateIspSmsApiTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

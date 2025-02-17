@@ -2,7 +2,7 @@
 
 function schedule_import_facebook_messages()
 {
-    if (!is_main_instance()) {
+    if (! is_main_instance()) {
         return false;
     }
 
@@ -24,17 +24,17 @@ function schedule_import_facebook_messages()
 
             // Initialize Guzzle client
             $client = new GuzzleHttp\Client([
-            'base_uri' => 'https://graph.facebook.com/v12.0/', // Facebook Graph API version
-            'timeout' => 30,
-        ]);
+                'base_uri' => 'https://graph.facebook.com/v12.0/', // Facebook Graph API version
+                'timeout' => 30,
+            ]);
 
             // Make a request to fetch all posts on the page
             $response = $client->get("$pageId/conversations", [
-            'query' => [
-                'fields' => 'messages{created_time,message,from},unread_count,link',
-                'access_token' => $accessToken,
-            ],
-        ]);
+                'query' => [
+                    'fields' => 'messages{created_time,message,from},unread_count,link',
+                    'access_token' => $accessToken,
+                ],
+            ]);
 
             // Process the API response
             $data = json_decode($response->getBody(), true);
@@ -54,21 +54,21 @@ function schedule_import_facebook_messages()
                     }
                 }
                 $data = [
-                'type' => 'conversation',
-                'page' => $page_name,
-                'post' => '',
-                'comment' => $message_chain,
-                'comment_id' => $conversation['id'],
-                'unread_count' => $conversation['unread_count'],
-                'has_reply' => $has_reply,
-                'published_at' => date('Y-m-d H:i:s', strtotime($last_message_time)),
-                'facebook_link' => 'https://business.facebook.com/'.$conversation['link'],
-            ];
+                    'type' => 'conversation',
+                    'page' => $page_name,
+                    'post' => '',
+                    'comment' => $message_chain,
+                    'comment_id' => $conversation['id'],
+                    'unread_count' => $conversation['unread_count'],
+                    'has_reply' => $has_reply,
+                    'published_at' => date('Y-m-d H:i:s', strtotime($last_message_time)),
+                    'facebook_link' => 'https://business.facebook.com/'.$conversation['link'],
+                ];
                 if (in_array($data['comment_id'], $comment_checked_ids)) {
                     $data['comment_checked'] = 1;
                 }
                 $e = \DB::table('crm_meta_messages')->where('comment_id', $conversation['id'])->count();
-                if (!$e) {
+                if (! $e) {
                     dbinsert('crm_meta_messages', $data);
                 } else {
                     dbupdate('crm_meta_messages', ['comment_id' => $conversation['id']], $data);
@@ -82,7 +82,7 @@ function schedule_import_facebook_messages()
 
 function schedule_import_facebook_comments()
 {
-    if (!is_main_instance()) {
+    if (! is_main_instance()) {
         return false;
     }
     // Your Facebook API credentials and access token
@@ -101,18 +101,18 @@ function schedule_import_facebook_comments()
 
             // Initialize Guzzle client
             $client = new GuzzleHttp\Client([
-            'base_uri' => 'https://graph.facebook.com/v12.0/', // Facebook Graph API version
-            'timeout' => 30,
-        ]);
+                'base_uri' => 'https://graph.facebook.com/v12.0/', // Facebook Graph API version
+                'timeout' => 30,
+            ]);
 
             // Make a request to fetch all posts on the page
             $response = $client->get("$pageId/posts", [
-            'query' => [
-                'fields' => 'id,message,comments',
-                'limit' => 10,
-                'access_token' => $accessToken,
-            ],
-        ]);
+                'query' => [
+                    'fields' => 'id,message,comments',
+                    'limit' => 10,
+                    'access_token' => $accessToken,
+                ],
+            ]);
 
             // Process the API response
             $data = json_decode($response->getBody(), true);
@@ -126,18 +126,18 @@ function schedule_import_facebook_comments()
 
                 // Process comments for this post
                 $commentsData = $post['comments']['data'];
-                if (!empty($commentsData)) {
+                if (! empty($commentsData)) {
                     foreach ($commentsData as $comment) {
                         $e = \DB::table('crm_meta_messages')->where('comment_id', $comment['id'])->count();
-                        if (!$e) {
+                        if (! $e) {
                             $data = [
-                            'type' => 'comment',
-                            'page' => $page_name,
-                            'post' => $post_name,
-                            'comment' => $comment['message'],
-                            'comment_id' => $comment['id'],
-                            'published_at' => date('Y-m-d H:i:s', strtotime($comment['created_time'])),
-                        ];
+                                'type' => 'comment',
+                                'page' => $page_name,
+                                'post' => $post_name,
+                                'comment' => $comment['message'],
+                                'comment_id' => $comment['id'],
+                                'published_at' => date('Y-m-d H:i:s', strtotime($comment['created_time'])),
+                            ];
                             dbinsert('crm_meta_messages', $data);
                         }
                     }
@@ -164,7 +164,7 @@ function configureWhatsAppWebhook()
     $callbackUrl = url('whatsapp_webhook');
     $verifyToken = 'cloudtelecoms@786';
     $accessToken = env('FB_APP_ACCESS_TOKEN');
-    $client = new GuzzleHttp\Client();
+    $client = new GuzzleHttp\Client;
     $whatsappBusinessAccountId = 102781789316507;
     $url = "https://graph.facebook.com/v13.0/{$whatsappBusinessAccountId}/subscribed_apps";
 
@@ -198,7 +198,7 @@ function aftersave_facebook_tokens_get_longlived_tokens($request)
     $beforesave_row = session('event_db_record');
     if ($beforesave_row->user_shortlived_token != $request->user_shortlived_token) {
         \DB::table('crm_facebook_access_tokens')
-        ->update(['user_shortlived_token' => $request->user_shortlived_token]);
+            ->update(['user_shortlived_token' => $request->user_shortlived_token]);
         update_facebook_longlived_user_access_token($request->user_shortlived_token);
         update_facebook_page_access_tokens();
     }
@@ -215,9 +215,9 @@ function update_facebook_longlived_user_access_token($app_user_token)
 
     try {
         $d = ['client_id' => $app_id,
-                'client_secret' => $app_secret,
-                'grant_type' => 'fb_exchange_token',
-                'fb_exchange_token' => $app_user_token, ];
+            'client_secret' => $app_secret,
+            'grant_type' => 'fb_exchange_token',
+            'fb_exchange_token' => $app_user_token, ];
 
         $response = $client->post('oauth/access_token', [
             'form_params' => [
@@ -232,10 +232,10 @@ function update_facebook_longlived_user_access_token($app_user_token)
 
         $data = json_decode($body, true);
         \DB::table('crm_facebook_access_tokens')
-        ->update([
-            'user_longlived_token' => $data['access_token'],
-            'user_token_expires_at' => date('Y-m-d H:i:s', strtotime('+ '.$data['expires_in'].' seconds')),
-        ]);
+            ->update([
+                'user_longlived_token' => $data['access_token'],
+                'user_token_expires_at' => date('Y-m-d H:i:s', strtotime('+ '.$data['expires_in'].' seconds')),
+            ]);
     } catch (\Exception $e) {
     }
 }
@@ -372,7 +372,7 @@ function schedule_facebook_stats_update()
     $facebook_channel_id = \DB::table('crm_ad_channels')->where('is_deleted', 0)->where('name', 'Facebook')->pluck('id')->first();
     foreach ($ad_campaigns as $ad_campaign) {
         $exists = \DB::table('crm_ad_campaign_details')->where('ad_campaign_id', $ad_campaign->id)->where('channel_id', $facebook_channel_id)->count();
-        if (!$exists) {
+        if (! $exists) {
             \DB::table('crm_ad_campaign_details')->insert(['ad_campaign_id' => $ad_campaign->id, 'channel_id' => $facebook_channel_id]);
         }
 
@@ -412,31 +412,31 @@ function update_facebook_campaign_results($campaign_id)
         $num_leads = count($account_ids);
         if ($account_ids) {
             $doc_query = \DB::table('crm_documents')
-            ->where('crm_documents.doctype', 'Tax Invoice')
-            ->where('crm_documents.reversal_id', 0)
-            ->where('crm_documents.billing_type', '')
-            ->whereIn('crm_documents.account_id', $account_ids);
+                ->where('crm_documents.doctype', 'Tax Invoice')
+                ->where('crm_documents.reversal_id', 0)
+                ->where('crm_documents.billing_type', '')
+                ->whereIn('crm_documents.account_id', $account_ids);
 
             $quotes_query = \DB::table('crm_documents')
-            ->where('crm_documents.doctype', 'Quotation')
-            ->where('crm_documents.reversal_id', 0)
-            ->where('crm_documents.billing_type', '')
-            ->whereIn('crm_documents.account_id', $account_ids);
+                ->where('crm_documents.doctype', 'Quotation')
+                ->where('crm_documents.reversal_id', 0)
+                ->where('crm_documents.billing_type', '')
+                ->whereIn('crm_documents.account_id', $account_ids);
 
             if ($ad_campaign && $ad_campaign->launch_date) {
-                if (!empty($ad_campaign->launch_date)) {
+                if (! empty($ad_campaign->launch_date)) {
                     $doc_query->where('crm_documents.docdate', '>=', $ad_campaign->launch_date);
                 }
-                if (!empty($ad_campaign->launch_date)) {
+                if (! empty($ad_campaign->launch_date)) {
                     $quotes_query->where('crm_documents.docdate', '>=', $ad_campaign->launch_date);
                 }
             }
 
             if ($ad_campaign && $ad_campaign->end_date) {
-                if (!empty($ad_campaign->end_date)) {
+                if (! empty($ad_campaign->end_date)) {
                     $doc_query->where('crm_documents.docdate', '<=', date('Y-m-d', strtotime($ad_campaign->end_date.' +2 weeks')));
                 }
-                if (!empty($ad_campaign->end_date)) {
+                if (! empty($ad_campaign->end_date)) {
                     $quotes_query->where('crm_documents.docdate', '<=', date('Y-m-d', strtotime($ad_campaign->end_date.' +2 weeks')));
                 }
             }
@@ -495,7 +495,7 @@ function get_facebook_ad_stats($ad_campaign)
 {
     $adAccountId = $ad_campaign->facebook_campaign_id;
     $accessToken = \DB::table('crm_facebook_access_tokens')->pluck('user_longlived_token')->first();
-    $client = new GuzzleHttp\Client();
+    $client = new GuzzleHttp\Client;
     $url = 'https://graph.facebook.com/v19.0/'.$adAccountId.'/insights';
 
     $query = [
@@ -505,7 +505,7 @@ function get_facebook_ad_stats($ad_campaign)
         //'time_range' => '{"since":"2022-01-01","until":"2022-01-31"}', // Modify the time range as needed
     ];
 
-    if (!empty($ad_campaign->launch_date) && !empty($ad_campaign->end_date)) {
+    if (! empty($ad_campaign->launch_date) && ! empty($ad_campaign->end_date)) {
         $query['time_range'] = '{"since":"'.$ad_campaign->launch_date.'","until":"'.$ad_campaign->end_date.'"}';
     }
 
@@ -524,7 +524,7 @@ function get_facebook_ad_stats($ad_campaign)
         } else {
             return false;
         }
-        if (!empty($data['data'])) {
+        if (! empty($data['data'])) {
             return $data['data'];
         }
 
@@ -540,11 +540,11 @@ function get_facebook_ad_stats($ad_campaign)
 
 function schedule_weekly_update_facebook_token_expiry()
 {
-    if (!is_main_instance()) {
+    if (! is_main_instance()) {
         return false;
     }
     $accessToken = \DB::table('crm_facebook_access_tokens')->pluck('user_longlived_token')->first();
-    $client = new GuzzleHttp\Client();
+    $client = new GuzzleHttp\Client;
     $url = 'https://graph.facebook.com/v12.0/debug_token';
 
     try {
@@ -562,10 +562,10 @@ function schedule_weekly_update_facebook_token_expiry()
             //return false; // Error occurred
         }
 
-        if (!empty($data['data']) && !empty($data['data']['data_access_expires_at'])) {
+        if (! empty($data['data']) && ! empty($data['data']['data_access_expires_at'])) {
             $expiry = date('Y-m-d H:i:s', $data['data']['data_access_expires_at']);
         }
-        if (!empty($expiry)) {
+        if (! empty($expiry)) {
             \DB::table('crm_facebook_access_tokens')->where('user_longlived_token', $accessToken)->update(['user_token_expires_at' => $expiry]);
         }
 

@@ -7,16 +7,16 @@ function aftersave_set_event_definitions($request)
 
     $function = \DB::table('erp_form_events')->where('id', $request->id)->pluck('function_name')->first();
 
-    if (!empty(session('event_db_record'))) {
+    if (! empty(session('event_db_record'))) {
         $beforesave_row = session('event_db_record');
-        if (!empty($beforesave_row->function_name)) {
+        if (! empty($beforesave_row->function_name)) {
             if ($beforesave_row->function_name != $function) {
                 replace_code_references_helpers('function '.$beforesave_row->function_name, 'function '.$function);
             }
         }
-    } elseif (!function_exists($function)) {
+    } elseif (! function_exists($function)) {
         $added = add_code_definition($function, 'request');
-        if (!$added) {
+        if (! $added) {
             return 'Could not create function definition.';
         }
     }
@@ -38,7 +38,6 @@ function aftersave_set_event_definitions($request)
     }
 }
 
-
 function schedule_events_update_run_time()
 {
     try {
@@ -56,7 +55,7 @@ function schedule_events_update_code_definitions()
     foreach ($events as $e) {
         try {
             $code = get_function_code($e->function_name);
-            if (!empty($code)) {
+            if (! empty($code)) {
                 \DB::table('erp_form_events')->where('id', $e->id)->update(['function_code' => $code]);
             }
         } catch (\Throwable $ex) {
@@ -91,7 +90,7 @@ function schedule_email_event_errors()
 function beforesave_events_check_event_type($request)
 {
     if ($request->type == 'format_response') {
-        if (!empty($request->id)) {
+        if (! empty($request->id)) {
             $event_count = \DB::connection('default')->table('erp_form_events')->where('module_id', $request->module_id)->where('id', '!=', $request->id)->where('type', 'format_response')->count();
         } else {
             $event_count = \DB::connection('default')->table('erp_form_events')->where('module_id', $request->module_id)->where('type', 'format_response')->count();
@@ -145,7 +144,7 @@ function beforesave_events_check_event_type($request)
             }
         }
 
-        if (!empty($request->frequency_time)) {
+        if (! empty($request->frequency_time)) {
             $minute = substr($request->frequency_time, 3, 2);
 
             if ($minute == '00' && $request->frequency_type != 'Minutely' && $request->frequency_type != 'Hourly' && $request->frequency_type != 'Yearly') {
@@ -154,7 +153,7 @@ function beforesave_events_check_event_type($request)
             $timeslot_used = false;
 
             if ($request->frequency_type != 'Minutely' && $request->frequency_type != 'Hourly' && $request->frequency_type != 'Yearly') {
-                if (!empty($request->id)) {
+                if (! empty($request->id)) {
                     $timeslot_used = \DB::table('erp_form_events')->where('id', '!=', $request->id)->where('frequency_time', $request->frequency_time)->count();
                 } else {
                     $timeslot_used = \DB::table('erp_form_events')->where('frequency_time', $request->frequency_time)->count();
@@ -165,7 +164,7 @@ function beforesave_events_check_event_type($request)
                 //   return 'Timeslot already in use.';
             }
         }
-        if (!empty($request->frequency_time)) {
+        if (! empty($request->frequency_time)) {
             $hour = date('H', strtotime($request->frequency_time));
 
             if ($hour == 4 && $request->function_name != 'schedule_servers_reboot') {
@@ -278,10 +277,11 @@ function button_form_events_run_schedule($request)
     }
     $result = \DB::table('erp_form_events')->where('id', $id)->update($data);
 
-    if ($data['error'])
+    if ($data['error']) {
         return json_alert($data['error'], 'error');
-    else 
+    } else {
         return json_alert('Function called');
+    }
 }
 
 function button_document_types_rebuild_ledger($request)
@@ -289,7 +289,7 @@ function button_document_types_rebuild_ledger($request)
     $data = [];
     $months = [];
     $months[] = 'All';
-    for ($i = 0; $i < 36; ++$i) {
+    for ($i = 0; $i < 36; $i++) {
         if ($i == 0) {
             $months[] = date('Y-m');
         } else {
@@ -304,14 +304,14 @@ function button_document_types_rebuild_ledger($request)
 
 function repost_document_by_id($doctable, $id)
 {
-    $db = new DBEvent();
+    $db = new DBEvent;
     $db->setTable($doctable)->postDocument($id);
     $db->postDocumentCommit();
 }
 
 function repost_document_by_ids($doctable, $ids)
 {
-    $db = new DBEvent();
+    $db = new DBEvent;
     foreach ($ids as $id) {
         $db->setTable($doctable)->postDocument($id);
     }
@@ -320,7 +320,7 @@ function repost_document_by_ids($doctable, $ids)
 
 function repost_document_by_account_id($account_id)
 {
-    $db = new DBEvent();
+    $db = new DBEvent;
     $doctypes = \DB::table('acc_doctypes')->get();
     $ledgers = \DB::table('acc_ledgers')->where('account_id', $account_id)->get();
     foreach ($ledgers as $l) {
@@ -333,9 +333,9 @@ function repost_document_by_account_id($account_id)
 function repost_documents($doctype_id = false, $period = 'all', $document_id = false)
 {
     set_time_limit(0);
-    $db = new DBEvent();
+    $db = new DBEvent;
 
-    if ('all' == $period) {
+    if ($period == 'all') {
         $first_day = '1900-01-01';
         $last_day = '2100-01-01';
     } else {
@@ -343,7 +343,7 @@ function repost_documents($doctype_id = false, $period = 'all', $document_id = f
         $last_day = date('Y-m-t', strtotime($period));
     }
 
-    if (!$doctype_id) {
+    if (! $doctype_id) {
         $doctables = \DB::select('select doctable, doctype from acc_doctypes where status!="Deleted" order by sort_order');
     } else {
         $doctables = \DB::select('select doctable, doctype from acc_doctypes where status!="Deleted" and id='.$doctype_id.' order by sort_order');
@@ -385,12 +385,12 @@ function repost_documents($doctype_id = false, $period = 'all', $document_id = f
 function repost_documents_by_year($doctype_id, $year)
 {
     set_time_limit(0);
-    $db = new DBEvent();
+    $db = new DBEvent;
 
     $first_day = $year.'-01-01';
     $last_day = $year.'-12-31';
 
-    if (!$doctype_id) {
+    if (! $doctype_id) {
         $doctables = \DB::select('select doctable, doctype from acc_doctypes where status!="Deleted" order by sort_order');
     } else {
         $doctables = \DB::select('select doctable, doctype from acc_doctypes where status!="Deleted" and id='.$doctype_id.' order by sort_order');
@@ -415,7 +415,7 @@ function repost_documents_by_year($doctype_id, $year)
                 $documents = DB::select('select * from '.$doctable->doctable.' where doctype = "'.$doctable->doctype.'" and docdate >= "'.$first_day.'" and docdate <= "'.$last_day.'" ');
             }
         }
-        
+
         $db->setTable($doctable->doctable);
         // aa($documents);
         foreach ($documents as $document) {
@@ -432,7 +432,7 @@ function repost_documents_by_year($doctype_id, $year)
 
 function repost_invoices_by_year($year, $doctype = false)
 {
-    $db = new DBEvent();
+    $db = new DBEvent;
     $doctype_id = 9;
     if ($doctype) {
         $doctables = \DB::select('select * from acc_doctypes where doctype = "'.$doctype.'"');
@@ -529,7 +529,7 @@ function beforesave_set_function_name($request)
     }
 
     if (empty($request->function_name)) {
-        if (!empty($request->id)) {
+        if (! empty($request->id)) {
             $beforesave_row = session('event_db_record');
             $function_name = str_replace(' ', '_', strtolower(trim($request->type).' '.trim($request->name)));
             if ($beforesave_row->function_name != $function_name) {

@@ -21,7 +21,6 @@ class CreateErpInstancesTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

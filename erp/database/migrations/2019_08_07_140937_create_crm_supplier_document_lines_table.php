@@ -26,7 +26,6 @@ class CreateCrmSupplierDocumentLinesTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

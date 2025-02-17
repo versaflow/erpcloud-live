@@ -37,12 +37,12 @@ function schedule_fnb_import_transactions($cashbook_id = 0)
                         }
 
                         $ref_id_exists = \DB::connection('default')->table('acc_cashbook_transactions')
-                        ->where('cashbook_id', $cashbook->id)
-                        ->where('docdate', $data['docdate'])
-                        ->where('total', currency($data['total']))
-                        ->where('reference', '!=', $data['reference'])
-                        ->where('reference', 'LIKE', '%DECLINED%')
-                        ->pluck('id')->first();
+                            ->where('cashbook_id', $cashbook->id)
+                            ->where('docdate', $data['docdate'])
+                            ->where('total', currency($data['total']))
+                            ->where('reference', '!=', $data['reference'])
+                            ->where('reference', 'LIKE', '%DECLINED%')
+                            ->pluck('id')->first();
 
                         if ($ref_id_exists) {
                             \DB::connection('default')->table('acc_cashbook_transactions')->where('id', $ref_id_exists)->delete();
@@ -58,8 +58,8 @@ function schedule_fnb_import_transactions($cashbook_id = 0)
                     }
 
                     $data = [
-                      'cashbook_id' => $cashbook->id,
-                      'api_data' => json_encode($trx),
+                        'cashbook_id' => $cashbook->id,
+                        'api_data' => json_encode($trx),
                     ];
 
                     $data = [
@@ -78,20 +78,20 @@ function schedule_fnb_import_transactions($cashbook_id = 0)
                     }
 
                     $ofx_exists = \DB::connection('default')->table('acc_cashbook_transactions')
-                            ->where('cashbook_id', $cashbook->id)
-                            ->where('docdate', $data['docdate'])
-                            ->whereRaw('REPLACE(reference, " ", "") ="'.str_replace(' ', '', $data['reference']).'"')
-                            ->where('api_status', '')
-                            ->where('total', currency($data['total']))->count();
+                        ->where('cashbook_id', $cashbook->id)
+                        ->where('docdate', $data['docdate'])
+                        ->whereRaw('REPLACE(reference, " ", "") ="'.str_replace(' ', '', $data['reference']).'"')
+                        ->where('api_status', '')
+                        ->where('total', currency($data['total']))->count();
 
                     $trx_exists = \DB::connection('default')->table('acc_cashbook_transactions')
-                            ->where('cashbook_id', $cashbook->id)
-                            ->where('docdate', $data['docdate'])
-                            ->whereRaw('REPLACE(reference, " ", "") ="'.str_replace(' ', '', $data['reference']).'"')
-                            ->where('total', currency($data['total']))->count();
+                        ->where('cashbook_id', $cashbook->id)
+                        ->where('docdate', $data['docdate'])
+                        ->whereRaw('REPLACE(reference, " ", "") ="'.str_replace(' ', '', $data['reference']).'"')
+                        ->where('total', currency($data['total']))->count();
 
-                    if (!$ofx_exists && !$trx_exists) {
-                        if (!empty($data['api_balance'])) {
+                    if (! $ofx_exists && ! $trx_exists) {
+                        if (! empty($data['api_balance'])) {
                             \DB::connection('default')->table('acc_cashbook_transactions')->insert($data);
                         }
                     }
@@ -197,14 +197,14 @@ function button_banking_fnb_import_payments($request)
 // https://github.com/bitshiftza/fnb-api
 function aftersave_cashbook_encode_fnb_pass($request)
 {
-    if (!empty($request->fnb_password)) {
+    if (! empty($request->fnb_password)) {
         \DB::table('acc_cashbook')->where('id', $request->id)->update(['fnb_password' => \Erp::encode($request->fnb_password)]);
     }
 }
 
 function aftersave_cashbook_create_ledger_account($request)
 {
-    if (!empty($request->new_record)) {
+    if (! empty($request->new_record)) {
         $data = [
             'name' => $request->name,
             'ledger_account_category_id' => 31,
@@ -233,6 +233,7 @@ function fnb_get_transactions($cashbook)
     $pos = strpos($transactions, '[{');
     $transactions = substr($transactions, $pos, strlen($transactions));
     $transactions = json_decode(trim($transactions));
+
     // dd($transactions);
     return $transactions;
 }

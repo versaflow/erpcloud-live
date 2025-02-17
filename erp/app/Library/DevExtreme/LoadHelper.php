@@ -9,8 +9,8 @@ class LoadHelper
         $namespaceNamePos = strpos($className, __NAMESPACE__);
         if ($namespaceNamePos === 0) {
             $subFolderPath = substr($className, $namespaceNamePos + strlen(__NAMESPACE__));
-            $filePath = __DIR__.str_replace("\\", DIRECTORY_SEPARATOR, $subFolderPath).".php";
-            require_once($filePath);
+            $filePath = __DIR__.str_replace('\\', DIRECTORY_SEPARATOR, $subFolderPath).'.php';
+            require_once $filePath;
         }
     }
 }

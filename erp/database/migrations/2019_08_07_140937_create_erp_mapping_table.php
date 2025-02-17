@@ -20,7 +20,6 @@ class CreateErpMappingTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

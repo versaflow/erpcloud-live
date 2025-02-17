@@ -25,7 +25,6 @@ class CreateAccApiTransactionsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

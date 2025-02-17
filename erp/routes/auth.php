@@ -14,12 +14,13 @@ Route::any('logout', 'CoreController@getLogout')->name('logout');
 Route::get('user/loginas/{any0?}/{any1?}', 'CoreController@getLoginAs');
 Route::any('autologin', 'CoreController@autoLogin');
 
-Route::get('user/loginas_voicebasic', function(){
-    if(!is_superadmin()){
+Route::get('user/loginas_voicebasic', function () {
+    if (! is_superadmin()) {
         return false;
     }
-    $account_id = \DB::connection('pbx')->table('v_domains')->where('pbx_type','Phone Line')
-    ->pluck('account_id')->first();
+    $account_id = \DB::connection('pbx')->table('v_domains')->where('pbx_type', 'Phone Line')
+        ->pluck('account_id')->first();
+
     return redirect()->to('user/loginas/'.$account_id);
 });
 
@@ -51,7 +52,6 @@ Route::get('helper/{function}/{var1}', 'CoreController@runHelper');
 Route::get('helper/{function}/{var1}/{var2}', 'CoreController@runHelper');
 Route::any('/user/kendomail/{email}', 'CoreController@postkendomail');
 Route::any('/user/paygateresult', 'CoreController@paygateresult');
-
 
 // token login
 Route::any('api/user/getusertoken', 'CoreController@getUserToken');

@@ -21,7 +21,6 @@ class CreateCrmPricelistCompetitorTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

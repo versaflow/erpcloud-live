@@ -27,7 +27,6 @@ class CreateIspHostZacrTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

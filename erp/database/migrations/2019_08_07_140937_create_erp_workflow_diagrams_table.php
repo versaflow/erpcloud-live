@@ -19,7 +19,6 @@ class CreateErpWorkflowDiagramsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

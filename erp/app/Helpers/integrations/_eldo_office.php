@@ -35,7 +35,7 @@ function schedule_set_services_shared()
     $disabled_tenant_count = 0;
     $disabled_tenant_ids = [];
     $disabled_account_ids = \DB::table('crm_accounts')->where('status', 'Disabled')->pluck('id')->toArray();
-    if (!empty($disabled_account_ids) && is_array($disabled_account_ids) && count($disabled_account_ids) > 0) {
+    if (! empty($disabled_account_ids) && is_array($disabled_account_ids) && count($disabled_account_ids) > 0) {
         $disabled_tenant_count = \DB::table('crm_rental_leases')->whereIn('account_id', $disabled_account_ids)->count();
         $disabled_tenant_ids = \DB::table('crm_rental_leases')->whereIn('account_id', $disabled_account_ids)->pluck('id')->toArray();
     }
@@ -53,12 +53,12 @@ function schedule_set_services_shared()
 
     if ($disabled_tenant_count > 0) {
         $total_fixed_tenants = \DB::table('crm_rental_leases')
-         ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
-        ->whereNotIn('account_id', $demo_account_ids)
-        ->where('crm_rental_leases.account_id', '>', 0)
-        ->whereNotIn('crm_rental_leases.id', $disabled_tenant_ids)
-        ->where('crm_rental_leases.status', '!=', 'Deleted')
-        ->count();
+            ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
+            ->whereNotIn('account_id', $demo_account_ids)
+            ->where('crm_rental_leases.account_id', '>', 0)
+            ->whereNotIn('crm_rental_leases.id', $disabled_tenant_ids)
+            ->where('crm_rental_leases.status', '!=', 'Deleted')
+            ->count();
         // $total_sqm_share = \DB::table('crm_rental_leases')
         //  ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
         // ->whereNotIn('account_id', $demo_account_ids)
@@ -67,8 +67,8 @@ function schedule_set_services_shared()
         // ->where('crm_rental_leases.status', '!=', 'Deleted')
         // ->sum('crm_rental_spaces.sqm_share');
         $total_sanitation_share = \DB::table('crm_rental_spaces')
-        ->where('has_lease', 'Occupied')
-        ->sum('sanitation_share');
+            ->where('has_lease', 'Occupied')
+            ->sum('sanitation_share');
         // $total_water_share = \DB::table('crm_rental_leases')
         //  ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
         // ->whereNotIn('account_id', $demo_account_ids)
@@ -79,11 +79,11 @@ function schedule_set_services_shared()
         $total_armed_response = $total_fixed_tenants;
     } else {
         $total_fixed_tenants = \DB::table('crm_rental_leases')
-        ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
-        ->whereNotIn('account_id', $demo_account_ids)
-        ->where('crm_rental_leases.status', '!=', 'Deleted')
-        ->where('crm_rental_leases.account_id', '>', 0)
-        ->count();
+            ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
+            ->whereNotIn('account_id', $demo_account_ids)
+            ->where('crm_rental_leases.status', '!=', 'Deleted')
+            ->where('crm_rental_leases.account_id', '>', 0)
+            ->count();
         // $total_sa_share = \DB::table('crm_rental_leases')
         // ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
         // ->whereNotIn('account_id', $demo_account_ids)
@@ -91,14 +91,14 @@ function schedule_set_services_shared()
         // ->where('crm_rental_leases.account_id', '>', 0)
         // ->sum('crm_rental_spaces.sqm_share');
         $total_sanitation_share = \DB::table('crm_rental_spaces')
-        ->where('has_lease', 'Occupied')
-        ->sum('sanitation_share');
+            ->where('has_lease', 'Occupied')
+            ->sum('sanitation_share');
         $total_water_share = \DB::table('crm_rental_leases')
-         ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
-        ->whereNotIn('account_id', $demo_account_ids)
-        ->where('crm_rental_leases.status', '!=', 'Deleted')
-        ->where('crm_rental_leases.account_id', '>', 0)
-        ->sum('crm_rental_spaces.water_share');
+            ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
+            ->whereNotIn('account_id', $demo_account_ids)
+            ->where('crm_rental_leases.status', '!=', 'Deleted')
+            ->where('crm_rental_leases.account_id', '>', 0)
+            ->sum('crm_rental_spaces.water_share');
         $total_armed_response = $total_fixed_tenants;
     }
 
@@ -118,7 +118,6 @@ function schedule_set_services_shared()
     \DB::table('crm_rental_spaces')->where('office_number', '11 Boardroom')->update(['sqm_share' => 0, 'water_share' => 0]);
 }
 
-
 /*
   $rentals = \DB::table('crm_rental_leases')
     ->select('crm_rental_leases.*','crm_rental_spaces.*','crm_rental_leases.id as id')
@@ -135,7 +134,7 @@ function schedule_update_lease_expiring()
     \DB::table('crm_rental_spaces')->update(['lease_expiring' => 0]);
     $leases = \DB::table('crm_rental_leases')->where('status', 'Enabled')->get();
     foreach ($leases as $lease) {
-        if (!empty($lease->lease_expiry_date) && $lease->lease_expiry_date <= date('Y-m-t', strtotime('last day next month'))) {
+        if (! empty($lease->lease_expiry_date) && $lease->lease_expiry_date <= date('Y-m-t', strtotime('last day next month'))) {
             \DB::table('crm_rental_spaces')->where('id', $lease->rental_space_id)->update(['lease_expiring' => 1]);
         }
     }
@@ -155,7 +154,7 @@ function schedule_process_cancelled_leases()
             'requested_by' => get_user_id_default(),
         ];
 
-        (new \DBEvent())->setTable('crm_approvals')->save($data);
+        (new \DBEvent)->setTable('crm_approvals')->save($data);
     }
 }
 
@@ -188,13 +187,13 @@ function schedule_create_rental_deposit_activations()
     foreach ($tenants as $tenant) {
         $docids = \DB::table('crm_documents')->where('account_id', $tenant->id)->whereIn('doctype', ['Order', 'Tax Invoice'])->where('reversal_id', 0)->pluck('id')->toArray();
         $deposit_amount = \DB::table('crm_document_lines')->whereIn('document_id', $docids)->where('product_id', 11)->sum('price');
-        if ((!$deposit_amount && $tenant->id != 8) || !$tenant->id_file || !$tenant->lease_agreement) {
+        if ((! $deposit_amount && $tenant->id != 8) || ! $tenant->id_file || ! $tenant->lease_agreement) {
             $pending_activation = \DB::table('sub_activations')
-            ->where('account_id', $tenant->id)
-            ->where('product_id', 11)
-            ->whereIn('status', ['Pending', 'Awaiting Third-Party'])
-            ->count();
-            if (!$pending_activation) {
+                ->where('account_id', $tenant->id)
+                ->where('product_id', 11)
+                ->whereIn('status', ['Pending', 'Awaiting Third-Party'])
+                ->count();
+            if (! $pending_activation) {
                 $data = [
                     'account_id' => $tenant->id,
                     'product_id' => 11,
@@ -219,30 +218,30 @@ function create_rental_deposit_credit_note($lease_id)
     $lease = \DB::table('crm_rental_leases')->where('id', $lease_id)->get()->first();
 
     $credit_note_id = \DB::table('crm_documents')
-    ->where('account_id', $lease->account_id)
-    ->join('crm_document_lines', 'crm_document_lines.document_id', '=', 'crm_documents.id')
-    ->where('crm_document_lines.product_id', 11)
-    ->where('doctype', 'Credit Note')
-    ->where('credit_note_reason', 'Rental deposit credited')
-    ->pluck('crm_documents.id')->first();
+        ->where('account_id', $lease->account_id)
+        ->join('crm_document_lines', 'crm_document_lines.document_id', '=', 'crm_documents.id')
+        ->where('crm_document_lines.product_id', 11)
+        ->where('doctype', 'Credit Note')
+        ->where('credit_note_reason', 'Rental deposit credited')
+        ->pluck('crm_documents.id')->first();
     if ($credit_note_id) {
         // check if credit note already exists
         return $credit_note_id;
     }
 
     $invoice_id = \DB::table('crm_documents')
-    ->where('account_id', $lease->account_id)
-    ->join('crm_document_lines', 'crm_document_lines.document_id', '=', 'crm_documents.id')
-    ->where('crm_document_lines.product_id', 11)
-    ->where('doctype', 'Tax Invoice')
-    ->pluck('crm_documents.id')->first();
+        ->where('account_id', $lease->account_id)
+        ->join('crm_document_lines', 'crm_document_lines.document_id', '=', 'crm_documents.id')
+        ->where('crm_document_lines.product_id', 11)
+        ->where('doctype', 'Tax Invoice')
+        ->pluck('crm_documents.id')->first();
 
-    if (!$invoice_id) {
+    if (! $invoice_id) {
         return false;
     }
 
     $invoice = \DB::table('crm_documents')->where('id', $invoice_id)->get()->first();
-    if (!empty($invoice->reversal_id)) {
+    if (! empty($invoice->reversal_id)) {
         return false;
     }
     $lines = \DB::table('crm_document_lines')->where('product_id', 11)->where('document_id', $invoice_id)->get();
@@ -276,7 +275,7 @@ function create_rental_deposit_credit_note($lease_id)
 
     \DB::table('crm_documents')->where('id', $invoice_id)->update(['reversal_id' => $credit_note_id]);
 
-    $db = new DBEvent();
+    $db = new DBEvent;
     $db->setTable('crm_documents');
     $db->postDocument($credit_note_id);
     $db->postDocumentCommit();
@@ -319,7 +318,7 @@ function button_rentals_archive($request)
 function beforesave_rentals_check_account($request)
 {
     $beforesave_row = session('event_db_record');
-    if (!empty($request->id) && $beforesave_row->lease_start_date != $rental->lease_start_date) {
+    if (! empty($request->id) && $beforesave_row->lease_start_date != $rental->lease_start_date) {
         return 'Lease start date cannot be changed, archive rental space and assign.';
     }
 
@@ -336,7 +335,7 @@ function beforesave_rentals_check_account($request)
 
 function beforesave_rentals_check_dates($request)
 {
-    if (!empty($request->account_id)) {
+    if (! empty($request->account_id)) {
         if (empty($request->lease_expiry_date)) {
             return 'Lease expiry date required';
         }
@@ -346,7 +345,7 @@ function beforesave_rentals_check_dates($request)
 function button_accounts_rental_spaces($request)
 {
     $id = \DB::table('crm_rental_leases')->where('account_id', $request->id)->pluck('id')->first();
-    if (!$id) {
+    if (! $id) {
         return json_alert('Record not found');
     }
     $url = '/rental_spaces/edit/'.$id;
@@ -357,11 +356,11 @@ function button_accounts_rental_spaces($request)
 function aftersave_rentals_spaces_calculate_price($request)
 {
     $rentals = \DB::table('crm_rental_leases')
-    ->select('crm_rental_leases.*', 'crm_rental_spaces.*', 'crm_rental_leases.id as id')
-    ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
-    ->where('crm_rental_leases.status', 'Enabled')
-    ->where('crm_rental_spaces.id', $request->id)
-    ->get();
+        ->select('crm_rental_leases.*', 'crm_rental_spaces.*', 'crm_rental_leases.id as id')
+        ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
+        ->where('crm_rental_leases.status', 'Enabled')
+        ->where('crm_rental_spaces.id', $request->id)
+        ->get();
 
     foreach ($rentals as $rental) {
         set_rental_prices($rental);
@@ -372,11 +371,11 @@ function aftersave_rentals_leases_calculate_price($request = false)
 {
     if ($request != false) {
         $rentals = \DB::table('crm_rental_leases')
-    ->select('crm_rental_leases.*', 'crm_rental_spaces.*', 'crm_rental_leases.id as id')
-    ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
-    ->where('crm_rental_leases.status', 'Enabled')
-    ->where('crm_rental_leases.id', $request->id)
-    ->get();
+            ->select('crm_rental_leases.*', 'crm_rental_spaces.*', 'crm_rental_leases.id as id')
+            ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
+            ->where('crm_rental_leases.status', 'Enabled')
+            ->where('crm_rental_leases.id', $request->id)
+            ->get();
 
         foreach ($rentals as $rental) {
             set_rental_prices($rental);
@@ -400,13 +399,13 @@ function set_all_rental_prices()
     DB::table('sub_services')->truncate();
     $deleted_accounts = \DB::table('crm_accounts')->where('status', 'Deleted')->pluck('id')->toArray();
     \DB::table('crm_rental_leases')->whereIn('account_id', $deleted_accounts)
-    ->update(['status' => 'Deleted']);
+        ->update(['status' => 'Deleted']);
 
     $rentals = \DB::table('crm_rental_leases')
-    ->select('crm_rental_leases.*', 'crm_rental_spaces.*', 'crm_rental_leases.id as id')
-    ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
-    ->where('crm_rental_leases.status', 'Enabled')
-    ->get();
+        ->select('crm_rental_leases.*', 'crm_rental_spaces.*', 'crm_rental_leases.id as id')
+        ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
+        ->where('crm_rental_leases.status', 'Enabled')
+        ->get();
 
     foreach ($rentals as $rental) {
         // vd($rental);
@@ -420,7 +419,7 @@ function set_rental_prices($rental)
     $disabled_tenant_count = 0;
     $disabled_tenant_ids = [];
     $disabled_account_ids = \DB::table('crm_accounts')->where('status', 'Disabled')->pluck('id')->toArray();
-    if (!empty($disabled_account_ids) && is_array($disabled_account_ids) && count($disabled_account_ids) > 0) {
+    if (! empty($disabled_account_ids) && is_array($disabled_account_ids) && count($disabled_account_ids) > 0) {
         $disabled_tenant_count = \DB::table('crm_rental_leases')->whereIn('account_id', $disabled_account_ids)->count();
         $disabled_tenant_ids = \DB::table('crm_rental_leases')->whereIn('account_id', $disabled_account_ids)->pluck('id')->toArray();
     }
@@ -465,7 +464,7 @@ function set_rental_prices($rental)
     DB::table('sub_services')->where('detail', $armed_response_reference)->update(['account_id' => $rental->account_id]);
 
     $rent_exists = \DB::table('sub_services')->where('detail', $reference)->where('status', '!=', 'Deleted')->count();
-    if (!$rent_exists) {
+    if (! $rent_exists) {
         $rent = [
             'account_id' => $rental->account_id,
             'product_id' => 13,
@@ -479,7 +478,7 @@ function set_rental_prices($rental)
     }
 
     $services_exists = \DB::table('sub_services')->where('detail', $service_reference)->where('status', '!=', 'Deleted')->count();
-    if (!$services_exists) {
+    if (! $services_exists) {
         $services = [
             'account_id' => $rental->account_id,
             'product_id' => 158,
@@ -573,7 +572,6 @@ function set_rental_prices($rental)
     //     $total_armed_response = $total_fixed_tenants;
     // }
 
-
     // $rent = [
     //     'account_id' => $rental->account_id,
     //     'product_id' => 158,
@@ -602,7 +600,7 @@ function set_rental_prices($rental)
     if ($rental->inverter_price > 0) {
         $exists = \DB::table('sub_services')->where('detail', $inverter_reference)->where('status', '!=', 'Deleted')->count();
         $price_tax = $rental->inverter_price;
-        if (!$exists) {
+        if (! $exists) {
             $services = [
                 'account_id' => $rental->account_id,
                 'product_id' => 151,
@@ -628,7 +626,7 @@ function set_rental_prices($rental)
 
     if ($rental->internet_price > 0) {
         $exists = \DB::table('sub_services')->where('detail', $internet_reference)->where('status', '!=', 'Deleted')->count();
-        if (!$exists) {
+        if (! $exists) {
             $services = [
                 'account_id' => $rental->account_id,
                 'product_id' => 15,
@@ -669,11 +667,11 @@ function set_rental_prices($rental)
         $office_number = str_replace('Office #', '', $office_number);
         $office_number = trim($office_number);
         $account_share = \DB::table('crm_rental_leases')
-        ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
-        ->where('crm_rental_leases.account_id', $sub->account_id)
-        ->where('crm_rental_spaces.office_number', $office_number)
-        ->where('crm_rental_leases.status', '!=', 'Deleted')
-        ->sum('crm_rental_spaces.water_share');
+            ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
+            ->where('crm_rental_leases.account_id', $sub->account_id)
+            ->where('crm_rental_spaces.office_number', $office_number)
+            ->where('crm_rental_leases.status', '!=', 'Deleted')
+            ->sum('crm_rental_spaces.water_share');
 
         if ($account_share == 0 || in_array($sub->account_id, $demo_account_ids)) {
             $data['price'] = 0;
@@ -739,14 +737,12 @@ function set_rental_prices($rental)
     // }
 }
 
-function aftersave_settings_set_shared_services($request)
-{
-}
+function aftersave_settings_set_shared_services($request) {}
 
 function provision_shared_services_form($provision, $input, $product, $customer)
 {
-    $taps = (!empty($input['taps'])) ? $input['taps'] : '';
-    $office_number = (!empty($input['office_number'])) ? $input['office_number'] : '';
+    $taps = (! empty($input['taps'])) ? $input['taps'] : '';
+    $office_number = (! empty($input['office_number'])) ? $input['office_number'] : '';
     $form = '';
 
     $form .= '<label for="taps">Number of taps</label>';
@@ -760,7 +756,7 @@ function provision_shared_services_form($provision, $input, $product, $customer)
 
 function provision_shared_internet_form($provision, $input, $product, $customer)
 {
-    $office_number = (!empty($input['office_number'])) ? $input['office_number'] : '';
+    $office_number = (! empty($input['office_number'])) ? $input['office_number'] : '';
     $form = '';
 
     $form .= '<label for="office_number">Office Number</label>';
@@ -771,7 +767,7 @@ function provision_shared_internet_form($provision, $input, $product, $customer)
 
 function provision_rental_form($provision, $input, $product, $customer)
 {
-    $office_number = (!empty($input['office_number'])) ? $input['office_number'] : '';
+    $office_number = (! empty($input['office_number'])) ? $input['office_number'] : '';
     $form = '';
 
     $form .= '<label for="office_number">Office Number</label>';
@@ -837,13 +833,13 @@ function schedule_rent_inflation()
     // run on the first of every month
 
     $month_day = date('m-d');
-    $db = new \DBEvent();
+    $db = new \DBEvent;
 
     $rentals = \DB::table('crm_rental_leases')
-    ->select('crm_rental_leases.*', 'crm_rental_spaces.*', 'crm_rental_leases.id as id')
-    ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
-    ->where('crm_rental_leases.status', '!=', 'Deleted')
-    ->where('crm_rental_leases.account_id', '>', 0)->where('next_escalation_date', '<=', date('Y-m-d'))->get();
+        ->select('crm_rental_leases.*', 'crm_rental_spaces.*', 'crm_rental_leases.id as id')
+        ->join('crm_rental_spaces', 'crm_rental_leases.rental_space_id', '=', 'crm_rental_spaces.id')
+        ->where('crm_rental_leases.status', '!=', 'Deleted')
+        ->where('crm_rental_leases.account_id', '>', 0)->where('next_escalation_date', '<=', date('Y-m-d'))->get();
 
     $offices_adjusted = '';
     foreach ($rentals as $rental) {
@@ -914,7 +910,7 @@ function schedule_rent_inflation()
         $function_variables = get_defined_vars();
         $data['function_name'] = __FUNCTION__;
         //$data['debug'] = 1;
-       // erp_process_notification(1, $data, $function_variables);
+        // erp_process_notification(1, $data, $function_variables);
     }
     \DB::table('crm_rental_leases')->where('account_id', 0)->update(['next_escalation_date' => null, 'lease_expiry_date' => null, 'last_escalation_date' => null]);
 
@@ -981,7 +977,7 @@ function aftersave_water_readings_set_water_bill($request)
 
         $readings = \DB::table('crm_water_readings')->where('is_deleted', 0)->where('premises', $premise)->orderBy('date_logged', 'asc')->orderBy('id', 'asc')->get();
         foreach ($readings as $reading) {
-            if (!$last_reading) {
+            if (! $last_reading) {
                 $reading_difference = 0;
             } else {
                 $reading_difference = $last_reading - $reading->reading;

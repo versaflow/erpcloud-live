@@ -2,7 +2,6 @@
 
 namespace App\Http;
 
-use Illuminate\Routing\Router;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
@@ -66,9 +65,9 @@ class Kernel extends HttpKernel
         'cors' => \App\Http\Middleware\Cors::class,
         'globalviewdata' => \App\Http\Middleware\ShareDataForViews::class,
         'tasksactive' => \App\Http\Middleware\StaffActiveTasks::class,
-        
+
     ];
-    
+
     protected function bootstrappers()
     {
         return array_merge(

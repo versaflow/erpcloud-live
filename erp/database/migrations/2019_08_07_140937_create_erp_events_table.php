@@ -36,7 +36,6 @@ class CreateErpEventsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

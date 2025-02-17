@@ -22,7 +22,7 @@ class SageOne
     private function curl($endpoint, $args = [], $method = 'get')
     {
         // $args['apikey'] = $this->api_key;
-        $url = $this->api_url . $endpoint;
+        $url = $this->api_url.$endpoint;
         if ($this->debug == 'output') {
         }
 
@@ -31,7 +31,6 @@ class SageOne
             exception_log($method);
             exception_log($args);
         }
-
 
         if ($method == 'post') {
             $url = $this->buildUrl($url, $args);
@@ -66,16 +65,17 @@ class SageOne
             exception_log($response);
         }
 
-        if (!empty($response->body)) {
+        if (! empty($response->body)) {
             return $response->body;
         } else {
             return (object) ['intCode' => $response->code];
         }
+
         return $response;
     }
 
-    private function buildUrl($url, $data = array())
+    private function buildUrl($url, $data = [])
     {
-        return $url . (empty($data) ? '' : '?' . http_build_query($data));
+        return $url.(empty($data) ? '' : '?'.http_build_query($data));
     }
 }
