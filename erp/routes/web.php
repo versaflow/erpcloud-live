@@ -3,10 +3,10 @@
 use App\Http\Controllers\CoreController;
 use App\Http\Controllers\CustomController;
 use App\Http\Controllers\ModuleController;
-use Illuminate\Support\Facades\Route;
 use App\Models\_UriValidator;
 use Illuminate\Routing\Matching\UriValidator;
 use Illuminate\Routing\Route as IlluminateRoute;
+use Illuminate\Support\Facades\Route;
 
 $validators = IlluminateRoute::getValidators();
 $validators[] = new _UriValidator;
