@@ -52,9 +52,6 @@ dillon@entegral.biz
 
 */
 
-
-use Httpful\Request as ApiRequest;
-
 class Entegral extends ApiCurl
 {
     public function __construct($debug = false)
@@ -64,7 +61,6 @@ class Entegral extends ApiCurl
         $this->master_password = '4c6f5fdb-1f28-4b19-aa49-01e2c969bda1';
         $this->master_source_id = 37;
         $this->debug = $debug;
-
 
         $this->client_office_id = 1;
         $this->office_api_username = 'Ahmed Sync API Sandbox';
@@ -81,6 +77,7 @@ class Entegral extends ApiCurl
     public function setDebug()
     {
         $this->debug = 'output';
+
         return $this;
     }
 
@@ -104,7 +101,6 @@ class Entegral extends ApiCurl
         +"isMaster": "0"
         +"sourceId": "37"
         }
-
         */
     }
 
@@ -125,7 +121,7 @@ class Entegral extends ApiCurl
         $officeData = (object) [
             'clientOfficeID' => 1,
             'name' => 'Kingmans Realty',
-            'portalOffice' => [(object)['name' => 'southafrica']],
+            'portalOffice' => [(object) ['name' => 'southafrica']],
             'country' => 'South Africa',
             'tel' => '0105007500',
             'email' => 'info@kingmansrealty.co.za',
@@ -178,7 +174,6 @@ class Entegral extends ApiCurl
         return $this->curl('listings', $args, 'get');
     }
 
-
     protected function curl($endpoint, $args = [], $method = 'get')
     {
         if ($endpoint != 'admin' && empty($this->office_api_key)) {
@@ -197,7 +192,7 @@ class Entegral extends ApiCurl
             $auth_key = $this->office_api_key;
         }
 
-        $url = $this->api_url . $endpoint;
+        $url = $this->api_url.$endpoint;
         if ($this->debug == 'output') {
         }
 
@@ -206,7 +201,6 @@ class Entegral extends ApiCurl
             exception_log($method);
             exception_log($args);
         }
-
 
         if ($method == 'post') {
             //$url = $this->buildUrl($url, $args);
@@ -243,16 +237,17 @@ class Entegral extends ApiCurl
             exception_log($response);
         }
 
-        if (is_array($response->body) || !empty($response->body)) {
+        if (is_array($response->body) || ! empty($response->body)) {
             return $response->body;
         } else {
             return (object) ['intCode' => $response->code];
         }
+
         return $response;
     }
 
-    protected function buildUrl($url, $data = array())
+    protected function buildUrl($url, $data = [])
     {
-        return $url . (empty($data) ? '' : '?' . http_build_query($data));
+        return $url.(empty($data) ? '' : '?'.http_build_query($data));
     }
 }

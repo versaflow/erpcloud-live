@@ -5,6 +5,7 @@ namespace App\Traits;
 trait BindsDynamically
 {
     protected $connection = null;
+
     protected $table = null;
 
     public function bind(string $connection, string $table)

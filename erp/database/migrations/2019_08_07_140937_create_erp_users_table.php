@@ -30,7 +30,6 @@ class CreateErpUsersTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

@@ -22,7 +22,6 @@ class CreateCrmMarketingChannelsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

@@ -21,7 +21,6 @@ class CreateErpGridViewsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

@@ -29,7 +29,7 @@ function drop_duplicated_cloudtelecoms_wordpress_tables()
     $prefix = 'wpiq';
     $tables = get_tables_from_schema('cloudtelecoms_wordpress');
     foreach ($tables as $table) {
-        if (!str_starts_with($table, $prefix)) {
+        if (! str_starts_with($table, $prefix)) {
             \Schema::connection('cloudtelecoms_wordpress')->dropIfExists($table);
         }
     }
@@ -178,7 +178,7 @@ function schedule_wordpress_faq()
             if (empty($faq->website)) {
                 continue;
             }
-            if (!str_contains($i->store_url, $faq->website)) {
+            if (! str_contains($i->store_url, $faq->website)) {
                 continue;
             }
 
@@ -206,7 +206,7 @@ function schedule_wordpress_faq()
             $category_seo = 'faq-'.seo_string($faq->type);
             $category_name = 'FAQ '.$faq->type;
             $category_id = \DB::connection($store_db)->table($wp_prefix.'terms')->where('name', $category_name)->pluck('term_id')->first();
-            if (!$category_id) {
+            if (! $category_id) {
                 $category_id = \DB::connection($store_db)->table($wp_prefix.'terms')->insertGetId(['name' => $category_name, 'slug' => $category_seo]);
             }
             $term_link = ['object_id' => $post_id, 'term_taxonomy_id' => $category_id];
@@ -222,9 +222,9 @@ function schedule_wordpress_faq()
 
             foreach ($meta_data as $key => $key) {
                 $faq_metadata = [
-                   'post_id' => $post_id,
-                   'meta_key' => $key,
-                   'meta_value' => $key,
+                    'post_id' => $post_id,
+                    'meta_key' => $key,
+                    'meta_value' => $key,
                 ];
                 \DB::connection($store_db)->table($wp_prefix.'postmeta')->insert($faq_metadata);
             }

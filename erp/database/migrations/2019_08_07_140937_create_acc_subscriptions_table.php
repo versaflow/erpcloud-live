@@ -36,10 +36,9 @@ class CreateAccSubscriptionsTable extends Migration
             $table->text('tracking_summary', 65535)->nullable();
             $table->date('contract_expiry_date')->nullable();
             $table->date('backup_date')->nullable();
-            $table->unique(['account_id','product_id','detail','status'], 'unique_line');
+            $table->unique(['account_id', 'product_id', 'detail', 'status'], 'unique_line');
         });
     }
-
 
     /**
      * Reverse the migrations.

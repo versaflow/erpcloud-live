@@ -21,7 +21,6 @@ class CreateErpExchangeRatesTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

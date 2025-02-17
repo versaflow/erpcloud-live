@@ -10,10 +10,11 @@ function aftersave_bulk_email_add_queue($request)
         $list_total = $records->count();
 
         foreach ($records as $record) {
-            if (!str_contains($list->name, 'Test') && !$bulk_mail->send_to_unsubscribed) {
+            if (! str_contains($list->name, 'Test') && ! $bulk_mail->send_to_unsubscribed) {
                 $subscribed = \DB::table('crm_accounts')->where('id', $record->account_id)->pluck('newsletter')->first();
-                if (!$subscribed) {
-                    --$list_total;
+                if (! $subscribed) {
+                    $list_total--;
+
                     continue;
                 }
             }
@@ -30,7 +31,7 @@ function aftersave_bulk_email_add_queue($request)
             \DB::table('crm_bulk_email_records')->insert($data);
         }
         $e = \DB::table('crm_bulk_email_records')->where('bulk_email_id', $request->id)->where('email', 'ahmed@telecloud.co.za')->count();
-        if (!$e) {
+        if (! $e) {
             $data = [
                 'bulk_email_id' => $request->id,
                 'name' => 'Ahmed',
@@ -50,7 +51,7 @@ function aftersave_bulk_email_add_queue($request)
         // $newsletter_link = url('/newsletter_view/'.$bulk_mail->newsletter_id);
 
         // $msg = str_replace('[newsletter_link]', $newsletter_link, $msg);
-        if (!$bulk_mail->send_to_unsubscribed) {
+        if (! $bulk_mail->send_to_unsubscribed) {
             $msg .= PHP_EOL.'Reply with STOP to unsubscribe';
         }
         $to = '';
@@ -59,10 +60,11 @@ function aftersave_bulk_email_add_queue($request)
         $list_total = $records->count();
 
         foreach ($records as $record) {
-            if (!str_contains($list->name, 'Test') && !$bulk_mail->send_to_unsubscribed) {
+            if (! str_contains($list->name, 'Test') && ! $bulk_mail->send_to_unsubscribed) {
                 $subscribed = \DB::table('crm_accounts')->where('id', $record->account_id)->pluck('sms_subscribed')->first();
-                if (!$subscribed) {
-                    --$list_total;
+                if (! $subscribed) {
+                    $list_total--;
+
                     continue;
                 }
             }
@@ -74,7 +76,6 @@ function aftersave_bulk_email_add_queue($request)
     }
 }
 
-
 function schedule_generate_mailing_lists()
 {
     generate_mailing_lists();
@@ -82,7 +83,7 @@ function schedule_generate_mailing_lists()
 
 function aftersave_email_set_sent_status($request)
 {
-    if (!empty($request->email_list_id)) {
+    if (! empty($request->email_list_id)) {
         if ($request->email_list_id == 1) {
             \DB::table('crm_newsletters')->where('id', $request->newsletter_id)->update(['sent_test' => 1]);
         } else {
@@ -113,7 +114,7 @@ function beforesave_newsletter_send_check($request)
     $sent_list_ids_including_test = \DB::table('crm_bulk_emails')->where('newsletter_id', $request->newsletter_id)->pluck('email_list_id')->unique()->toArray();
     $sent_list_ids = \DB::table('crm_bulk_emails')->where('email_list_id', '!=', 1)->where('newsletter_id', $request->newsletter_id)->pluck('email_list_id')->unique()->toArray();
 
-    if ($request->email_list_id != 1 && !in_array(1, $sent_list_ids_including_test)) {
+    if ($request->email_list_id != 1 && ! in_array(1, $sent_list_ids_including_test)) {
         return 'Newsletter needs to be sent to test list first.';
     }
 
@@ -173,7 +174,7 @@ function button_newsletters_view_email($request)
 
     $data['html'] = str_ireplace('https://#unsubscribe', $unsubscribe_url, $data['html']);
 
-    if (!empty($newsletter->attachment_file)) {
+    if (! empty($newsletter->attachment_file)) {
         $attachments = explode(',', $newsletter->attachment_file);
         foreach ($attachments as $file) {
             if (file_exists(uploads_newsletter_path().$file)) {
@@ -185,24 +186,24 @@ function button_newsletters_view_email($request)
     $admin = dbgetaccount(1);
     $admin_settings = \DB::table('erp_admin_settings')->where('id', 1)->get()->first();
     $data['from_company'] = $admin->company;
-    if ('No Reply' == $newsletter->from_email) {
+    if ($newsletter->from_email == 'No Reply') {
         $from_email_arr = explode('@', $admin_settings->notification_support);
         $data['from_email'] = 'no-reply@'.$from_email_arr[1];
     }
 
-    if ('Accounting' == $newsletter->from_email) {
+    if ($newsletter->from_email == 'Accounting') {
         $data['from_email'] = $admin_settings->notification_account;
     }
 
-    if ('Sales' == $newsletter->from_email) {
+    if ($newsletter->from_email == 'Sales') {
         $data['from_email'] = $admin_settings->notification_sales;
     }
 
-    if ('Marketing' == $newsletter->from_email) {
+    if ($newsletter->from_email == 'Marketing') {
         $data['from_email'] = $admin_settings->notification_marketing;
     }
 
-    if ('Helpdesk' == $newsletter->from_email) {
+    if ($newsletter->from_email == 'Helpdesk') {
         $data['from_email'] = $admin_settings->notification_support;
     }
 
@@ -254,7 +255,7 @@ function generate_mailing_lists()
     $list_id = \DB::table('crm_email_lists')->insertGetId(['auto_generated' => 1, 'status' => 'Enabled', 'name' => 'All customers and deleted customers', 'id' => $generated_ids['All customers and deleted customers']]);
     foreach ($list_records as $row) {
         $phone = valid_za_mobile_number($row->phone);
-        if (!$phone) {
+        if (! $phone) {
             $phone = '';
         }
         \DB::table('crm_email_list_records')->insert(['name' => $row->company, 'email' => $row->email, 'phone' => $phone, 'email_list_id' => $list_id, 'account_id' => $row->id]);
@@ -265,7 +266,7 @@ function generate_mailing_lists()
     $list_id = \DB::table('crm_email_lists')->insertGetId(['auto_generated' => 1, 'status' => 'Enabled', 'name' => 'All active customers', 'id' => $generated_ids['All active customers']]);
     foreach ($list_records as $row) {
         $phone = valid_za_mobile_number($row->phone);
-        if (!$phone) {
+        if (! $phone) {
             $phone = '';
         }
 
@@ -282,7 +283,7 @@ function generate_mailing_lists()
     $list_id = \DB::table('crm_email_lists')->insertGetId(['auto_generated' => 1, 'status' => 'Enabled', 'name' => 'Voice customers', 'id' => $generated_ids['Voice customers']]);
     foreach ($list_records as $row) {
         $phone = valid_za_mobile_number($row->phone);
-        if (!$phone) {
+        if (! $phone) {
             $phone = '';
         }
         \DB::table('crm_email_list_records')->insert(['name' => $row->company, 'email' => $row->email, 'phone' => $phone, 'email_list_id' => $list_id, 'account_id' => $row->id]);
@@ -297,7 +298,7 @@ function generate_mailing_lists()
     $list_id = \DB::table('crm_email_lists')->insertGetId(['auto_generated' => 1, 'status' => 'Enabled', 'name' => 'LTE customers', 'id' => $generated_ids['LTE customers']]);
     foreach ($list_records as $row) {
         $phone = valid_za_mobile_number($row->phone);
-        if (!$phone) {
+        if (! $phone) {
             $phone = '';
         }
         \DB::table('crm_email_list_records')->insert(['name' => $row->company, 'email' => $row->email, 'phone' => $phone, 'email_list_id' => $list_id, 'account_id' => $row->id]);
@@ -312,7 +313,7 @@ function generate_mailing_lists()
     $list_id = \DB::table('crm_email_lists')->insertGetId(['auto_generated' => 1, 'status' => 'Enabled', 'name' => 'Fibre customers', 'id' => $generated_ids['Fibre customers']]);
     foreach ($list_records as $row) {
         $phone = valid_za_mobile_number($row->phone);
-        if (!$phone) {
+        if (! $phone) {
             $phone = '';
         }
         \DB::table('crm_email_list_records')->insert(['name' => $row->company, 'email' => $row->email, 'phone' => $phone, 'email_list_id' => $list_id, 'account_id' => $row->id]);
@@ -325,7 +326,7 @@ function generate_mailing_lists()
     $list_id = \DB::table('crm_email_lists')->insertGetId(['auto_generated' => 1, 'status' => 'Enabled', 'name' => 'Unlimited PBX customers', 'id' => $generated_ids['Unlimited PBX customers']]);
     foreach ($list_records as $row) {
         $phone = valid_za_mobile_number($row->phone);
-        if (!$phone) {
+        if (! $phone) {
             $phone = '';
         }
         \DB::table('crm_email_list_records')->insert(['name' => $row->company, 'email' => $row->email, 'phone' => $phone, 'email_list_id' => $list_id, 'account_id' => $row->id]);
@@ -341,7 +342,7 @@ function generate_mailing_lists()
     $list_id = \DB::table('crm_email_lists')->insertGetId(['auto_generated' => 1, 'status' => 'Enabled', 'name' => 'IP Range customers', 'id' => $generated_ids['IP Range customers']]);
     foreach ($list_records as $row) {
         $phone = valid_za_mobile_number($row->phone);
-        if (!$phone) {
+        if (! $phone) {
             $phone = '';
         }
         \DB::table('crm_email_list_records')->insert(['name' => $row->company, 'email' => $row->email, 'phone' => $phone, 'email_list_id' => $list_id, 'account_id' => $row->id]);
@@ -356,7 +357,7 @@ function generate_mailing_lists()
     $list_id = \DB::table('crm_email_lists')->insertGetId(['auto_generated' => 1, 'status' => 'Enabled', 'name' => 'Hosting customers', 'id' => $generated_ids['Hosting customers']]);
     foreach ($list_records as $row) {
         $phone = valid_za_mobile_number($row->phone);
-        if (!$phone) {
+        if (! $phone) {
             $phone = '';
         }
         \DB::table('crm_email_list_records')->insert(['name' => $row->company, 'email' => $row->email, 'phone' => $phone, 'email_list_id' => $list_id, 'account_id' => $row->id]);
@@ -367,7 +368,7 @@ function generate_mailing_lists()
     $list_id = \DB::table('crm_email_lists')->insertGetId(['auto_generated' => 1, 'status' => 'Enabled', 'name' => 'USD customers', 'id' => $generated_ids['USD customers']]);
     foreach ($list_records as $row) {
         $phone = valid_za_mobile_number($row->phone);
-        if (!$phone) {
+        if (! $phone) {
             $phone = '';
         }
         \DB::table('crm_email_list_records')->insert(['name' => $row->company, 'email' => $row->email, 'phone' => $phone, 'email_list_id' => $list_id, 'account_id' => $row->id]);
@@ -378,7 +379,7 @@ function generate_mailing_lists()
     $list_id = \DB::table('crm_email_lists')->insertGetId(['auto_generated' => 1, 'status' => 'Enabled', 'name' => 'Leads', 'id' => $generated_ids['Leads']]);
     foreach ($list_records as $row) {
         $phone = valid_za_mobile_number($row->phone);
-        if (!$phone) {
+        if (! $phone) {
             $phone = '';
         }
         \DB::table('crm_email_list_records')->insert(['name' => $row->company, 'email' => $row->email, 'phone' => $phone, 'email_list_id' => $list_id, 'account_id' => $row->id]);
@@ -389,7 +390,7 @@ function generate_mailing_lists()
     $list_id = \DB::table('crm_email_lists')->insertGetId(['auto_generated' => 1, 'status' => 'Enabled', 'name' => 'Customers', 'id' => $generated_ids['Customers']]);
     foreach ($list_records as $row) {
         $phone = valid_za_mobile_number($row->phone);
-        if (!$phone) {
+        if (! $phone) {
             $phone = '';
         }
         \DB::table('crm_email_list_records')->insert(['name' => $row->company, 'email' => $row->email, 'phone' => $phone, 'email_list_id' => $list_id, 'account_id' => $row->id]);
@@ -400,7 +401,7 @@ function generate_mailing_lists()
     $list_id = \DB::table('crm_email_lists')->insertGetId(['auto_generated' => 1, 'status' => 'Enabled', 'name' => 'Resellers', 'id' => $generated_ids['Resellers']]);
     foreach ($list_records as $row) {
         $phone = valid_za_mobile_number($row->phone);
-        if (!$phone) {
+        if (! $phone) {
             $phone = '';
         }
         \DB::table('crm_email_list_records')->insert(['name' => $row->company, 'email' => $row->email, 'phone' => $phone, 'email_list_id' => $list_id, 'account_id' => $row->id]);
@@ -411,7 +412,7 @@ function generate_mailing_lists()
     $list_id = \DB::table('crm_email_lists')->insertGetId(['auto_generated' => 1, 'status' => 'Enabled', 'name' => 'Resellers and customers', 'id' => $generated_ids['Resellers and customers']]);
     foreach ($list_records as $row) {
         $phone = valid_za_mobile_number($row->phone);
-        if (!$phone) {
+        if (! $phone) {
             $phone = '';
         }
         \DB::table('crm_email_list_records')->insert(['name' => $row->company, 'email' => $row->email, 'phone' => $phone, 'email_list_id' => $list_id, 'account_id' => $row->id]);
@@ -424,7 +425,7 @@ function generate_mailing_lists()
     $list_id = \DB::table('crm_email_lists')->insertGetId(['auto_generated' => 1, 'status' => 'Enabled', 'name' => 'Debit order customers', 'id' => $generated_ids['Debit order customers']]);
     foreach ($list_records as $row) {
         $phone = valid_za_mobile_number($row->phone);
-        if (!$phone) {
+        if (! $phone) {
             $phone = '';
         }
         \DB::table('crm_email_list_records')->insert(['name' => $row->company, 'email' => $row->email, 'phone' => $phone, 'email_list_id' => $list_id, 'account_id' => $row->id]);
@@ -435,7 +436,7 @@ function generate_mailing_lists()
         $list_id = \DB::table('crm_email_lists')->insertGetId(['auto_generated' => 1, 'status' => 'Enabled', 'name' => 'Estate Agents', 'id' => $generated_ids['Estate Agents']]);
         foreach ($list_records as $row) {
             $phone = valid_za_mobile_number($row->phone);
-            if (!$phone) {
+            if (! $phone) {
                 $phone = '';
             }
             \DB::table('crm_email_list_records')->insert(['name' => $row->name, 'email' => $row->email, 'phone' => $phone, 'email_list_id' => $list_id, 'account_id' => 1]);
@@ -536,10 +537,11 @@ function button_bulk_email_reset_queue($request)
         $list_total = $records->count();
 
         foreach ($records as $record) {
-            if (!str_contains($list->name, 'Test') && !$bulk_mail->send_to_unsubscribed) {
+            if (! str_contains($list->name, 'Test') && ! $bulk_mail->send_to_unsubscribed) {
                 $subscribed = \DB::table('crm_accounts')->where('id', $record->account_id)->pluck('newsletter')->first();
-                if (!$subscribed) {
-                    --$list_total;
+                if (! $subscribed) {
+                    $list_total--;
+
                     continue;
                 }
             }
@@ -556,7 +558,7 @@ function button_bulk_email_reset_queue($request)
             \DB::table('crm_bulk_email_records')->insert($data);
         }
         $e = \DB::table('crm_bulk_email_records')->where('bulk_email_id', $request->id)->where('email', 'ahmed@telecloud.co.za')->count();
-        if (!$e) {
+        if (! $e) {
             $data = [
                 'bulk_email_id' => $request->id,
                 'name' => 'Ahmed',
@@ -579,28 +581,28 @@ function schedule_process_email_queue()
     //Path "/home/erpcloud-live/htdocs/html/attachments/telecloud/Cloud-Telecoms Customer Pricelist 1-2022-07-05.xlsx" is not readable.
     // set queue to processing
     $queue = \DB::table('crm_bulk_email_records')
-    ->select('crm_bulk_email_records.*', 'crm_bulk_emails.newsletter_id', 'crm_bulk_emails.send_to_unsubscribed', 'crm_bulk_emails.attach_retail_pricelist', 'crm_bulk_emails.attach_wholesale_pricelist')
-    ->join('crm_bulk_emails', 'crm_bulk_emails.id', '=', 'crm_bulk_email_records.bulk_email_id')
-    ->where('crm_bulk_email_records.status', 'Queued')
-    ->get();
+        ->select('crm_bulk_email_records.*', 'crm_bulk_emails.newsletter_id', 'crm_bulk_emails.send_to_unsubscribed', 'crm_bulk_emails.attach_retail_pricelist', 'crm_bulk_emails.attach_wholesale_pricelist')
+        ->join('crm_bulk_emails', 'crm_bulk_emails.id', '=', 'crm_bulk_email_records.bulk_email_id')
+        ->where('crm_bulk_email_records.status', 'Queued')
+        ->get();
 
     $needs_retail_pricelist = \DB::table('crm_bulk_email_records')
-    ->select('crm_bulk_email_records.*', 'crm_bulk_emails.newsletter_id', 'crm_bulk_emails.send_to_unsubscribed', 'crm_bulk_emails.attach_retail_pricelist', 'crm_bulk_emails.attach_wholesale_pricelist')
-    ->join('crm_bulk_emails', 'crm_bulk_emails.id', '=', 'crm_bulk_email_records.bulk_email_id')
-    ->where('crm_bulk_email_records.status', 'Queued')
-    ->where('crm_bulk_emails.attach_retail_pricelist', 1)
-    ->count();
+        ->select('crm_bulk_email_records.*', 'crm_bulk_emails.newsletter_id', 'crm_bulk_emails.send_to_unsubscribed', 'crm_bulk_emails.attach_retail_pricelist', 'crm_bulk_emails.attach_wholesale_pricelist')
+        ->join('crm_bulk_emails', 'crm_bulk_emails.id', '=', 'crm_bulk_email_records.bulk_email_id')
+        ->where('crm_bulk_email_records.status', 'Queued')
+        ->where('crm_bulk_emails.attach_retail_pricelist', 1)
+        ->count();
 
     $needs_wholesale_pricelist = \DB::table('crm_bulk_email_records')
-    ->select('crm_bulk_email_records.*', 'crm_bulk_emails.newsletter_id', 'crm_bulk_emails.send_to_unsubscribed', 'crm_bulk_emails.attach_retail_pricelist', 'crm_bulk_emails.attach_wholesale_pricelist')
-    ->join('crm_bulk_emails', 'crm_bulk_emails.id', '=', 'crm_bulk_email_records.bulk_email_id')
-    ->where('crm_bulk_email_records.status', 'Queued')
-    ->where('crm_bulk_emails.attach_wholesale_pricelist', 1)
-    ->count();
+        ->select('crm_bulk_email_records.*', 'crm_bulk_emails.newsletter_id', 'crm_bulk_emails.send_to_unsubscribed', 'crm_bulk_emails.attach_retail_pricelist', 'crm_bulk_emails.attach_wholesale_pricelist')
+        ->join('crm_bulk_emails', 'crm_bulk_emails.id', '=', 'crm_bulk_email_records.bulk_email_id')
+        ->where('crm_bulk_email_records.status', 'Queued')
+        ->where('crm_bulk_emails.attach_wholesale_pricelist', 1)
+        ->count();
 
     $sending_ids = \DB::table('crm_bulk_email_records')->where('status', 'Queued')->pluck('bulk_email_id')->filter()->unique()->toArray();
     \DB::table('crm_bulk_email_records')->where('status', 'Queued')->update(['status' => 'Processing']);
-    if (!empty($queue) && count($queue) > 0) {
+    if (! empty($queue) && count($queue) > 0) {
         $retail_pricelist = false;
         $wholesale_pricelist = false;
         //if ($needs_retail_pricelist) {
@@ -657,7 +659,7 @@ function send_newsletter($email, $retail_pricelist = false, $wholesale_pricelist
         $data['partner'] = $reseller;
         $data['partner_company'] = $reseller->company;
         $data['paynow_button'] = '';
-        if (1 == $account->partner_id) {
+        if ($account->partner_id == 1) {
             $paynow_button = generate_paynow_button($account->id, 100);
 
             $data['html'] = str_replace('[Paynow]', $paynow_button, $data['html']);
@@ -696,7 +698,7 @@ function send_newsletter($email, $retail_pricelist = false, $wholesale_pricelist
         $data['css'] = '';
         $template_file = '_emails.gjs';
 
-        if (!empty($newsletter->attachment_file)) {
+        if (! empty($newsletter->attachment_file)) {
             $attachments = explode(',', $newsletter->attachment_file);
             foreach ($attachments as $file) {
                 if (file_exists(uploads_newsletter_path().$file)) {
@@ -708,24 +710,24 @@ function send_newsletter($email, $retail_pricelist = false, $wholesale_pricelist
         $admin = dbgetaccount(1);
         $admin_settings = \DB::table('erp_admin_settings')->where('id', 1)->get()->first();
         $data['from_company'] = $admin->company;
-        if ('No Reply' == $newsletter->from_email) {
+        if ($newsletter->from_email == 'No Reply') {
             $from_email_arr = explode('@', $admin_settings->notification_support);
             $data['from_email'] = 'no-reply@'.$from_email_arr[1];
         }
 
-        if ('Accounting' == $newsletter->from_email) {
+        if ($newsletter->from_email == 'Accounting') {
             $data['from_email'] = $admin_settings->notification_account;
         }
 
-        if ('Sales' == $newsletter->from_email) {
+        if ($newsletter->from_email == 'Sales') {
             $data['from_email'] = $admin_settings->notification_sales;
         }
 
-        if ('Marketing' == $newsletter->from_email) {
+        if ($newsletter->from_email == 'Marketing') {
             $data['from_email'] = $admin_settings->notification_marketing;
         }
 
-        if ('Helpdesk' == $newsletter->from_email) {
+        if ($newsletter->from_email == 'Helpdesk') {
             $data['from_email'] = $admin_settings->notification_support;
         }
 
@@ -745,19 +747,19 @@ function send_newsletter($email, $retail_pricelist = false, $wholesale_pricelist
             $mailer = new Symfony\Component\Mailer\Mailer($transport);
             $html = view($template_file, $data)->render();
 
-            $symfony_mail = (new Symfony\Component\Mime\Email())->subject($data['subject'])->html($html);
+            $symfony_mail = (new Symfony\Component\Mime\Email)->subject($data['subject'])->html($html);
             $symfony_mail->from(new Symfony\Component\Mime\Address($data['from_email'], $data['from_company']));
             $symfony_mail->to(new Symfony\Component\Mime\Address($data['to_email'], $data['to_company']));
             $symfony_mail->subject($data['subject']);
-            if (!empty($data['attachments']) && is_array($data['attachments'])) {
+            if (! empty($data['attachments']) && is_array($data['attachments'])) {
                 foreach ($data['attachments'] as $attachment) {
                     $symfony_mail->attachFromPath(attachments_path().$attachment, $attachment);
                 }
             }
-            if (!empty($retail_pricelist) && $email->attach_retail_pricelist) {
+            if (! empty($retail_pricelist) && $email->attach_retail_pricelist) {
                 $symfony_mail->attachFromPath(attachments_path().$retail_pricelist, $retail_pricelist);
             }
-            if (!empty($wholesale_pricelist) && $email->attach_wholesale_pricelist) {
+            if (! empty($wholesale_pricelist) && $email->attach_wholesale_pricelist) {
                 $symfony_mail->attachFromPath(attachments_path().$wholesale_pricelist, $wholesale_pricelist);
             }
 

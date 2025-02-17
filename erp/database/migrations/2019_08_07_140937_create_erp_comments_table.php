@@ -21,7 +21,6 @@ class CreateErpCommentsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

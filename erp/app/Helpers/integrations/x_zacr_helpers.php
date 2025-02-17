@@ -2,11 +2,11 @@
 
 function zacr_process_poll()
 {
-    $tlds = array('co.za', 'org.za', 'net.za', 'web.za');
+    $tlds = ['co.za', 'org.za', 'net.za', 'web.za'];
     foreach ($tlds as $tld) {
         $zacr = new Zacr($tld);
         $registrar_id = $zacr->get_registrar_id();
-        if ('cloudtel6r2k8g' == $registrar_id) {
+        if ($registrar_id == 'cloudtel6r2k8g') {
             $poll = $zacr->poll_check();
             if ($poll['response']['poll_contains_message']) {
                 $poll_count = $poll['poll_queue']['@attributes']['count'];
@@ -32,9 +32,9 @@ function zacr_process_poll()
                     \DB::select($sql);
 
                     //handle transfer out requests
-                    if ('pending' == $transfer_data['domain:trStatus'] && $transfer_data['domain:acID'] == $registrar_id) {
+                    if ($transfer_data['domain:trStatus'] == 'pending' && $transfer_data['domain:acID'] == $registrar_id) {
                         $transfer_out = dbgetcell('isp_host_websites', 'domain', $transfer_data['domain:name'], 'transfer_out');
-                        if (1 == $transfer_out) {
+                        if ($transfer_out == 1) {
                             $zacr->domain_transfer_approve($transfer_data['domain:name']);
                         } else {
                             $zacr->domain_transfer_reject($transfer_data['domain:name']);
@@ -42,14 +42,14 @@ function zacr_process_poll()
                     }
 
                     //complete transfer out requests
-                    if ('clientApproved' == $transfer_data['domain:trStatus'] && $transfer_data['domain:acID'] == $registrar_id) {
+                    if ($transfer_data['domain:trStatus'] == 'clientApproved' && $transfer_data['domain:acID'] == $registrar_id) {
                         \DB::update('update isp_host_websites set transfer_out=0, to_delete=1 where domain="'.$transfer_data['domain:name'].'"');
                     }
                 }
 
                 $res = $zacr->poll_message_acknowledge($msg_id);
                 if ($res) {
-                   $result = dbset('isp_host_zacr', 'id', $msg_id, array('acknowledged' => 1));
+                    $result = dbset('isp_host_zacr', 'id', $msg_id, ['acknowledged' => 1]);
                 }
 
                 $zacr->logout();
@@ -60,7 +60,6 @@ function zacr_process_poll()
         }
     }
 }
-
 
 function zacr_domain_info_all()
 {
@@ -76,6 +75,7 @@ function zacr_domain_info($domain)
     $zacr = new Zacr($tld);
     $result = $zacr->domain_info($domain);
     $zacr->logout();
+
     return $result;
 }
 
@@ -85,6 +85,7 @@ function zacr_domain_transfer_query($domain)
     $zacr = new Zacr($tld);
     $result = $zacr->domain_transfer_query($domain);
     $zacr->logout();
+
     return $result;
 }
 
@@ -94,6 +95,7 @@ function zacr_domain_info_contacts($domain, $account_id)
     $zacr = new Zacr($tld);
     $result = $zacr->contact_info($account_id);
     $zacr->logout();
+
     return $result;
 }
 
@@ -103,6 +105,7 @@ function zacr_domain_expiry($domain)
     $zacr = new Zacr($tld);
     $result = $zacr->domain_info($domain, 1);
     $zacr->logout();
+
     return $result;
 }
 
@@ -112,6 +115,7 @@ function zacr_domain_check($domain)
     $zacr = new Zacr($tld);
     $result = $zacr->domain_check($domain);
     $zacr->logout();
+
     return $result;
 }
 
@@ -121,6 +125,7 @@ function zacr_cancel_action($domain, $action)
     $zacr = new Zacr($tld);
     $result = $zacr->domain_cancel_action($domain, $action);
     $zacr->logout();
+
     return $result;
 }
 
@@ -130,9 +135,9 @@ function zacr_renew($domain)
     $zacr = new Zacr($tld);
     $result = $zacr->domain_renew($domain);
     $zacr->logout();
+
     return $result;
 }
-
 
 function zacr_domain_lock($domain, $lock = true)
 {
@@ -157,15 +162,13 @@ function zacr_autorenew($domain, $status)
 
 /////////////////////////////////////////////////////////////////////////////
 
-
-
 function zacr_register($domain, $customer, $nameservers = false)
 {
     $tld = get_tld($domain);
     $zacr = new Zacr($tld);
     $result = $zacr->domain_check($domain);
 
-    if (1000 == $result['code'] && 1 == $result['response']['available']) {
+    if ($result['code'] == 1000 && $result['response']['available'] == 1) {
         $result = $zacr->domain_create($domain, $customer, $nameservers);
     }
     $zacr->logout();
@@ -181,12 +184,12 @@ function zacr_clear_poll_log()
     \DB::delete($sql);
 }
 
-
 function zacr_nameserver_update_flexerp($domain)
 {
     $tld = get_tld($domain);
     $zacr = new Zacr($tld);
     $result = $zacr->nameserver_update_flexerp($domain);
+
     return $result;
 }
 
@@ -195,7 +198,8 @@ function zacr_nameserver_update($domain)
     $tld = get_tld($domain);
     $zacr = new Zacr($tld);
     $result = $zacr->nameserver_update($domain);
-    print_r ($result);
+    print_r($result);
+
     return $result;
 }
 
@@ -204,15 +208,16 @@ function zacr_nameserver_update_host3($domain)
     $tld = get_tld($domain);
     $zacr = new Zacr($tld);
 
-    $nameservers = ['host3.cloudtools.co.za','host4.cloudtools.co.za'];
+    $nameservers = ['host3.cloudtools.co.za', 'host4.cloudtools.co.za'];
     $result = $zacr->nameserver_update($domain, $nameservers);
+
     return $result;
 }
 
 function zacr_transfer($domain)
 {
     //initiate the transfer
-    if (1 == $domain->transfer_in) {
+    if ($domain->transfer_in == 1) {
         $tld = get_tld($domain->domain);
 
         $zacr = new Zacr($tld);
@@ -223,33 +228,33 @@ function zacr_transfer($domain)
 
         $zacr->logout();
 
-        if ('2304' == $result['code'] || '2300' == $result['code'] || '2106' == $result['code']) {
-            dbset('isp_host_websites', 'domain', $domain->domain, array('transfer_in' => '2'));
+        if ($result['code'] == '2304' || $result['code'] == '2300' || $result['code'] == '2106') {
+            dbset('isp_host_websites', 'domain', $domain->domain, ['transfer_in' => '2']);
         }
         $data['response'] = $result['message'];
 
         return $data;
-    } elseif (2 == $domain->transfer_out) {
+    } elseif ($domain->transfer_out == 2) {
         $tld = get_tld($domain->domain);
         $zacr = new Zacr($tld);
         $domain_info = $zacr->domain_info($domain->domain);
         $registrar = $domain_info['data']['domain:infData']['domain:clID'];
         $zacr->logout();
 
-        if ('cloudtel6r2k8g' == $registrar) {
-            $domains = dbset('isp_host_websites', 'domain', $domain->domain, array('to_update' => 1, 'transfer_in' => 0));
+        if ($registrar == 'cloudtel6r2k8g') {
+            $domains = dbset('isp_host_websites', 'domain', $domain->domain, ['to_update' => 1, 'transfer_in' => 0]);
             $data['response'] = true;
         } else {
             return $data['response'] = 'Your registrar is still '.$registrar.'.  Please talk to them.';
         }
-    } elseif (2 == $domain->transfer_in) {
+    } elseif ($domain->transfer_in == 2) {
         $tld = get_tld($domain->domain);
         $zacr = new Zacr($tld);
         $domain_info = $zacr->domain_info($domain->domain);
         $registrar_id = $zacr->get_registrar_id();
         $domain_data = $domain_info['data']['domain:infData'];
 
-        if (1000 == $domain_info['code'] && (isset($domain_data['domain:clID']) && $domain_data['domain:clID'] == $registrar_id)) {
+        if ($domain_info['code'] == 1000 && (isset($domain_data['domain:clID']) && $domain_data['domain:clID'] == $registrar_id)) {
             $result = $zacr->nameserver_update($domain->domain);
 
             $contact = dbgetaccount($domain->account_id);
@@ -258,12 +263,12 @@ function zacr_transfer($domain)
 
             $data = [];
             $data['response'] = true;
-           
+
             return $data;
-        }else{
-            
+        } else {
+
             $data['response'] = false;
-           
+
             return $data;
         }
     } else {
@@ -289,7 +294,6 @@ function zacr_check_registrar_balance()
 
     $balance = $result['extension_data']['cozac:infData']['cozac:balance'];
 
-
     return $balance;
 }
 
@@ -298,19 +302,19 @@ function zacr_cancel_update($domain)
     $tld = get_tld($domain);
     $zacr = new Zacr($tld);
     $result = $zacr->domain_cancel_action($domain, 'PendingUpdate');
-   // echo '<PRE>';
-   // print_r($result);
-   // echo '</PRE>';
+    // echo '<PRE>';
+    // print_r($result);
+    // echo '</PRE>';
     $zacr->logout();
 }
 
-function zacr_set_technical_contact(){
+function zacr_set_technical_contact()
+{
     $r = zacr_domain_info('vehicledb.co.za');
     $zacr = new Zacr('co.za');
-    $domains = \DB::table('isp_host_websites')->where('domain','vehicledb.co.za')->where('status','!=','Deleted')->where('provider','zacr')->get();
-    foreach($domains as $domain){
+    $domains = \DB::table('isp_host_websites')->where('domain', 'vehicledb.co.za')->where('status', '!=', 'Deleted')->where('provider', 'zacr')->get();
+    foreach ($domains as $domain) {
         $customer = dbgetaccount($domain->account_id);
-        $r = $zacr->domain_update_contact_info($domain->domain, $customer); 
+        $r = $zacr->domain_update_contact_info($domain->domain, $customer);
     }
 }
-

@@ -34,7 +34,6 @@ class CreateErpModuleTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

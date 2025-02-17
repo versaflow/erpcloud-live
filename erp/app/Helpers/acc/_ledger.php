@@ -7,8 +7,8 @@ select docid, doctype, sum(amount) as total from acc_ledgers where doctype!='Gen
 SELECT account_id, docid, doctype, sum(amount) as total ,
   YEAR(docdate) AS year_part,
     MONTH(docdate) AS month_part
-FROM acc_ledgers 
-WHERE 
+FROM acc_ledgers
+WHERE
 ledger_account_id = 5
 
 GROUP BY
@@ -18,69 +18,69 @@ ORDER BY
     year_part, month_part;
 */
 
-function validate_customer_control(){
- 
- 
+function validate_customer_control()
+{
+
     //repost_document_by_id('acc_cashbook_transactions',3);
-    
-    $db = new DBEvent();
+
+    $db = new DBEvent;
     $doctypes = \DB::table('acc_doctypes')->get();
-    $accounts = \DB::table('crm_accounts')->select('id','balance','currency')->where('partner_id',1)->where('type','!=','lead')->get();
-    
-      
-    $ledgers = \DB::table('acc_ledgers')->where('doctype','!=','General Journal')->where('ledger_account_id',5)->groupBy('doctype','docid')->get();
-    foreach($ledgers as $l){
-        $doctable = $doctypes->where('doctype',$l->doctype)->pluck('doctable')->first();
-      
-        $total = \DB::table($doctable)->select('total')->where('id',$l->docid)->pluck('total')->first();
-        if(abs(currency($total)) != abs(currency($l->original_amount))){
+    $accounts = \DB::table('crm_accounts')->select('id', 'balance', 'currency')->where('partner_id', 1)->where('type', '!=', 'lead')->get();
+
+    $ledgers = \DB::table('acc_ledgers')->where('doctype', '!=', 'General Journal')->where('ledger_account_id', 5)->groupBy('doctype', 'docid')->get();
+    foreach ($ledgers as $l) {
+        $doctable = $doctypes->where('doctype', $l->doctype)->pluck('doctable')->first();
+
+        $total = \DB::table($doctable)->select('total')->where('id', $l->docid)->pluck('total')->first();
+        if (abs(currency($total)) != abs(currency($l->original_amount))) {
         }
     }
-    
-    foreach($accounts as $a){
-      
-        $ledger_balance = \DB::table('acc_ledgers')->where('account_id',$a->id)->where('ledger_account_id',5)->sum('original_amount');
+
+    foreach ($accounts as $a) {
+
+        $ledger_balance = \DB::table('acc_ledgers')->where('account_id', $a->id)->where('ledger_account_id', 5)->sum('original_amount');
         $diff = currency($ledger_balance) - currency($a->balance);
-        if(abs($diff) > 1){
+        if (abs($diff) > 1) {
             $trxs = get_debtor_transactions($a->id);
-            
-            foreach($trxs as $trx){
-               $ledger_amount = \DB::table('acc_ledgers')->where('doctype',$trx->doctype)->where('docid',$trx->id)->where('account_id',$trx->account_id)->pluck('original_amount')->first();
-               if(currency(abs($trx->total)) != currency(abs($ledger_amount))){
-                  
-                   // $doctable = $doctypes->where('doctype',$trx->doctype)->pluck('doctable')->first();
-                   // $db->setTable($doctable)->postDocument($trx->id);
-                  
-               }
+
+            foreach ($trxs as $trx) {
+                $ledger_amount = \DB::table('acc_ledgers')->where('doctype', $trx->doctype)->where('docid', $trx->id)->where('account_id', $trx->account_id)->pluck('original_amount')->first();
+                if (currency(abs($trx->total)) != currency(abs($ledger_amount))) {
+
+                    // $doctable = $doctypes->where('doctype',$trx->doctype)->pluck('doctable')->first();
+                    // $db->setTable($doctable)->postDocument($trx->id);
+
+                }
             }
-              $b = get_debtor_balance($a->id);
-            \DB::table('crm_accounts')->where('id',$a->id)->update(['balance' => $b]);       
-           // $db->postDocumentCommit();
+            $b = get_debtor_balance($a->id);
+            \DB::table('crm_accounts')->where('id', $a->id)->update(['balance' => $b]);
+            // $db->postDocumentCommit();
         }
     }
 }
 
-function schedule_validate_ledger(){
+function schedule_validate_ledger()
+{
     return false;
-     $db = new DBEvent();
-   
+    $db = new DBEvent;
+
     $doctypes = \DB::table('acc_doctypes')->get();
     $rows = \DB::select('select docid, doctype, sum(amount) as total from acc_ledgers group by doctype,docid having total>0.1 or total < -0.1 ');
-   
-    foreach($sql as $s){
-        
-        $doctable = $doctypes->where('doctype',$s->doctype)->pluck('doctable')->first();
-         $db->setTable($doctable)->postDocument($s->docid);
+
+    foreach ($sql as $s) {
+
+        $doctable = $doctypes->where('doctype', $s->doctype)->pluck('doctable')->first();
+        $db->setTable($doctable)->postDocument($s->docid);
     }
-    
+
     $db->postDocumentCommit();
 }
 
-function debug_ledger(){
-    
-    
-  //  debug profitability - financials/income stament match
-  $s = "SELECT 
+function debug_ledger()
+{
+
+    //  debug profitability - financials/income stament match
+    $s = "SELECT 
     crm_documents.docdate,
     crm_documents.doctype,
     crm_document_lines.product_id,
@@ -90,168 +90,161 @@ function debug_ledger(){
     LEFT JOIN `crm_documents` on `crm_document_lines`.`document_id` = `crm_documents`.`id`
     WHERE crm_documents.docdate LIKE '2023-10%' and crm_documents.doctype in ('Tax Invoice','Credit Note')";
     $rows = \DB::connection('default')->select($s);
-    foreach($rows as $r){
-        if($r->zar_sale_total==0){
-            
+    foreach ($rows as $r) {
+        if ($r->zar_sale_total == 0) {
+
             $c = \DB::connection('default')->table('acc_ledgers')
-            ->where('docid',$r->document_id)
-            ->where('docdate',$r->docdate)
-            ->where('doctype',$r->doctype)
-            ->where('docdate',$r->docdate)
-            ->where('product_id',$r->product_id)
-            ->count();
-          
-            if($c){
-            
+                ->where('docid', $r->document_id)
+                ->where('docdate', $r->docdate)
+                ->where('doctype', $r->doctype)
+                ->where('docdate', $r->docdate)
+                ->where('product_id', $r->product_id)
+                ->count();
+
+            if ($c) {
+
             }
+
             continue;
-        }else{
-        $c = \DB::connection('default')->table('acc_ledgers')
-        ->where('docid',$r->document_id)
-        ->where('docdate',$r->docdate)
-        ->where('doctype',$r->doctype)
-        ->where('docdate',$r->docdate)
-        ->where('product_id',$r->product_id)
-        ->where('amount',$r->zar_sale_total*-1)
-        ->count();
-      
-        if(!$c){
-        
-        }
+        } else {
+            $c = \DB::connection('default')->table('acc_ledgers')
+                ->where('docid', $r->document_id)
+                ->where('docdate', $r->docdate)
+                ->where('doctype', $r->doctype)
+                ->where('docdate', $r->docdate)
+                ->where('product_id', $r->product_id)
+                ->where('amount', $r->zar_sale_total * -1)
+                ->count();
+
+            if (! $c) {
+
+            }
         }
     }
-    
+
     /*
     1. check cashbook has correct doctypes for reallocated transactions
     2. find documents that arent balancing on the ledger
     3. check ledger totals for each period
     */
-    
-    
-    $trxs1 = \DB::table('acc_cashbook_transactions')->where('doctype','Cashbook Supplier Payment')->whereNull('supplier_id')->get();
-   
-    $trxs2 = \DB::table('acc_cashbook_transactions')->where('doctype','Cashbook Expense')->whereNull('ledger_account_id')->get();
 
-    $trxs3 = \DB::table('acc_cashbook_transactions')->where('doctype','Cashbook Customer Receipt')->whereNull('account_id')->get();
-    
-    
-// income statement balance sql 
+    $trxs1 = \DB::table('acc_cashbook_transactions')->where('doctype', 'Cashbook Supplier Payment')->whereNull('supplier_id')->get();
+
+    $trxs2 = \DB::table('acc_cashbook_transactions')->where('doctype', 'Cashbook Expense')->whereNull('ledger_account_id')->get();
+
+    $trxs3 = \DB::table('acc_cashbook_transactions')->where('doctype', 'Cashbook Customer Receipt')->whereNull('account_id')->get();
+
+    // income statement balance sql
     $doctypes = \DB::table('acc_doctypes')->get();
     $sql = "SELECT docid,doctype FROM `acc_ledgers` where doctype!='General Journal' group by doctype,docid having sum(amount) > 1";
     $docs = \DB::select($sql);
-   
-    foreach($docs as $doc){
-        $doctable = $doctypes->where('doctype',$doc->doctype)->pluck('doctable')->first();
-        
+
+    foreach ($docs as $doc) {
+        $doctable = $doctypes->where('doctype', $doc->doctype)->pluck('doctable')->first();
+
         repost_document_by_id($doctable, $doc->docid);
     }
     $doctypes = \DB::table('acc_doctypes')->get();
     $sql = "SELECT docid,doctype FROM `acc_ledgers` where doctype!='General Journal' group by doctype,docid having sum(amount) < -1";
     $docs = \DB::select($sql);
-   
-    foreach($docs as $doc){
-        $doctable = $doctypes->where('doctype',$doc->doctype)->pluck('doctable')->first();
-        
+
+    foreach ($docs as $doc) {
+        $doctable = $doctypes->where('doctype', $doc->doctype)->pluck('doctable')->first();
+
         repost_document_by_id($doctable, $doc->docid);
     }
     $sql = "SELECT docid,doctype FROM `acc_ledgers`  where doctype!='General Journal'  group by doctype,docid having sum(amount) > 1";
     $docs = \DB::select($sql);
-    foreach($docs as $d){
-        if(in_array($d->doctype,['Tax Invoice','Credit Note'])){
-           repost_document_by_id('crm_documents',$d->docid);
+    foreach ($docs as $d) {
+        if (in_array($d->doctype, ['Tax Invoice', 'Credit Note'])) {
+            repost_document_by_id('crm_documents', $d->docid);
         }
     }
 
-
-// check_trail_balance_all_periods
+    // check_trail_balance_all_periods
     $periods = \DB::table('acc_ledger_totals')->pluck('period')->unique()->toArray();
     $faulty_periods = [];
-    foreach($periods as $period){
-        $period_total =  \DB::table('acc_ledger_totals')->where('period',$period)->sum('total');
-        if($period_total > 5 || $period_total < -5){
+    foreach ($periods as $period) {
+        $period_total = \DB::table('acc_ledger_totals')->where('period', $period)->sum('total');
+        if ($period_total > 5 || $period_total < -5) {
             $faulty_periods[] = $period;
         }
-    }    
+    }
     $trail_balance_msg = '';
-    foreach($faulty_periods as $period){
-        $ledger = \DB::table('acc_ledgers')->where('docdate','like',$period.'%')->select('doctype', \DB::raw('sum(amount) as total'))->groupBy('doctype')->get();
-        
+    foreach ($faulty_periods as $period) {
+        $ledger = \DB::table('acc_ledgers')->where('docdate', 'like', $period.'%')->select('doctype', \DB::raw('sum(amount) as total'))->groupBy('doctype')->get();
+
         foreach ($ledger as $balance) {
             if (abs($balance->total) > 5) {
                 $trail_balance_msg .= $period.' '.$balance->doctype.' is not balancing. '.$balance->total.'<br>';
             }
         }
     }
-   
+
 }
 
+function set_doctype_doc_no($doctype)
+{
 
-function set_doctype_doc_no($doctype){
- 
- 
-    $doctype_row = \DB::table('acc_doctypes')->where('doctype',$doctype)->get()->first();
+    $doctype_row = \DB::table('acc_doctypes')->where('doctype', $doctype)->get()->first();
     $cols = get_columns_from_schema($doctype_row->doctable);
-    
-    if(in_array('doc_no',$cols)){
-    
-    
-        $sql ="SET @row_number = 10000";
-        
+
+    if (in_array('doc_no', $cols)) {
+
+        $sql = 'SET @row_number = 10000';
+
         \DB::statement($sql);
-        
-        $sql = "UPDATE ".$doctype_row->doctable." SET doc_no = @row_number:=@row_number+1 WHERE doctype='".$doctype."'";
-        
+
+        $sql = 'UPDATE '.$doctype_row->doctable." SET doc_no = @row_number:=@row_number+1 WHERE doctype='".$doctype."'";
+
         \DB::statement($sql);
-        
-        
-        $sql = "UPDATE acc_ledgers SET doc_no = (SELECT doc_no FROM ".$doctype_row->doctable." WHERE id=acc_ledgers.docid) WHERE doctype='".$doctype."'";
+
+        $sql = 'UPDATE acc_ledgers SET doc_no = (SELECT doc_no FROM '.$doctype_row->doctable." WHERE id=acc_ledgers.docid) WHERE doctype='".$doctype."'";
         \DB::statement($sql);
-        
-        
+
         $next_sequence_number = \DB::table($doctype_row->doctable)->max('doc_no');
-        \DB::table('acc_doctypes')->where('doctype',$doctype)->update(['sequence_number'=>$next_sequence_number]);
+        \DB::table('acc_doctypes')->where('doctype', $doctype)->update(['sequence_number' => $next_sequence_number]);
     }
-    
- 
+
 }
 
 function schedule_check_trial_balance()
-{   
-    if(!is_main_instance()){
+{
+    if (! is_main_instance()) {
         return false;
     }
-    
-    \DB::table('notifications')->where('data','LIKE','%Trial balance is not balancing%')->delete();
-    $db_conns = ['telecloud','eldooffice','moviemagic'];
-    foreach($db_conns as $c){
-        
+
+    \DB::table('notifications')->where('data', 'LIKE', '%Trial balance is not balancing%')->delete();
+    $db_conns = ['telecloud', 'eldooffice', 'moviemagic'];
+    foreach ($db_conns as $c) {
+
         $ledger_total = \DB::connection($c)->table('acc_ledger_totals')->sum('total');
         $ledger = \DB::connection($c)->table('acc_ledgers')->select('doctype', \DB::raw('sum(amount) as total'))->groupBy('doctype')->having('total', '>', 1)->get();
         $trail_balance_msg = '';
-     
-        if(abs($ledger_total) > 50){
+
+        if (abs($ledger_total) > 50) {
             $trail_balance_msg .= 'Ledger total is not balancing. Trial Balance: '.$ledger_total.'<br><br>';
         }
-       
+
         foreach ($ledger as $balance) {
-         
+
             if (abs($balance->total) > 2) {
                 $trail_balance_msg .= $balance->doctype.' is not balancing. '.$balance->total.'<br>';
             }
         }
-        if($trail_balance_msg > ''){
+        if ($trail_balance_msg > '') {
             $title = 'Trial balance is not balancing';
-            
-            if($c == 'telecloud'){
-                $title = 'Cloud Telecoms '.$title; 
+
+            if ($c == 'telecloud') {
+                $title = 'Cloud Telecoms '.$title;
             }
-            if($c == 'moviemagic'){
-                $title = 'Movie Magic '.$title; 
+            if ($c == 'moviemagic') {
+                $title = 'Movie Magic '.$title;
             }
-            if($c == 'eldooffice'){
-                $title = 'Eldo Office '.$title; 
+            if ($c == 'eldooffice') {
+                $title = 'Eldo Office '.$title;
             }
-            
+
             $data['subject'] = $title;
             $data['internal_function'] = 'debug_email';
             $data['exception_email'] = true;
@@ -261,8 +254,7 @@ function schedule_check_trial_balance()
             //$data['test_debug'] = 1;
             $data['var'] = nl2br($trail_balance_msg);
             erp_process_notification(1, $data, $function_variables);
-           
-          
+
         }
     }
 }
@@ -271,7 +263,7 @@ function button_process_annual_retained_earnings($request)
 {
     $years = \DB::table('acc_accounting_periods')->where('locked', 0)->pluck('accounting_period')->toArray();
     foreach ($years as $year) {
-        $transaction_ids =  DB::table('acc_general_journal_transactions')->where('docdate', 'LIKE', $year.'%')->pluck('id')->toArray();
+        $transaction_ids = DB::table('acc_general_journal_transactions')->where('docdate', 'LIKE', $year.'%')->pluck('id')->toArray();
         \DB::table('acc_general_journals')->whereIn('transaction_id', $transaction_ids)->where('reference', 'LIKE', 'Annual Closing Balance%')->delete();
         \DB::table('acc_general_journals')->whereIn('transaction_id', $transaction_ids)->where('reference', 'LIKE', 'Annual Opening Balance%')->delete();
         \DB::table('acc_general_journals')->whereIn('transaction_id', $transaction_ids)->where('reference', 'LIKE', 'Annual Retained Earnings%')->delete();
@@ -279,7 +271,7 @@ function button_process_annual_retained_earnings($request)
     $trxs = \DB::table('acc_general_journal_transactions')->get();
     foreach ($trxs as $trx) {
         $c = \DB::table('acc_general_journals')->where('transaction_id', $trx->id)->count();
-        if (!$c) {
+        if (! $c) {
             DB::table('acc_general_journal_transactions')->where('id', $trx->id)->delete();
         }
     }
@@ -296,9 +288,8 @@ function button_process_annual_retained_earnings($request)
         }
         $year = date('Y-02-28', strtotime($year.' +1 year'));
     }
-    $db = new DBEvent();
+    $db = new DBEvent;
     $ledger_accounts = \DB::table('acc_ledger_accounts')->where('ledger_account_category_id', '<', 30)->where('id', '!=', 11)->where('id', '!=', 100)->get();
-
 
     foreach ($years as $i => $year) {
         $docids = [];
@@ -306,7 +297,7 @@ function button_process_annual_retained_earnings($request)
         foreach ($ledger_accounts as $ledger_account) {
             $ledger_total = \DB::table('acc_ledgers')->where('docdate', '<=', $year)->where('ledger_account_id', $ledger_account->id)->sum('amount');
 
-            if (!empty($ledger_total) && $ledger_total != 0) {
+            if (! empty($ledger_total) && $ledger_total != 0) {
                 $trx_data = [
                     'docdate' => $year,
                     'doctype' => 'General Journal',
@@ -351,6 +342,7 @@ function button_process_annual_retained_earnings($request)
     archive_ledger();
     schedule_period_check();
     rebuild_ledger_doctype('General Journal');
+
     return json_alert('Done');
 }
 
@@ -390,7 +382,7 @@ function archive_ledger()
 
 function rebuild_ledger_doctype($doctype)
 {
-    $db = new DBEvent();
+    $db = new DBEvent;
     \DB::table('acc_ledgers')->where('doctype', $doctype)->delete();
     $doctype = \DB::table('acc_doctypes')->where('doctype', $doctype)->get()->first();
 
@@ -402,10 +394,9 @@ function rebuild_ledger_doctype($doctype)
     $db->postDocumentCommit();
 }
 
-
 function aftersave_doctypes_update_tables($request)
 {
-    if (!empty(session('event_db_record'))) {
+    if (! empty(session('event_db_record'))) {
         $beforesave_row = session('event_db_record');
         if ($beforesave_row->doctype != $request->doctype) {
             \DB::table($request->doctable)->where('doctype', $beforesave_row->doctype)->update(['doctype' => $request->doctype]);
@@ -413,15 +404,15 @@ function aftersave_doctypes_update_tables($request)
     }
 }
 
-function generate_doctype_details($connnection ='default')
+function generate_doctype_details($connnection = 'default')
 {
     $doctypes = \DB::connection($connnection)->table('acc_doctypes')->get();
     foreach ($doctypes as $doctype) {
         $i = 1;
-        while ($i<6) {
+        while ($i < 6) {
             $field = 'credit_account_'.$i;
             $value_field = 'value_'.$i;
-            if (!empty($doctype->{$field})) {
+            if (! empty($doctype->{$field})) {
                 if (empty($doctype->{$value_field})) {
                     $document_field = '';
                 } else {
@@ -430,16 +421,15 @@ function generate_doctype_details($connnection ='default')
                 $data = [
                     'doctype_id' => $doctype->id,
                     'type' => 'Credit',
-                    'document_value' =>$document_field,
-                    'ledger_account_id' => $doctype->{$field}
+                    'document_value' => $document_field,
+                    'ledger_account_id' => $doctype->{$field},
                 ];
                 \DB::connection($connnection)->table('acc_doctype_details')->insert($data);
             }
 
-
             $field = 'debit_account_'.$i;
             $value_field = 'value_'.$i;
-            if (!empty($doctype->{$field})) {
+            if (! empty($doctype->{$field})) {
                 if (empty($doctype->{$value_field})) {
                     $document_field = '';
                 } else {
@@ -449,7 +439,7 @@ function generate_doctype_details($connnection ='default')
                     'doctype_id' => $doctype->id,
                     'type' => 'Debit',
                     'document_value' => $document_field,
-                    'ledger_account_id' => $doctype->{$field}
+                    'ledger_account_id' => $doctype->{$field},
                 ];
                 \DB::connection($connnection)->table('acc_doctype_details')->insert($data);
             }
@@ -478,14 +468,14 @@ function button_rebuild_closing_balances($request = false)
             $year = date('Y-02-28', strtotime($year.' +1 year'));
         }
 
-        $ledger_account_ids = \DB::table('acc_ledger_accounts')->whereIn('ledger_account_category_id', [31,40])->pluck('id')->toArray();
+        $ledger_account_ids = \DB::table('acc_ledger_accounts')->whereIn('ledger_account_category_id', [31, 40])->pluck('id')->toArray();
 
         //  $ledger_account_ids = [56,44,55];
         foreach ($ledger_account_ids as $ledger_account_id) {
 
-        //    \DB::table('acc_closing_balances')->where('ledger_account_id',$ledger_account_id)->delete();
+            //    \DB::table('acc_closing_balances')->where('ledger_account_id',$ledger_account_id)->delete();
             foreach ($docdates as $docdate) {
-               
+
                 $cashbook_transaction_ids = \DB::table('acc_general_journals')
                     ->where('ledger_account_id', 57)
                     ->pluck('id')->toArray();
@@ -548,7 +538,7 @@ function button_rebuild_closing_balances($request = false)
                     $recon_balance = \DB::table('acc_cashbook_transactions')->where('cashbook_id', 9)->where('docdate', '<=', $docdate)->orderBy('docdate', 'desc')->orderBy('id', 'desc')->pluck('balance')->first();
 
                     if (empty($recon_balance)) {
-                        $transaction_ids =  DB::table('acc_general_journal_transactions')->where('docdate', '<=', $docdate)->pluck('id')->toArray();
+                        $transaction_ids = DB::table('acc_general_journal_transactions')->where('docdate', '<=', $docdate)->pluck('id')->toArray();
                         $debit_balance = \DB::table('acc_general_journals')->whereIn('transaction_id', $transaction_ids)->where('ledger_account_id', 4)->sum('debit_amount');
                         $credit_balance = \DB::table('acc_general_journals')->whereIn('transaction_id', $transaction_ids)->where('ledger_account_id', 4)->sum('credit_amount');
                         $recon_balance = $debit_balance - $credit_balance;
@@ -558,9 +548,8 @@ function button_rebuild_closing_balances($request = false)
                 if ($ledger_account_id == 2) {
                     $recon_balance = \DB::table('acc_cashbook_transactions')->where('cashbook_id', 8)->where('docdate', '<=', $docdate)->orderBy('docdate', 'desc')->orderBy('id', 'desc')->pluck('balance')->first();
 
-
                     if (empty($recon_balance)) {
-                        $transaction_ids =  DB::table('acc_general_journal_transactions')->where('docdate', '<=', $docdate)->pluck('id')->toArray();
+                        $transaction_ids = DB::table('acc_general_journal_transactions')->where('docdate', '<=', $docdate)->pluck('id')->toArray();
                         $debit_balance = \DB::table('acc_general_journals')->whereIn('transaction_id', $transaction_ids)->where('ledger_account_id', 2)->sum('debit_amount');
                         $credit_balance = \DB::table('acc_general_journals')->whereIn('transaction_id', $transaction_ids)->where('ledger_account_id', 2)->sum('credit_amount');
                         $recon_balance = $debit_balance - $credit_balance;
@@ -680,14 +669,13 @@ function button_rebuild_closing_balances($request = false)
                     }
                 }
 
-
                 if (empty($recon_balance)) {
                     $recon_balance = 0;
                 }
                 if (empty($ledger_balance)) {
                     $ledger_balance = 0;
                 }
-                $data =[
+                $data = [
                     'docdate' => $docdate,
                     'ledger_account_id' => $ledger_account_id,
                     'ledger_balance' => $ledger_balance,
@@ -697,30 +685,32 @@ function button_rebuild_closing_balances($request = false)
                 \DB::table('acc_closing_balances')->insert($data);
             }
         }
+
         return json_alert('Done');
-    } catch (\Throwable $ex) {  exception_log($ex);
+    } catch (\Throwable $ex) {
+        exception_log($ex);
         $error = $ex->getMessage().' '.$ex->getFile().':'.$ex->getLine();
         trace($ex);
+
         return response()->json(['status' => 'error', 'message' => $error]);
     }
 }
 
-
 function ledger_post_amount($doctype, $doctype_detail, $obj, $document = false)
 {
-  
+
     $math_str = $doctype_detail->document_value;
     $type = $doctype_detail->type;
 
     if ($math_str == 'cost_total') {
-        if (isset($obj->cost_price) && $doctype->doctable=='crm_documents') {
-            $amount = currency($obj->qty * $obj->cost_price,2);
-        } elseif ($doctype->doctable=='crm_supplier_documents') {
-            $amount = currency($obj->qty * $obj->price,2);
+        if (isset($obj->cost_price) && $doctype->doctable == 'crm_documents') {
+            $amount = currency($obj->qty * $obj->cost_price, 2);
+        } elseif ($doctype->doctable == 'crm_supplier_documents') {
+            $amount = currency($obj->qty * $obj->price, 2);
         }
-        if (isset($obj->price) && $doctype->doctable=='crm_documents') {
-            if($document && $document->bill_frequency > 1){
-                $amount = currency( $document->bill_frequency * $amount);
+        if (isset($obj->price) && $doctype->doctable == 'crm_documents') {
+            if ($document && $document->bill_frequency > 1) {
+                $amount = currency($document->bill_frequency * $amount);
             }
         }
         if ($doctype_detail->type == 'Credit' && $amount != 0) {
@@ -731,13 +721,13 @@ function ledger_post_amount($doctype, $doctype_detail, $obj, $document = false)
     }
 
     if ($math_str == 'price') {
-        if (isset($obj->price) && $doctype->doctable=='crm_documents') {
-            if($document && $document->bill_frequency > 1){
-                $amount = currency( $document->bill_frequency * $obj->qty * $obj->price,2);
-            }else{
-                $amount = currency( $obj->qty * $obj->price,2);
+        if (isset($obj->price) && $doctype->doctable == 'crm_documents') {
+            if ($document && $document->bill_frequency > 1) {
+                $amount = currency($document->bill_frequency * $obj->qty * $obj->price, 2);
+            } else {
+                $amount = currency($obj->qty * $obj->price, 2);
             }
-        } elseif (isset($obj->price) && $doctype->doctable=='crm_supplier_documents') {
+        } elseif (isset($obj->price) && $doctype->doctable == 'crm_supplier_documents') {
             $amount = currency($obj->qty * $obj->price);
         }
         if ($doctype_detail->type == 'Credit' && $amount != 0) {
@@ -792,20 +782,20 @@ function ledger_post_ledger_account_id($doctype, $doctype_detail, $obj, $stock_p
     34 - Product Cost of Sales
     */
     if ($doctype->doctable == 'acc_cashbook_transactions' && $doctype_detail->document_ledger_account == 'cashbook_id') {
-     
+
         $ledger_account_id = \DB::connection('default')->table('acc_cashbook')->where('id', $obj->cashbook_id)->pluck('ledger_account_id')->first();
-    } elseif ($doctype_detail->document_ledger_account && !empty($obj->{$doctype_detail->document_ledger_account})) {
-      
+    } elseif ($doctype_detail->document_ledger_account && ! empty($obj->{$doctype_detail->document_ledger_account})) {
+
         $ledger_account_id = $obj->{$doctype_detail->document_ledger_account};
-    } elseif ($doctype_detail->service_ledger_account_id && !in_array($obj->product_id, $stock_product_ids)) {
-      
+    } elseif ($doctype_detail->service_ledger_account_id && ! in_array($obj->product_id, $stock_product_ids)) {
+
         $ledger_account_id = $doctype_detail->service_ledger_account_id;
     } elseif ($doctype_detail->ledger_account_id) {
-       
+
         $ledger_account_id = $doctype_detail->ledger_account_id;
     }
     if ($doctype->doctable == 'acc_cashbook_transactions' && $doctype_detail->ledger_account_id == 8 && $obj->total < 0) {
-      // change to vat on purchases if vat 
+        // change to vat on purchases if vat
         $ledger_account_id = 9;
     }
     //if ($doctype_detail->service_ledger_account_id == 54 && in_array($obj->product_id, $airtime_product_ids)) {
@@ -815,19 +805,18 @@ function ledger_post_ledger_account_id($doctype, $doctype_detail, $obj, $stock_p
     //if ($doctype_detail->service_ledger_account_id == 53 && in_array($obj->product_id, $airtime_product_ids)) {
     //    $ledger_account_id = 120;
     //}
-   
 
     return $ledger_account_id;
 }
 
 function ledger_validate_doctypes()
 {
-    $doctypes =  \DB::table('acc_doctypes')->get();
+    $doctypes = \DB::table('acc_doctypes')->get();
 }
 
 function rebuild_supplier_ledger($supplier_id)
 {
-    $db = new DBEvent();
+    $db = new DBEvent;
 
     $doctypes = \DB::table('acc_doctypes')->get();
     $data = [];
@@ -846,7 +835,7 @@ function rebuild_supplier_ledger($supplier_id)
 
 function rebuild_account_ledger($account_id)
 {
-    $db = new DBEvent();
+    $db = new DBEvent;
 
     $doctypes = \DB::table('acc_doctypes')->get();
     $data = [];
@@ -866,7 +855,7 @@ function rebuild_account_ledger($account_id)
 function get_ledger_name($doctype, $docid, $doctable = false, $connection = 'default')
 {
     $name = '';
-    if (!$doctable) {
+    if (! $doctable) {
         $doctable = \DB::connection($connection)->table('acc_doctypes')->where('doctype', $doctype)->pluck('doctable')->first();
     }
 
@@ -894,13 +883,14 @@ function get_ledger_name($doctype, $docid, $doctable = false, $connection = 'def
         $product_id = \DB::connection($connection)->table($doctable)->where('id', $docid)->pluck('product_id')->first();
         $name = \DB::connection($connection)->table('crm_products')->where('id', $account_id)->pluck('code')->first();
     }
+
     return $name;
 }
 
 function get_ledger_reference($doctype, $docid, $doctable = false, $connection = 'default')
 {
     $reference = '';
-    if (!$doctable) {
+    if (! $doctable) {
         $doctable = \DB::connection($connection)->table('acc_doctypes')->where('doctype', $doctype)->pluck('doctable')->first();
     }
 

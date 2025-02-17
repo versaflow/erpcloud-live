@@ -10,7 +10,7 @@
  *   echo $Socket->get('http://user:pass@somesite.com/somedir/some.file?query=string&this=that');
  *
  * @author Phi1 'l0rdphi1' Stier <l0rdphi1@liquenox.net>
- * @package HTTPSocket
+ *
  * @version 3.0.2
 
  * 3.0.2
@@ -30,7 +30,6 @@
 
  * 2.7.1
  * added isset to headers['location'], line 306
-
  */
 class HTTPSocket
 {
@@ -41,37 +40,47 @@ class HTTPSocket
     public $method = 'GET';
 
     public $remote_host;
+
     public $remote_port;
+
     public $remote_uname;
+
     public $remote_passwd;
 
     public $result;
+
     public $result_header;
+
     public $result_body;
+
     public $result_status_code;
 
     public $lastTransferSpeed;
 
     public $bind_host;
 
-    public $error = array();
-    public $warn = array();
-    public $query_cache = array();
+    public $error = [];
+
+    public $warn = [];
+
+    public $query_cache = [];
 
     public $doFollowLocationHeader = true;
+
     public $redirectURL;
+
     public $max_redirects = 5;
+
     public $ssl_setting_message = 'DirectAdmin appears to be using SSL. Change your script to connect to ssl://';
 
-    public $extra_headers = array();
+    public $extra_headers = [];
 
     /**
      * Create server "connection".
-     *
      */
     public function connect($host, $port = '')
     {
-        if (!is_numeric($port)) {
+        if (! is_numeric($port)) {
             $port = 80;
         }
 
@@ -124,7 +133,7 @@ class HTTPSocket
      */
     public function query($request, $content = '', $doSpeedCheck = 0)
     {
-        $this->error = $this->warn = array();
+        $this->error = $this->warn = [];
         $this->result_status_code = null;
 
         $is_ssl = false;
@@ -160,10 +169,10 @@ class HTTPSocket
             $is_ssl = true;
         }
 
-        $array_headers = array(
+        $array_headers = [
             'Host' => ($this->remote_port == 80 ? $this->remote_host : "$this->remote_host:$this->remote_port"),
             'Accept' => '*/*',
-            'Connection' => 'Close' );
+            'Connection' => 'Close'];
 
         foreach ($this->extra_headers as $key => $value) {
             $array_headers[$key] = $value;
@@ -173,13 +182,13 @@ class HTTPSocket
 
         // was content sent as an array? if so, turn it into a string
         if (is_array($content)) {
-            $pairs = array();
+            $pairs = [];
 
             foreach ($content as $key => $value) {
                 $pairs[] = "$key=".urlencode($value);
             }
 
-            $content = join('&', $pairs);
+            $content = implode('&', $pairs);
             unset($pairs);
         }
 
@@ -240,15 +249,14 @@ class HTTPSocket
 
         curl_setopt($ch, CURLOPT_HTTPHEADER, $array_headers);
 
-
-        if (!($this->result = curl_exec($ch))) {
+        if (! ($this->result = curl_exec($ch))) {
             $this->error[] .= curl_error($ch);
             $OK = false;
         }
 
-        $header_size			= curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-        $this->result_header	= substr($this->result, 0, $header_size);
-        $this->result_body		= substr($this->result, $header_size);
+        $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $this->result_header = substr($this->result, 0, $header_size);
+        $this->result_body = substr($this->result, $header_size);
         $this->result_status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         $this->lastTransferSpeed = curl_getinfo($ch, CURLINFO_SPEED_DOWNLOAD) / 1024;
@@ -260,20 +268,20 @@ class HTTPSocket
         $headers = $this->fetch_header();
 
         // did we get the full file?
-        if (!empty($headers['content-length']) && $headers['content-length'] != strlen($this->result_body)) {
+        if (! empty($headers['content-length']) && $headers['content-length'] != strlen($this->result_body)) {
             $this->result_status_code = 206;
         }
 
         // now, if we're being passed a location header, should we follow it?
         if ($this->doFollowLocationHeader) {
             //dont bother if we didn't even setup the script correctly
-            if (isset($headers['x-use-https']) && $headers['x-use-https']=='yes') {
-                die($this->ssl_setting_message);
+            if (isset($headers['x-use-https']) && $headers['x-use-https'] == 'yes') {
+                exit($this->ssl_setting_message);
             }
 
             if (isset($headers['location'])) {
                 if ($this->max_redirects <= 0) {
-                    die("Too many redirects on: ".$headers['location']);
+                    exit('Too many redirects on: '.$headers['location']);
                 }
 
                 $this->max_redirects--;
@@ -292,7 +300,7 @@ class HTTPSocket
      * The quick way to get a URL's content :)
      *
      * @param string URL
-     * @param boolean return as array? (like PHP's file() command)
+     * @param bool return as array? (like PHP's file() command)
      * @return string result body
      */
     public function get($location, $asArray = false)
@@ -336,11 +344,10 @@ class HTTPSocket
 
     /**
      * Clears any extra headers.
-     *
      */
     public function clear_headers()
     {
-        $this->extra_headers = array();
+        $this->extra_headers = [];
     }
 
     /**
@@ -363,14 +370,14 @@ class HTTPSocket
     {
         $array_headers = preg_split("/\r\n/", $this->result_header);
 
-        $array_return = array( 0 => $array_headers[0] );
+        $array_return = [0 => $array_headers[0]];
         unset($array_headers[0]);
 
         foreach ($array_headers as $pair) {
             if ($pair == '' || $pair == "\r\n") {
                 continue;
             }
-            list($key, $value) = preg_split("/: /", $pair, 2);
+            [$key, $value] = preg_split('/: /', $pair, 2);
             $array_return[strtolower($key)] = $value;
         }
 
@@ -399,9 +406,9 @@ class HTTPSocket
     public function fetch_parsed_body()
     {
         parse_str($this->result_body, $x);
+
         return $x;
     }
-
 
     /**
      * Set a specifc message on how to change the SSL setting, in the event that it's not set correctly.

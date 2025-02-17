@@ -24,7 +24,6 @@ class CreateCrmNewslettersTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

@@ -14,7 +14,7 @@ function beforesave_commitment_date_check_debtor_status($request)
 
     $commitment_date_allowed = \DB::connection('default')->table('crm_debtor_status')->where('id', $account->debtor_status_id)->pluck('commitment_date_allowed')->first();
 
-    if (!$commitment_date_allowed) {
+    if (! $commitment_date_allowed) {
         return 'Current Debtor status does not allow commitment dates.';
     }
 
@@ -49,13 +49,13 @@ function check_commitments_paid($account_id = false)
     }
     if ($account_id) {
         $commitments = \DB::connection('default')->table('crm_commitment_dates')
-        ->where('account_id', $account_id)
-        ->where('expired', 0)
-        ->where('commitment_fulfilled', 0)->get();
+            ->where('account_id', $account_id)
+            ->where('expired', 0)
+            ->where('commitment_fulfilled', 0)->get();
     } else {
         $commitments = \DB::connection('default')->table('crm_commitment_dates')
-        ->where('expired', 0)
-        ->where('commitment_fulfilled', 0)->get();
+            ->where('expired', 0)
+            ->where('commitment_fulfilled', 0)->get();
     }
     $processed_account_ids = [];
     foreach ($commitments as $commitment) {
@@ -64,17 +64,17 @@ function check_commitments_paid($account_id = false)
         }
         $processed_account_ids[] = $commitment->account_id;
         $amount_paid = \DB::connection('default')
-        ->table('acc_cashbook_transactions')
-        ->where('docdate', '>', $commitment->created_at)
-        ->where('account_id', $account_id)
-        ->sum('total');
+            ->table('acc_cashbook_transactions')
+            ->where('docdate', '>', $commitment->created_at)
+            ->where('account_id', $account_id)
+            ->sum('total');
         if ($amount_paid >= $commitment->amount) {
             $data = ['commitment_fulfilled' => 1, 'fulfilled_at' => date('Y-m-d H:i:s')];
             \DB::connection('default')->table('crm_commitment_dates')
-            ->where('expired', 0)
-            ->where('commitment_fulfilled', 0)
-            ->where('account_id', $account_id)
-            ->update($data);
+                ->where('expired', 0)
+                ->where('commitment_fulfilled', 0)
+                ->where('account_id', $account_id)
+                ->update($data);
         }
     }
 }
@@ -83,7 +83,7 @@ function schedule_expire_commitment_dates()
 {
     $account_ids = \DB::table('crm_accounts')->where('is_deleted', 0)->pluck('id')->toArray();
     foreach ($account_ids as $account_id) {
-        (new DBEvent())->setAccountAging($account_id);
+        (new DBEvent)->setAccountAging($account_id);
     }
 
     \DB::table('crm_commitment_dates')
@@ -95,9 +95,9 @@ function schedule_expire_commitment_dates()
     $account_ids = \DB::table('crm_accounts')->where('commitment', 1)->pluck('id')->toArray();
 
     foreach ($account_ids as $account_id) {
-        if (!account_has_debtor_commitment($account_id)) {
+        if (! account_has_debtor_commitment($account_id)) {
             \DB::table('crm_accounts')->where('id', $account_id)->update(['commitment' => 0]);
-            (new DBEvent())->setAccountAging($account_id);
+            (new DBEvent)->setAccountAging($account_id);
         }
     }
 
@@ -139,7 +139,7 @@ function account_has_debtor_commitment($account_id)
 function ajax_commitment_date_get_amount($request)
 {
     $response = [];
-    if (!empty($request->account_id)) {
+    if (! empty($request->account_id)) {
         $response['amount'] = abs(dbgetaccount($request->account_id)->balance);
     }
 
@@ -158,7 +158,7 @@ function beforesave_commitment_dates_required($request)
 
 function beforesave_commitment_date_resellers($request)
 {
-    if (!check_access('1')) {
+    if (! check_access('1')) {
         return json_alert('Debtor commitment dates can only be added by admin.', 'warning');
     }
 
@@ -168,7 +168,7 @@ function beforesave_commitment_date_resellers($request)
     $account_id = $request->account_id;
     $account = dbgetaccount($account_id);
     $commitment_date_allowed = \DB::table('crm_debtor_status')->where('id', $account->debtor_status_id)->pluck('commitment_date_allowed')->first();
-    if (!$commitment_date_allowed) {
+    if (! $commitment_date_allowed) {
         return json_alert('Commitment date not allowed for current debtor status.', 'warning');
     }
     if ($account->type == 'reseller') {
@@ -184,13 +184,13 @@ function aftersave_commitment_date_debtor_status($request)
     // $approved = \DB::table('crm_commitment_dates')->where('id', $request->id)->pluck('approved')->first();
 
     $commitment = \DB::table('crm_commitment_dates')->where('id', $request->id)->get()->first();
-    (new DBEvent())->setAccountAging($account_id);
+    (new DBEvent)->setAccountAging($account_id);
     $balance = \DB::table('crm_accounts')->where('id', $account_id)->pluck('balance')->first();
 
-    if (!empty(session('event_db_record'))) {
+    if (! empty(session('event_db_record'))) {
         $beforesave_row = session('event_db_record');
 
-        if (!empty($commitment_date) && $beforesave_row->commitment_date != $commitment_date) {
+        if (! empty($commitment_date) && $beforesave_row->commitment_date != $commitment_date) {
             if (date('Y-m-d') <= date('Y-m-d', strtotime($commitment_date))) {
                 \DB::table('crm_accounts')->where('id', $account_id)->update(['commitment' => 1]);
                 switch_account($account_id, 'Enabled');
@@ -203,7 +203,7 @@ function aftersave_commitment_date_debtor_status($request)
                 erp_process_notification($account_id, $data, []);
             }
         }
-    } elseif (!empty($commitment_date) && date('Y-m-d') <= date('Y-m-d', strtotime($commitment_date))) {
+    } elseif (! empty($commitment_date) && date('Y-m-d') <= date('Y-m-d', strtotime($commitment_date))) {
         \DB::table('crm_accounts')->where('id', $account_id)->update(['commitment' => 1]);
         switch_account($account_id, 'Enabled');
 

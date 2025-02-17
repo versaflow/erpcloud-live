@@ -2,12 +2,12 @@
 
 function git_backups()
 {
-    if (!is_main_instance()) {
+    if (! is_main_instance()) {
         return false;
     }
     // git push
     $weekend = (date('N', strtotime($date)) >= 6);
-    if (!$weekend) {
+    if (! $weekend) {
         $time_start = date('Y-m-d 00:00');
         $time_end = date('Y-m-d 20:00');
         $now = date('Y-m-d H:i');
@@ -23,10 +23,9 @@ function git_backups()
     return true;
 }
 
-
 function monthly_maintenance()
 {
-    if (!is_main_instance()) {
+    if (! is_main_instance()) {
         return false;
     }
 
@@ -68,14 +67,13 @@ function monthly_maintenance()
     mysql_cdr_rollover();
 }
 
-
 function database_backups()
 {
-    if (!is_main_instance()) {
+    if (! is_main_instance()) {
         return true;
     }
 
-    $erp_backups = new ErpBackups();
+    $erp_backups = new ErpBackups;
 
     $instances = \DB::table('erp_instances')->where('installed', 1)->where('installed', 1)->get();
     $erp_dbs = [];
@@ -119,7 +117,7 @@ function backup_nextcloud_db()
 
         $result = $scp->get($remote_path, $local_path);
 
-        if (!$result) {
+        if (! $result) {
             create_github_issue('Nextcloud db could not be downloaded', 'remote path: '.$remote_path.', local path: '.$local_path);
         }
     }
@@ -149,25 +147,25 @@ function fusionpbx_postgres_db_backups()
 
     $backup_list = [];
     $backup_date = date('Y-m-d');
-    for ($i = 0; $i < 2; ++$i) {
+    for ($i = 0; $i < 2; $i++) {
         $backup_list[] = 'fusionpbx_'.date('Ymd', strtotime($backup_date)).'.sql';
         $backup_date = date('Ymd', strtotime($backup_date.' - 1 day'));
     }
 
     $backup_date = date('Y-m-d', strtotime('monday'));
-    for ($i = 0; $i < 2; ++$i) {
+    for ($i = 0; $i < 2; $i++) {
         $backup_list[] = 'fusionpbx_'.date('Ymd', strtotime($backup_date)).'.sql';
         $backup_date = date('Ymd', strtotime($backup_date.' - 1 week'));
     }
     $backup_date = date('Y-m-01');
-    for ($i = 0; $i < 4; ++$i) {
+    for ($i = 0; $i < 4; $i++) {
         $backup_list[] = 'fusionpbx_'.date('Ymd', strtotime($backup_date)).'.sql';
         $backup_date = date('Ymd', strtotime($backup_date.' - 1 month'));
     }
 
-    if (!empty($backups) && count($backups) > 0) {
+    if (! empty($backups) && count($backups) > 0) {
         foreach ($backups as $backup) {
-            if (!in_array($backup, $backup_list)) {
+            if (! in_array($backup, $backup_list)) {
                 $cmd = 'cd  /home/erpcloud-live/htdocs/erp/zadmin/db_backups && rm '.$backup;
                 $result = Erp::ssh('156.0.96.60', 'root', 'Ahmed777', $cmd);
             }
@@ -267,7 +265,7 @@ function mysql_cdr_rollover()
 function move_archive_tables_to_backup_server()
 {
     // MOVE ARCHIVE TABLES TO BACKUP SERVER
-    $erp_backups = new ErpBackups();
+    $erp_backups = new ErpBackups;
 
     $erp_backups->setSourceServer('156.0.96.60', 'remote', 'Webmin@786');
     $pbx_db = 'cdr';
@@ -321,7 +319,7 @@ function cdr_rollover()
     foreach ($cdr_tables as $cdr_table) {
         $backup_table = $cdr_table.'_backup';
 
-        if (!\Schema::connection('pbx_cdr')->hasTable($backup_table)) {
+        if (! \Schema::connection('pbx_cdr')->hasTable($backup_table)) {
             \DB::connection('pbx_cdr')->statement('CREATE TABLE '.$backup_table.' LIKE  '.$cdr_table.' ;');
             \DB::connection('pbx_cdr')->statement('INSERT INTO '.$backup_table.' (SELECT * FROM '.$cdr_table.')');
         }
@@ -392,7 +390,7 @@ function schedule_git_config_backups()
 
         //$cmd = '/var/www/git_admin.sh';
         //$result = Erp::ssh('pbx.cloudtools.co.za', 'root', 'Ahmed777', $cmd);
-       // system_log('backup', 'config pbx', $result, 'code', 'weekly');
+        // system_log('backup', 'config pbx', $result, 'code', 'weekly');
     }
 }
 

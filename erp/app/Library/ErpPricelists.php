@@ -5,7 +5,7 @@ class ErpPricelists
     public function createAdminPricelist($type = false)
     {
         $partner_id = 1;
-        if (!$pricelist_id) {
+        if (! $pricelist_id) {
             $currency = get_account_currency($partner_id);
             $patner = dbgetaccount($partner_id);
             $name = $reseller->company;
@@ -25,20 +25,20 @@ class ErpPricelists
         $pricelist_currency = \DB::table('crm_pricelists')->where('pricelist_id', $pricelist_id)->pluck('currency')->first();
         // get admin retail pricing
         $admin_retail_pricelist_id = \DB::table('crm_pricelist_items')
-        ->where('partner_id', 1)
-        ->where('default_pricelist', 1)
-        ->where('type', 'retail')
-        ->where('currency', $pricelist_currency)
-        ->pluck('id')->first();
+            ->where('partner_id', 1)
+            ->where('default_pricelist', 1)
+            ->where('type', 'retail')
+            ->where('currency', $pricelist_currency)
+            ->pluck('id')->first();
 
         $retail_pricelist_items = \DB::table('crm_pricelist_items')->where('pricelist_id', $admin_pricelist_id)->get();
 
         $admin_wholesale_pricelist_id = \DB::table('crm_pricelist_items')
-        ->where('partner_id', 1)
-        ->where('default_pricelist', 1)
-        ->where('type', 'wholesale')
-        ->where('currency', $pricelist_currency)
-        ->pluck('id')->first();
+            ->where('partner_id', 1)
+            ->where('default_pricelist', 1)
+            ->where('type', 'wholesale')
+            ->where('currency', $pricelist_currency)
+            ->pluck('id')->first();
 
         $wholesale_pricelist_items = \DB::table('crm_pricelist_items')->where('pricelist_id', $admin_pricelist_id)->get();
 
@@ -86,7 +86,7 @@ class ErpPricelists
 
     public function createPartnerPricelist($partner_id, $pricelist_id = false)
     {
-        if (!$pricelist_id) {
+        if (! $pricelist_id) {
             $currency = get_account_currency($partner_id);
             $patner = dbgetaccount($partner_id);
             $name = $reseller->company;
@@ -96,7 +96,7 @@ class ErpPricelists
                 'name' => $name,
                 'partner_id' => $partner_id,
                 'default_pricelist' => $default_pricelist,
-                'type' =>'retail',
+                'type' => 'retail',
                 'default_markup' => 15,
                 'currency' => $currency,
             ];
@@ -106,20 +106,20 @@ class ErpPricelists
         $pricelist_currency = \DB::table('crm_pricelists')->where('pricelist_id', $pricelist_id)->pluck('currency')->first();
         // get admin retail pricing
         $admin_retail_pricelist_id = \DB::table('crm_pricelist_items')
-        ->where('partner_id', 1)
-        ->where('default_pricelist', 1)
-        ->where('type', 'retail')
-        ->where('currency', $pricelist_currency)
-        ->pluck('id')->first();
+            ->where('partner_id', 1)
+            ->where('default_pricelist', 1)
+            ->where('type', 'retail')
+            ->where('currency', $pricelist_currency)
+            ->pluck('id')->first();
 
         $retail_pricelist_items = \DB::table('crm_pricelist_items')->where('pricelist_id', $admin_pricelist_id)->get();
 
         $admin_wholesale_pricelist_id = \DB::table('crm_pricelist_items')
-        ->where('partner_id', 1)
-        ->where('default_pricelist', 1)
-        ->where('type', 'wholesale')
-        ->where('currency', $pricelist_currency)
-        ->pluck('id')->first();
+            ->where('partner_id', 1)
+            ->where('default_pricelist', 1)
+            ->where('type', 'wholesale')
+            ->where('currency', $pricelist_currency)
+            ->pluck('id')->first();
 
         $wholesale_pricelist_items = \DB::table('crm_pricelist_items')->where('pricelist_id', $admin_pricelist_id)->get();
 

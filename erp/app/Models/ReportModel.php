@@ -19,7 +19,6 @@ class ReportModel extends Model
 
         $colDefs = [];
 
-
         $table_aliases = [];
         foreach ($query_data['db_tables'] as $table) {
             $alias = '';
@@ -55,23 +54,23 @@ class ReportModel extends Model
             foreach ($query_data['db_columns'] as $i => $col) {
                 $col_arr = explode('.', $col);
                 if ($table == $col_arr[0]) {
-                    if (!in_array($col_arr[1], $cols_added)) {
+                    if (! in_array($col_arr[1], $cols_added)) {
                         $cols_added[] = $col_arr[1];
                         $label = $col_arr[1];
                     } else {
-                        $label = $table_aliases[$col_arr[0]] . ' ' . $col_arr[1];
+                        $label = $table_aliases[$col_arr[0]].' '.$col_arr[1];
                         $label = str_replace('records_lastmonth ', '', $label);
                         $label = str_replace('records ', '', $label);
                     }
 
-                    $sql_label = $table_aliases[$col_arr[0]] . ' ' . $col_arr[1];
+                    $sql_label = $table_aliases[$col_arr[0]].' '.$col_arr[1];
                     //$sql = str_replace($col." as '".$sql_label."'",$col,$sql);
 
                     $hide = false;
                     if ($i > 10) {
                         $hide = true;
                     }
-                    $colDef =  [
+                    $colDef = [
                         'db_col' => $col,
                         'field' => $sql_label,
                         'headerName' => $label,
@@ -93,27 +92,28 @@ class ReportModel extends Model
     {
         $report = $this->report;
         $sql = $this->getSQL($request);
-        $sql = str_replace("'",'"',$sql);
-        $sql = str_replace("`","",$sql);
-        if($report->connection == 'pbx' || $report->connection == 'pbx_cdr'){
-        $sql = $this->replaceMySQLFunctions($sql);
+        $sql = str_replace("'", '"', $sql);
+        $sql = str_replace('`', '', $sql);
+        if ($report->connection == 'pbx' || $report->connection == 'pbx_cdr') {
+            $sql = $this->replaceMySQLFunctions($sql);
         }
-        
+
         $rows = \DB::connection($report->connection)->select($sql);
 
         //$sql = $this->getCount($request);
         // aa($sql);
         $count = \DB::connection($report->connection)->select('select count(*) as lastRow from ('.$sql.') as temp');
+
         //aa($count);
         //aa($count[0]->lastRow);
-        return ['rows' => $rows,'lastRow' => $count[0]->lastRow];
+        return ['rows' => $rows, 'lastRow' => $count[0]->lastRow];
     }
-    
+
     public function replaceMySQLFunctions($query)
     {
-           
+
         // Define an array of MySQL functions and their corresponding PostgreSQL functions
-        $mysqlFunctions = array(
+        $mysqlFunctions = [
             'date_format' => 'to_char',
             'curdate()' => 'current_date',
             'concat' => 'concat',
@@ -126,23 +126,23 @@ class ReportModel extends Model
             'count' => 'count',
             'sum' => 'sum',
             'avg' => 'avg',
-        );
-        
+        ];
+
         // Define an array of MySQL date format strings and their corresponding PostgreSQL date format strings
-        $mysqlDateFormats = array(
+        $mysqlDateFormats = [
             '%Y-%m-%dT%H:%i:%s' => 'YYYY-MM-DD HH24:MI:SS',
             '%Y-%m-%d %H:%i:%s' => 'YYYY-MM-DD HH24:MI:SS',
-            '%Y-%m-%dT%H:%i' => 'YYYY-MM-DD HH24:MI', 
+            '%Y-%m-%dT%H:%i' => 'YYYY-MM-DD HH24:MI',
             '%Y-%m-%d %H:%i' => 'YYYY-MM-DD HH24:MI',
             '%Y-%m-%d' => 'YYYY-MM-DD',
             // Add more date format string mappings as needed
-        );
-        
+        ];
+
         // Replace MySQL functions with PostgreSQL functions in the query
         foreach ($mysqlFunctions as $mysqlFunc => $postgresFunc) {
             $query = str_ireplace($mysqlFunc, $postgresFunc, $query);
         }
-        
+
         // Replace MySQL date format strings with PostgreSQL date format strings in the query
         foreach ($mysqlDateFormats as $mysqlFormat => $postgresFormat) {
             $query = str_ireplace($mysqlFormat, $postgresFormat, $query);
@@ -150,10 +150,9 @@ class ReportModel extends Model
         foreach ($mysqlDateFormats as $mysqlFormat => $postgresFormat) {
             $query = str_ireplace('"'.$postgresFormat.'"', "'".$postgresFormat."'", $query);
         }
-        
+
         return $query;
     }
-
 
     public function getSQL($request)
     {
@@ -181,7 +180,7 @@ class ReportModel extends Model
 
             $colsToSelect = [];
 
-            $rowGroupCol = $rowGroupCols[sizeof($groupKeys)];
+            $rowGroupCol = $rowGroupCols[count($groupKeys)];
             array_push($colsToSelect, $rowGroupCol['field']);
 
             foreach ($colsToSelect as $i => $groupcol) {
@@ -201,7 +200,8 @@ class ReportModel extends Model
                     }
                 }
                 if ($value['aggFunc'] == 'value') {
-                    array_push($colsToSelect, $val_field." as '" . $value['field']."'");
+                    array_push($colsToSelect, $val_field." as '".$value['field']."'");
+
                     continue;
                     //$aggregate_sorts[$val_field] =    "(" . $val_field . ")";
                     //array_push($colsToSelect,  "(" . $val_field . ") as '" . $value['field']."'");
@@ -213,40 +213,40 @@ class ReportModel extends Model
                     concat(round(( sum(call_records_outbound.duration_mins)/total.total * 100 ),2),'%') as 'cdr duration_mins_percentage',
                     CROSS JOIN ( select SUM(call_records_outbound.duration_mins) as total from call_records_outbound WHERE  call_records_outbound.hangup_date >= ( CURDATE() - INTERVAL 1 WEEK ) ) total
                     */
-                    if (!empty($where_arr[1])) {
+                    if (! empty($where_arr[1])) {
                         $cross_joins[] = ' CROSS JOIN (select sum('.$val_field.') as percentage'.$percentage_count.'total from '.$val_field_arr[0].' where '.$where_arr[1].' ) percentage'.$percentage_count.'table ';
                     } else {
                         $cross_joins[] = ' CROSS JOIN (select sum('.$val_field.') as percentage'.$percentage_count.'total from '.$val_field_arr[0].' ) percentage'.$percentage_count.'table ';
                     }
-                    $aggregate_sorts[$val_field] =  $value['aggFunc'] . "(" . $val_field . ")";
-                    $percentage_select =  ' concat(round(( sum('.$val_field.')/percentage'.$percentage_count.'table.percentage'.$percentage_count.'total * 100 ),2),"%") AS "'.$value['field'].'" ';
+                    $aggregate_sorts[$val_field] = $value['aggFunc'].'('.$val_field.')';
+                    $percentage_select = ' concat(round(( sum('.$val_field.')/percentage'.$percentage_count.'table.percentage'.$percentage_count.'total * 100 ),2),"%") AS "'.$value['field'].'" ';
                     array_push($colsToSelect, $percentage_select);
                     $percentage_count++;
                 } else {
-                    $aggregate_sorts[$val_field] =  $value['aggFunc'] . "(" . $val_field . ")";
-                    array_push($colsToSelect, $value['aggFunc'] . "(" . $val_field . ") as '" . $value['field']."'");
+                    $aggregate_sorts[$val_field] = $value['aggFunc'].'('.$val_field.')';
+                    array_push($colsToSelect, $value['aggFunc'].'('.$val_field.") as '".$value['field']."'");
                 }
             }
 
-            $sql =  "select " . join(", ", $colsToSelect). ' from ';
+            $sql = 'select '.implode(', ', $colsToSelect).' from ';
             $where_arr = explode(' WHERE ', $sql_arr[1]);
 
-            $sql .=$where_arr[0];
+            $sql .= $where_arr[0];
             foreach ($cross_joins as $cross_join) {
-                $sql.= $cross_join;
+                $sql .= $cross_join;
             }
-            $sql .=' WHERE '.$where_arr[1];
+            $sql .= ' WHERE '.$where_arr[1];
         }
-        $whereSql = $this->createWhereSql($request,$sql);
+        $whereSql = $this->createWhereSql($request, $sql);
         foreach ($this->colDefs as $col) {
             $whereSql = str_replace($col['field'], $col['db_col'], $whereSql);
         }
         if (str_contains($sql, ' WHERE ')) {
             $sql_arr = explode(' WHERE ', $sql);
-            if($whereSql > ''){
-            $sql = $sql_arr[0].' WHERE 1=1 and '.$whereSql.' and '.$sql_arr[1];
-            }else{
-            $sql = $sql_arr[0].' WHERE '.$sql_arr[1];
+            if ($whereSql > '') {
+                $sql = $sql_arr[0].' WHERE 1=1 and '.$whereSql.' and '.$sql_arr[1];
+            } else {
+                $sql = $sql_arr[0].' WHERE '.$sql_arr[1];
             }
         } else {
             $sql .= ' WHERE 1=1 and '.$whereSql;
@@ -257,7 +257,7 @@ class ReportModel extends Model
             $rowGroupCol = $rowGroupCols[count($groupKeys)];
             $colsToGroupBy[] = $rowGroupCol['field'];
 
-            $groupBy = ' group by ' . join(', ', $colsToGroupBy);
+            $groupBy = ' group by '.implode(', ', $colsToGroupBy);
         } else {
             $groupBy = '';
         }
@@ -267,16 +267,15 @@ class ReportModel extends Model
         }
         $sql .= $groupBy;
 
-
         $sortParts = [];
         if ($sortModel) {
-            foreach ($sortModel as $key=>$item) {
-                $sortParts[] = $item['colId'] . ' ' . $item['sort'];
+            foreach ($sortModel as $key => $item) {
+                $sortParts[] = $item['colId'].' '.$item['sort'];
             }
         }
 
         if (count($sortParts) > 0) {
-            $orderBy = ' order by ' . join(', ', $sortParts);
+            $orderBy = ' order by '.implode(', ', $sortParts);
         } else {
             $orderBy = '';
         }
@@ -292,18 +291,19 @@ class ReportModel extends Model
 
         $sql .= $orderBy;
 
-        if (!isset($request->startRow) && !isset($request->endRow)) {
+        if (! isset($request->startRow) && ! isset($request->endRow)) {
             $limit = '';
         } else {
             $startRow = $request->startRow;
             $endRow = $request->endRow;
             $pageSize = $endRow - $startRow;
-            $limit = ' limit ' . ($pageSize + 1) . ' offset ' . $startRow;
+            $limit = ' limit '.($pageSize + 1).' offset '.$startRow;
         }
 
-        if (!$grouping) {
+        if (! $grouping) {
             $sql .= $limit;
         }
+
         return $sql;
     }
 
@@ -318,19 +318,16 @@ class ReportModel extends Model
 
         $grouping = $this->isDoingGrouping($rowGroupCols, $groupKeys);
 
-
-      
         $sql = trim(preg_replace('/\s+/', ' ', $sql));
         $sql = str_replace_last(' from ', '||', $sql);
 
         $sql_arr = explode('||', $sql);
 
-
-        $sql =  'select count(*) as lastRow from '.$sql_arr[1];
+        $sql = 'select count(*) as lastRow from '.$sql_arr[1];
         $sql = str_replace(' from ', ' FROM ', $sql);
         $sql = str_replace(' where ', ' WHERE ', $sql);
 
-        $whereSql = $this->createWhereSql($request,$sql);
+        $whereSql = $this->createWhereSql($request, $sql);
         foreach ($this->colDefs as $col) {
             $whereSql = str_replace($col['field'], $col['db_col'], $whereSql);
         }
@@ -342,7 +339,7 @@ class ReportModel extends Model
             $rowGroupCol = $rowGroupCols[count($groupKeys)];
             $colsToGroupBy[] = $rowGroupCol['field'];
 
-            $groupBy = ' group by ' . join(', ', $colsToGroupBy);
+            $groupBy = ' group by '.implode(', ', $colsToGroupBy);
         } else {
             $groupBy = '';
         }
@@ -352,16 +349,15 @@ class ReportModel extends Model
         }
         $sql .= $groupBy;
 
-
         $sortParts = [];
         if ($sortModel) {
-            foreach ($sortModel as $key=>$item) {
-                $sortParts[] = $item['colId'] . ' ' . $item['sort'];
+            foreach ($sortModel as $key => $item) {
+                $sortParts[] = $item['colId'].' '.$item['sort'];
             }
         }
 
         if (count($sortParts) > 0) {
-            $orderBy = ' order by ' . join(', ', $sortParts);
+            $orderBy = ' order by '.implode(', ', $sortParts);
         } else {
             $orderBy = '';
         }
@@ -375,7 +371,6 @@ class ReportModel extends Model
         return $sql;
     }
 
-
     private function isDoingGrouping($rowGroupCols, $groupKeys)
     {
         // we are not doing grouping if at the lowest level. we are at the lowest level
@@ -384,9 +379,7 @@ class ReportModel extends Model
         return count($rowGroupCols) > count($groupKeys);
     }
 
-
-
-    public function createWhereSql($request,$sql)
+    public function createWhereSql($request, $sql)
     {
         $rowGroupCols = $request->rowGroupCols;
         $groupKeys = $request->groupKeys;
@@ -395,7 +388,7 @@ class ReportModel extends Model
 
         foreach ($groupKeys as $key => $value) {
             $colName = $rowGroupCols[$key]['field'];
-            $whereParts[] = $colName . ' = "' . $value . '"';
+            $whereParts[] = $colName.' = "'.$value.'"';
         }
 
         foreach ($filterModel as $key => $value) {
@@ -403,26 +396,23 @@ class ReportModel extends Model
             $whereParts[] = $this->createFilterSql($key, $value);
         }
 
-        $whereSql = " ";
+        $whereSql = ' ';
         if (count($whereParts) > 0) {
-            $whereSql = " " . join(' and ', $whereParts);
-        } 
+            $whereSql = ' '.implode(' and ', $whereParts);
+        }
 
-
-
-        if (!empty($request->search)) {
+        if (! empty($request->search)) {
             $search_query = ' and  (';
             foreach ($this->colDefs as $col) {
-                $search_fields[] = $col['db_col']. ' LIKE "%'.$request->search.'%" ';
+                $search_fields[] = $col['db_col'].' LIKE "%'.$request->search.'%" ';
             }
 
-            $search_query .= implode(" || ", $search_fields);
+            $search_query .= implode(' || ', $search_fields);
             $search_query .= ') ';
             if (count($search_fields) > 0) {
                 $whereSql .= $search_query;
             }
         }
-      
 
         return $whereSql;
     }
@@ -450,46 +440,50 @@ class ReportModel extends Model
             case 'set':
                 return $this->createSetFilter($key, $item);
             default:
-                logger('unkonwn filter type: ' . $item['filterType']);
+                logger('unkonwn filter type: '.$item['filterType']);
         }
     }
 
     public function createDomainsFilterSql($key, $item)
     {
         $domains = array_map('trim', explode(',', $item));
-        return $key .' in ('."'" . implode("', '", $domains) . "'".')';
+
+        return $key.' in ('."'".implode("', '", $domains)."'".')';
     }
 
     public function createNullFilterSql($key)
     {
-        return $key . ' is NULL';
+        return $key.' is NULL';
     }
 
     public function createNotNullFilterSql($key)
     {
-        return $key . ' is NOT NULL';
+        return $key.' is NOT NULL';
     }
 
     private function createSetFilter($key, $item)
     {
         $list = implode("', '", array_map('addslashes', $item['values']));
-        return $key .' in ('."'" .$list . "'".')';
+
+        return $key.' in ('."'".$list."'".')';
     }
 
     private function createDateFilterSql($key, $item)
     {
         switch ($item['type']) {
             case 'equals':
-                return $key . ' = "' . $item['dateFrom'] . '"';
+                return $key.' = "'.$item['dateFrom'].'"';
             case 'notEqual':
-                return $key . ' != "' . $item['dateFrom'] . '"';
+                return $key.' != "'.$item['dateFrom'].'"';
             case 'inRange':
-                $toDate= $item['dateTo'];
+                $toDate = $item['dateTo'];
                 $fromDate = $item['dateFrom'];
+
                 return " ( $key >= Date('$fromDate') AND $key <= Date('$toDate') ) ";
                 break;
             default:
-                logger('unknown text filter type: ' . $item['dateFrom']);
+                logger('unknown text filter type: '.$item['dateFrom']);
+
                 return 'true';
         }
     }
@@ -498,19 +492,20 @@ class ReportModel extends Model
     {
         switch ($item['type']) {
             case 'equals':
-                return $key . ' = "' . $item['filter'] . '"';
+                return $key.' = "'.$item['filter'].'"';
             case 'notEqual':
-                return $key . ' != "' . $item['filter'] . '"';
+                return $key.' != "'.$item['filter'].'"';
             case 'contains':
-                return $key . ' like "%' . $item['filter'] . '%"';
+                return $key.' like "%'.$item['filter'].'%"';
             case 'notContains':
-                return $key . ' not like "%' . $item['filter'] . '%"';
+                return $key.' not like "%'.$item['filter'].'%"';
             case 'startsWith':
-                return $key . ' like "' . $item['filter'] . '%"';
+                return $key.' like "'.$item['filter'].'%"';
             case 'endsWith':
-                return $key . ' like "%' . $item['filter'] . '"';
+                return $key.' like "%'.$item['filter'].'"';
             default:
-                logger('unknown text filter type: ' . $item['type']);
+                logger('unknown text filter type: '.$item['type']);
+
                 return 'true';
         }
     }
@@ -519,21 +514,22 @@ class ReportModel extends Model
     {
         switch ($item['type']) {
             case 'equals':
-                return $key . ' = ' . $item['filter'];
+                return $key.' = '.$item['filter'];
             case 'notEqual':
-                return $key . ' != ' . $item['filter'];
+                return $key.' != '.$item['filter'];
             case 'greaterThan':
-                return $key . ' > ' . $item['filter'];
+                return $key.' > '.$item['filter'];
             case 'greaterThanOrEqual':
-                return $key . ' >= ' . $item['filter'];
+                return $key.' >= '.$item['filter'];
             case 'lessThan':
-                return $key . ' < ' . $item['filter'];
+                return $key.' < '.$item['filter'];
             case 'lessThanOrEqual':
-                return $key . ' <= ' . $item['filter'];
+                return $key.' <= '.$item['filter'];
             case 'inRange':
-                return '(' . $key . ' >= ' . $item['filter'] . ' and ' . $key . ' <= ' . $item['filterTo'] . ')';
+                return '('.$key.' >= '.$item['filter'].' and '.$key.' <= '.$item['filterTo'].')';
             default:
-                logger('unknown number filter type: ' . $item['type']);
+                logger('unknown number filter type: '.$item['type']);
+
                 return 'true';
         }
     }

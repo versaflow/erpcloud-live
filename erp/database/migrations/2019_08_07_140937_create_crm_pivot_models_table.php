@@ -21,7 +21,6 @@ class CreateCrmPivotModelsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

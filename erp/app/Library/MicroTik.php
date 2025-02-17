@@ -16,6 +16,7 @@ class MicroTik
     {
         $query = new IpQuery('/ip/route/print');
         $query->where('dst-address', $ip);
+
         return $this->client->query($query)->read();
     }
 
@@ -24,9 +25,7 @@ class MicroTik
         return $this->client->query('/ip/address/print')->read();
     }
 
-    public function addIp($ip)
-    {
-    }
+    public function addIp($ip) {}
 
     public function enableIp($ip)
     {
@@ -43,6 +42,7 @@ class MicroTik
         $query = new IpQuery('/ip/address/set');
         $query->equal('.id', $id);
         $query->equal('disabled', 'false');
+
         return $this->client->query($query)->read();
     }
 
@@ -53,6 +53,7 @@ class MicroTik
         $query = new IpQuery('/ip/address/set');
         $query->equal('dst-address', $ip);
         $query->equal('disabled', 'true');
+
         return $this->client->query($query)->read();
     }
 }

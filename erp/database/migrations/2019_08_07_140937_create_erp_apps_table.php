@@ -19,7 +19,6 @@ class CreateErpAppsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

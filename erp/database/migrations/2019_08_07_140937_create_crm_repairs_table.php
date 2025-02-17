@@ -27,7 +27,6 @@ class CreateCrmRepairsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

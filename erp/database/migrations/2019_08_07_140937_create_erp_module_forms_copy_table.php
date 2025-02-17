@@ -34,7 +34,6 @@ class CreateErpModuleFormsCopyTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

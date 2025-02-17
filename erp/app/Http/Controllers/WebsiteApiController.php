@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 
@@ -21,6 +20,7 @@ class WebsiteApiController extends BaseController
     {
         $r = \DB::connection('shop')->table('products')->get();
         $r = \DB::connection('default')->table('crm_products')->get();
+
         return 'ok';
     }
 

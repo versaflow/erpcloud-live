@@ -1,26 +1,29 @@
 <?php
 
+use App\Http\Controllers\IntegrationsController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('test_layout_export', function () {
     $file_path = export_billing_summary_layout(575);
+
     return response()->download($file_path, 'billing_text.xlsx');
 });
 
 Route::get('test_supportboard', function () {
-//define('SB_PATH', '/home/teleclou/helpdesk.telecloud.co.za/html');
-  
+    //define('SB_PATH', '/home/teleclou/helpdesk.telecloud.co.za/html');
+
     //require('/home/teleclou/helpdesk.telecloud.co.za/html/admin.php');
-  return view('integrations.supportboard');
+    return view('integrations.supportboard');
     //sb_component_admin();
 })->middleware('globalviewdata');
 
 Route::get('test_ckeditor', function () {
-     return  view('__app.test.ckeditor');
+    return view('__app.test.ckeditor');
 });
 Route::get('render_pricelist', function ($account_id = 0) {
-     return  export_pricelist_storefront(1,1);
+    return export_pricelist_storefront(1, 1);
 });
-Route::any('payslip_test', function(){
+Route::any('payslip_test', function () {
     $id = 119;
     $payroll = (array) \DB::table('hr_payroll')->where('id', $id)->get()->first();
     $company = dbgetaccount(1);
@@ -47,66 +50,66 @@ Route::any('payslip_test', function(){
     }
     $pdf->save($filename);
 
-
     $filename = attachments_url().$pdf_name;
     $data['pdf'] = $filename;
     $data['menu_name'] = $pdf_name;
-    return view('__app.components.pdf', $data); 
+
+    return view('__app.components.pdf', $data);
 });
 
-Route::any('toggle_dev_views', function(){
-    
-    if(!empty(session('use_dev_views'))){
-       session()->forget('use_dev_views');
-    }else{
+Route::any('toggle_dev_views', function () {
+
+    if (! empty(session('use_dev_views'))) {
+        session()->forget('use_dev_views');
+    } else {
         session(['use_dev_views' => 1]);
     }
+
     return redirect()->to('customers');
 });
 
-Route::any('check_dev_views', function(){
-    
-});
+Route::any('check_dev_views', function () {});
 
-Route::any('export_bitco',function(){
+Route::any('export_bitco', function () {
     $rows = \DB::connection('pbx_cdr')->table('bitco_cdr')->get()->toArray();
     $excel_list = [];
-    foreach($rows as $row){
-       $excel_list[] = (array) $row; 
+    foreach ($rows as $row) {
+        $excel_list[] = (array) $row;
     }
-    $export = new App\Exports\CollectionExport();
+    $export = new App\Exports\CollectionExport;
     $export->setData($excel_list);
 
     Excel::store($export, session('instance')->directory.'/bitco_cdr.xlsx', 'attachments');
+
     return redirect()->to(attachments_url().'bitco_cdr.xlsx');
 });
 
-Route::any('pr_view', function(){
+Route::any('pr_view', function () {
 
-    return export_pricelist(1, 'pdf', true,'test.pdf');
+    return export_pricelist(1, 'pdf', true, 'test.pdf');
 });
-Route::any('velzon_view', function(){
+Route::any('velzon_view', function () {
 
     $data = [];
+
     return view('velzon.grid', $data);
 });
 
-Route::any('session_user_id', function(){
-    
-   //  $r = is_dev();
-  //$rr = is_superadmin();
-  //dd($r,$rr);
+Route::any('session_user_id', function () {
+
+    //  $r = is_dev();
+    //$rr = is_superadmin();
+    //dd($r,$rr);
 });
 
-Route::any('session_role_id', function(){
-    
+Route::any('session_role_id', function () {
+
     $instance_access = get_admin_instance_access_session();
     $instance_ids = get_admin_instance_access();
-       $list = [];
+    $list = [];
     $instance_list = get_instances_list();
     $i = 10000;
-    
-  
+
     foreach ($instance_list as $instance) {
         if ($instance->id == 1) {
             $main_instance = $instance;
@@ -115,41 +118,41 @@ Route::any('session_role_id', function(){
             continue;
         }
 
-        
         $user_exists = \DB::connection($instance->db_connection)->table('erp_users')->where('username', session('username'))->pluck('id')->first();
-        if (!$user_exists) {
+        if (! $user_exists) {
             continue;
         }
-      
+
         $instance->login_url .= '&redirect_page='.request()->path();
-       
+
         $instance_access = get_admin_instance_access_session();
 
-        if (!in_array($instance->id, $instance_access)) {
+        if (! in_array($instance->id, $instance_access)) {
             continue;
         }
 
         //$list[] = ['url' => $instance->login_url, 'menu_name' => $instance->name, 'menu_icon' => '', 'menu_type' => 'link', 'id' => $i, 'new_tab' => 1, 'childs' => []];
         $list[] = ['menu_url' => $instance->login_url, 'menu_name' => $instance->name, 'menu_icon' => '', 'menu_type' => 'link', 'id' => $i, 'new_tab' => 1, 'childs' => []];
-        
+
         $i++;
     }
     if (is_dev() || session('role_id') == 1) {
-    //    $list[] = ['url' => url('update_instances'), 'menu_name' => 'Update Instances','action_type'=>'ajax', 'menu_type' => 'link', 'id' => $i, 'new_tab' => 0, 'childs' => []];
+        //    $list[] = ['url' => url('update_instances'), 'menu_name' => 'Update Instances','action_type'=>'ajax', 'menu_type' => 'link', 'id' => $i, 'new_tab' => 0, 'childs' => []];
     }
-    
+
 });
 
-Route::any('session_check', function(){
-});
+Route::any('session_check', function () {});
 
 Route::any('grid_tabstest', function () {
     $data = [];
+
     return view('__app.components.simplegrid', $data);
 });
 Route::any('grid_tabs', function () {
-   
+
     $data = [];
+
     return view('__app.grids.grid_tabs', $data);
 });
 Route::any('website_ajax', function () {
@@ -185,17 +188,18 @@ Route::any('aggrid_demo_data', function () {
     foreach ($immutableStore as $i => $row) {
         $n = $row;
         $n['id'] = $id;
-        $list[]  = $n;
+        $list[] = $n;
         $id++;
     }
 
+    $data = ['rows' => $list, 'lastRow' => count($immutableStore)];
 
-    $data = ['rows'=> $list, 'lastRow' =>count($immutableStore)];
     return response()->json($data);
 });
 
 Route::any('kendoui', function () {
     $data = [];
+
     return view('__app.test.kendodrawer', $data);
 });
 
@@ -203,20 +207,20 @@ Route::any('dev', function () {
     return generate_refferal_link(12);
 });
 
-
 Route::any('aggrid_demo', function () {
     $data = [];
+
     return view('__app.test.aggrid_demo', $data);
 });
 
-Route::any('agrid_demodata', 'IntegrationsController@agridData');
+Route::any('agrid_demodata', [IntegrationsController::class, 'agridData']);
 
 Route::any('test_exception', function () {
     // try {
-    $r = 1/0;
-  //  } catch (\Throwable $ex) {  exception_log($ex);
-      //  exception_email($ex, 'test board error');
-  //  }
+    $r = 1 / 0;
+    //  } catch (\Throwable $ex) {  exception_log($ex);
+    //  exception_email($ex, 'test board error');
+    //  }
 });
 
 Route::any('numbers_ranges_verify', function () {
@@ -227,12 +231,10 @@ Route::any('numbers_ranges_verify', function () {
 
 Route::any('dd', function () {
     if (check_access('1,34') || is_dev()) {
-       
+
         debugdd();
     }
 });
-
-
 
 Route::any('debugbar_on', function () {
     if (check_access('1,34') || is_dev()) {
@@ -242,20 +244,18 @@ Route::any('debugbar_on', function () {
 
 Route::any('debugbar_off', function () {
     if (check_access('1,34') || is_dev()) {
-       session()->forget('show_debug_bar');
+        session()->forget('show_debug_bar');
     }
     //return redirect()->to('/');
 });
 
-
-
 Route::any('test_fs', function () {
-    if (session('role_id')==1 || is_dev()) {
+    if (session('role_id') == 1 || is_dev()) {
         echo 'will return gateway xml if successful<br>';
-        $pbx = new FusionPBX();
+        $pbx = new FusionPBX;
 
         $result = $pbx->portalCmd('portal_sofia_status_gateway');
-        $xml = simplexml_load_string($result, "SimpleXMLElement", LIBXML_NOCDATA);
+        $xml = simplexml_load_string($result, 'SimpleXMLElement', LIBXML_NOCDATA);
 
         $json = json_encode($xml);
         $gateways = json_decode($json, true);
@@ -263,14 +263,12 @@ Route::any('test_fs', function () {
     }
 });
 
-
 Route::any('pdf_viewer', function () {
     return view('__app.test.pdf_viewer');
 });
 Route::any('pdf_builder', function () {
     return view('__app.test.pdf_builder');
 });
-
 
 Route::any('voipshop', function () {
     // return view('__app.test.voipshop');
@@ -280,7 +278,7 @@ Route::any('voiprates', function () {
 });
 
 Route::any('yodlee_details', function () {
-    $y = new Yodlee();
+    $y = new Yodlee;
     $user = str_replace('_', '', session('instance')->directory);
 
     $y->setLoginName($user);
@@ -294,6 +292,7 @@ Route::any('yodlee_details', function () {
 
 Route::any('webview', function () {
     $url = 'https://cloudtools.versaflow.io/api/getrates?api_token=$2y$10$lqmYL8H3cOz2InHe1ZWDGOpLh7z0aCn.a6vSSqnkTKVZ/tGb0G8q.&key=$2y$10$rO4mTY12aZPeuV570behsOujwA/kHChV.46RLDBTmox1V3aNekc4O';
+
     return redirect()->to($url);
 });
 
@@ -301,13 +300,13 @@ Route::any('iframe_test', function () {
     echo '<iframe src="https://reports.cloudtelecoms.io/?token=eyJ1bnN0YWmjZV91ZCoIMSw4cpVwbgJ0Xi3koj24Mjkmo4w4dXN3c391ZCoIMzYmNn0=" width="100%" frameborder="0px" height="400px" onerror="alert(\'Failed\')" style="margin-bottom:-5px;"><!-- //required for browser compatibility --></iframe> ';
 });
 
-Route::any('mailbox', 'IntegrationsController@mailBox');
-Route::any('mailbox_data', 'IntegrationsController@mailBoxData');
+Route::any('mailbox', [IntegrationsController::class, 'mailBox']);
+Route::any('mailbox_data', [IntegrationsController::class, 'mailBoxData']);
 
-Route::any('last_active/{id?}', function($id){
-    if(is_dev()){
-    $ts = \DB::connection('default')->table('erp_user_sessions')->where('user_id',$id)->orderBy('last_activity','desc')->pluck('last_activity')->first();
-    $r = date('Y-m-d H:i:s',$ts);
-    echo $r;
+Route::any('last_active/{id?}', function ($id) {
+    if (is_dev()) {
+        $ts = \DB::connection('default')->table('erp_user_sessions')->where('user_id', $id)->orderBy('last_activity', 'desc')->pluck('last_activity')->first();
+        $r = date('Y-m-d H:i:s', $ts);
+        echo $r;
     }
 });

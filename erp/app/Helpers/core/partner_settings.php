@@ -2,7 +2,7 @@
 
 function beforesave_check_whitelabel_domain($request)
 {
-    if (!empty($request->whitelabel_domain)) {
+    if (! empty($request->whitelabel_domain)) {
         $ip = gethostbyname($request->whitelabel_domain);
         if ($ip != '156.0.96.71') {
             return 'Invalid white label domain. You need to create a CNAME record that points to portal.telecloud.co.za';
@@ -12,7 +12,7 @@ function beforesave_check_whitelabel_domain($request)
 
 function beforesave_check_afriphone_signup_code($request)
 {
-    if (!empty($request->afriphone_signup_code)) {
+    if (! empty($request->afriphone_signup_code)) {
         $exists = \DB::table('crm_account_partner_settings')->where('id', '!=', $request->id)->where('afriphone_signup_code', $request->afriphone_signup_code)->count();
         if ($exists) {
             return 'Unlimited Mobile signup code already in use';
@@ -33,13 +33,11 @@ function aftersave_create_pointer_domain($request)
     */
 }
 
-
-
 function schedule_delete_pointer_domains()
 {
     return false;
     if (session('instance')->directory == 'telecloud') {
-        $instances = \DB::connection('default')->table('erp_instances')->where('installed',1)->get();
+        $instances = \DB::connection('default')->table('erp_instances')->where('installed', 1)->get();
         $valid_hostnames = [];
         foreach ($instances as $instance) {
             $whitelabel_domains = \DB::connection($instance->db_connection)->table('crm_account_partner_settings')->where('whitelabel_domain', '>', '')->pluck('whitelabel_domain')->toArray();
@@ -52,7 +50,7 @@ function schedule_delete_pointer_domains()
             }
         }
 
-        $iw = new Interworx();
+        $iw = new Interworx;
         $iw->deleteInvalidWhiteLabelDomains();
     }
 }

@@ -23,7 +23,6 @@ class CreateDBEventMigrationsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

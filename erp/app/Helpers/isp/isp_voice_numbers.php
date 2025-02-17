@@ -1,46 +1,47 @@
 <?php
 
-function remove_unused_087_numbers(){
-   // return false;
+function remove_unused_087_numbers()
+{
+    // return false;
     $r = 0;
-    $account_ids = \DB::connection('pbx')->table('v_domains')->where('cost_calculation','!=','volume')->pluck('account_id')->toArray();
-    $accounts = \DB::table('crm_accounts')->whereIn('id',$account_ids)->where('status','!=','Deleted')->get();
-    $subs = \DB::table('sub_services')->whereIn('account_id',$account_ids)->where('product_id',127)->where('status','!=','Deleted')->get();
-    foreach($subs as $sub){
+    $account_ids = \DB::connection('pbx')->table('v_domains')->where('cost_calculation', '!=', 'volume')->pluck('account_id')->toArray();
+    $accounts = \DB::table('crm_accounts')->whereIn('id', $account_ids)->where('status', '!=', 'Deleted')->get();
+    $subs = \DB::table('sub_services')->whereIn('account_id', $account_ids)->where('product_id', 127)->where('status', '!=', 'Deleted')->get();
+    foreach ($subs as $sub) {
         $geo_subscription_exists = \DB::table('sub_services')
-        ->where('account_id',$sub->account_id)
-        ->where('product_id','!=',127)
-        ->where('provision_type','phone_number')
-        ->where('status','!=','Deleted')
-        ->count();
-        if($geo_subscription_exists){
+            ->where('account_id', $sub->account_id)
+            ->where('product_id', '!=', 127)
+            ->where('provision_type', 'phone_number')
+            ->where('status', '!=', 'Deleted')
+            ->count();
+        if ($geo_subscription_exists) {
             // check cdr
             $outbound_cdr_records = \DB::connection('pbx_cdr')->table('call_records_outbound')
-            ->where('domain_name',$sub->pbx_domain)
-            ->where('caller_id_number',$sub->detail)
-            ->count();
+                ->where('domain_name', $sub->pbx_domain)
+                ->where('caller_id_number', $sub->detail)
+                ->count();
             $inbound_cdr_records = \DB::connection('pbx_cdr')->table('call_records_outbound')
-            ->where('domain_name',$sub->pbx_domain)
-            ->where('callee_id_number',$sub->detail)
-            ->count();
-            $used_in_routing = \DB::connection('pbx')->table('p_phone_numbers')->where('routing_type','>','')->where('routing_type','!=','extension')->where('number',$s->detail)->count();
-                $company = $accounts->where('id',$sub->account_id)->pluck('company')->first();
-            if(!$used_in_routing && !$outbound_cdr_records && !$inbound_cdr_records){
-               
+                ->where('domain_name', $sub->pbx_domain)
+                ->where('callee_id_number', $sub->detail)
+                ->count();
+            $used_in_routing = \DB::connection('pbx')->table('p_phone_numbers')->where('routing_type', '>', '')->where('routing_type', '!=', 'extension')->where('number', $s->detail)->count();
+            $company = $accounts->where('id', $sub->account_id)->pluck('company')->first();
+            if (! $used_in_routing && ! $outbound_cdr_records && ! $inbound_cdr_records) {
+
                 $r++;
                 //pbxnumbers_unallocate($sub->detail);
             }
         }
-        
+
     }
 
 }
 
-
-function schedule_export_available_numbers(){
+function schedule_export_available_numbers()
+{
     $gateway_uuids = \DB::connection('pbx')->table('v_gateways')->where('allow_provision_numbers', 1)->where('enabled', 'true')->pluck('gateway_uuid')->toArray();
-        
-    $numbers = \DB::connection('pbx')->table('p_phone_numbers')->select('prefix', 'number')->whereIn('gateway_uuid',$gateway_uuids)->whereNull('domain_uuid')->where('status','Enabled')->orderBy('number')->get();
+
+    $numbers = \DB::connection('pbx')->table('p_phone_numbers')->select('prefix', 'number')->whereIn('gateway_uuid', $gateway_uuids)->whereNull('domain_uuid')->where('status', 'Enabled')->orderBy('number')->get();
 
     $file_title = 'Available Phone Numbers';
     $file_name = $file_title.'.xlsx';
@@ -54,55 +55,57 @@ function schedule_export_available_numbers(){
         $excel_list[] = (array) $n;
     }
 
-
-    $export = new App\Exports\CollectionExport();
+    $export = new App\Exports\CollectionExport;
     $export->setData($excel_list);
 
     Excel::store($export, session('instance')->directory.'/'.$file_name, 'attachments');
 }
 
-function button_unallocate_087_numbers($request){
+function button_unallocate_087_numbers($request)
+{
     $subs = \DB::table('sub_services')
-    ->where('product_id',127)
-    ->where('date_activated','<',date('Y-m-d',strtotime('-1 month')))
-    ->where('status','!=','Deleted')
-    ->get();
-    
+        ->where('product_id', 127)
+        ->where('date_activated', '<', date('Y-m-d', strtotime('-1 month')))
+        ->where('status', '!=', 'Deleted')
+        ->get();
+
     $domains = \DB::connection('pbx')->table('v_domains')->get();
-    
-    foreach($subs as $s){
-        $domain_uuid = $domains->where('account_id',$s->account_id)->pluck('domain_uuid')->first();
-        $total_numbers = \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid',$domain_uuid)->count();
-        if($total_numbers === 1){
+
+    foreach ($subs as $s) {
+        $domain_uuid = $domains->where('account_id', $s->account_id)->pluck('domain_uuid')->first();
+        $total_numbers = \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid', $domain_uuid)->count();
+        if ($total_numbers === 1) {
             continue;
         }
-        $sub_number = \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid',$domain_uuid)->where('number',$s->detail)->get()->first();
-        if(!$sub_number->last_inbound_call && !$sub_number->last_outbound_call){
-          unallocate_pbx_number($sub_number->id);
+        $sub_number = \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid', $domain_uuid)->where('number', $s->detail)->get()->first();
+        if (! $sub_number->last_inbound_call && ! $sub_number->last_outbound_call) {
+            unallocate_pbx_number($sub_number->id);
         }
     }
+
     return json_alert('087 numbers removed');
 }
 
-function unallocate_pbx_number($id){
+function unallocate_pbx_number($id)
+{
     $deleted_at = date('Y-m-d H:i:s');
     $num = \DB::connection('pbx')->table('p_phone_numbers')->where('id', $id)->get()->first();
     if ($num->domain_uuid > '') {
         $account_id = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $num->domain_uuid)->pluck('account_id')->first();
-        \DB::table('sub_services')->where('detail', $num->number)->where('status','Deleted')->delete();
-        \DB::table('sub_services')->where('detail', $num->number)->where('account_id', $account_id)->update(['status'=>'Deleted','deleted_at'=>$deleted_at]);
+        \DB::table('sub_services')->where('detail', $num->number)->where('status', 'Deleted')->delete();
+        \DB::table('sub_services')->where('detail', $num->number)->where('account_id', $account_id)->update(['status' => 'Deleted', 'deleted_at' => $deleted_at]);
     }
-    \DB::connection('pbx')->table('p_phone_numbers')->where('id', $id)->where('status', 'Deleted')->update(['domain_uuid' => null,'number_routing' => null,'routing_type'=> null,'wholesale_ext'=> 0]);
-    \DB::connection('pbx')->table('p_phone_numbers')->where('id', $id)->where('status', '!=', 'Deleted')->update(['domain_uuid' => null, 'status' => 'Enabled','number_routing' => null,'routing_type'=> null,'wholesale_ext'=> 0]);
+    \DB::connection('pbx')->table('p_phone_numbers')->where('id', $id)->where('status', 'Deleted')->update(['domain_uuid' => null, 'number_routing' => null, 'routing_type' => null, 'wholesale_ext' => 0]);
+    \DB::connection('pbx')->table('p_phone_numbers')->where('id', $id)->where('status', '!=', 'Deleted')->update(['domain_uuid' => null, 'status' => 'Enabled', 'number_routing' => null, 'routing_type' => null, 'wholesale_ext' => 0]);
 
     /// clear extension cache
     $extensions = \DB::connection('pbx')->table('v_extensions')->where('domain_uuid', $num->domain_uuid)->get();
     foreach ($extensions as $ext) {
-        $pbx = new FusionPBX();
+        $pbx = new FusionPBX;
         $key = 'directory:'.$ext->extension.'@'.$ext->user_context;
         $pbx->portalCmd('portal_aftersave_extension', $key);
     }
-    
+
     update_caller_id($num->domain_uuid);
 }
 
@@ -111,45 +114,45 @@ function schedule_wholesale_numbers_uptime()
 
     // system uptime
     // All wholesale numbers have at least 10 normal clearing calls.
-    $volume_domains = \DB::connection('pbx')->table('v_domains')->where('cost_calculation','volume')->pluck('domain_uuid')->toArray();
-    
+    $volume_domains = \DB::connection('pbx')->table('v_domains')->where('cost_calculation', 'volume')->pluck('domain_uuid')->toArray();
+
     $volume_numbers = \DB::connection('pbx')->table('p_phone_numbers')
-    ->where('status', 'Enabled')
-    ->whereIn('domain_uuid', $volume_domains)
-    ->pluck('number')->toArray();
+        ->where('status', 'Enabled')
+        ->whereIn('domain_uuid', $volume_domains)
+        ->pluck('number')->toArray();
     $result = '';
     $cdr_total = 0;
     $date = date('Y-m-d H');
     //$date = date('Y-m-d',strtotime('-1 day'));
     foreach ($volume_numbers as $volume_number) {
-        $destinations =   $cdr_counts = \DB::connection('pbx_cdr')->table('call_records_outbound')->select('destination')
-        ->where('hangup_cause', 'not like', 'BLOCKED_%')
-        ->where('hangup_time', 'like', $date.'%')
-        ->where('caller_id_number', $volume_number)->groupBy('destination')->pluck('destination')->filter()->unique()->toArray();
+        $destinations = $cdr_counts = \DB::connection('pbx_cdr')->table('call_records_outbound')->select('destination')
+            ->where('hangup_cause', 'not like', 'BLOCKED_%')
+            ->where('hangup_time', 'like', $date.'%')
+            ->where('caller_id_number', $volume_number)->groupBy('destination')->pluck('destination')->filter()->unique()->toArray();
         $destination_result = '';
         foreach ($destinations as $destination) {
             $call_rejected_count = \DB::connection('pbx_cdr')->table('call_records_outbound')
-            ->where('hangup_cause', 'CALL_REJECTED')
-            ->where('destination', $destination)
-            ->where('hangup_time', 'like', $date.'%')
-            ->where('caller_id_number', $volume_number)->count();
-            $origininator_cancel_count = \DB::connection('pbx_cdr')->table('call_records_outbound')
-            ->where('hangup_cause', 'ORIGINATOR_CANCEL')
-            ->where('destination', $destination)
-            ->where('hangup_time', 'like', $date.'%')
-            ->where('caller_id_number', $volume_number)->count();
-            $total_not_rejected = \DB::connection('pbx_cdr')->table('call_records_outbound')
-            ->where('hangup_cause', '!=', 'CALL_REJECTED')
-            ->where('hangup_cause', '!=', 'ORIGINATOR_CANCEL')
-            ->where('destination', $destination)
-            ->where('hangup_time', 'like', $date.'%')
-            ->where('caller_id_number', $volume_number)->count();
-            if ($call_rejected_count > $total_not_rejected && $total_not_rejected > 20) {
-                $gateway = \DB::connection('pbx_cdr')->table('call_records_outbound')
-                ->select('gateway')
+                ->where('hangup_cause', 'CALL_REJECTED')
                 ->where('destination', $destination)
                 ->where('hangup_time', 'like', $date.'%')
-                ->where('caller_id_number', $volume_number)->pluck('gateway')->first();
+                ->where('caller_id_number', $volume_number)->count();
+            $origininator_cancel_count = \DB::connection('pbx_cdr')->table('call_records_outbound')
+                ->where('hangup_cause', 'ORIGINATOR_CANCEL')
+                ->where('destination', $destination)
+                ->where('hangup_time', 'like', $date.'%')
+                ->where('caller_id_number', $volume_number)->count();
+            $total_not_rejected = \DB::connection('pbx_cdr')->table('call_records_outbound')
+                ->where('hangup_cause', '!=', 'CALL_REJECTED')
+                ->where('hangup_cause', '!=', 'ORIGINATOR_CANCEL')
+                ->where('destination', $destination)
+                ->where('hangup_time', 'like', $date.'%')
+                ->where('caller_id_number', $volume_number)->count();
+            if ($call_rejected_count > $total_not_rejected && $total_not_rejected > 20) {
+                $gateway = \DB::connection('pbx_cdr')->table('call_records_outbound')
+                    ->select('gateway')
+                    ->where('destination', $destination)
+                    ->where('hangup_time', 'like', $date.'%')
+                    ->where('caller_id_number', $volume_number)->pluck('gateway')->first();
                 $destination_result .= '<p>'.$gateway.' '.$destination.' - CALL_REJECTED:'.$call_rejected_count.' | ORIGINATOR_CANCEL:'.$origininator_cancel_count.' | OTHER:'.$total_not_rejected.'</p><br>';
 
                 $cdr_total++;
@@ -163,33 +166,34 @@ function schedule_wholesale_numbers_uptime()
 
     if ($result > '') {
         $data = [];
-        $data['function_name'] =__FUNCTION__;
+        $data['function_name'] = __FUNCTION__;
         $data['uptime_result'] = $result;
         //$data['test_debug'] =1;
         erp_process_notification(1, $data);
     }
 }
 
-
-
-function aftersave_phone_numbers_wholesale_ext($request){
-      $volume_domains = \DB::connection('pbx')->table('v_domains')->where('cost_calculation', 'volume')->pluck('domain_uuid')->toArray(); 
-    foreach($volume_domains as $volume_domain){
-        \DB::connection('pbx')->table('p_phone_numbers')->where('number_routing','>','')->where('domain_uuid', $volume_domain)->where('wholesale_ext', 0)->update(['wholesale_ext'=>\DB::raw('number_routing')]);
+function aftersave_phone_numbers_wholesale_ext($request)
+{
+    $volume_domains = \DB::connection('pbx')->table('v_domains')->where('cost_calculation', 'volume')->pluck('domain_uuid')->toArray();
+    foreach ($volume_domains as $volume_domain) {
+        \DB::connection('pbx')->table('p_phone_numbers')->where('number_routing', '>', '')->where('domain_uuid', $volume_domain)->where('wholesale_ext', 0)->update(['wholesale_ext' => \DB::raw('number_routing')]);
     }
-    \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid','0abfd39b-294e-40e1-a813-79799077edf0')->where('wholesale_ext',101)->update(['number_routing'=>0]);
+    \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid', '0abfd39b-294e-40e1-a813-79799077edf0')->where('wholesale_ext', 101)->update(['number_routing' => 0]);
 }
 
-function phone_numbers_set_volume_outbound(){
-    $volume_domains = \DB::connection('pbx')->table('v_domains')->where('cost_calculation', 'volume')->pluck('domain_uuid')->toArray(); 
-    foreach($volume_domains as $volume_domain){
-        \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid', $volume_domain)->where('wholesale_ext', '')->update(['wholesale_ext'=>\DB::raw('number_routing')]);
-        \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid', $volume_domain)->whereNull('wholesale_ext')->update(['wholesale_ext'=>\DB::raw('number_routing')]);
+function phone_numbers_set_volume_outbound()
+{
+    $volume_domains = \DB::connection('pbx')->table('v_domains')->where('cost_calculation', 'volume')->pluck('domain_uuid')->toArray();
+    foreach ($volume_domains as $volume_domain) {
+        \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid', $volume_domain)->where('wholesale_ext', '')->update(['wholesale_ext' => \DB::raw('number_routing')]);
+        \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid', $volume_domain)->whereNull('wholesale_ext')->update(['wholesale_ext' => \DB::raw('number_routing')]);
     }
-  \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid','0abfd39b-294e-40e1-a813-79799077edf0')->where('wholesale_ext',101)->update(['number_routing'=>0]);
+    \DB::connection('pbx')->table('p_phone_numbers')->where('domain_uuid', '0abfd39b-294e-40e1-a813-79799077edf0')->where('wholesale_ext', 101)->update(['number_routing' => 0]);
 }
 
-function schedule_pbx_phone_numbers_update_subscriptions(){
+function schedule_pbx_phone_numbers_update_subscriptions()
+{
     $pbx = new FusionPBX;
     $pbx->verify_number_subscriptions();
 }
@@ -198,7 +202,7 @@ function schedule_network_temp_blocked_notification()
 {
     return false;
     $domains = \DB::connection('pbx')->table('v_domains')
-    ->where('cost_calculation', 'volume')->get();
+        ->where('cost_calculation', 'volume')->get();
 
     foreach ($domains as $domain) {
         $data = [];
@@ -212,21 +216,19 @@ function schedule_network_temp_blocked_notification()
             if (file_exists($file_path)) {
                 unlink($file_path);
             }
-            $blocked_calls =  json_decode(json_encode($blocked_calls), true);
+            $blocked_calls = json_decode(json_encode($blocked_calls), true);
 
             foreach ($blocked_calls as $i => $arr) {
                 unset($blocked_calls[$i]['id']);
                 unset($blocked_calls[$i]['gateway']);
             }
 
-
-            $export = new App\Exports\CollectionExport();
+            $export = new App\Exports\CollectionExport;
             $export->setData($blocked_calls);
 
             Excel::store($export, session('instance')->directory.'/'.$file_name, 'attachments');
 
             $data['attachments'][] = $file_title.'.xlsx';
-
 
             // $data['function_name'] = __FUNCTION__;
             // if ($domain->domain_name == 'vca.cloudtools.co.za') {
@@ -238,21 +240,21 @@ function schedule_network_temp_blocked_notification()
     }
 }
 
-
 function get_available_pbx_phone_numbers()
 {
     $gateway_uuids = \DB::connection('pbx')->table('v_gateways')->where('allow_provision_numbers', 1)->pluck('gateway_uuid')->toArray();
+
     return \DB::connection('pbx')->table('p_phone_numbers')
-    ->select('id', 'number', 'prefix')
-    ->whereIn('gateway_uuid', $gateway_uuids)
-    ->whereNull('domain_uuid')
-    ->get();
+        ->select('id', 'number', 'prefix')
+        ->whereIn('gateway_uuid', $gateway_uuids)
+        ->whereNull('domain_uuid')
+        ->get();
 }
 
 function schedule_phone_number_routing_check()
 {
 
-   // $domains = \DB::connection('pbx')->table('v_domains')->get();
+    // $domains = \DB::connection('pbx')->table('v_domains')->get();
     // foreach
     $numbers = \DB::connection('pbx')->table('p_phone_numbers')->where('number_routing', '>', '')->whereNotNull('domain_uuid')->where('status', '!=', 'Deleted')->get();
 
@@ -260,7 +262,7 @@ function schedule_phone_number_routing_check()
         $routing_type = get_routing_type($num->domain_uuid, $num->number_routing);
 
         if (empty($routing_type)) {
-            \DB::connection('pbx')->table('p_phone_numbers')->where('id', $num->id)->update(['number_routing' => null,'routing_type' => null]);
+            \DB::connection('pbx')->table('p_phone_numbers')->where('id', $num->id)->update(['number_routing' => null, 'routing_type' => null]);
         } else {
             \DB::connection('pbx')->table('p_phone_numbers')->where('id', $num->id)->update(['routing_type' => $routing_type]);
         }
@@ -271,19 +273,18 @@ function schedule_phone_number_routing_check()
     foreach ($numbers as $num) {
         if (empty($num->number_routing)) {
             $ext = \DB::connection('pbx')->table('v_extensions')->where('domain_uuid', $num->domain_uuid)->pluck('extension')->first();
-            if (!empty($ext)) {
-                \DB::connection('pbx')->table('p_phone_numbers')->where('id', $num->id)->update(['number_routing' => $ext,'routing_type' => 'extension']);
+            if (! empty($ext)) {
+                \DB::connection('pbx')->table('p_phone_numbers')->where('id', $num->id)->update(['number_routing' => $ext, 'routing_type' => 'extension']);
             }
         }
     }
 }
 
-
 function schedule_phone_numbers_set_lastcall_date()
 {
     $numbers = \DB::connection('pbx')->table('p_phone_numbers')->pluck('number')->toArray();
     foreach ($numbers as $number) {
-        $destinations = ['fixed telkom','fixed liquid','mobile mtn','mobile vodacom','mobile cellc','mobile telkom'];
+        $destinations = ['fixed telkom', 'fixed liquid', 'mobile mtn', 'mobile vodacom', 'mobile cellc', 'mobile telkom'];
         $cdr_records = \DB::connection('pbx_cdr')->table('call_records_outbound_lastmonth')
             ->select('destination', 'hangup_time')
             ->where('hangup_cause', 'NORMAL_CLEARING')
@@ -297,11 +298,9 @@ function schedule_phone_numbers_set_lastcall_date()
     }
 }
 
+function get_porting_table_from_number($number)
+{
 
-
-
-function get_porting_table_from_number($number){
-    
     if (substr($number, 0, 2) != '27') {
         return false;
     }
@@ -335,18 +334,20 @@ function get_porting_table_from_number($number){
     if (empty($table)) {
         return false;
     }
+
     return $table;
 }
 
-function get_ported_number_network($number){
-    
+function get_ported_number_network($number)
+{
+
     $table = get_porting_table_from_number($number);
-   
-    if(!$table){
-        return  '';    
+
+    if (! $table) {
+        return '';
     }
-    
-    return \DB::connection('pbx_cdr')->table($table)->where('msisdn',$number)->pluck('network')->first();
+
+    return \DB::connection('pbx_cdr')->table($table)->where('msisdn', $number)->pluck('network')->first();
 }
 
 function number_sms_sent($number)
@@ -355,29 +356,27 @@ function number_sms_sent($number)
     if ($exists) {
         return true;
     }
+
     return false;
 }
-
-
 
 function button_phone_numbers_call_number($request)
 {
     $number = \DB::connection('pbx')->table('p_phone_numbers')->where('id', $request->id)->pluck('telkom')->first();
     $result = pbx_call($number, session('account_id'));
-    if (true === $result) {
+    if ($result === true) {
         return json_alert('Call sent to PBX');
     } else {
         return json_alert($result, 'error');
     }
 }
 
-
 function button_phone_numbers_assign_to_session($request)
 {
     \DB::connection('pbx')->table('p_phone_numbers')->where('id', $request->id)->update(['gateway_uuid' => 'c924db4e-a881-44e8-b8da-a150e3cf4c52']);
+
     return json_alert('Number assigned to SESSION');
 }
-
 
 function button_phone_numbers_set_admin_caller_id($request)
 {
@@ -385,16 +384,14 @@ function button_phone_numbers_set_admin_caller_id($request)
     $data['outbound_caller_id_number'] = $num->number;
     $user_extension = \DB::table('erp_users')->where('id', session('user_id'))->whereNotNull('pbx_extension')->pluck('pbx_extension')->first();
     \DB::connection('pbx')->table('v_extensions')->where('extension', $user_extension)->where('user_context', 'pbx.cloudtools.co.za')->update($data);
-    $pbx = new FusionPBX();
+    $pbx = new FusionPBX;
 
     $key = 'directory:'.$user_extension.'@'.'pbx.cloudtools.co.za';
     $pbx->portalCmd('portal_aftersave_extension', $key);
+
     //\DB::connection('pbx')->table('v_extensions')->where('extension', '101')->where('user_context', 'pbx.cloudtools.co.za')->update($data);
     return json_alert('Done');
 }
-
-
-
 
 function aftersave_phonenumbers_set_defaults($request)
 {
@@ -416,7 +413,7 @@ function aftersave_phonenumbers_set_defaults($request)
 function button_pbxnumbers_view_routing($request)
 {
     $num = \DB::connection('pbx')->table('p_phone_numbers')->where('id', $request->id)->get()->first();
-    $domain =  \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $num->domain_uuid)->pluck('domain_name')->first();
+    $domain = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $num->domain_uuid)->pluck('domain_name')->first();
     $api_key = \DB::connection('pbx')->table('v_users as vu')->where('domain_uuid', $num->domain_uuid)->pluck('api_key')->first();
 
     if ($num->routing_type == 'ring_group') {
@@ -426,6 +423,7 @@ function button_pbxnumbers_view_routing($request)
             ->pluck('ring_group_uuid')->first();
         if ($ring_group_uuid) {
             $url = 'http://'.$domain.'/app/ring_groups/ring_group_edit.php?id='.$ring_group_uuid.'&key='.$api_key;
+
             return redirect()->to($url);
         }
     }
@@ -436,6 +434,7 @@ function button_pbxnumbers_view_routing($request)
             ->pluck('ivr_menu_uuid')->first();
         if ($ivr_menu_uuid) {
             $url = 'http://'.$domain.'/app/ivr_menus/ivr_menu_edit.php?id='.$ivr_menu_uuid.'&key='.$api_key;
+
             return redirect()->to($url);
         }
     }
@@ -448,6 +447,7 @@ function button_pbxnumbers_view_routing($request)
             ->pluck('dialplan_uuid')->first();
         if ($time_condition_uuid) {
             $url = 'http://'.$domain.'/app/time_conditions/time_condition_edit.php?id='.$time_condition_uuid.'&key='.$api_key.'&app_uuid=4b821450-926b-175a-af93-a03c441818b1';
+
             return redirect()->to($url);
         }
     }
@@ -461,19 +461,20 @@ function pbxnumbers_unallocate($number)
     $id = $num->id;
     if ($num->domain_uuid > '') {
         $account_id = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $num->domain_uuid)->pluck('account_id')->first();
-        \DB::table('sub_services')->where('detail', $num->number)->where('status','Deleted')->delete();
-        \DB::table('sub_services')->where('detail', $num->number)->where('account_id', $account_id)->update(['status'=>'Deleted','deleted_at'=>$deleted_at]);
+        \DB::table('sub_services')->where('detail', $num->number)->where('status', 'Deleted')->delete();
+        \DB::table('sub_services')->where('detail', $num->number)->where('account_id', $account_id)->update(['status' => 'Deleted', 'deleted_at' => $deleted_at]);
     }
-    \DB::connection('pbx')->table('p_phone_numbers')->where('id', $id)->where('status', 'Deleted')->update(['domain_uuid' => null,'number_routing' => null,'routing_type'=> null,'wholesale_ext'=> 0]);
-    \DB::connection('pbx')->table('p_phone_numbers')->where('id', $id)->where('status', '!=', 'Deleted')->update(['domain_uuid' => null, 'status' => 'Enabled','number_routing' => null,'routing_type'=> null,'wholesale_ext'=> 0]);
+    \DB::connection('pbx')->table('p_phone_numbers')->where('id', $id)->where('status', 'Deleted')->update(['domain_uuid' => null, 'number_routing' => null, 'routing_type' => null, 'wholesale_ext' => 0]);
+    \DB::connection('pbx')->table('p_phone_numbers')->where('id', $id)->where('status', '!=', 'Deleted')->update(['domain_uuid' => null, 'status' => 'Enabled', 'number_routing' => null, 'routing_type' => null, 'wholesale_ext' => 0]);
 
     /// clear extension cache
     $extensions = \DB::connection('pbx')->table('v_extensions')->where('domain_uuid', $num->domain_uuid)->get();
     foreach ($extensions as $ext) {
-        $pbx = new FusionPBX();
+        $pbx = new FusionPBX;
         $key = 'directory:'.$ext->extension.'@'.$ext->user_context;
         $pbx->portalCmd('portal_aftersave_extension', $key);
     }
+
     return json_alert('Done');
 }
 
@@ -483,19 +484,20 @@ function button_pbxnumbers_unallocate($request)
     $num = \DB::connection('pbx')->table('p_phone_numbers')->where('id', $request->id)->get()->first();
     if ($num->domain_uuid > '') {
         $account_id = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $num->domain_uuid)->pluck('account_id')->first();
-        \DB::table('sub_services')->where('detail', $num->number)->where('status','Deleted')->delete();
-        \DB::table('sub_services')->where('detail', $num->number)->where('account_id', $account_id)->update(['status'=>'Deleted','deleted_at'=>$deleted_at]);
+        \DB::table('sub_services')->where('detail', $num->number)->where('status', 'Deleted')->delete();
+        \DB::table('sub_services')->where('detail', $num->number)->where('account_id', $account_id)->update(['status' => 'Deleted', 'deleted_at' => $deleted_at]);
     }
-    \DB::connection('pbx')->table('p_phone_numbers')->where('id', $request->id)->where('status', 'Deleted')->update(['domain_uuid' => null,'number_routing' => null,'routing_type'=> null,'wholesale_ext'=> 0]);
-    \DB::connection('pbx')->table('p_phone_numbers')->where('id', $request->id)->where('status', '!=', 'Deleted')->update(['domain_uuid' => null, 'status' => 'Enabled','number_routing' => null,'routing_type'=> null,'wholesale_ext'=> 0]);
+    \DB::connection('pbx')->table('p_phone_numbers')->where('id', $request->id)->where('status', 'Deleted')->update(['domain_uuid' => null, 'number_routing' => null, 'routing_type' => null, 'wholesale_ext' => 0]);
+    \DB::connection('pbx')->table('p_phone_numbers')->where('id', $request->id)->where('status', '!=', 'Deleted')->update(['domain_uuid' => null, 'status' => 'Enabled', 'number_routing' => null, 'routing_type' => null, 'wholesale_ext' => 0]);
 
     /// clear extension cache
     $extensions = \DB::connection('pbx')->table('v_extensions')->where('domain_uuid', $num->domain_uuid)->get();
     foreach ($extensions as $ext) {
-        $pbx = new FusionPBX();
+        $pbx = new FusionPBX;
         $key = 'directory:'.$ext->extension.'@'.$ext->user_context;
         $pbx->portalCmd('portal_aftersave_extension', $key);
     }
+
     return json_alert('Done');
 }
 
@@ -510,45 +512,44 @@ function button_pbxnumbers_change_number($request)
     $gateway_name = \DB::connection('pbx')->table('v_gateways')->where('gateway_uuid', $gateway_uuid)->pluck('gateway')->first();
     $number = \DB::connection('pbx')->table('p_phone_numbers')->where('id', $request->id)->pluck('number')->first();
     $current_domain_uuid = \DB::connection('pbx')->table('p_phone_numbers')->where('id', $request->id)->pluck('domain_uuid')->first();
-    $numbers = \DB::table('sub_services')->where('provision_type','phone_number')->where('status','!=','Deleted')->pluck('detail')->toArray();
-    
+    $numbers = \DB::table('sub_services')->where('provision_type', 'phone_number')->where('status', '!=', 'Deleted')->pluck('detail')->toArray();
+
     $volume_domains = \DB::connection('pbx')->table('v_domains')->where('cost_calculation', 'volume')->pluck('domain_uuid')->toArray();
-    if(in_array($current_domain_uuid,$volume_domains)){
+    if (in_array($current_domain_uuid, $volume_domains)) {
         $p_phone_numbers = \DB::connection('pbx')->table('p_phone_numbers')
-            ->join('v_gateways','v_gateways.gateway_uuid','=','p_phone_numbers.gateway_uuid')
-            ->select('p_phone_numbers.id','p_phone_numbers.prefix','p_phone_numbers.number','v_gateways.gateway')
+            ->join('v_gateways', 'v_gateways.gateway_uuid', '=', 'p_phone_numbers.gateway_uuid')
+            ->select('p_phone_numbers.id', 'p_phone_numbers.prefix', 'p_phone_numbers.number', 'v_gateways.gateway')
             ->whereNull('p_phone_numbers.domain_uuid')
-            ->whereNotIn('p_phone_numbers.number',$numbers)
+            ->whereNotIn('p_phone_numbers.number', $numbers)
             ->where('p_phone_numbers.status', 'Enabled')
             //->whereIn('p_phone_numbers.gateway_uuid', $gateway_uuids)
             ->where('p_phone_numbers.gateway_uuid', $gateway_uuid)
             ->where('p_phone_numbers.is_spam', 0)
-            ->orderby('p_phone_numbers.prefix','desc')->orderby('p_phone_numbers.number')
+            ->orderby('p_phone_numbers.prefix', 'desc')->orderby('p_phone_numbers.number')
             ->get();
-    }else{
+    } else {
         $p_phone_numbers = \DB::connection('pbx')->table('p_phone_numbers')
-            ->join('v_gateways','v_gateways.gateway_uuid','=','p_phone_numbers.gateway_uuid')
-            ->select('p_phone_numbers.id','p_phone_numbers.prefix','p_phone_numbers.number','v_gateways.gateway')
+            ->join('v_gateways', 'v_gateways.gateway_uuid', '=', 'p_phone_numbers.gateway_uuid')
+            ->select('p_phone_numbers.id', 'p_phone_numbers.prefix', 'p_phone_numbers.number', 'v_gateways.gateway')
             ->whereNull('p_phone_numbers.domain_uuid')
-            ->whereNotIn('p_phone_numbers.number',$numbers)
+            ->whereNotIn('p_phone_numbers.number', $numbers)
             ->where('p_phone_numbers.status', 'Enabled')
             ->whereIn('p_phone_numbers.gateway_uuid', $gateway_uuids)
             //->where('p_phone_numbers.gateway_uuid', $gateway_uuid)
             ->where('p_phone_numbers.is_spam', 0)
-            ->orderby('p_phone_numbers.prefix','desc')->orderby('p_phone_numbers.number')
+            ->orderby('p_phone_numbers.prefix', 'desc')->orderby('p_phone_numbers.number')
             ->get();
     }
-    
-   
-        
+
     $data['numbers'] = [];
-    foreach($p_phone_numbers as $p_phone_number){
-    $data['numbers'][] = ['text'=>$p_phone_number->number.' '.$p_phone_number->gateway,'id'=>$p_phone_number->id,'prefix'=>$p_phone_number->prefix];
+    foreach ($p_phone_numbers as $p_phone_number) {
+        $data['numbers'][] = ['text' => $p_phone_number->number.' '.$p_phone_number->gateway, 'id' => $p_phone_number->id, 'prefix' => $p_phone_number->prefix];
     }
-    
+
     $data['id'] = $request->id;
     $data['number'] = $number;
     $data['gateway_name'] = $gateway_name;
+
     return view('__app.button_views.pbx_number_change', $data);
 }
 
@@ -558,11 +559,9 @@ function button_pbxnumbers_edit_extension($request)
     $extension_id = \DB::connection('pbx')->table('v_extensions')->where('extension', $num->number_routing)->where('domain_uuid', $num->domain_uuid)->pluck('id')->first();
 
     $menu_name = get_menu_url_from_table('v_extensions');
+
     return redirect()->to($menu_name.'/edit/'.$extension_id);
 }
-
-
-
 
 function afterdelete_pbxnumbers_delete_subscription($request)
 {
@@ -571,13 +570,12 @@ function afterdelete_pbxnumbers_delete_subscription($request)
     $exists = \DB::table('sub_services')->where('detail', $num->number)->where('status', '!=', 'Deleted')->count();
 
     if ($exists) {
-       \DB::table('sub_services')->where('detail', $num->number)->where('status','Deleted')->delete();
-       \DB::table('sub_services')->where('detail', $num->number)->update(['status'=>'Deleted','deleted_at'=>date('Y-m-d H:i:s')]);
+        \DB::table('sub_services')->where('detail', $num->number)->where('status', 'Deleted')->delete();
+        \DB::table('sub_services')->where('detail', $num->number)->update(['status' => 'Deleted', 'deleted_at' => date('Y-m-d H:i:s')]);
     }
-    \DB::connection('pbx')->table('p_phone_numbers')->where('id', $request->id)->update(['domain_uuid' => null, 'status' => 'Deleted','number_routing' => null,'routing_type'=> null,'wholesale_ext'=>0]);
-    
-   
-    if($domain_uuid){
+    \DB::connection('pbx')->table('p_phone_numbers')->where('id', $request->id)->update(['domain_uuid' => null, 'status' => 'Deleted', 'number_routing' => null, 'routing_type' => null, 'wholesale_ext' => 0]);
+
+    if ($domain_uuid) {
         update_all_caller_ids($domain_uuid);
     }
 }
@@ -593,8 +591,8 @@ function number_routing_select($row)
 
     $extensions = \DB::connection('pbx')->table('v_extensions')->where('domain_uuid', $domain_uuid)->orderby('extension')->get();
     foreach ($extensions as $ext) {
-        $ext_desc_arr = [$ext->extension,$ext->effective_caller_id_name,$ext->description];
-        $ext_desc = implode(' ',$ext_desc_arr);
+        $ext_desc_arr = [$ext->extension, $ext->effective_caller_id_name, $ext->description];
+        $ext_desc = implode(' ', $ext_desc_arr);
         $routing[$ext->extension] = 'Extension - '.$ext_desc;
     }
 
@@ -632,7 +630,6 @@ function get_routing_type($domain_uuid, $extension = false)
             $routing_type = 'ring_group';
         }
 
-
         $ivr_menus = \DB::connection('pbx')->table('v_ivr_menus')
             ->where('domain_uuid', $domain_uuid)->where('ivr_menu_extension', $extension)->count();
         if ($ivr_menus) {
@@ -651,7 +648,7 @@ function get_routing_type($domain_uuid, $extension = false)
 
 function aftersave_pbxnumbers_set_routing($request)
 {
-    if (!empty($request->number_routing)) {
+    if (! empty($request->number_routing)) {
         $num = \DB::connection('pbx')->table('p_phone_numbers')->where('id', $request->id)->get()->first();
         $routing_type = get_routing_type($num->domain_uuid, $num->number_routing);
 
@@ -670,12 +667,13 @@ function button_pbxcdr_details($request)
     $data = [
         'variables' => $cdr->variables,
     ];
+
     return view('__app.button_views.cdr_details', $data);
 }
 
 function button_pbx_number_import($request)
 {
-    $data['gateways'] = \DB::connection('pbx')->table('v_gateways')->select('gateway','gateway_uuid')->get();
+    $data['gateways'] = \DB::connection('pbx')->table('v_gateways')->select('gateway', 'gateway_uuid')->get();
     $data['conn'] = 'pbx';
 
     return view('__app.button_views.pbx_number_import', $data);
@@ -689,7 +687,7 @@ function delete_all_inbound_routes()
 
         \DB::connection('pbx')->table('v_destinations')->where('destination_number', $phone_number)->delete();
         \DB::connection('pbx')->table('v_destination_numbers')->where('id', $phone_number)->delete();
-        $inbound_dialplans =  \DB::connection('pbx')->table('v_dialplans')
+        $inbound_dialplans = \DB::connection('pbx')->table('v_dialplans')
             ->where('dialplan_number', $phone_number)
             ->where('dialplan_context', 'public')
             ->where('app_uuid', 'c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4')
@@ -706,52 +704,52 @@ function aftersave_phonenumbers_set_subscription_data($request)
     $c = session('mod_conn');
 
     $num = \DB::connection($c)->table('p_phone_numbers')->where('id', $request->id)->get()->first();
-    $routing_type =  \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $num->domain_uuid)->pluck('cost_calculation')->first();
+    $routing_type = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $num->domain_uuid)->pluck('cost_calculation')->first();
 
     //if ($routing_type == 'product') {
-        if (!empty($num->domain_uuid)) {
-            $account_id =  \DB::connection($c)->table('v_domains')->where('domain_uuid', $num->domain_uuid)->pluck('account_id')->first();
-         
-            $subs_count = \DB::connection($sub_conn)->table('sub_services')->where('detail', $num->number)->count();
+    if (! empty($num->domain_uuid)) {
+        $account_id = \DB::connection($c)->table('v_domains')->where('domain_uuid', $num->domain_uuid)->pluck('account_id')->first();
 
-            $phone_number = $num->number;
-            if ('2787' == substr($phone_number, 0, 4) || '087' == substr($phone_number, 0, 3)) {
-                $subscription_product = 127; // 087
-            } else {
-                if (str_starts_with($phone_number, '2712786')) { // 012786
-                    $subscription_product = 176;
-                } elseif (str_starts_with($phone_number, '2710786')) { // 010786
-                    $subscription_product = 176;
-                } else { // geo
-                    $subscription_product = 128;
-                }
-            }
+        $subs_count = \DB::connection($sub_conn)->table('sub_services')->where('detail', $num->number)->count();
 
-            $subscription_data = [
-                'account_id' => $account_id,
-                'status' => 'Enabled',
-                'provision_type' => 'phone_number',
-                'detail' => $phone_number,
-                'product_id' => $subscription_product,
-                'created_at' => date('Y-m-d H:i:s'),
-                'date_activated' => date('Y-m-d H:i:s'),
-                'bill_frequency' => 1,
-                'renews_at' => date('Y-m-d H:i:s',strtotime('+1 month'))
-            ];
-
-            if ($subs_count == 0) {
-                \DB::connection($sub_conn)->table('sub_services')->insert($subscription_data);
-            } elseif ($subs_count == 1) {
-                \DB::connection($sub_conn)->table('sub_services')->where('detail', $num->number)->update($subscription_data);
-            } else {
-                \DB::connection($sub_conn)->table('sub_services')->where('detail', $num->number)->delete();
-                \DB::connection($sub_conn)->table('sub_services')->insert($subscription_data);
-            }
-            
-            update_all_caller_ids($num->domain_uuid);
+        $phone_number = $num->number;
+        if (substr($phone_number, 0, 4) == '2787' || substr($phone_number, 0, 3) == '087') {
+            $subscription_product = 127; // 087
         } else {
-            \DB::connection($sub_conn)->table('sub_services')->where('detail', $num->number)->where('status', '!=', 'Pending')->delete();
+            if (str_starts_with($phone_number, '2712786')) { // 012786
+                $subscription_product = 176;
+            } elseif (str_starts_with($phone_number, '2710786')) { // 010786
+                $subscription_product = 176;
+            } else { // geo
+                $subscription_product = 128;
+            }
         }
+
+        $subscription_data = [
+            'account_id' => $account_id,
+            'status' => 'Enabled',
+            'provision_type' => 'phone_number',
+            'detail' => $phone_number,
+            'product_id' => $subscription_product,
+            'created_at' => date('Y-m-d H:i:s'),
+            'date_activated' => date('Y-m-d H:i:s'),
+            'bill_frequency' => 1,
+            'renews_at' => date('Y-m-d H:i:s', strtotime('+1 month')),
+        ];
+
+        if ($subs_count == 0) {
+            \DB::connection($sub_conn)->table('sub_services')->insert($subscription_data);
+        } elseif ($subs_count == 1) {
+            \DB::connection($sub_conn)->table('sub_services')->where('detail', $num->number)->update($subscription_data);
+        } else {
+            \DB::connection($sub_conn)->table('sub_services')->where('detail', $num->number)->delete();
+            \DB::connection($sub_conn)->table('sub_services')->insert($subscription_data);
+        }
+
+        update_all_caller_ids($num->domain_uuid);
+    } else {
+        \DB::connection($sub_conn)->table('sub_services')->where('detail', $num->number)->where('status', '!=', 'Pending')->delete();
+    }
     //}
 }
 
@@ -785,21 +783,19 @@ function schedule_network_blocked_notification()
             if (file_exists($file_path)) {
                 unlink($file_path);
             }
-            $blocked_calls =  json_decode(json_encode($blocked_calls), true);
+            $blocked_calls = json_decode(json_encode($blocked_calls), true);
 
             foreach ($blocked_calls as $i => $arr) {
                 unset($blocked_calls[$i]['id']);
                 unset($blocked_calls[$i]['gateway']);
             }
 
-
-            $export = new App\Exports\CollectionExport();
+            $export = new App\Exports\CollectionExport;
             $export->setData($blocked_calls);
 
             Excel::store($export, session('instance')->directory.'/'.$file_name, 'attachments');
 
             $data['attachments'][] = $file_title.'.xlsx';
-
 
             $data['function_name'] = __FUNCTION__;
             if ($domain->domain_name == 'vca.cloudtools.co.za') {
@@ -811,16 +807,17 @@ function schedule_network_blocked_notification()
     }
 }
 
-function set_phone_number_product_codes(){
-    
-    $phone_numbers = \DB::connection('pbx')->table('p_phone_numbers')->where('product_code','')->get();
-    
-    foreach($phone_numbers as $num){
+function set_phone_number_product_codes()
+{
+
+    $phone_numbers = \DB::connection('pbx')->table('p_phone_numbers')->where('product_code', '')->get();
+
+    foreach ($phone_numbers as $num) {
         $phone_number = $num->number;
         $prefix = substr($phone_number, 0, 4);
         $prefix = str_replace('27', 0, $prefix);
-        
-        if ('2787' == substr($phone_number, 0, 4) || '087' == substr($phone_number, 0, 3)) {
+
+        if (substr($phone_number, 0, 4) == '2787' || substr($phone_number, 0, 3) == '087') {
             $product_id = 127; // 087
         } else {
             if (str_starts_with($phone_number, '2712786')) { // 012786
@@ -830,43 +827,44 @@ function set_phone_number_product_codes(){
             } else { // geo
                 $product_id = 128;
             }
-        }    
-        
-        $product_code = \DB::table('crm_products')->where('id',$product_id)->pluck('code')->first();
-        \DB::connection('pbx')->table('p_phone_numbers')->where('id',$num->id)->update(['product_code'=>$product_code,'product_id'=>$product_id,'prefix'=>$prefix]);
+        }
+
+        $product_code = \DB::table('crm_products')->where('id', $product_id)->pluck('code')->first();
+        \DB::connection('pbx')->table('p_phone_numbers')->where('id', $num->id)->update(['product_code' => $product_code, 'product_id' => $product_id, 'prefix' => $prefix]);
     }
 }
 
-function validate_pbx_numbers(){
-      $numbers = \DB::connection('pbx')->table('p_phone_numbers')
-  ->select('p_phone_numbers.number','v_domains.account_id')
-  ->join('v_domains','v_domains.domain_uuid','=','p_phone_numbers.domain_uuid')
-  ->whereNotNull('p_phone_numbers.domain_uuid')
-  ->get();
-  foreach($numbers as $n){
-        $r = \DB::table('sub_services')->where('account_id',$n->account_id)->where('detail',$n->number)->where('status','!=','Deleted')->count();
-        if(!$r){
+function validate_pbx_numbers()
+{
+    $numbers = \DB::connection('pbx')->table('p_phone_numbers')
+        ->select('p_phone_numbers.number', 'v_domains.account_id')
+        ->join('v_domains', 'v_domains.domain_uuid', '=', 'p_phone_numbers.domain_uuid')
+        ->whereNotNull('p_phone_numbers.domain_uuid')
+        ->get();
+    foreach ($numbers as $n) {
+        $r = \DB::table('sub_services')->where('account_id', $n->account_id)->where('detail', $n->number)->where('status', '!=', 'Deleted')->count();
+        if (! $r) {
         }
-     }
-     $ids = [];
-  $numbers = \DB::connection('default')->table('sub_services')
-  ->select('id','detail','account_id')
-  ->where('status','!=','Deleted')
-  ->where('provision_type','phone_number')
-  ->get();
-  foreach($numbers as $n){
+    }
+    $ids = [];
+    $numbers = \DB::connection('default')->table('sub_services')
+        ->select('id', 'detail', 'account_id')
+        ->where('status', '!=', 'Deleted')
+        ->where('provision_type', 'phone_number')
+        ->get();
+    foreach ($numbers as $n) {
         $r = \DB::connection('pbx')->table('p_phone_numbers')
-  ->join('v_domains','v_domains.domain_uuid','=','p_phone_numbers.domain_uuid')
-  ->whereNotNull('p_phone_numbers.domain_uuid')
-  ->where('p_phone_numbers.number',$n->detail)
-  ->where('v_domains.account_id',$n->account_id)
-  ->count();
-        if(!$r){
+            ->join('v_domains', 'v_domains.domain_uuid', '=', 'p_phone_numbers.domain_uuid')
+            ->whereNotNull('p_phone_numbers.domain_uuid')
+            ->where('p_phone_numbers.number', $n->detail)
+            ->where('v_domains.account_id', $n->account_id)
+            ->count();
+        if (! $r) {
             $ids[] = $n->id;
         }
-     }
-     
-    $numbers = \DB::connection('default')->table('sub_services')->whereIn('id',$ids)->get(); 
+    }
+
+    $numbers = \DB::connection('default')->table('sub_services')->whereIn('id', $ids)->get();
     $account_ids = $numbers->pluck('account_id')->toArray();
-    $accounts = \DB::table('crm_accounts')->wherein('id',$account_ids)->pluck('company')->toArray();
+    $accounts = \DB::table('crm_accounts')->wherein('id', $account_ids)->pluck('company')->toArray();
 }

@@ -37,7 +37,7 @@ class Namecheap extends ApiCurl
         $user = dbgetaccount($account_id);
 
         $name = explode(' ', $user->contact);
-        if (count($name) >= 2 && !empty($name[0]) && !empty($name[1]) && !is_numeric($name[0]) && !is_numeric($name[1])) {
+        if (count($name) >= 2 && ! empty($name[0]) && ! empty($name[1]) && ! is_numeric($name[0]) && ! is_numeric($name[1])) {
             $firstname = $name[0];
             $lastname = $name[1];
         } else {
@@ -47,11 +47,11 @@ class Namecheap extends ApiCurl
         $contact = [
             'firstName' => $firstname,
             'lastName' => $lastname,
-            'emailAddress' => (!empty($user->email)) ? $user->email : $contact_admin['emailAddress'],
-            'phone' => (!empty($user->phone) && tel_e164_format($user->phone)) ? tel_e164_format($user->phone) : $contact_admin['telephoneNumber'],
-            'address' => (!empty($user->address)) ? $user->address : $contact_admin['address'],
-            'city' => (!empty($user->suburb)) ? $user->suburb : $contact_admin['city'],
-            'province' => (!empty($user->province)) ? $user->province : $contact_admin['province'],
+            'emailAddress' => (! empty($user->email)) ? $user->email : $contact_admin['emailAddress'],
+            'phone' => (! empty($user->phone) && tel_e164_format($user->phone)) ? tel_e164_format($user->phone) : $contact_admin['telephoneNumber'],
+            'address' => (! empty($user->address)) ? $user->address : $contact_admin['address'],
+            'city' => (! empty($user->suburb)) ? $user->suburb : $contact_admin['city'],
+            'province' => (! empty($user->province)) ? $user->province : $contact_admin['province'],
             'postalCode' => '0182',
             'country' => 'South Africa',
         ];
@@ -120,7 +120,7 @@ class Namecheap extends ApiCurl
             $data['ORGUKLegalType'] = 'FIND';
             $data['ORGUKRegisteredfor'] = $contact_user['firstName'].' '.$contact_user['lastName'];
         }
-       
+
         return $this->curl('namecheap.domains.create', $data, 'get');
     }
 
@@ -130,6 +130,7 @@ class Namecheap extends ApiCurl
         $data['ListType'] = $list_type;
         $data['PageSize'] = 100;
         $data['Page'] = $page_number;
+
         return $this->curl('namecheap.domains.getList', $data);
     }
 
@@ -137,6 +138,7 @@ class Namecheap extends ApiCurl
     {
         //https://www.namecheap.com/support/api/methods/domains/get-list/
         $data['DomainName'] = $domain;
+
         return $this->curl('namecheap.domains.getContacts', $data);
     }
 
@@ -157,7 +159,6 @@ class Namecheap extends ApiCurl
         $data = [];
         $data['DomainName'] = $domain;
 
-
         $contact_types = ['Registrant', 'Admin', 'Tech', 'AuxBilling'];
         foreach ($contact_types as $type) {
             if ($type == 'Registrant') {
@@ -175,6 +176,7 @@ class Namecheap extends ApiCurl
             $data[$type.'Phone'] = $contact['phone'];
             $data[$type.'EmailAddress'] = $contact['emailAddress'];
         }
+
         return $this->curl('namecheap.domains.setContacts');
     }
 
@@ -182,6 +184,7 @@ class Namecheap extends ApiCurl
     {
         //https://www.namecheap.com/support/api/methods/domains/check/
         $data['DomainList'] = $domain_list;
+
         return $this->curl('namecheap.domains.check', $data);
     }
 
@@ -189,6 +192,7 @@ class Namecheap extends ApiCurl
     {
         //https://www.namecheap.com/support/api/methods/domains/reactivate/
         $data['DomainName'] = $domain;
+
         return $this->curl('namecheap.domains.reactivate', $data);
     }
 
@@ -197,6 +201,7 @@ class Namecheap extends ApiCurl
         //https://www.namecheap.com/support/api/methods/domains/renew/
         $data['DomainName'] = $domain;
         $data['Years'] = 1;
+
         return $this->curl('namecheap.domains.renew', $data);
     }
 
@@ -204,6 +209,7 @@ class Namecheap extends ApiCurl
     {
         //https://www.namecheap.com/support/api/methods/domains/get-registrar-lock/
         $data['DomainName'] = $domain;
+
         return $this->curl('namecheap.domains.getRegistrarLock', $data);
     }
 
@@ -212,6 +218,7 @@ class Namecheap extends ApiCurl
         //https://www.namecheap.com/support/api/methods/domains/set-registrar-lock/
         $data['DomainName'] = $domain;
         $data['LockAction'] = ($lock) ? 'LOCK' : 'UNLOCK';
+
         return $this->curl('namecheap.domains.setRegistrarLock', $data);
     }
 
@@ -219,6 +226,7 @@ class Namecheap extends ApiCurl
     {
         //https://www.namecheap.com/support/api/methods/domains/get-info/
         $data['DomainName'] = $domain;
+
         return $this->curl('namecheap.domains.getInfo', $data);
     }
 
@@ -231,6 +239,7 @@ class Namecheap extends ApiCurl
         $data['SLD'] = $sld;
         $data['TLD'] = $tld;
         $data['Nameservers'] = $nameservers;
+
         return $this->curl('namecheap.domains.dns.setCustom', $data);
     }
 
@@ -242,6 +251,7 @@ class Namecheap extends ApiCurl
         $data['DomainName'] = $domain;
         $data['Years'] = 1;
         $data['EPPCode'] = $epp_code;
+
         return $this->curl('namecheap.domains.transfer.create', $data);
     }
 
@@ -249,6 +259,7 @@ class Namecheap extends ApiCurl
     {
         //https://www.namecheap.com/support/api/methods/domains-transfer/get-status/
         $data['TransferID'] = $transfer_id;
+
         return $this->curl('namecheap.domains.transfer.getStatus', $data);
     }
 
@@ -257,6 +268,7 @@ class Namecheap extends ApiCurl
         //https://www.namecheap.com/support/api/methods/domains-transfer/update-status/s/
         $data['TransferID'] = $transfer_id;
         $data['Resubmit'] = true;
+
         return $this->curl('namecheap.domains.transfer.updateStatus', $data);
     }
 
@@ -264,6 +276,7 @@ class Namecheap extends ApiCurl
     {
         //https://www.namecheap.com/support/api/methods/domains-transfer/get-list/
         $data['ListType'] = $list_type;
+
         return $this->curl('namecheap.domains.transfer.getList', $data);
     }
 
@@ -280,42 +293,43 @@ class Namecheap extends ApiCurl
         if ($tld) {
             $data['ProductName'] = $tld;
         }
+
         return $this->curl('namecheap.users.getPricing', $data);
     }
 
     public function importPricing()
     {
         $pricing = $this->getPricing();
-        if(empty($pricing)){
+        if (empty($pricing)) {
             return false;
         }
-        try{
+        try {
             $pricing = $this->parseXml($pricing);
-        }catch(\Throwable $ex){
+        } catch (\Throwable $ex) {
             return false;
         }
-        foreach ($pricing["CommandResponse"]["UserGetPricingResult"]["ProductType"]["ProductCategory"] as $product_category) {
-            $action = $product_category["@attributes"]["Name"];
-            foreach ($product_category["Product"] as $tld_info) {
-                $tld = $tld_info["@attributes"]["Name"];
-                $price_info = (isset($tld_info["Price"][0])) ? $tld_info["Price"][0]["@attributes"] : $tld_info["Price"]["@attributes"];
-                $duration = $price_info["Duration"];
-                $duration_type = $price_info["DurationType"];
-                $price = $price_info["YourPrice"];
-                $currency = $price_info["Currency"];
+        foreach ($pricing['CommandResponse']['UserGetPricingResult']['ProductType']['ProductCategory'] as $product_category) {
+            $action = $product_category['@attributes']['Name'];
+            foreach ($product_category['Product'] as $tld_info) {
+                $tld = $tld_info['@attributes']['Name'];
+                $price_info = (isset($tld_info['Price'][0])) ? $tld_info['Price'][0]['@attributes'] : $tld_info['Price']['@attributes'];
+                $duration = $price_info['Duration'];
+                $duration_type = $price_info['DurationType'];
+                $price = $price_info['YourPrice'];
+                $currency = $price_info['Currency'];
 
                 $exists = \DB::connection('default')->table('isp_hosting_tlds')
                     ->where('action', $action)->where('tld', $tld)->where('provider', 'Namecheap')
                     ->count();
 
                 $data = [
-                    "tld" => $tld,
-                    "action" => $action,
-                    "duration" => $duration,
-                    "duration_type" => $duration_type,
-                    "price" => $price,
-                    "currency" => $currency,
-                    "provider" => "Namecheap"
+                    'tld' => $tld,
+                    'action' => $action,
+                    'duration' => $duration,
+                    'duration_type' => $duration_type,
+                    'price' => $price,
+                    'currency' => $currency,
+                    'provider' => 'Namecheap',
                 ];
 
                 if ($exists) {
@@ -331,14 +345,14 @@ class Namecheap extends ApiCurl
 
         $tld_info = $this->getTldList();
         $tld_info = $this->parseXml($tld_info);
-        foreach ($tld_info["CommandResponse"]["Tlds"]["Tld"] as $tld_row) {
-            $info = $tld_row["@attributes"];
-            $tld = $info["Name"];
+        foreach ($tld_info['CommandResponse']['Tlds']['Tld'] as $tld_row) {
+            $info = $tld_row['@attributes'];
+            $tld = $info['Name'];
             $data = [
-                'api_register' => ($info["IsApiRegisterable"] == "true") ? 1 : 0,
-                'api_transfer' => ($info["IsApiTransferable"] == "true") ? 1 : 0,
-                'api_renew' => ($info["IsApiRenewable"] == "true") ? 1 : 0,
-                'epp_required' => ($info["IsEppRequired"] == "true") ? 1 : 0,
+                'api_register' => ($info['IsApiRegisterable'] == 'true') ? 1 : 0,
+                'api_transfer' => ($info['IsApiTransferable'] == 'true') ? 1 : 0,
+                'api_renew' => ($info['IsApiRenewable'] == 'true') ? 1 : 0,
+                'epp_required' => ($info['IsEppRequired'] == 'true') ? 1 : 0,
             ];
 
             \DB::connection('default')->table('isp_hosting_tlds')
@@ -362,7 +376,7 @@ class Namecheap extends ApiCurl
 
     public function parseXml($xml)
     {
-        $doc = new DOMDocument();
+        $doc = new DOMDocument;
         $doc->loadXML($xml);
         $root = $doc->documentElement;
         $output = $this->domnode_to_array($root);
@@ -374,55 +388,56 @@ class Namecheap extends ApiCurl
     private function domnode_to_array($node)
     {
         try {
-            $output = array();
+            $output = [];
 
             switch ($node->nodeType) {
-            case XML_CDATA_SECTION_NODE:
-            case XML_TEXT_NODE:
-            $output = trim($node->textContent);
-            break;
-            case XML_ELEMENT_NODE:
-            for ($i = 0, $m = $node->childNodes->length; $i < $m; ++$i) {
-                $child = $node->childNodes->item($i);
-                $v = $this->domnode_to_array($child);
+                case XML_CDATA_SECTION_NODE:
+                case XML_TEXT_NODE:
+                    $output = trim($node->textContent);
+                    break;
+                case XML_ELEMENT_NODE:
+                    for ($i = 0, $m = $node->childNodes->length; $i < $m; $i++) {
+                        $child = $node->childNodes->item($i);
+                        $v = $this->domnode_to_array($child);
 
-                if (isset($child->tagName) && $child->tagName != 'Categories') {
-                    $t = $child->tagName;
-                    if (!isset($output[$t])) {
-                        $output[$t] = array();
-                    }
-                    $output[$t][] = $v;
-                } elseif ($v || '0' === $v) {
-                    $output = (string) $v;
-                }
-            }
-
-            if ($node->attributes->length && !is_array($output)) {
-                $output = array('@content' => $output);
-            }
-
-            if (is_array($output)) {
-                if ($node->attributes->length) {
-                    $a = array();
-                    foreach ($node->attributes as $attrName => $attrNode) {
-                        $a[$attrName] = (string) $attrNode->value;
+                        if (isset($child->tagName) && $child->tagName != 'Categories') {
+                            $t = $child->tagName;
+                            if (! isset($output[$t])) {
+                                $output[$t] = [];
+                            }
+                            $output[$t][] = $v;
+                        } elseif ($v || $v === '0') {
+                            $output = (string) $v;
+                        }
                     }
 
-                    $output['@attributes'] = $a;
-                }
-
-                foreach ($output as $t => $v) {
-                    if (is_array($v) && 1 == count($v) && '@attributes' != $t) {
-                        $output[$t] = $v[0];
+                    if ($node->attributes->length && ! is_array($output)) {
+                        $output = ['@content' => $output];
                     }
-                }
-            }
 
-            break;
-        }
+                    if (is_array($output)) {
+                        if ($node->attributes->length) {
+                            $a = [];
+                            foreach ($node->attributes as $attrName => $attrNode) {
+                                $a[$attrName] = (string) $attrNode->value;
+                            }
+
+                            $output['@attributes'] = $a;
+                        }
+
+                        foreach ($output as $t => $v) {
+                            if (is_array($v) && count($v) == 1 && $t != '@attributes') {
+                                $output[$t] = $v[0];
+                            }
+                        }
+                    }
+
+                    break;
+            }
 
             return $output;
-        } catch (\Throwable $ex) {  exception_log($ex);
+        } catch (\Throwable $ex) {
+            exception_log($ex);
             $error = $ex->getMessage().' '.$ex->getFile().':'.$ex->getLine();
         }
     }
@@ -436,6 +451,7 @@ class Namecheap extends ApiCurl
         $args['Command'] = $endpoint;
         $args['UserName'] = $this->api_user;
         $args['ClientIp'] = '156.0.96.73';
+
         return ['endpoint_url' => $endpoint_url, 'args' => $args];
     }
 }

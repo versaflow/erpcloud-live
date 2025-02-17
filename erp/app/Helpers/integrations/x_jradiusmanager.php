@@ -28,15 +28,15 @@ function getClient($url)
     return $client;
 }
 
-function curlRadius($endpoint, $params = null, $type)
+function curlRadius($endpoint, $params, $type)
 {
     $ch = curl_init();
-    if ('POST' == $type) {
+    if ($type == 'POST') {
         $data_string = json_encode($params);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
         curl_setopt($ch, CURLOPT_URL, 'https://radiusmanager.cloudtelecoms.co.za/ws/rest/v1/'.$endpoint);
-    } elseif ('PUT' == $type) {
+    } elseif ($type == 'PUT') {
         $data_string = json_encode($params);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
@@ -44,7 +44,7 @@ function curlRadius($endpoint, $params = null, $type)
         // curl_setopt($ch, CURLOPT_URL, $url);
 
         curl_setopt($ch, CURLOPT_URL, 'https://radiusmanager.cloudtelecoms.co.za/ws/rest/v1/'.$endpoint);
-    } elseif ('GET' == $type) {
+    } elseif ($type == 'GET') {
         if ($params) {
             $url = 'https://radiusmanager.cloudtelecoms.co.za/ws/rest/v1/'.$endpoint.'?'.http_build_query($params);
         } else {
@@ -55,17 +55,17 @@ function curlRadius($endpoint, $params = null, $type)
 
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'Content-Type: application/json',
         'service_key: '.'3b91cab8-926f-49b6-ba00-920bcf934c2a',
         'vaadinIpAddress: '.$_SERVER['REMOTE_ADDR'],
         'vaadinUserAgent: '.'PHP-API',
         'auth_token: '.$_SESSION['radiustoken'],
-    ));
+    ]);
 
     $result = curl_exec($ch);
 
-    if (false === $result) {
+    if ($result === false) {
         printf(
             "cUrl error (#%d): %s<br>\n",
             curl_errno($ch),
@@ -80,12 +80,12 @@ function curlRadius($endpoint, $params = null, $type)
 function radius_connect()
 {
     $endpoint = 'authentication/loginapi';
-    $params = array(
+    $params = [
         'username' => 'ahmed',
         'password' => 'u0EJS0MFXYdePpJbIuMjqgi1Hfre1QPS',
-    );
+    ];
     $result = json_decode(curlRadius($endpoint, $params, 'POST'));
-    if ('SUCCESS' == $result->status) {
+    if ($result->status == 'SUCCESS') {
         $authtoken = $result->authToken;
         $_SESSION['radiustoken'] = $authtoken;
     } else {
@@ -94,7 +94,7 @@ function radius_connect()
 
     $endpoint = 'authentication/session';
     $result = json_decode(curlRadius($endpoint, $params, 'GET'));
-    if ('SUCCESS' == $result->status) {
+    if ($result->status == 'SUCCESS') {
         $authtoken = $result->authToken;
     } else {
     }
@@ -150,7 +150,7 @@ function create_RadiusUser($product, $account)
     $username = strtolower($account->company);
     $username_arr = preg_split('/\s+/', $username);
     $username = $username_arr[0];
-    if (!empty($username_arr[1])) {
+    if (! empty($username_arr[1])) {
         $username .= $username_arr[1];
     }
     $username = preg_replace("/[\W_]+/u", '', $username);
@@ -161,17 +161,17 @@ function create_RadiusUser($product, $account)
     while ($username_unique > 0) {
         $username = $username.$i;
         $username_unique = \DB::table('sub_services')->where('detail', $username)->count();
-        ++$i;
+        $i++;
     }
 
     $endpoint = 'radiususer';
     $code = $product->provision_package;
     $params['username'] = $username; //auto
     $params['password'] = generate_strong_password(); //auto
-    $params['payment'] = array('paymentNumber' => '2');
+    $params['payment'] = ['paymentNumber' => '2'];
     //$params['paymentNumber'] = 2;
     $params['radiusRealm'] = 'cloudtelecoms.co.za';
-    if (1 != $account->partner_id) {
+    if ($account->partner_id != 1) {
         $params['radiusRealm'] = 'cloudtools.co.za';
     }
     $params['activeRadiusProfile'] = $product->provision_package; //product
@@ -189,7 +189,7 @@ function create_RadiusUser($product, $account)
     $result = curlRadius($endpoint, $params, 'POST');
 
     $result = json_decode($result, true);
-    if (!empty($result['ok']) && true == $result['ok']) {
+    if (! empty($result['ok']) && $result['ok'] == true) {
         return ['username' => $params['username'], 'password' => $params['password']];
     }
 
@@ -216,7 +216,7 @@ function update_RadiusUserProfile($username, $package)
     $params = [];
     $params['scheduleDate'] = date('U', strtotime('+ 1 minute')) * 1000;
     $params['radiusUser'] = $username;
-    if (1 == $account->partner_id) {
+    if ($account->partner_id == 1) {
         $params['radiusRealm'] = 'cloudtelecoms.co.za';
     } else {
         $params['radiusRealm'] = 'cloudtools.co.za';

@@ -24,7 +24,6 @@ class CreateErpSchedulesTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

@@ -9,7 +9,7 @@ function schedule_porting_import_ftp()
 {
     //return false;
     set_time_limit(0);
-    if (!is_main_instance()) {
+    if (! is_main_instance()) {
         return false;
     }
 
@@ -26,7 +26,7 @@ function schedule_porting_import_ftp()
         $ftp_valid = false;
     }
 
-    if (!$directories) {
+    if (! $directories) {
         admin_email('Porting ftp down, no directories returned');
 
         return false;
@@ -41,7 +41,7 @@ function schedule_porting_import_ftp()
         }
     }
     // vd($files);
-    if (!$files) {
+    if (! $files) {
         admin_email('Porting ftp down, no files returned');
 
         return false;
@@ -49,13 +49,13 @@ function schedule_porting_import_ftp()
 
     if ($files) {
         foreach ($files as $file) {
-            $processed = \DB::connection('default')->table('erp_system_log')->where('type', 'porting_import_gnp')->where('created_date','>=','2025-01-01')->where('action', $file)->where('result', 'success')->count();
+            $processed = \DB::connection('default')->table('erp_system_log')->where('type', 'porting_import_gnp')->where('created_date', '>=', '2025-01-01')->where('action', $file)->where('result', 'success')->count();
             // vd($processed);
-            if (!$processed && !Storage::disk('porting_input')->exists($file)) {
+            if (! $processed && ! Storage::disk('porting_input')->exists($file)) {
                 // vd($file);
                 Storage::disk('porting_input')->writeStream($file, Storage::disk('porting_data_gnp_source')->readStream($file));
             }
-            if (!$processed && !Storage::disk('porting_data_gnp_local')->exists($file)) {
+            if (! $processed && ! Storage::disk('porting_data_gnp_local')->exists($file)) {
                 // vd($file);
                 Storage::disk('porting_data_gnp_local')->writeStream($file, Storage::disk('porting_data_gnp_source')->readStream($file));
                 system_log('porting_import_gnp', $file, 'success', 'porting_import', 'Daily', 1);
@@ -80,12 +80,12 @@ function schedule_porting_import_ftp()
             $files = Storage::disk('porting_data_mnp_source')->files($directory);
 
             foreach ($files as $file) {
-                $processed = \DB::connection('default')->table('erp_system_log')->where('type', 'porting_import_mnp')->where('created_date','>=','2025-01-01')->where('result', 'success')->where('action', $file)->where('result', 'success')->count();
+                $processed = \DB::connection('default')->table('erp_system_log')->where('type', 'porting_import_mnp')->where('created_date', '>=', '2025-01-01')->where('result', 'success')->where('action', $file)->where('result', 'success')->count();
 
-                if (!$processed && !Storage::disk('porting_input')->exists($file)) {
+                if (! $processed && ! Storage::disk('porting_input')->exists($file)) {
                     Storage::disk('porting_input')->writeStream($file, Storage::disk('porting_data_mnp_source')->readStream($file));
                 }
-                if (!$processed && !Storage::disk('porting_data_mnp_local')->exists($file)) {
+                if (! $processed && ! Storage::disk('porting_data_mnp_local')->exists($file)) {
                     Storage::disk('porting_data_mnp_local')->writeStream($file, Storage::disk('porting_data_mnp_source')->readStream($file));
                     system_log('porting_import_mnp', $file, 'success', 'porting_import', 'Daily', 1);
                 }
@@ -102,6 +102,7 @@ function split_xml_file($file)
     $cmd = 'cd /root/porting_input/DWNLDS && /home/_admin/splitxml.sh '.$file;
     // aa($cmd);
     $result = Erp::ssh('localhost', 'root', 'Ahmed777', $cmd);
+
     // aa($result);
     return $result;
 }
@@ -110,7 +111,7 @@ function porting_data_source_import($counter = 0)
 {
     return false;
     set_time_limit(0);
-    if (!is_main_instance()) {
+    if (! is_main_instance()) {
         return false;
     }
     if ($counter > 40) {
@@ -205,8 +206,9 @@ function porting_data_source_import($counter = 0)
 
                     Storage::disk('porting_input')->move($file_path, $new_file_path);
 
-                    ++$counter;
+                    $counter++;
                     porting_data_source_import($counter);
+
                     continue;
                 }
             }
@@ -227,8 +229,9 @@ function porting_data_source_import($counter = 0)
                 if ($processed) {
                     //Storage::disk('porting_input')->delete($file);
 
-                    ++$counter;
+                    $counter++;
                     porting_data_source_import($counter);
+
                     continue;
                 }
                 $num_list = [];
@@ -237,7 +240,7 @@ function porting_data_source_import($counter = 0)
 
                 $file_path = $storage_path.$file;
 
-                $reader = new XMLReader();
+                $reader = new XMLReader;
 
                 $reader->open($file_path);
 
@@ -247,7 +250,7 @@ function porting_data_source_import($counter = 0)
 
                         $msisdn = '';
                         $numbers_to_import = [];
-                        if (!empty($ported_number->DNRanges->DNFrom)) {
+                        if (! empty($ported_number->DNRanges->DNFrom)) {
                             $msisdn = (string) $ported_number->DNRanges->DNFrom;
                             $range_start = (string) $ported_number->DNRanges->DNFrom;
                             $range_end = (string) $ported_number->DNRanges->DNTo;
@@ -256,7 +259,7 @@ function porting_data_source_import($counter = 0)
                             } else {
                                 $numbers_to_import[] = $range_start;
                             }
-                        } elseif (!empty($ported_number->MSISDN)) {
+                        } elseif (! empty($ported_number->MSISDN)) {
                             $numbers_to_import[] = (string) $ported_number->MSISDN;
                         }
                         $rnoroute = (string) $ported_number->RNORoute;
@@ -289,9 +292,9 @@ function porting_data_source_import($counter = 0)
 
                         foreach ($numbers_to_import as $msisdn) {
                             $transaction_time = null;
-                            if (!empty($ported_number->TransTime)) {
+                            if (! empty($ported_number->TransTime)) {
                                 $ported_date = date('Y-m-d H:i:s', strtotime($ported_number->TransTime));
-                                if (!empty($ported_date)) {
+                                if (! empty($ported_date)) {
                                     $transaction_time = $ported_date;
                                 }
                             }
@@ -372,7 +375,7 @@ function porting_data_source_import($counter = 0)
                 //system_log('porting', $file, 'success', 'porting', 'Daily', 1);
                 //Storage::disk('porting_input')->delete($file.'.gz');
 
-                ++$counter;
+                $counter++;
                 porting_data_source_import($counter);
             }
 
@@ -381,7 +384,7 @@ function porting_data_source_import($counter = 0)
                 $file_path = '/root/porting_input/'.$file;
 
                 shell_exec('gunzip -f '.$file_path);
-                ++$counter;
+                $counter++;
                 porting_data_source_import($counter);
             }
         }
@@ -411,7 +414,7 @@ function porting_split_ranges()
                 $table .= substr($number->msisdn, 2, 1);
                 $data['msisdn'] = $n;
                 $exists = \DB::connection('pbx_porting')->table($table)->where('msisdn', $n)->count();
-                if (!$exists) {
+                if (! $exists) {
                     \DB::connection('pbx_porting')->table($table)->insert($data);
                 }
             }

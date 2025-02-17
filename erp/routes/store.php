@@ -1,6 +1,9 @@
-<?php 
+<?php
 
-Route::any('store', 'StoreController@index');
-Route::any('store/cart', 'StoreController@cart');
-Route::any('store/checkout', 'StoreController@checkout');
-Route::any('store/{produt_slug?}', 'StoreController@products');
+use App\Http\Controllers\StoreController;
+use Illuminate\Support\Facades\Route;
+
+Route::any('store', [StoreController::class, 'index']);
+Route::any('store/cart', [StoreController::class, 'cart']);
+Route::any('store/checkout', [StoreController::class, 'checkout']);
+Route::any('store/{produt_slug?}', [StoreController::class, 'products']);

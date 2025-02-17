@@ -21,7 +21,6 @@ class CreateErpRestapiTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

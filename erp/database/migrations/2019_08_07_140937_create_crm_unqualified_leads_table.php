@@ -40,7 +40,6 @@ class CreateCrmUnqualifiedLeadsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

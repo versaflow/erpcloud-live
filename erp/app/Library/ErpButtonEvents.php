@@ -1,5 +1,3 @@
 <?php
 
-class ErpButtonEvents
-{
-}
+class ErpButtonEvents {}

@@ -1,4 +1,5 @@
 <?php
+
 // deleted module
 /*
 function button_rates_summary_competitor_rates($request)
@@ -20,7 +21,7 @@ function button_ratesheets_competitor_rates($request)
 }
 function aftersave_set_rates_competitor_avg($request)
 {
-    
+
  $rates = \DB::connection('pbx')->table('p_rates_partner_items')->select('country', 'destination')->groupBy('country', 'destination')->get();
     foreach ($rates as $rate) {
         $competitor_retail_avg = \DB::connection('pbx')->table('p_competitor_rates')->where('destination', $rate->destination)->where('country', $rate->country)->where('type', 'retail')->where('rate', '>', 0)->avg('rate');
@@ -36,7 +37,7 @@ function aftersave_set_rates_competitor_avg($request)
 
         $usd_competitor_retail_avg = convert_currency_zar_to_usd($competitor_retail_avg);
         $usd_competitor_wholesale_avg = convert_currency_zar_to_usd($competitor_wholesale_avg);
-      
+
         \DB::connection('pbx')->table('p_rates_partner_items')->where('currency','ZAR')->where('destination', $rate->destination)->where('country', $rate->country)
         ->update(['competitor_retail_avg' => $competitor_retail_avg,'competitor_wholesale_avg'=> $competitor_wholesale_avg]);
         \DB::connection('pbx')->table('p_rates_partner_items')->where('currency','USD')->where('destination', $rate->destination)->where('country', $rate->country)
@@ -61,7 +62,7 @@ function afterdelete_set_rates_competitor_avg($request)
         }
         $usd_competitor_retail_avg = convert_currency_zar_to_usd($competitor_retail_avg);
         $usd_competitor_wholesale_avg = convert_currency_zar_to_usd($competitor_wholesale_avg);
-      
+
         \DB::connection('pbx')->table('p_rates_partner_items')->where('currency','ZAR')->where('destination', $rate->destination)->where('country', $rate->country)
         ->update(['competitor_retail_avg' => $competitor_retail_avg,'competitor_wholesale_avg'=> $competitor_wholesale_avg]);
         \DB::connection('pbx')->table('p_rates_partner_items')->where('currency','USD')->where('destination', $rate->destination)->where('country', $rate->country)

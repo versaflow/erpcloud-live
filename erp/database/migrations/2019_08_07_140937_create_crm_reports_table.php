@@ -36,7 +36,6 @@ class CreateCrmReportsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

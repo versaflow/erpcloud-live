@@ -13,34 +13,34 @@ class RestApiModel extends Model
         $this->module = \DB::connection('default')->table('erp_cruds')->where('id', $module_id)->get()->first();
     }
 
-
     public function getRows($request)
     {
         $where = $this->accountFilter();
         $data = \DB::connection($this->module->connection)->table($this->module->db_table)
-        ->whereRaw('1=1 '.$where)
-        ->get();
-        
-        return response()->json(['message' => 'OK','status'=>'success', 'data' => $data], 200);
+            ->whereRaw('1=1 '.$where)
+            ->get();
+
+        return response()->json(['message' => 'OK', 'status' => 'success', 'data' => $data], 200);
     }
 
     public function getRow($id)
     {
         $allowed = $this->singleRecordAccess($id);
-        if (!$allowed) {
-            return response()->json(['message' => 'You do not have access to the requested resource','status'=>'error'], 403);
+        if (! $allowed) {
+            return response()->json(['message' => 'You do not have access to the requested resource', 'status' => 'error'], 403);
         }
         $data = \DB::connection($this->module->connection)->table($this->module->db_table)
-        ->where($this->module->db_key, $id)
-        ->whereRaw('1=1 '.$where)
-        ->get()->first();
-        return response()->json(['message' => 'OK','status'=>'success', 'data' => $data], 200);
+            ->where($this->module->db_key, $id)
+            ->whereRaw('1=1 '.$where)
+            ->get()->first();
+
+        return response()->json(['message' => 'OK', 'status' => 'success', 'data' => $data], 200);
     }
 
     public function createRow($request)
     {
         $settings = [];
-        if ('crm_supplier_import_documents' == $this->module->db_table || 'crm_supplier_documents' == $this->module->db_table || 'crm_documents' == $this->module->db_table) {
+        if ($this->module->db_table == 'crm_supplier_import_documents' || $this->module->db_table == 'crm_supplier_documents' || $this->module->db_table == 'crm_documents') {
             $settings = ['validate_document' => true];
         }
 
@@ -50,29 +50,31 @@ class RestApiModel extends Model
 
         if ($response instanceof \Illuminate\Http\JsonResponse) {
             $response->setStatusCode(403);
+
             return $response;
-        } elseif (!is_array($response) || empty($response['id'])) {
+        } elseif (! is_array($response) || empty($response['id'])) {
             return response()->json(['status' => 'error', 'message' => $response], 403);
         } else {
             $data = \DB::connection($this->module->connection)->table($this->module->db_table)
-            ->where($this->module->db_key, $response['id'])
-            ->get()->first();
-            return response()->json(['message' => 'OK','status'=>'success', 'data' => $data], 200);
+                ->where($this->module->db_key, $response['id'])
+                ->get()->first();
+
+            return response()->json(['message' => 'OK', 'status' => 'success', 'data' => $data], 200);
         }
     }
 
     public function updateRow($request, $id)
     {
         $settings = [];
-        if ('crm_supplier_import_documents' == $this->module->db_table || 'crm_supplier_documents' == $this->module->db_table || 'crm_documents' == $this->module->db_table) {
+        if ($this->module->db_table == 'crm_supplier_import_documents' || $this->module->db_table == 'crm_supplier_documents' || $this->module->db_table == 'crm_documents') {
             $settings = ['validate_document' => true];
         }
 
         $db = new \DBEvent($this->module->id, $settings);
 
         $allowed = $this->singleRecordAccess($id);
-        if (!$allowed) {
-            return response()->json(['message' => 'You do not have access to the requested resource','status'=>'error'], 403);
+        if (! $allowed) {
+            return response()->json(['message' => 'You do not have access to the requested resource', 'status' => 'error'], 403);
         }
         $db = new \DBEvent($this->module->id);
         $data = \DB::connection($this->module->connection)->table($this->module->db_table)
@@ -81,7 +83,7 @@ class RestApiModel extends Model
 
         $db_columns = $this->getTableFields();
         if (in_array('status', $db_columns) && $data->status == 'Deleted') {
-            return response()->json(['message' => 'Record is deleted, cannot be updated','status'=>'error'], 401);
+            return response()->json(['message' => 'Record is deleted, cannot be updated', 'status' => 'error'], 401);
         }
 
         $data = (array) $data;
@@ -94,13 +96,16 @@ class RestApiModel extends Model
 
         if ($response instanceof \Illuminate\Http\JsonResponse) {
             $response->setStatusCode(404);
+
             return $response;
         } else {
             $data = \DB::connection($this->module->connection)->table($this->module->db_table)
-            ->where($this->module->db_key, $id)
-            ->get()->first();
-            return response()->json(['message' => 'OK','status'=>'success', 'data' => $data], 200);
+                ->where($this->module->db_key, $id)
+                ->get()->first();
+
+            return response()->json(['message' => 'OK', 'status' => 'success', 'data' => $data], 200);
         }
+
         return true;
     }
 
@@ -108,19 +113,19 @@ class RestApiModel extends Model
     {
         // validate account record access
         $allowed = $this->singleRecordAccess($id);
-        if (!$allowed) {
-            return response()->json(['message' => 'You do not have access to the requested resource','status'=>'error'], 401);
+        if (! $allowed) {
+            return response()->json(['message' => 'You do not have access to the requested resource', 'status' => 'error'], 401);
         }
 
         if ($this->module->id == 334) { // subscriptions
-            $erp_subscriptions = new \ErpSubs();
+            $erp_subscriptions = new \ErpSubs;
             $result = $erp_subscriptions->deleteSubscription($id);
             if ($result !== true) {
                 return json_alert($result, 'error');
             }
         } else {
             $db = new \DBEvent($this->module->id);
-            $result = $db->deleteRecord(['id'=>$id]);
+            $result = $db->deleteRecord(['id' => $id]);
             if ($result instanceof \Illuminate\Http\JsonResponse) {
                 if ($result->getData()->status == 'success') {
                     return true;
@@ -130,6 +135,7 @@ class RestApiModel extends Model
             } else {
                 return response()->json(['status' => 'error', 'message' => $result]);
             }
+
             return true;
         }
     }
@@ -137,7 +143,7 @@ class RestApiModel extends Model
     public function accountFilter()
     {
         $db_columns = $this->getTableFields();
-        if (14 == $this->module->app_id && !empty(session('sms_account_id')) && 1 != session('sms_account_id')) {
+        if ($this->module->app_id == 14 && ! empty(session('sms_account_id')) && session('sms_account_id') != 1) {
             if (in_array('account_id', $db_columns)) {
                 return ' and '.$this->module->db_table.'.account_id='.session('sms_account_id');
             }
@@ -151,8 +157,8 @@ class RestApiModel extends Model
             return ' and 1=0';
         }
 
-        if ($this->module->connection != 'freeswitch' && $this->module->app_id == 12 && (!empty(session('pbx_partner_level')) || (!empty(session('pbx_account_id')) && 1 != session('pbx_account_id')))) {
-            if (in_array('partner_id', $db_columns) && session('role_level') == 'Admin' && !empty(request()->query_params['show_all']) && request()->query_params['show_all'] == 1) {
+        if ($this->module->connection != 'freeswitch' && $this->module->app_id == 12 && (! empty(session('pbx_partner_level')) || (! empty(session('pbx_account_id')) && session('pbx_account_id') != 1))) {
+            if (in_array('partner_id', $db_columns) && session('role_level') == 'Admin' && ! empty(request()->query_params['show_all']) && request()->query_params['show_all'] == 1) {
                 return ' ';
             } elseif (in_array('domain_uuid', $db_columns) && session('role_id') <= 11 && session('pbx_partner_level')) {
                 return ' and '.$this->module->db_table.'.domain_uuid IN (select domain_uuid from v_domains where partner_id='.session('account_id').')';
@@ -167,7 +173,6 @@ class RestApiModel extends Model
             }
         }
 
-
         if ($this->module->connection == 'freeswitch' && session('pbx_domain') != '156.0.96.60' && session('pbx_domain') != '156.0.96.69' && session('pbx_domain') != '156.0.96.61') {
             if ($this->module->db_table == 'registrations') {
                 return ' and realm="'.session('pbx_domain').'" ';
@@ -177,17 +182,17 @@ class RestApiModel extends Model
             }
         }
 
-        if (session('role_level') == 'Admin' && 507 == $this->module->id) {
+        if (session('role_level') == 'Admin' && $this->module->id == 507) {
             return ' and pricelist_id = 1 ';
         } elseif (session('role_level') == 'Admin') {
             return '';
         }
 
         if (session('role_level') == 'Partner') {
-            if ('crm_accounts' == $this->module->db_table && $this->menu->menu_type == 'module_form') {
+            if ($this->module->db_table == 'crm_accounts' && $this->menu->menu_type == 'module_form') {
                 return ' and '.$this->module->db_table.'.id='.session('account_id');
             }
-            if ('crm_accounts' == $this->module->db_table) {
+            if ($this->module->db_table == 'crm_accounts') {
                 return ' and '.$this->module->db_table.'.partner_id='.session('account_id');
             }
 
@@ -207,29 +212,29 @@ class RestApiModel extends Model
         }
 
         if (session('role_level') == 'Customer') {
-            if (588 == $this->module->id && (check_access('21') || (!empty(session('grid_role_id')) && session('grid_role_id') == 21))) {
+            if ($this->module->id == 588 && (check_access('21') || (! empty(session('grid_role_id')) && session('grid_role_id') == 21))) {
                 return ' and '.$this->module->db_table.'.ratesheet_id='.session('pbx_ratesheet_id');
             }
 
-            if (507 == $this->module->id) {
+            if ($this->module->id == 507) {
                 return ' and '.$this->module->db_table.'.pricelist_id IN (select pricelist_id from crm_accounts where id='.session('account_id').')';
             }
 
-            if (508 == $this->module->id || 524 == $this->module->id) {
+            if ($this->module->id == 508 || $this->module->id == 524) {
                 return ' and pricelist_id IN (select id from crm_pricelists where partner_id='.session('account_id').')';
             }
 
-            if ('crm_accounts' == $this->module->db_table) {
+            if ($this->module->db_table == 'crm_accounts') {
                 return ' and '.$this->module->db_table.'.id='.session('account_id');
             }
 
-            if (1 != session('parent_id')) {
-                if ('crm_documents' == $this->module->db_table) {
+            if (session('parent_id') != 1) {
+                if ($this->module->db_table == 'crm_documents') {
                     return ' and '.$this->module->db_table.'.reseller_user='.session('account_id');
                 }
             }
 
-            if (in_array('partner_id', $db_columns) && 21 != session('role_id')) {
+            if (in_array('partner_id', $db_columns) && session('role_id') != 21) {
                 return ' and '.$this->module->db_table.'.partner_id='.session('account_id');
             }
 
@@ -246,6 +251,7 @@ class RestApiModel extends Model
     public function singleRecordAccess($id)
     {
         $where = $this->accountFilter();
+
         return \DB::connection($this->module->connection)->table($this->module->db_table)
             ->where($this->module->db_key, $id)
             ->whereRaw('1=1 '.$where)

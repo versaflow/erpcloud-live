@@ -6,14 +6,13 @@ use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Events\BeforeWriting;
 use Maatwebsite\Excel\Events\AfterSheet;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Events\BeforeWriting;
 
-class ViewExport implements FromView, WithEvents, ShouldAutoSize
+class ViewExport implements FromView, ShouldAutoSize, WithEvents
 {
     public $view_file;
+
     public $view_data;
 
     public function __construct($view = false, $data = false)
@@ -45,25 +44,25 @@ class ViewExport implements FromView, WithEvents, ShouldAutoSize
     {
         return
         [
-            AfterSheet::class    => function (AfterSheet $event) {
+            AfterSheet::class => function (AfterSheet $event) {
                 $event->sheet->getDelegate()->getRowDimension('1')->setRowHeight(100);
             },
             BeforeWriting::class => function (BeforeWriting $event) {
                 $event->getWriter()
-                            ->getDelegate()
-                            ->getActiveSheet()
-                            ->getPageSetup()
-                            ->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+                    ->getDelegate()
+                    ->getActiveSheet()
+                    ->getPageSetup()
+                    ->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
                 $event->getWriter()
-                            ->getDelegate()
-                            ->getActiveSheet()
-                            ->getHeaderFooter()
-                            ->setOddHeader('&C&HPlease treat this document as confidential!');
+                    ->getDelegate()
+                    ->getActiveSheet()
+                    ->getHeaderFooter()
+                    ->setOddHeader('&C&HPlease treat this document as confidential!');
                 $event->getWriter()
-                            ->getDelegate()
-                            ->getActiveSheet()
-                            ->getHeaderFooter()
-                            ->setOddFooter('&L&B Cloud Telecoms &RPage &P of &N');
+                    ->getDelegate()
+                    ->getActiveSheet()
+                    ->getHeaderFooter()
+                    ->setOddFooter('&L&B Cloud Telecoms &RPage &P of &N');
             },
 
         ];

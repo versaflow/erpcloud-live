@@ -19,7 +19,6 @@ class CreateErpPasswordResetsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

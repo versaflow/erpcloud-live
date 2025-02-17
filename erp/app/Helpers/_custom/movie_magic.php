@@ -27,11 +27,11 @@ function schedule_process_easypanel_activations()
             ];
             aa($data); // Log data before inserting into queue
             dbinsert('isp_iptv_api_queue', $data);
-            $request_data = new \Illuminate\Http\Request();
+            $request_data = new \Illuminate\Http\Request;
             $id = $activation->id;
             $request_data->id = $id;
             aa($request_data); // Log request data
-            app('App\Http\Controllers\CustomController')->provisionService($request_data, 'sub_activations', $id);
+            app(\App\Http\Controllers\CustomController::class)->provisionService($request_data, 'sub_activations', $id);
         }
     }
 }
@@ -72,9 +72,9 @@ function schedule_process_easypanel_activations_trial()
         dbinsert('isp_iptv_api_queue', $data);
 
         $id = $activation->id;
-        $request_data = new \Illuminate\Http\Request();
+        $request_data = new \Illuminate\Http\Request;
         $request_data->id = $id;
-        app('App\Http\Controllers\CustomController')->provisionService($request_data, 'sub_activations', $id);
+        app(\App\Http\Controllers\CustomController::class)->provisionService($request_data, 'sub_activations', $id);
     }
 }
 
@@ -142,7 +142,7 @@ function schedule_easypanel_api_process_queue()
     // }
     $requests = \DB::table('isp_iptv_api_queue')->where('processed', 0)->orderBy('created_at', 'asc')->orderBy('id', 'asc')->get();
 
-    if (!$requests) {
+    if (! $requests) {
         return false;
     } else {
         foreach ($requests as $request) {
@@ -286,7 +286,7 @@ function schedule_set_easypanel_from_subscriptions()
         //     ->where('subscription_id',0)
         //     ->get()->first();
 
-        if (!empty($easypanel_account)) {
+        if (! empty($easypanel_account)) {
             \DB::table('isp_data_iptv')->where('id', $iptv->id)->update(['account_id' => 0, 'subscription_id' => 0, 'subscription_status' => 'Deleted']);
             // \DB::table('isp_data_iptv')->where('id',$easypanel_account->id)->update(['account_id'=>$iptv->account_id,'subscription_id' => $iptv->subscription_id,'subscription_status' => $iptv->subscription_status]);
             \DB::table('sub_services')->where('id', $iptv->subscription_id)->update(['detail' => $easypanel_account->username]);
@@ -350,7 +350,7 @@ function easypanel_create_line()
 
 function import_easypanel_lines($data = null)
 {
-    if (!$data) {
+    if (! $data) {
         //     $iptvs = \DB::table('isp_data_iptv')->where('is_deleted',0)->get();
         $lines = json_decode(easypanel_get_lines());
         $data = $lines->data;
@@ -440,42 +440,42 @@ function button_easypanel_api_process_queue($request)
 {
     // return false;
     $request = \DB::table('isp_iptv_api_queue')->where('processed', 0)->where('id', $request->id)->orderBy('created_at', 'asc')->orderBy('id', 'asc')->get()->first();
-    if (!$request) {
+    if (! $request) {
         return false;
     }
     try {
         $params = [];
-        if (!empty($request->post_data)) {
+        if (! empty($request->post_data)) {
             $params = json_decode($request->post_data, true);
         }
 
         $response = easypanel_api_requests($request->endpoint, $params, $request->request_type);
         $json = json_decode($response['result']);
         $completed = false;
-        if (!empty($json) && isset($json->result) && $json->result == true) {
+        if (! empty($json) && isset($json->result) && $json->result == true) {
             $completed = true;
         }
         if ($response['code'] === 200) {
             $completed = true;
         }
 
-        if (!$completed) {
+        if (! $completed) {
             \DB::table('isp_iptv_api_queue')->where('id', $request->id)->update(['callback_error' => '', 'last_attempt' => date('Y-m-d H:i:s'), 'api_response' => $response['result']]);
         } else {
             \DB::table('isp_iptv_api_queue')->where('id', $request->id)->update(['callback_error' => '', 'last_attempt' => date('Y-m-d H:i:s'), 'processed' => 1, 'api_response' => $response['result']]);
 
-            if (!empty($request->success_callback_function) && function_exists($request->success_callback_function)) {
+            if (! empty($request->success_callback_function) && function_exists($request->success_callback_function)) {
                 $fn = $request->success_callback_function;
                 $json = json_decode($response['result']);
                 if ($request->success_callback_function == 'import_easypanel_lines') {
                     $json = $json->data;
                 }
 
-                if (!empty($json) && !empty($request->row_id)) {
+                if (! empty($json) && ! empty($request->row_id)) {
                     $fn($json, $request->row_id);
-                } elseif (!empty($json) && empty($request->row_id)) {
+                } elseif (! empty($json) && empty($request->row_id)) {
                     $fn($json);
-                } elseif (!empty($json) && !empty($request->row_id)) {
+                } elseif (! empty($json) && ! empty($request->row_id)) {
                     $fn($request->row_id);
                 }
             }
@@ -583,7 +583,7 @@ function insert_new_line_iptv_center($data)
     }
 
     $product_id = 0;
-    if (!empty($data->product_id)) {
+    if (! empty($data->product_id)) {
         $product_id = $data->product_id;
     }
 
@@ -696,7 +696,7 @@ function import_easypanel_packages($data)
         foreach ($data as $package) {
             $package_data = (array) $package;
             $e = \DB::table('isp_iptv_packages')->where('id', $package->id)->count();
-            if (!$e) {
+            if (! $e) {
                 dbinsert('isp_iptv_packages', $package_data);
             } else {
                 dbset('isp_iptv_packages', 'id', $package->id, $package_data);
@@ -738,6 +738,7 @@ function easypanel_api_requests($endpoint, $params = [], $type = 'GET')
 
         $status_code = $response->getStatusCode();
         $message = $response->getBody()->getContents();
+
         //$json = json_decode($message);
         return ['code' => $status_code, 'result' => $message];
     } catch (\Throwable $ex) {
@@ -754,6 +755,7 @@ function easypanel_get_lines()
 {
     // $url = 'http://cms.easy
     $r = gen_request('lines/lines?per_page=1000');
+
     // $r = easypanel_api_requests('lines/lines?per_page=1000');
     // dd($r);
     return $r;
@@ -797,7 +799,7 @@ function gen_request($endpoint, $post = [])
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', $authorization, 'username: '.$client_username, 'password: '.$client_password]); // Inject the token into the header
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-    if (!empty($post)) {
+    if (! empty($post)) {
         $post = json_encode($post);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $post);

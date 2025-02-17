@@ -33,7 +33,6 @@ class CreateCrmProductsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

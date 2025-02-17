@@ -23,7 +23,6 @@ class CreateErpFlowsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

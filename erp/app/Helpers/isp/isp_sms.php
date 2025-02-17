@@ -12,40 +12,38 @@ function schedule_email2sms()
         $username = 'catchall@smssend.co.za';
         $password = 'JollyGoalieCofferAlias92';
         $inbox = imap_open($hostname, $username, $password);
-    } catch (\Throwable $ex) {  
+    } catch (\Throwable $ex) {
         exception_log($ex);
+
         //exception_email($ex, 'SMS email2sms error');
         return false;
     }
 
-    if (!$inbox) {
+    if (! $inbox) {
         return;
     }
     $emails = imap_search($inbox, 'UNSEEN');
 
-
-    if (!empty($emails) && count($emails) > 0) {
+    if (! empty($emails) && count($emails) > 0) {
         rsort($emails);
         foreach ($emails as $email_number) {
             $header = imap_headerinfo($inbox, $email_number);
 
             $email_sender = $header->from[0]->mailbox.'@'.$header->from[0]->host;
 
-
             $sender = dbgetcell('isp_sms_email', 'sending_email_address', $email_sender, 'account_id');
 
             $overview = imap_fetch_overview($inbox, $i, 0);
             $subject = $overview[0]->subject;
-            if (!empty($subject) && str_contains($subject, '@')) {
+            if (! empty($subject) && str_contains($subject, '@')) {
                 $subject_sender = dbgetcell('isp_sms_email', 'sending_email_address', $subject, 'account_id');
-                if (!empty($subject_sender)) {
+                if (! empty($subject_sender)) {
                     $sender = $subject_sender;
                 }
             }
 
             if ($sender) {
                 $body = imap_fetchbody($inbox, $email_number, 1);
-
 
                 if (preg_match('/^([a-zA-Z0-9]{76} )+[a-zA-Z0-9]{76}$/', $body)) {
                     $body = base64_decode($body);
@@ -70,7 +68,7 @@ function schedule_email2sms()
                     $sms['charactercount'] = strlen($message);
                     $sms['message'] = str_replace('=0A', "\n", $message);
                     $id = dbinsert('isp_sms_messages', $sms);
-                    $request_data = new \Illuminate\Http\Request();
+                    $request_data = new \Illuminate\Http\Request;
                     $request_data->id = $id;
                     $result = aftersave_send_sms($request_data);
                 }
@@ -81,7 +79,6 @@ function schedule_email2sms()
     imap_expunge($inbox);
     imap_close($inbox);
 }
-
 
 function schedule_sms_uptime_send()
 {
@@ -94,10 +91,10 @@ function schedule_sms_uptime_check()
     // task notification
     try {
         $message_id = \DB::table('isp_sms_messages')
-        ->where('queuetime', 'LIKE', date('Y-m-d').'%')
-        ->where('numbers', '0658919100')
-        ->where('message', 'sms downtime check')
-        ->pluck('id')->first();
+            ->where('queuetime', 'LIKE', date('Y-m-d').'%')
+            ->where('numbers', '0658919100')
+            ->where('message', 'sms downtime check')
+            ->pluck('id')->first();
         $status = \DB::table('isp_sms_message_queue')->where('isp_sms_messages_id', $message_id)->pluck('status')->first();
         $error_description = \DB::table('isp_sms_message_queue')->where('isp_sms_messages_id', $message_id)->pluck('error_description')->first();
 
@@ -111,7 +108,8 @@ function schedule_sms_uptime_check()
             $data = ['error_description' => $error_description, 'sms_status' => $status, 'function_name' => 'schedule_sms_uptime_check'];
             //  erp_process_notification(1,$data);
         }
-    } catch (\Throwable $ex) {  exception_log($ex);
+    } catch (\Throwable $ex) {
+        exception_log($ex);
         exception_email($ex, 'schedule_sms_uptime_check error '.date('Y-m-d H:i'));
     }
 }
@@ -162,6 +160,7 @@ function sms_send_list_options($row)
     foreach ($lists as $list) {
         $opt[$list->id] = $list->name.' - '.$list->list_total.' numbers';
     }
+
     return $opt;
 }
 
@@ -182,12 +181,12 @@ function button_sms_list_download($request)
         $excel_list[] = (array) $n;
     }
 
-
-    $export = new App\Exports\CollectionExport();
+    $export = new App\Exports\CollectionExport;
     $export->setData($excel_list);
 
     Excel::store($export, session('instance')->directory.'/'.$file_name, 'attachments');
     $file_path = attachments_path().$file_name;
+
     return response()->download($file_path, $file_name);
 }
 
@@ -205,6 +204,7 @@ function button_sms_list_duplicate($request)
         $d['sms_list_id'] = $new_list_id;
         \DB::table('isp_sms_list_numbers')->insert($d);
     }
+
     return json_alert('List duplicated.');
 }
 
@@ -219,7 +219,6 @@ function afterimport_update_sms_list_count()
             \DB::table('isp_sms_list_numbers')->where('id', $n->id)->delete();
         }
     }
-
 
     $list_ids = \DB::table('isp_sms_lists')->pluck('id')->toArray();
     //delete duplicates
@@ -313,7 +312,7 @@ function validate_sms_lists()
     $lists = \DB::table('isp_sms_lists')->get();
     foreach ($lists as $list) {
         $list_count = \DB::table('isp_sms_list_numbers')->where('sms_list_id', $list->id)->count();
-        if (!$list_count) {
+        if (! $list_count) {
             \DB::table('isp_sms_lists')->where('id', $list->id)->delete();
         }
         $account_deleted = \DB::table('crm_accounts')->where('id', $list->account_id)->where('status', 'Deleted')->count();
@@ -330,43 +329,43 @@ function validate_sms_lists()
 function schedule_get_sms_inbox()
 {
     try {
-        $api = new PanaceaApi();
+        $api = new PanaceaApi;
         $api->setUsername('cloud_telecoms');
         $api->setPassword('147896');
         $last_id = \DB::table('isp_sms_inbox')->max('message_id');
-        if (empty($last_id) && !is_main_instance()) {
+        if (empty($last_id) && ! is_main_instance()) {
             $last_id = \DB::connection('system')->table('isp_sms_inbox')->max('message_id');
         }
         if (empty($last_id)) {
             $last_id = 84148622;
         }
         $result = $api->messages_get($last_id);
-      
-        if ($result['status'] == 0 && $result['message'] =="OK") {
+
+        if ($result['status'] == 0 && $result['message'] == 'OK') {
             foreach ($result['details'] as $reply) {
-                if (!empty($reply['reply_msg_uuid'])) {
+                if (! empty($reply['reply_msg_uuid'])) {
                     $msg_found = \DB::table('isp_sms_message_queue')->where('panacea_id', $reply['reply_msg_uuid'])->count();
-                   
+
                     if ($msg_found) {
                         $sms_id = \DB::table('isp_sms_message_queue')->where('panacea_id', $reply['reply_msg_uuid'])->pluck('isp_sms_messages_id')->first();
                         $sms = \DB::table('isp_sms_messages')->where('id', $sms_id)->get()->first();
                         $exists = \DB::table('isp_sms_inbox')->where('message_id', $reply['id'])->count();
-                        if(strtolower($reply['data']) == 'stop'){
+                        if (strtolower($reply['data']) == 'stop') {
                             $number = valid_za_mobile_number($reply['from']);
-                            if($number){
-                                $account_ids = \DB::table('crm_email_list_records')->where('phone',$number)->pluck('account_id')->unique()->filter()->toArray();
-                               
-                                $db_account_ids = \DB::table('crm_accounts')->where('phone',$number)->orWhere('phone',$reply['from'])->pluck('id')->unique()->filter()->toArray();
-                                $account_ids = collect(array_merge($account_ids,$db_account_ids))->unique()->filter()->toArray();
-                                if(count($account_ids) > 0){
-                                    \DB::table('crm_accounts')->whereIn('id',$account_ids)->update(['sms_subscribed' => 0]);
+                            if ($number) {
+                                $account_ids = \DB::table('crm_email_list_records')->where('phone', $number)->pluck('account_id')->unique()->filter()->toArray();
+
+                                $db_account_ids = \DB::table('crm_accounts')->where('phone', $number)->orWhere('phone', $reply['from'])->pluck('id')->unique()->filter()->toArray();
+                                $account_ids = collect(array_merge($account_ids, $db_account_ids))->unique()->filter()->toArray();
+                                if (count($account_ids) > 0) {
+                                    \DB::table('crm_accounts')->whereIn('id', $account_ids)->update(['sms_subscribed' => 0]);
                                 }
                             }
                         }
-                        
-                        if (!$exists) {
+
+                        if (! $exists) {
                             $number = valid_za_mobile_number($reply['from']);
-                            if (!$number) {
+                            if (! $number) {
                                 $number = $reply['from'];
                             }
                             $inbox = [
@@ -376,20 +375,19 @@ function schedule_get_sms_inbox()
                                 'message' => $reply['data'],
                                 'panacea_id' => $reply['reply_msg_uuid'],
                                 'original_message' => $sms->message,
-                                'message_id' => $reply['id']
+                                'message_id' => $reply['id'],
                             ];
 
                             \DB::table('isp_sms_inbox')->insert($inbox);
 
-
                             if ($sms->account_id == 12 || $sms->account_id == 1) {
-                                if(strtolower($reply['data']) != 'stop'){
+                                if (strtolower($reply['data']) != 'stop') {
                                     $data['internal_function'] = 'sms_inbox_admin';
                                     $data['reply'] = $reply['data'];
                                     $data['original_message'] = $sms->message;
                                     $data['sender'] = $number;
-                                    if(!empty($sms->to_account_id)){
-                                        $account = \DB::table('crm_accounts')->select('company','type')->where('id',$sms->to_account_id)->get()->first();
+                                    if (! empty($sms->to_account_id)) {
+                                        $account = \DB::table('crm_accounts')->select('company', 'type')->where('id', $sms->to_account_id)->get()->first();
                                         $data['to_account_company'] = $account->company;
                                         $data['to_account_type'] = $account->type;
                                         $data['to_account_id'] = $sms->to_account_id;
@@ -407,16 +405,17 @@ function schedule_get_sms_inbox()
                     }
                 }
             }
-        } elseif (!empty($result)) {
+        } elseif (! empty($result)) {
             if (isset($result['status']) && isset($result['message'])) {
-                debug_email("schedule_get_sms_inbox error | ".$result['status']." | ".$result['message']);
+                debug_email('schedule_get_sms_inbox error | '.$result['status'].' | '.$result['message']);
             } else {
-                debug_email("schedule_get_sms_inbox error | check log");
+                debug_email('schedule_get_sms_inbox error | check log');
             }
         }
-    } catch (\Throwable $ex) {  exception_log($ex);
+    } catch (\Throwable $ex) {
+        exception_log($ex);
         $error = $ex->getMessage().' '.$ex->getFile().':'.$ex->getLine();
-        debug_email("schedule_get_sms_inbox error | ".$error);
+        debug_email('schedule_get_sms_inbox error | '.$error);
     }
 }
 
@@ -424,7 +423,7 @@ function button_sms_inbox_optout($request)
 {
     $inbox = \DB::table('isp_sms_inbox')->where('id', $request->id)->get()->first();
     $number = valid_za_mobile_number($inbox->sender);
-    if (!$number) {
+    if (! $number) {
         $number = $inbox->sender;
     }
     $exists = \DB::table('isp_sms_optout')->where('number', $number)->count();
@@ -434,7 +433,7 @@ function button_sms_inbox_optout($request)
     $data = [
         'created_at' => date('Y-m-d H:i:s'),
         'inbox_id' => $request->id,
-        'number' => $number
+        'number' => $number,
     ];
     \DB::table('isp_sms_optout')->insert($data);
 
@@ -443,39 +442,36 @@ function button_sms_inbox_optout($request)
 
 function queue_sms($account_id, $to, $msg, $priority = 0, $send_immediately = 0, $email_id = 0, $to_account_id = 0)
 {
-   
-    if (!is_array($to)) {
+
+    if (! is_array($to)) {
         $to = [$to];
     }
     $numbers = $to;
     $to_numbers = implode(PHP_EOL, $to);
 
-
     $size = ceil(strlen($msg) / 160);
     $character_count = strlen($msg);
-    $size = (0 == $size) ? 1 : $size;
+    $size = ($size == 0) ? 1 : $size;
 
     $qty = count($numbers);
-
 
     $schedule = date('Y-m-d H:i:s');
     $queue_data = [
         'message' => $msg,
         'numbers' => $to_numbers,
         'account_id' => $account_id,
-        'priority' => $priority
+        'priority' => $priority,
 
     ];
     if ($email_id) {
         $queue_data['email_id'] = $email_id;
     }
-    
+
     if ($to_account_id) {
         $queue_data['to_account_id'] = $to_account_id;
     }
 
     $id = \DB::connection('default')->table('isp_sms_messages')->insertGetId($queue_data);
-
 
     ///////SEND MESSAGE TO QUEUE AND PROCESS QUEUE
     $sms_data = \DB::connection('default')->table('isp_sms_messages')->where('id', $id)->get()->first();
@@ -485,12 +481,12 @@ function queue_sms($account_id, $to, $msg, $priority = 0, $send_immediately = 0,
         $number = trim(preg_replace('/\s\s+/', ' ', $number));
 
         $number = str_replace(' ', '', $number);
-        if (!$number) {
+        if (! $number) {
             $qty--;
             $data['status'] = 'Invalid Number';
         }
 
-        if (('0' == strpos($number, '0')) && (strlen($number) < 10)) {
+        if ((strpos($number, '0') == '0') && (strlen($number) < 10)) {
             $qty--;
             $data['status'] = 'Invalid Number';
         }
@@ -513,7 +509,7 @@ function queue_sms($account_id, $to, $msg, $priority = 0, $send_immediately = 0,
 
     $total_qty = $qty * $size;
 
-    $update = array('queuetime' => date('Y-m-d H:i:s'), 'schedule' => $schedule, 'quantity' => $qty, 'size' => $size, 'total_qty' => $total_qty, 'charactercount' => $character_count);
+    $update = ['queuetime' => date('Y-m-d H:i:s'), 'schedule' => $schedule, 'quantity' => $qty, 'size' => $size, 'total_qty' => $total_qty, 'charactercount' => $character_count];
 
     \DB::connection('default')->table('isp_sms_messages')->where('id', $id)->update($update);
 
@@ -529,7 +525,7 @@ function button_sms_api_get_api_token($request)
         return json_alert('Switch to customer to set api token', 'warning');
     }
     $token = user_api_token(session('user_id'));
-    if (!$token) {
+    if (! $token) {
         $token_str = $account_id.date('Y-m-d H:i:s');
         $token = \Hash::make($token_str);
         $token = user_set_api_token(session('user_id'), $token);
@@ -551,7 +547,7 @@ function send_sms($queue_id, $to, $text, $report_url = null)
     // https://www.panaceamobile.com/developers/sms-delivery-reports/
     //  $report_url = 'https://cloudtools.versaflow.io/panacea_sms_report?to='.$to.'&status=%d';
 
-    if (!$report_url) {
+    if (! $report_url) {
         $report_url = 'https://portal.telecloud.co.za/sms_result?queue_id='.$queue_id.'&status=%d';
     }
 
@@ -562,27 +558,27 @@ function send_sms($queue_id, $to, $text, $report_url = null)
         $report_mask = 19;
         $charset = 'UTF-8';
         $data_coding = null;
-        $message_class;
+
         $auto_detect_encoding = 0;
-        $api = new PanaceaApi();
+        $api = new PanaceaApi;
         $api->setUsername('cloud_telecoms');
         $api->setPassword('147896');
 
         $result = $api->message_send($to, $text, $from = null, $report_mask, $report_url, $charset, $data_coding, $message_class, $auto_detect_encoding);
 
-
-        if (!empty($result['details'])) {
+        if (! empty($result['details'])) {
             \DB::connection('default')->table('isp_sms_message_queue')->where('id', $queue_id)->update(['panacea_id' => $result['details']]);
         }
-        if (!empty($result['message'])) {
+        if (! empty($result['message'])) {
             \DB::connection('default')->table('isp_sms_message_queue')->where('id', $queue_id)->update(['status' => $result['message']]);
         }
-      
-      
+
         return $result;
-    } catch (\Throwable $ex) {  exception_log($ex);
+    } catch (\Throwable $ex) {
+        exception_log($ex);
         $error = $ex->getMessage().' '.$ex->getFile().':'.$ex->getLine();
     }
+
     // {"status":1,"message":"Sent","details":"8beda1a8-5c12-489f-0107-123000000003"}
     return false;
 }
@@ -602,7 +598,7 @@ function smslist_select()
 
 function beforesave_number_validation($request)
 {
-    $id = (!empty($request->id)) ? $request->id : null;
+    $id = (! empty($request->id)) ? $request->id : null;
 
     //validate name
     if (strlen($request->name) <= 1) {
@@ -613,8 +609,7 @@ function beforesave_number_validation($request)
     try {
         $number = $request->number;
 
-        $phone = phone($number, ['ZA','US','Auto']);
-
+        $phone = phone($number, ['ZA', 'US', 'Auto']);
 
         if (empty($phone)) {
             return 'Invalid phone number: '.$number;
@@ -638,7 +633,9 @@ function beforesave_number_validation($request)
         if ($number_exists > 0) {
             return 'Duplicate number';
         }
-    } catch (\Throwable $ex) {  exception_log($ex);
+    } catch (\Throwable $ex) {
+        exception_log($ex);
+
         return $ex->getMessage();
     }
 }
@@ -658,7 +655,6 @@ function beforesave_send_sms($request)
         }
     }
 
-
     if (empty($numbers) || count($numbers) == 0) {
         $numbers = explode(PHP_EOL, $row->numbers);
         $numbers = collect($numbers)->unique()->filter()->toArray();
@@ -671,7 +667,7 @@ function beforesave_send_sms($request)
 
     foreach ($numbers as $number) {
         try {
-            $phone = phone($number, ['ZA','US','Auto']);
+            $phone = phone($number, ['ZA', 'US', 'Auto']);
 
             if (empty($phone)) {
                 return 'Invalid phone number: '.$number;
@@ -685,7 +681,9 @@ function beforesave_send_sms($request)
             if (empty($phone) && strlen($phone) != 10) {
                 return 'Invalid phone number: '.$number;
             }
-        } catch (\Throwable $ex) {  exception_log($ex);
+        } catch (\Throwable $ex) {
+            exception_log($ex);
+
             return 'Invalid phone number: '.$number;
         }
     }
@@ -693,8 +691,8 @@ function beforesave_send_sms($request)
 
 function aftersave_send_sms($request)
 {
-    $id = (!empty($request->id)) ? $request->id : null;
-    $new_record = (!empty($request->new_record)) ? 1 : 0;
+    $id = (! empty($request->id)) ? $request->id : null;
+    $new_record = (! empty($request->new_record)) ? 1 : 0;
     $request->request->remove('new_record');
 
     if (session('instance')->id == 1) {
@@ -708,13 +706,13 @@ function aftersave_send_sms($request)
     $sql = ' SELECT * FROM isp_sms_messages WHERE id = '.$id.'';
     $row = \DB::select($sql)[0];
     $schedule = $row->schedule;
-    if (empty($schedule) || '0000-00-00 00:00:00' == $schedule) {
+    if (empty($schedule) || $schedule == '0000-00-00 00:00:00') {
         $schedule = date('Y-m-d H:i:s');
     }
 
     $size = ceil(strlen($row->message) / 160);
     $character_count = strlen($row->message);
-    $size = (0 == $size) ? 1 : $size;
+    $size = ($size == 0) ? 1 : $size;
     if ($row->sms_list_id > 0) {
         $sql = 'select number from isp_sms_list_numbers where sms_list_id = '.$row->sms_list_id;
         $numbers = \DB::table('isp_sms_list_numbers')->where('sms_list_id', $row->sms_list_id)->pluck('number')->toArray();
@@ -726,24 +724,26 @@ function aftersave_send_sms($request)
         $qty = count($numbers);
     }
 
-
     $sms_data = \DB::table('isp_sms_messages')->where('id', $id)->get()->first();
     foreach ($numbers as $number) {
         $number = trim(preg_replace('/\s\s+/', ' ', $number));
 
         $number = str_replace(' ', '', $number);
-        if (!$number) {
+        if (! $number) {
             $qty--;
+
             continue;
         }
 
-        if (('0' == strpos($number, '0')) && (strlen($number) < 10)) {
+        if ((strpos($number, '0') == '0') && (strlen($number) < 10)) {
             $qty--;
+
             continue;
         }
 
         if ((strlen($number) < 10)) {
             $qty--;
+
             continue;
         }
 
@@ -760,20 +760,20 @@ function aftersave_send_sms($request)
     }
 
     $total_qty = $qty * $size;
-    dbset('isp_sms_messages', 'id', $id, array('queuetime' => date('Y-m-d H:i:s'), 'schedule' => $schedule, 'quantity' => $qty, 'size' => $size, 'total_qty' => $total_qty, 'charactercount' => $character_count));
+    dbset('isp_sms_messages', 'id', $id, ['queuetime' => date('Y-m-d H:i:s'), 'schedule' => $schedule, 'quantity' => $qty, 'size' => $size, 'total_qty' => $total_qty, 'charactercount' => $character_count]);
     $request->request->add(['new_record' => $new_record]);
 }
 
 ///////SCHEDULE
 function schedule_sms_get_balance()
 {
-    $api = new PanaceaApi();
+    $api = new PanaceaApi;
     $api->setUsername('cloud_telecoms');
     $api->setPassword('147896');
 
     $result = $api->user_get_balance();
 
-    if (!empty($result) && isset($result['details'])) {
+    if (! empty($result) && isset($result['details'])) {
         \DB::table('erp_admin_settings')->where('id', 1)->update(['carrier_sms' => $result['details']]);
         if ($result['details'] < 100) {
             $data['details'] = 'Carrier SMS balance is: '.$result['details'].', only priority sms being sent.';
@@ -785,8 +785,6 @@ function schedule_sms_get_balance()
     }
 }
 
-
-
 function button_sms_process_queue()
 {
     schedule_process_sms_queue();
@@ -797,21 +795,22 @@ function get_account_sms_balance($account_id)
     if (session('instance')->id == 1 && $account_id == 12) {
         return 20000;
     }
+
     return \DB::connection('default')->table('sub_services')
-    ->where('account_id', $account_id)
-    ->where('provision_type', 'bulk_sms_prepaid')
-    ->where('status', '!=', 'Deleted')
-    ->pluck('current_usage')->first();
+        ->where('account_id', $account_id)
+        ->where('provision_type', 'bulk_sms_prepaid')
+        ->where('status', '!=', 'Deleted')
+        ->pluck('current_usage')->first();
 }
 
 function set_account_sms_balance($account_id, $balance)
 {
     $used_sms = \DB::table('isp_sms_message_queue')->where('account_id', $account_id)->where('time_queued', 'LIKE', date('Y-m').'%')->where('status', '!=', 'Queued')->count();
     \DB::connection('default')->table('sub_services')
-    ->where('account_id', $account_id)
-    ->where('provision_type', 'bulk_sms_prepaid')
-    ->where('status', '!=', 'Deleted')
-    ->update(['current_usage'=>$balance]);
+        ->where('account_id', $account_id)
+        ->where('provision_type', 'bulk_sms_prepaid')
+        ->where('status', '!=', 'Deleted')
+        ->update(['current_usage' => $balance]);
 }
 
 function schedule_process_sms_queue($sms_id = false)
@@ -829,7 +828,7 @@ function schedule_process_sms_queue($sms_id = false)
             }
         }
         if ($retry_failed_count == 3) {
-         
+
             // debug_email('sms queue error - retry failed');
             return false;
         }
@@ -847,22 +846,19 @@ function schedule_process_sms_queue($sms_id = false)
             ->where('status', '!=', 'Deleted')
             ->pluck('account_id')->toArray();
         if (empty($sms_accounts) || count($sms_accounts) == 0) {
-            $sms_accounts = [1,12];
+            $sms_accounts = [1, 12];
         }
 
-        $processing =  \DB::table('isp_sms_messages')->where('processing', 1)->count();
+        $processing = \DB::table('isp_sms_messages')->where('processing', 1)->count();
         if ($processing) {
-           
+
             return false;
         }
         $ids = \DB::table('isp_sms_messages')->where('message', 'number validation')->pluck('id')->toArray();
         //dd($ids);
-        \DB::table('isp_sms_message_queue')->where('status', 'Expired')->whereIn('isp_sms_messages_id', $ids)->update(['status' => 'Queued','time_queued' =>date('Y-m-d H:i:s')]);
-
-
+        \DB::table('isp_sms_message_queue')->where('status', 'Expired')->whereIn('isp_sms_messages_id', $ids)->update(['status' => 'Queued', 'time_queued' => date('Y-m-d H:i:s')]);
 
         \DB::table('isp_sms_message_queue')->where('status', 'Queued')->where('time_queued', '<', date('Y-m-d', strtotime('- 2 days')))->update(['status' => 'Expired']);
-
 
         $query = \DB::table('isp_sms_message_queue as smq');
         $query->select('sm.*', 'smq.id as smq_id', 'smq.number', 'smq.status', 'sm.total_qty', 'sm.size', 'sm.account_id');
@@ -870,7 +866,6 @@ function schedule_process_sms_queue($sms_id = false)
 
         $query->whereIn('sm.account_id', $sms_accounts);
 
-       
         $query->where(function ($query) {
             $query->whereNull('schedule');
             $query->orWhere('schedule', '<=', date('Y-m-d H:i:s'));
@@ -894,7 +889,7 @@ function schedule_process_sms_queue($sms_id = false)
         $id_query = $query;
         $message_id = $id_query->limit(1)->pluck('sm.id')->first();
 
-        if (!$message_id) {
+        if (! $message_id) {
             return false;
         }
 
@@ -915,25 +910,21 @@ function schedule_process_sms_queue($sms_id = false)
             return false;
         }
 
-
-        \DB::table('isp_sms_messages')->where('id', $message_id)->update(['processing'=>1]);
+        \DB::table('isp_sms_messages')->where('id', $message_id)->update(['processing' => 1]);
         $retry_queue = false;
-
 
         foreach ($results as $row) {
             \DB::table('isp_sms_message_queue')->where('id', $row->smq_id)->update(['error_description' => '']);
-          
 
             \DB::table('isp_sms_message_queue')->where('id', $row->smq_id)->update(['account_id' => $row->account_id]);
             $total_qty = $row->total_qty;
             $customer_balance = get_account_sms_balance($row->account_id);
 
-
             $customer_active = is_customer_active($row->account_id);
             $to = $row->number;
 
             if ($customer_active || $row->account_id == 1) {
-                if (!is_numeric($to)) {
+                if (! is_numeric($to)) {
                     \DB::table('isp_sms_message_queue')->where('id', $row->smq_id)->update(['status' => 'Error', 'error_description' => 'Number not numeric']);
 
                     continue;
@@ -950,34 +941,34 @@ function schedule_process_sms_queue($sms_id = false)
 
                 $new_customer_balance = floatval($customer_balance) - $sms_cost;
 
-                if (!in_array($row->account_id,[1,12]) && $new_customer_balance <= 0) {
+                if (! in_array($row->account_id, [1, 12]) && $new_customer_balance <= 0) {
                     \DB::table('isp_sms_message_queue')->where('id', $row->smq_id)->update(['status' => 'Error', 'error_description' => 'Customer out of credit']);
+
                     continue;
                 }
 
                 try {
                     $result = send_sms($row->smq_id, $to, $row->message);
-                } catch (\Throwable $ex) {  exception_log($ex);
+                } catch (\Throwable $ex) {
+                    exception_log($ex);
                     $result = false;
                     \DB::table('isp_sms_message_queue')->where('id', $row->smq_id)->update(['status' => 'Error', 'error_description' => $ex->getMessage()]);
                     exception_email($ex, 'SMS error '.date('Y-m-d H:i'));
                 }
 
-                if (!empty($result) && isset($result) && isset($result['status'])) {
-                    if ($result && 1 == $result['status'] && 'Sent' == $result['message']) {
+                if (! empty($result) && isset($result) && isset($result['status'])) {
+                    if ($result && $result['status'] == 1 && $result['message'] == 'Sent') {
                         $carrier_sms = \DB::table('erp_admin_settings')->where('id', 1)->pluck('carrier_sms')->first();
                         $carrier_sms -= $row->size;
                         \DB::table('erp_admin_settings')->where('id', 1)->update(['carrier_sms' => $carrier_sms]);
                         $customer_balance = floatval($customer_balance) - $sms_cost;
 
-
                         set_account_sms_balance($row->account_id, $customer_balance);
                         \DB::table('isp_sms_message_queue')->where('id', $row->smq_id)->update(['status' => 'Sent']);
 
-
                         \DB::table('isp_sms_messages')->where('id', $row->id)->increment('customer_credits_used', $sms_cost);
                         \DB::table('isp_sms_messages')->where('id', $row->id)->increment('admin_credits_used', $row->size);
-                    } elseif ($result && (1 != $result['status'] || 'Sent' != $result['message'])) {
+                    } elseif ($result && ($result['status'] != 1 || $result['message'] != 'Sent')) {
                         \DB::table('isp_sms_message_queue')->where('id', $row->smq_id)->update(['status' => 'Error', 'error_description' => $result['message']]);
                     } else {
                         \DB::table('isp_sms_message_queue')->where('id', $row->smq_id)->update(['status' => 'Error', 'error_description' => 'Rejected by Service']);
@@ -1000,51 +991,50 @@ function schedule_process_sms_queue($sms_id = false)
             $delivered = \DB::table('isp_sms_message_queue')->where('id', $row->smq_id)->where('status', 'Delivered')->count();
             \DB::table('isp_sms_messages')->where('id', $row->id)->update(['delivered_qty' => $delivered]);
 
-            \DB::table('isp_sms_message_queue')->where('id', $row->smq_id)->where('status', 'Queued')->update(['status' => 'Processed','error_description' => '']);
+            \DB::table('isp_sms_message_queue')->where('id', $row->smq_id)->where('status', 'Queued')->update(['status' => 'Processed', 'error_description' => '']);
         }
 
-
-
-        \DB::table('isp_sms_messages')->update(['last_processed_id'=>$message_id]);
+        \DB::table('isp_sms_messages')->update(['last_processed_id' => $message_id]);
         if ($retry_queue) {
             $retry_count = \DB::table('isp_sms_messages')->where('id', $message_id)->pluck('retry_count')->first();
             if ($retry_count >= 5) {
                 \DB::table('isp_sms_messages')->where('id', $message_id)->update(['retry_failed' => 1]);
-                \DB::table('isp_sms_messages')->where('id', $message_id)->update(['processing'=>0,'processed'=>1]);
+                \DB::table('isp_sms_messages')->where('id', $message_id)->update(['processing' => 0, 'processed' => 1]);
             } else {
-                \DB::table('isp_sms_messages')->where('id', $message_id)->update(['processing'=>0,'processed'=>0]);
+                \DB::table('isp_sms_messages')->where('id', $message_id)->update(['processing' => 0, 'processed' => 0]);
                 \DB::table('isp_sms_messages')->where('id', $message_id)->increment('retry_count');
                 \DB::table('isp_sms_message_queue')->where('id', $row->smq_id)->update(['status' => 'Queued']);
-                $last_processed_id = $message_id-1;
-                \DB::table('isp_sms_messages')->update(['last_processed_id'=>$last_processed_id]);
+                $last_processed_id = $message_id - 1;
+                \DB::table('isp_sms_messages')->update(['last_processed_id' => $last_processed_id]);
             }
         } else {
             $queued = \DB::table('isp_sms_message_queue')->where('id', $row->smq_id)->where('status', 'Queued')->count();
             if ($queued) {
-                \DB::table('isp_sms_messages')->where('id', $message_id)->update(['processing'=>0,'processed'=>0]);
+                \DB::table('isp_sms_messages')->where('id', $message_id)->update(['processing' => 0, 'processed' => 0]);
             } else {
-                \DB::table('isp_sms_messages')->where('id', $message_id)->update(['processing'=>0,'processed'=>1]);
+                \DB::table('isp_sms_messages')->where('id', $message_id)->update(['processing' => 0, 'processed' => 1]);
             }
         }
 
         if ($message_id) {
-            $api = new PanaceaApi();
+            $api = new PanaceaApi;
             $api->setUsername('cloud_telecoms');
             $api->setPassword('147896');
 
             $result = $api->user_get_balance();
 
             if ($result && $result['details']) {
-                \DB::table('isp_sms_messages')->where('id', $message_id)->update(['admin_credits'=>$result['details']]);
+                \DB::table('isp_sms_messages')->where('id', $message_id)->update(['admin_credits' => $result['details']]);
             }
         }
-    } catch (\Throwable $ex) {  exception_log($ex);
-        if($message_id){
+    } catch (\Throwable $ex) {
+        exception_log($ex);
+        if ($message_id) {
             $queued = \DB::table('isp_sms_message_queue')->where('isp_sms_messages_id', $message_id)->where('status', 'Queued')->count();
             if ($queued) {
-                \DB::table('isp_sms_messages')->where('id', $message_id)->update(['processing'=>0,'processed'=>0]);
+                \DB::table('isp_sms_messages')->where('id', $message_id)->update(['processing' => 0, 'processed' => 0]);
             } else {
-                \DB::table('isp_sms_messages')->where('id', $message_id)->update(['processing'=>0,'processed'=>1]);
+                \DB::table('isp_sms_messages')->where('id', $message_id)->update(['processing' => 0, 'processed' => 1]);
             }
         }
 
@@ -1052,13 +1042,12 @@ function schedule_process_sms_queue($sms_id = false)
     }
 }
 
-
 function schedule_sms_list_fibre_customers()
 {
     \DB::table('isp_sms_list_numbers')->where('sms_list_id', 819)->delete();
     $fibre_account_ids = \DB::table('sub_services')->where('provision_type', 'fibre')->where('status', '!=', 'Deleted')->pluck('account_id')->unique()->toArray();
     foreach ($fibre_account_ids as $fibre_account_id) {
         $account = dbgetaccount($fibre_account_id);
-        \DB::table('isp_sms_list_numbers')->insert(['sms_list_id'=>819,'name'=>$account->company,'number'=>$account->phone]);
+        \DB::table('isp_sms_list_numbers')->insert(['sms_list_id' => 819, 'name' => $account->company, 'number' => $account->phone]);
     }
 }

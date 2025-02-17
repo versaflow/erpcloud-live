@@ -1,24 +1,22 @@
 <?php
 
-return array(
+return [
 
-
-    'pdf' => array(
+    'pdf' => [
         'enabled' => true,
         'binary' => base_path().'/vendor/h4cc/wkhtmltopdf-amd64/bin/wkhtmltopdf-amd64',
         'timeout' => 3600,
-        'options' => array(),
-        'env'     => array(),
+        'options' => [],
+        'env' => [],
         // 'temp-folder' => "/home/erpcloud-live/htdocs/html/tmp"
-    ),
-    'image' => array(
+    ],
+    'image' => [
         'enabled' => true,
         'binary' => base_path().'/vendor/h4cc/wkhtmltopdf-amd64/bin/wkhtmltopdf-amd64',
         'timeout' => false,
-        'options' => array(),
-        'env'     => array(),
+        'options' => [],
+        'env' => [],
         // 'temp-folder' => "/home/erpcloud-live/htdocs/html/tmp"
-    ),
+    ],
 
-
-);
+];

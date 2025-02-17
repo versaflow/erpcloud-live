@@ -30,7 +30,6 @@ class CreateErpMenuTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

@@ -20,7 +20,6 @@ class CreateAccPerformanceTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

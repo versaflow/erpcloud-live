@@ -6,19 +6,19 @@ class DirectAdmin
 {
     public function __construct()
     {
-        $this->server_ip="156.0.96.73"; //IP that User is assigned to
-        $this->server_login="admin";
-        $this->server_pass="Webmin@786";
-        $this->server_host="156.0.96.73"; //where the API connects to
-        $this->server_ssl="Y";
-        $this->server_port=2222;
+        $this->server_ip = '156.0.96.73'; //IP that User is assigned to
+        $this->server_login = 'admin';
+        $this->server_pass = 'Webmin@786';
+        $this->server_host = '156.0.96.73'; //where the API connects to
+        $this->server_ssl = 'Y';
+        $this->server_port = 2222;
     }
 
     public function call($endpoint, $data = [], $login_as = false, $return_raw = false)
     {
-        $sock = new HTTPSocket();
+        $sock = new HTTPSocket;
         if ($this->server_ssl == 'Y') {
-            $sock->connect("ssl://".$this->server_host, $this->server_port);
+            $sock->connect('ssl://'.$this->server_host, $this->server_port);
         } else {
             $sock->connect($this->server_host, $this->server_port);
         }
@@ -35,6 +35,7 @@ class DirectAdmin
         } else {
             $result = $sock->fetch_parsed_body();
         }
+
         return $result;
     }
 
@@ -42,7 +43,7 @@ class DirectAdmin
     {
         $account = dbgetaccount($account_id);
         $users = $this->getUsers();
-        if (!empty($users) && !empty($users['list']) && is_array($users['list']) && in_array('da'.$account_id, $users['list'])) {
+        if (! empty($users) && ! empty($users['list']) && is_array($users['list']) && in_array('da'.$account_id, $users['list'])) {
             $this->setUserQuotas($account_id);
             $this->createDomain($account_id, $domain);
             $this->createKeyFile($account_id, $domain);
@@ -87,13 +88,13 @@ class DirectAdmin
         $username = 'da'.$account_id;
 
         $users = $this->getUsers();
-        if (!empty($users['list']) && is_array($users['list']) && count($users['list']) > 0) {
+        if (! empty($users['list']) && is_array($users['list']) && count($users['list']) > 0) {
             if (in_array($username, $users['list'])) {
                 $data = [
-                'location' => 'CMD_SELECT_USERS',
-                'select0' => $username,
-                'suspend' => ($enable == 1) ? 'Unsuspend' : 'Suspend',
-            ];
+                    'location' => 'CMD_SELECT_USERS',
+                    'select0' => $username,
+                    'suspend' => ($enable == 1) ? 'Unsuspend' : 'Suspend',
+                ];
 
                 return $this->call('CMD_API_SELECT_USERS', $data);
             }
@@ -102,9 +103,10 @@ class DirectAdmin
 
     public function getDomains($user)
     {
-        $data = array(
-            'user' => $user
-        );
+        $data = [
+            'user' => $user,
+        ];
+
         return $this->call('CMD_API_SHOW_USER_DOMAINS', $data);
     }
 
@@ -116,6 +118,7 @@ class DirectAdmin
         foreach ($users['list'] as $user) {
             $domain_list[$user] = $this->getDomains($user);
         }
+
         return $domain_list;
     }
 
@@ -139,9 +142,10 @@ class DirectAdmin
         ];
         $result = $this->getDomains($user);
         foreach ($result as $domain_name => $data) {
-            $formatted_domain = str_replace("_", ".", $domain_name);
+            $formatted_domain = str_replace('_', '.', $domain_name);
             if ($formatted_domain == $domain) {
                 $data_arr = explode(':', $data);
+
                 return array_combine($data_keys, $data_arr);
             }
         }
@@ -150,7 +154,7 @@ class DirectAdmin
     public function createUser($account_id, $email, $pass, $domain)
     {
         $username = 'da'.$account_id;
-        $data = array(
+        $data = [
             'action' => 'create',
             'add' => 'Submit',
             'username' => $username,
@@ -160,8 +164,8 @@ class DirectAdmin
             'domain' => $domain,
             'package' => 'sitebuilder',
             'ip' => $this->server_ip,
-            'notify' => 'yes'
-        );
+            'notify' => 'yes',
+        ];
 
         return $this->call('CMD_API_ACCOUNT_USER', $data);
     }
@@ -183,17 +187,17 @@ class DirectAdmin
             $domain_count++;
         }
         if ($account_id == 12) {
-            $domain_count +=10;
+            $domain_count += 10;
         }
         if ($account_id == 3248) {
             $quota = 2;
             $domain_count = 2;
         }
-        $data = array(
+        $data = [
             'action' => 'customize',
             'user' => $username,
-            'quota' => $quota*1000,
-            'nemails' => $quota*10,
+            'quota' => $quota * 1000,
+            'nemails' => $quota * 10,
             'unemails' => 'OFF',
             'mysql' => $quota,
             'umysql' => 'OFF',
@@ -201,7 +205,7 @@ class DirectAdmin
             'php' => 'ON',
             'spam' => 'ON',
             'vdomains' => $domain_count,
-        );
+        ];
 
         return $this->call('CMD_API_MODIFY_USER', $data);
     }
@@ -209,44 +213,47 @@ class DirectAdmin
     public function setUserPackage($account_id, $package)
     {
         $username = 'da'.$account_id;
-        $data = array(
+        $data = [
             'action' => 'package',
             'user' => $username,
             'package' => $package,
-        );
+        ];
 
         return $this->call('CMD_API_MODIFY_USER', $data);
     }
 
     public function createDomain($account_id, $domain)
     {
-        $data = array(
+        $data = [
             'action' => 'create',
             'domain' => $domain,
             'ssl' => 'ON',
             'php' => 'ON',
-        );
+        ];
+
         return $this->call('CMD_API_DOMAIN', $data, 'da'.$account_id);
     }
 
     public function setPHP($account_id, $domain)
     {
-        $data = array(
+        $data = [
             'action' => 'php_selector',
             'domain' => $domain,
             'php1_select' => 1,
-            'php2_select' => 1
-        );
+            'php2_select' => 1,
+        ];
+
         return $this->call('CMD_API_DOMAIN', $data, 'da'.$account_id);
     }
 
     public function deleteDomain($account_id, $domain)
     {
-        $data = array(
+        $data = [
             'confirmed' => 'Confirm',
             'delete' => 'yes',
-            'select0' => $domain
-        );
+            'select0' => $domain,
+        ];
+
         return $this->call('CMD_API_DOMAIN', $data, 'da'.$account_id);
     }
 
@@ -257,63 +264,67 @@ class DirectAdmin
         $username = 'da'.$account_id;
 
         $cmd = 'cd /home/'.$username.'/domains/'.$domain.'/public_html/ && touch key.1.txt';
+
         return Erp::ssh('localhost', 'root', 'Ahmed777', $cmd);
     }
 
     public function getEmails($account_id, $domain)
     {
-        $data = array(
+        $data = [
             'action' => 'list',
-            'domain' => $domain
-        );
+            'domain' => $domain,
+        ];
+
         return $this->call('CMD_API_POP', $data, 'da'.$account_id);
     }
 
     public function createEmail($account_id, $domain, $user, $pass)
     {
-        $data = array(
+        $data = [
             'action' => 'create',
             'domain' => $domain,
             'user' => $user,
             'passwd' => $pass,
-            'passwd2' => $pass
-        );
+            'passwd2' => $pass,
+        ];
+
         return $this->call('CMD_API_POP', $data, 'da'.$account_id);
     }
 
     public function editEmail($account_id, $domain, $user, $pass)
     {
-        $data = array(
+        $data = [
             'action' => 'modify',
             'domain' => $domain,
             'user' => $user,
             'passwd' => $pass,
-            'passwd2' => $pass
-        );
+            'passwd2' => $pass,
+        ];
 
         return $this->call('CMD_API_POP', $data, 'da'.$account_id);
     }
 
     public function deleteEmail($account_id, $domain, $user)
     {
-        $data = array(
+        $data = [
             'action' => 'delete',
             'domain' => $domain,
             'user' => $user,
-        );
+        ];
 
         return $this->call('CMD_API_POP', $data, 'da'.$account_id);
     }
 
     public function addSPF($account_id, $domain)
     {
-        $data = array(
+        $data = [
             'action' => 'add',
             'domain' => $domain,
             'type' => 'TXT',
             'name' => $domain.'.',
             'value' => '"v=spf1 a mx ip4:156.0.96.73 ~all"',
-        );
+        ];
+
         return $this->call('CMD_API_DNS_CONTROL', $data, 'da'.$account_id);
         //"v=spf1 a mx ip4:156.0.96.73 ~all"
         //CMD_API_DNS_CONTROL?domain=domain.com&action=add&type=A|NS|MX|CNAME|PTR&name=namevalue&value=recordvalue
@@ -321,10 +332,10 @@ class DirectAdmin
 
     public function getDns($domain)
     {
-        $data = array(
+        $data = [
             'domain' => $domain,
             'json' => 'yes',
-        );
+        ];
         $result = $this->call('CMD_API_DNS_ADMIN', $data, 0, 1);
         $result = json_decode($result);
 
@@ -333,10 +344,10 @@ class DirectAdmin
 
     public function getPbxDns()
     {
-        $data = array(
+        $data = [
             'domain' => 'cloudtools.co.za',
             'urlencoded' => 'yes',
-        );
+        ];
         $result = $this->call('CMD_API_DNS_ADMIN', $data);
         $predefined_domains = [];
         foreach ($result as $key => $val) {
@@ -344,6 +355,7 @@ class DirectAdmin
                 $predefined_domains[] = rtrim(str_replace('_', '.', $key), '.');
             }
         }
+
         return $predefined_domains;
     }
 
@@ -361,23 +373,24 @@ class DirectAdmin
 
     public function addDns($account_id, $domain, $type, $host, $value)
     {
-        $data = array(
+        $data = [
             'action' => 'add',
             'domain' => $domain,
             'type' => $type,
             'name' => $host,
             'value' => $value,
-        );
+        ];
+
         return $this->call('CMD_API_DNS_CONTROL', $data, 'da'.$account_id);
     }
 
     public function deleteDns($account_id, $domain, $type, $host, $value)
     {
-        $data = array(
+        $data = [
             'action' => 'select',
             'delete' => 'delete',
             'domain' => $domain,
-        );
+        ];
 
         if ($type == 'A') {
             $data['arecs0'] = 'name='.$host.'&value='.$value;
@@ -400,19 +413,21 @@ class DirectAdmin
 
     public function getUserBackups($account_id, $domain)
     {
-        $data = array(
+        $data = [
             'action' => 'list',
             'domain' => $domain,
-        );
+        ];
+
         return $this->call('CMD_API_SITE_BACKUP', $data, 'da'.$account_id);
     }
 
     public function createUserBackup($account_id, $domain)
     {
-        $data = array(
+        $data = [
             'action' => 'backup',
             'domain' => $domain,
-        );
+        ];
+
         return $this->call('CMD_API_SITE_BACKUP', $data, 'da'.$account_id);
     }
 
@@ -420,6 +435,7 @@ class DirectAdmin
     {
         $cmd = 'find /home/*/backups/*  -name "*.gz" -mtime +14 -exec rm {} \; && echo "success: $?" || echo "fail: $?"';
         $result = Erp::ssh('localhost', 'root', 'Ahmed777', $cmd);
+
         return $result;
     }
 
@@ -446,7 +462,7 @@ class DirectAdmin
         }
         $result = Erp::ssh('localhost', 'root', 'Ahmed777', $cmd);
         //dd($result);
-        $url = str_replace([PHP_EOL,'URL: '], '', $result);
+        $url = str_replace([PHP_EOL, 'URL: '], '', $result);
         $url = str_replace('https://156.0.96.73', 'https://host3.cloudtools.co.za', $url);
 
         return $url;

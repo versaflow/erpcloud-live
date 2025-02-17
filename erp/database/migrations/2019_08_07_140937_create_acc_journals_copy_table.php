@@ -22,7 +22,6 @@ class CreateAccJournalsCopyTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

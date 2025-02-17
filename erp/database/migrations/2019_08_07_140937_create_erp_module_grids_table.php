@@ -32,7 +32,6 @@ class CreateErpModuleGridsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

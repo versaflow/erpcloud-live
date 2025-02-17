@@ -3,7 +3,7 @@
 function beforesave_rates_check_markup($request)
 {
     try {
-        if (!empty($request->id)) {
+        if (! empty($request->id)) {
             $row = \DB::connection('pbx')->table('p_rates_partner_items')->where('id', $request->id)->get()->first();
             $currency = \DB::connection('pbx')->table('p_rates_partner')->where('id', $request->ratesheet_id)->pluck('currency')->first();
             if ($row->destination == 'onpbx') {
@@ -12,14 +12,12 @@ function beforesave_rates_check_markup($request)
 
             $cost_price = $row->cost_price;
 
-         
-         
             if (empty($cost_price)) {
                 $cost_price = 0;
             }
 
             if ($cost_price > 0) {
-                $markup =  intval((($request->rate - $cost_price) * 100) / $cost_price);
+                $markup = intval((($request->rate - $cost_price) * 100) / $cost_price);
 
                 if ($cost_price > 0) {
                     if ($markup < 1) {
@@ -31,13 +29,11 @@ function beforesave_rates_check_markup($request)
                 }
             }
         }
-    } catch (\Throwable $ex) {  exception_log($ex);
+    } catch (\Throwable $ex) {
+        exception_log($ex);
         aa($ex->getMessage());
     }
 }
-
-
-
 
 function get_ratesheet_item_markup($row)
 {
@@ -46,6 +42,7 @@ function get_ratesheet_item_markup($row)
     $sql = \DB::connection('default')->table('erp_cruds')->where('id', 588)->pluck('db_sql')->first();
     $sql .= ' where p_rates_partner_items.id ="'.$pricelist_item_id.'"';
     $result = \DB::connection('pbx')->select($sql);
+
     return collect($result)->pluck('markup')->first();
 }
 
@@ -58,18 +55,19 @@ function get_ratesheet_item_cost_price($row)
     $sql .= ' where p_rates_partner_items.id ="'.$pricelist_item_id.'"';
 
     $result = \DB::connection('pbx')->select($sql);
+
     return collect($result)->pluck('cost_price')->first();
 }
 
 function ajax_partner_rates_set_pricing($request)
 {
-    if (!empty($request->id)) {
+    if (! empty($request->id)) {
         $response = [];
         //COST PRICE
         $partner_id = \DB::connection('pbx')->table('p_rates_partner_items')->where('id', $request->id)->pluck('partner_id')->first();
         if (empty(session('voice_rates_ajax'))) {
             $item = \DB::connection('pbx')->table('p_rates_partner_items')->where('id', $request->id)->get()->first();
-   
+
             session(['voice_rates_ajax' => (array) $item]);
         } else {
             $item = (object) session('voice_rates_ajax');
@@ -82,7 +80,6 @@ function ajax_partner_rates_set_pricing($request)
 
         $admin_rate = $item->cost_price;
 
-
         /// RETAIL START
 
         $old_retail_rate = currency($item->rate, 3);
@@ -94,13 +91,12 @@ function ajax_partner_rates_set_pricing($request)
         //MARKUP
 
         if ($retail_markup != $old_retail_markup) {
-            if (0 == $admin_rate or $retail_markup < 0) {
+            if ($admin_rate == 0 or $retail_markup < 0) {
                 $retail_markup = 0;
             }
             $retail_markup_amount = ($admin_rate / 100) * $retail_markup;
             $retail_rate = $admin_rate + $retail_markup_amount;
         }
-
 
         //SELLING PRICE
 
@@ -110,7 +106,6 @@ function ajax_partner_rates_set_pricing($request)
             }
             $retail_markup = intval(($admin_rate > 0) ? ($retail_rate - $admin_rate) * 100 / $admin_rate : 0);
         }
-
 
         $retail_markup = intval(($admin_rate > 0) ? ($retail_rate - $admin_rate) * 100 / $admin_rate : 0);
 
@@ -123,6 +118,7 @@ function ajax_partner_rates_set_pricing($request)
         }
 
         session(['voice_rates_ajax' => $item]);
+
         /// RETAIL END
         return $response;
     }
@@ -135,30 +131,26 @@ function beforesave_competitor_rates_set_tax($request)
         $conn = 'pbx';
     }
     if (empty($request->id)) {
-        if (empty($request->rate) && !empty($request->rate_inc)) {
+        if (empty($request->rate) && ! empty($request->rate_inc)) {
             $rate = $request->rate_inc / 1.15;
             $request->request->add(['rate' => $rate]);
-        } elseif (!empty($request->rate) && empty($request->rate_inc)) {
+        } elseif (! empty($request->rate) && empty($request->rate_inc)) {
             $rate_inc = $request->rate * 1.15;
             $request->request->add(['rate_inc' => $rate_inc]);
         }
     } else {
-        $item =  \DB::connection($conn)->table('p_competitor_rates')->where('id', $request->id)->get()->first();
+        $item = \DB::connection($conn)->table('p_competitor_rates')->where('id', $request->id)->get()->first();
 
-        if (empty($request->rate) || (!empty($request->rate_inc) && currency($item->rate_inc) != currency($request->rate_inc))) {
+        if (empty($request->rate) || (! empty($request->rate_inc) && currency($item->rate_inc) != currency($request->rate_inc))) {
             $rate = $request->rate_inc / 1.15;
 
             $request->request->add(['rate' => $rate]);
-        } elseif (empty($request->rate_inc) || (!empty($request->rate) && currency($request->rate) != currency($request->rate))) {
+        } elseif (empty($request->rate_inc) || (! empty($request->rate) && currency($request->rate) != currency($request->rate))) {
             $rate_inc = $request->rate * 1.15;
             $request->request->add(['rate_inc' => $rate_inc]);
         }
     }
 }
-
-
-
-
 
 function button_itr_fix_block_list_destinations($request)
 {
@@ -166,8 +158,7 @@ function button_itr_fix_block_list_destinations($request)
     foreach ($routes as $route) {
         $route->destination = strtolower($route->destination);
 
-
-        if (!str_contains($route->destination, 'mobile')) {
+        if (! str_contains($route->destination, 'mobile')) {
             if (str_contains($route->destination, 'telkom')) {
                 \DB::connection('pbx')->table('c_blocked_ani_itr')->where('id', $route->id)->update(['destination' => 'fixed telkom']);
             } elseif (str_contains($route->destination, 'liquid') || str_contains($route->destination, 'neotel')) {
@@ -190,9 +181,9 @@ function button_itr_fix_block_list_destinations($request)
             }
         }
     }
+
     return json_alert('Updated');
 }
-
 
 function set_ported_numbers_destinations()
 {
@@ -220,7 +211,7 @@ function set_ported_numbers_destinations()
 
         if (empty($destination)) {
             $destination_lookup = \DB::connection('pbx')->table('p_rates_destinations')->where('country', 'south africa')->where('destination', 'LIKE', '%'.strtolower($routing->gnp_no).'%')->pluck('destination')->first();
-            if (!empty($destination_lookup)) {
+            if (! empty($destination_lookup)) {
                 $destination = $destination_lookup;
             }
         }
@@ -231,11 +222,11 @@ function set_ported_numbers_destinations()
 function select_domains_ratesheet_list($row)
 {
     $row = (object) $row;
-    if (!empty($row) && !empty($row->partner_id)) {
+    if (! empty($row) && ! empty($row->partner_id)) {
         $ratesheets = \DB::connection('pbx')->table('p_rates_partner')->where('partner_id', $row->partner_id)->get();
     }
 
-    if (!empty($ratesheets) && count($ratesheets) > 0) {
+    if (! empty($ratesheets) && count($ratesheets) > 0) {
         foreach ($ratesheets as $ratesheet) {
             $options[$ratesheet->id] = $ratesheet->name;
         }

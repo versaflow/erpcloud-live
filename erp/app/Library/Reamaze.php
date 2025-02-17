@@ -21,13 +21,13 @@ class Reamaze extends ApiCurl
     protected function setCurlAuth($api_request)
     {
         $api_request->authenticateWith($this->authuser, $this->authpass);
+
         return $api_request;
     }
 
-
     public function getCoversations($filters = false)
     {
-        if (!empty($filters) && is_array($filters) && count($filters) > 0) {
+        if (! empty($filters) && is_array($filters) && count($filters) > 0) {
             return $this->curl('conversations', $filters);
         } else {
             return $this->curl('conversations');
@@ -50,7 +50,6 @@ class Reamaze extends ApiCurl
                 exception_log($method);
                 exception_log($args);
             }
-
 
             if ($method == 'post') {
                 $api_request = ApiRequest::post($url);
@@ -91,13 +90,15 @@ class Reamaze extends ApiCurl
                 exception_log($response);
             }
 
-            if (!empty($response->body)) {
+            if (! empty($response->body)) {
                 return $response->body;
             } else {
                 return (object) ['intCode' => $response->code];
             }
+
             return $response;
-        } catch (\Throwable $ex) {  exception_log($ex);
+        } catch (\Throwable $ex) {
+            exception_log($ex);
             if ($this->debug == 'output') {
             }
 

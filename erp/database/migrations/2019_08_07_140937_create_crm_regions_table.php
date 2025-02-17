@@ -18,7 +18,6 @@ class CreateCrmRegionsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

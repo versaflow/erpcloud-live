@@ -16,7 +16,7 @@ class Freshdesk extends ApiCurl
         if ($endpoint != 'authentication') {
             $this->checkSession();
         }
-        $endpoint_url = $this->service_url . 'api/2.0/' . $endpoint . '.json' ;
+        $endpoint_url = $this->service_url.'api/2.0/'.$endpoint.'.json';
 
         return ['endpoint_url' => $endpoint_url, 'args' => $args];
     }
@@ -29,7 +29,6 @@ class Freshdesk extends ApiCurl
 
         return $api_request;
     }
-
 
     protected function curl($endpoint, $args = [], $method = 'get')
     {
@@ -49,7 +48,6 @@ class Freshdesk extends ApiCurl
                 exception_log($method);
                 exception_log($args);
             }
-
 
             if ($method == 'post') {
                 $api_request = ApiRequest::post($url);
@@ -91,13 +89,15 @@ class Freshdesk extends ApiCurl
                 exception_log($response);
             }
 
-            if (!empty($response->body)) {
+            if (! empty($response->body)) {
                 return $response->body;
             } else {
                 return (object) ['intCode' => $response->code];
             }
+
             return $response;
-        } catch (\Throwable $ex) {  exception_log($ex);
+        } catch (\Throwable $ex) {
+            exception_log($ex);
             if ($this->debug == 'output') {
             }
 

@@ -3,7 +3,7 @@
 function schedule_debit_orders_set_batch_totals()
 {
     $enabled = get_admin_setting('enable_debit_orders');
-    if (!$enabled) {
+    if (! $enabled) {
         return false;
     }
     $batches = \DB::table('acc_debit_order_batch')->get();
@@ -18,29 +18,27 @@ function schedule_debit_orders_set_batch_totals()
             ->where('api_status', 'Complete')
             ->where('account_id', '>', 0)
             ->sum('total');
-        \DB::table('acc_debit_order_batch')->where('id', $batch->id)->update(['declined_total' => abs($declined_total),'allocated_total' => $allocated_total]);
+        \DB::table('acc_debit_order_batch')->where('id', $batch->id)->update(['declined_total' => abs($declined_total), 'allocated_total' => $allocated_total]);
     }
 }
-
-
 
 function schedule_netcash_statement_get_polling_ids()
 {
     $enabled = get_admin_setting('enable_debit_orders');
-    if (!$enabled) {
+    if (! $enabled) {
         return false;
     }
-    $netcash = new NetCash();
+    $netcash = new NetCash;
     $from_date = date('Y-m-d', strtotime('-1 week'));
     $yesterday = date('Y-m-d', strtotime('-1 day'));
 
     while ($from_date <= $yesterday) {
         $exists = \DB::table('acc_netcash_statement')->where('statement_date', $from_date)->where('polling_id', '>', '')->count();
-        if (!$exists) {
+        if (! $exists) {
             $polling_id = $netcash->getStatementPollingId($from_date);
-           
+
             if ($polling_id && is_numeric($polling_id)) {
-                \DB::table('acc_netcash_statement')->insert(['statement_date'=>$from_date,'polling_id'=>$polling_id]);
+                \DB::table('acc_netcash_statement')->insert(['statement_date' => $from_date, 'polling_id' => $polling_id]);
             }
         }
         $from_date = date('Y-m-d', strtotime($from_date.'+1 day'));
@@ -50,16 +48,15 @@ function schedule_netcash_statement_get_polling_ids()
 function schedule_netcash_statement_get_statement()
 {
     $enabled = get_admin_setting('enable_debit_orders');
-    if (!$enabled) {
+    if (! $enabled) {
         return false;
     }
-    
-  
-    $netcash = new NetCash();
+
+    $netcash = new NetCash;
     \DB::table('acc_netcash_statement')->where('statement', 'FILE NOT READY')->update(['statement' => '']);
     $statements = \DB::table('acc_netcash_statement')->where('statement', '')->where('polling_id', '>', '')->get();
     foreach ($statements as $statement) {
-        if (!empty($statement->polling_id) && is_numeric($statement->polling_id)) {
+        if (! empty($statement->polling_id) && is_numeric($statement->polling_id)) {
             $result = $netcash->retrieveStatement($statement->polling_id);
             $statement_result = $result->RetrieveMerchantStatementResult;
 
@@ -70,7 +67,6 @@ function schedule_netcash_statement_get_statement()
             \DB::table('acc_netcash_statement')->where('id', $statement->id)->update($data);
         }
     }
-
 
     \DB::table('acc_netcash_statement')->update(['has_transactions' => 0]);
     $statements = \DB::table('acc_netcash_statement')->where('statement', '>', '')->where('polling_id', '>', '')->get();
@@ -112,7 +108,7 @@ function schedule_netcash_statement_get_statement()
                     $transactions_processed = true;
                     \DB::table('acc_cashbook_transactions')->where('id', $transaction_id)->update(['api_status' => 'Declined']);
                     process_account_declined_debit_order($account_id);
-                    (new DBEvent())->setAccountAging($account_id);
+                    (new DBEvent)->setAccountAging($account_id);
                 }
             }
         }
@@ -133,27 +129,25 @@ function schedule_netcash_statement_get_statement()
         'OBL',
         'CBL',
         'BTR',
-        'ABR'
+        'ABR',
     ];
-    $trxs = \DB::table('acc_netcash_statement')->where('has_transactions', 1)->orderBy('id','desc')->limit(2)->get();
-   
+    $trxs = \DB::table('acc_netcash_statement')->where('has_transactions', 1)->orderBy('id', 'desc')->limit(2)->get();
+
     foreach ($trxs as $trx) {
-        
+
         if ($trx->statement > '') {
-          
+
             $lines = explode(PHP_EOL, $trx->statement);
-          
+
             $transactions_processed = false;
             foreach ($lines as $line) {
-           
+
                 $transaction = explode("\t", $line);
 
-          
                 $code = $transaction[1];
-                
-           
-                if (!empty($transaction[0]) && !in_array($code, $transaction_codes)) {
-                  
+
+                if (! empty($transaction[0]) && ! in_array($code, $transaction_codes)) {
+
                     $data = [
                         'docdate' => $transaction[0],
                         'doctype' => 'Cashbook Fee',
@@ -163,21 +157,19 @@ function schedule_netcash_statement_get_statement()
                         'cashbook_id' => 1,
                         'ledger_account_id' => 22,
                     ];
-                    if ($transaction[5] == "-") {
-                        $data['total'] = currency(abs($data['total'])*-1);
+                    if ($transaction[5] == '-') {
+                        $data['total'] = currency(abs($data['total']) * -1);
                     }
 
-                  
                     $exists = \DB::table('acc_cashbook_transactions')
                         //->where('total', $data['total'])
                         ->where('reference', $data['reference'])
                         ->where('docdate', $data['docdate'])
                         ->where('cashbook_id', $data['cashbook_id'])
                         ->count();
-                      
-                   
-                    if (!$exists) {
-                 
+
+                    if (! $exists) {
+
                         \DB::table('acc_cashbook_transactions')->insert($data);
                     }
                 }
@@ -186,11 +178,11 @@ function schedule_netcash_statement_get_statement()
     }
 
     // RECONCILE
-    $last_batch = \DB::table('acc_debit_order_batch')->orderBy('id','desc')->get()->first();
-    if($last_batch->id && $last_batch->action_date){
-    \DB::table('acc_cashbook_transactions')->whereNull('docdate')->where('debit_order_batch_id', $last_batch->id)->where('cashbook_id', 1)->update(['docdate' => date('Y-m-d',strtotime($last_batch->action_date))]);
+    $last_batch = \DB::table('acc_debit_order_batch')->orderBy('id', 'desc')->get()->first();
+    if ($last_batch->id && $last_batch->action_date) {
+        \DB::table('acc_cashbook_transactions')->whereNull('docdate')->where('debit_order_batch_id', $last_batch->id)->where('cashbook_id', 1)->update(['docdate' => date('Y-m-d', strtotime($last_batch->action_date))]);
     }
-    
+
     $trxs = \DB::table('acc_cashbook_transactions')->where('cashbook_id', 1)->where('reconciled', 0)->orderBy('docdate', 'asc')->get();
 
     foreach ($trxs as $trx) {
@@ -208,24 +200,25 @@ function schedule_netcash_statement_get_statement()
             \DB::table('acc_cashbook_transactions')->where('docdate', $polling_date)->where('cashbook_id', 1)->update(['api_balance' => $closing_balance]);
         }
     }
-     
+
     cashbook_reconcile(1);
-    
+
 }
 
-function process_account_declined_debit_order($account_id){
-                  
+function process_account_declined_debit_order($account_id)
+{
+
     \DB::table('acc_debit_orders')->where('account_id', $account_id)->update(['status' => 'Disabled']);
     \DB::table('crm_accounts')->where('id', $account_id)->update(['payment_method' => 'Bank']);
-    
+
     $service_account_ids = [$account_id];
     $account = dbgetaccount($account_id);
-    if($account->type == 'reseller'){
-        $service_account_ids = \DB::table('crm_accounts')->where('partner_id',$account_id)->pluck('id')->toArray();
+    if ($account->type == 'reseller') {
+        $service_account_ids = \DB::table('crm_accounts')->where('partner_id', $account_id)->pluck('id')->toArray();
     }
-    \DB::table('sub_services')->whereIn('account_id',$service_account_ids)->update(['contract_period' => 0]);
+    \DB::table('sub_services')->whereIn('account_id', $service_account_ids)->update(['contract_period' => 0]);
     $sub = new ErpSubs;
-    foreach($service_account_ids as $service_account_id){
+    foreach ($service_account_ids as $service_account_id) {
         $sub->updateProductPricesByAccount($service_account_id);
     }
 }
@@ -235,18 +228,16 @@ function button_netcash_statement_unpaid_codes($request)
     return view('__app.button_views.netcash_unpaid_codes');
 }
 
-
-
 function aftersave_debitorders_set_payment_method($request)
 {
     if ($request->status == 'Enabled') {
         \DB::table('crm_accounts')->where('id', $request->account_id)->update(['payment_method' => 'Debit Order']);
-        \DB::table('sub_services')->where('account_id', $request->account_id)->where('status', '!=','Deleted')->update(['contract_period' => 12]);
+        \DB::table('sub_services')->where('account_id', $request->account_id)->where('status', '!=', 'Deleted')->update(['contract_period' => 12]);
     }
-    
+
     if ($request->status == 'Disabled' || $request->status == 'Deleted') {
         \DB::table('crm_accounts')->where('id', $request->account_id)->update(['payment_method' => 'Bank']);
-        (new DBEvent())->setAccountAging($request->account_id);
+        (new DBEvent)->setAccountAging($request->account_id);
     }
     $account = dbgetaccount($request->account_id);
     if ($account->type == 'reseller_user') {
@@ -254,15 +245,11 @@ function aftersave_debitorders_set_payment_method($request)
     }
 }
 
-function aftersave_set_debit_order_balance($request)
-{
-}
-
-
+function aftersave_set_debit_order_balance($request) {}
 
 function button_debit_order_transactions_decline($request)
 {
-    $db = new DBEvent();
+    $db = new DBEvent;
     $debit_order_transaction = \DB::table('acc_cashbook_transactions')->where('id', $request->id)->get()->first();
     if ($debit_order_transaction->account_id > 0) {
         \DB::table('acc_cashbook_transactions')->where('id', $request->id)->update(['api_status' => 'Declined']);
@@ -287,7 +274,6 @@ function create_declined_debit_order_transactions()
     $ledger_ids = [];
 
     foreach ($declined_transactions_payments as $debit_order_transaction) {
-        
 
         $ledger_ids[] = $debit_order_transaction->id;
         $account_ids_balances[] = $debit_order_transaction->account_id;
@@ -305,14 +291,12 @@ function create_declined_debit_order_transactions()
             ->where('account_id', $declined_transaction->account_id)
             ->where('api_status', 'Debit Order Declined Fee')->count();
 
-
-        if (!$reversal_exists) {
-          
+        if (! $reversal_exists) {
 
             $data = (array) $declined_transaction;
             unset($data['id']);
             $data['api_status'] = 'Debit Order Declined';
-           
+
             $data['total'] = currency(($declined_transaction->total) * -1);
             $data['doctype'] = 'Cashbook Customer Receipt';
             $trx_id = \DB::table('acc_cashbook_transactions')->insertGetId($data);
@@ -320,13 +304,13 @@ function create_declined_debit_order_transactions()
             $account_ids_balances[] = $declined_transaction->account_id;
         }
 
-        if (!$reversal_fee_exists) {
+        if (! $reversal_fee_exists) {
 
             $data = (array) $declined_transaction;
             unset($data['id']);
             $data['api_status'] = 'Debit Order Declined Fee';
             $data['reference'] = 'Debit Order Declined Fee';
-            
+
             $data['doctype'] = 'Cashbook Customer Receipt';
             $data['total'] = -50;
             $trx_id = \DB::table('acc_cashbook_transactions')->insertGetId($data);
@@ -339,11 +323,11 @@ function create_declined_debit_order_transactions()
     if (count($account_ids_balances) > 0) {
         $account_ids_balances = collect($account_ids_balances)->unique()->toArray();
         foreach ($account_ids_balances as $account_id) {
-            (new DBEvent())->setAccountAging($account_id, 1);
+            (new DBEvent)->setAccountAging($account_id, 1);
         }
     }
     if (count($ledger_ids) > 0) {
-        $db = new DBEvent();
+        $db = new DBEvent;
         foreach ($ledger_ids as $ledger_id) {
             $db->setTable('acc_cashbook_transactions')->postDocument($ledger_id);
         }
@@ -355,7 +339,7 @@ function button_debit_orders_validate_bank_details($request)
 {
     sleep(2);
     $debit_order = \DB::table('acc_debit_orders')->where('id', $request->id)->get()->first();
-    $netcash = new \NetCash();
+    $netcash = new \NetCash;
     $response = $netcash->validateBankAccount($debit_order);
 
     \DB::table('acc_debit_orders')->where('id', $request->id)->update($response);
@@ -366,11 +350,11 @@ function button_debit_orders_validate_bank_details($request)
     }
 }
 
-
 function button_debit_orders_create($request)
 {
     $account_id = \DB::table('acc_debit_orders')->where('id', $request->id)->pluck('account_id')->first();
     create_single_debit_order($account_id);
+
     return json_alert('Debit order created');
 }
 
@@ -403,7 +387,6 @@ function button_debit_order_batch_generate($request)
     $total = $netcash->generate($storage_file);
     $invoice_amount = currency($total / 100);
 
-
     $batch = \Storage::disk('debit_orders')->get($storage_file);
     $batch = [
         'batch' => $batch,
@@ -416,7 +399,6 @@ function button_debit_order_batch_generate($request)
 
     return json_alert('Debit Orders generated.');
 }
-
 
 function button_debit_order_batch_upload($request)
 {
@@ -444,7 +426,7 @@ function button_debit_order_batch_upload($request)
 function button_debit_order_batch_report($request)
 {
     $batch = \DB::table('acc_debit_order_batch')->where('id', $request->id)->get()->first();
-    if (!empty($batch->result) && 'FILE NOT READY' != $batch->result) {
+    if (! empty($batch->result) && $batch->result != 'FILE NOT READY') {
         return json_alert('Batch report already generated.', 'warning');
     }
     $batch_name_arr = explode('.', $batch->batch_file);
@@ -454,7 +436,7 @@ function button_debit_order_batch_report($request)
 
     \DB::table('acc_debit_order_batch')->where('id', $request->id)->update(['result' => $result->RequestFileUploadReportResult]);
     $batch = \DB::table('acc_debit_order_batch')->where('id', $request->id)->get()->first();
-    if (str_contains($batch->result, 'SUCCESSFUL') && !str_contains($batch->result, 'UNSUCCESSFUL')) {
+    if (str_contains($batch->result, 'SUCCESSFUL') && ! str_contains($batch->result, 'UNSUCCESSFUL')) {
         $complete = $netcash->createTransactions($batch->id);
         if ($complete) {
             return json_alert('Transactions Created.');
@@ -462,13 +444,14 @@ function button_debit_order_batch_report($request)
             return json_alert('Transactions already created.', 'warning');
         }
     }
+
     return json_alert('Batch report updated.');
 }
 
 function button_debit_order_batch_authorise($request)
 {
     $batch = \DB::table('acc_debit_order_batch')->where('id', $request->id)->get()->first();
-    if (!empty($batch->authorise_result) && 'Debit order autorise' == $batch->authorise_result) {
+    if (! empty($batch->authorise_result) && $batch->authorise_result == 'Debit order autorise') {
         return json_alert('Debit order already authorised.', 'warning');
     }
     $batch_name_arr = explode('.', $batch->batch_file);
@@ -498,9 +481,9 @@ function beforedelete_debitorderbatch_check_upload($request)
 
 function beforesave_debitorders_account_unique($request)
 {
-    if (!empty($request->id)) {
+    if (! empty($request->id)) {
         $exists = \DB::table('acc_debit_orders')->where('id', '!=', $request->id)->where('account_id', $request->account_id)->where('status', 'Enabled')->count();
-    } elseif (!empty($request->account_id)) {
+    } elseif (! empty($request->account_id)) {
         $exists = \DB::table('acc_debit_orders')->where('account_id', $request->account_id)->where('status', 'Enabled')->count();
     }
     if ($exists) {
@@ -511,50 +494,50 @@ function beforesave_debitorders_account_unique($request)
         return 'ID Number required';
     }
     $id_verified = verify_za_id_number($request->id_number);
-    if (!$id_verified) {
+    if (! $id_verified) {
         return 'Please enter a valid South African ID Number';
     }
 }
 
 function aftersave_debitorders_set_branch_code($request)
 {
-    if ('Absa Bank' == $request->bank_branch) {
+    if ($request->bank_branch == 'Absa Bank') {
         $bank_branch_code = '632005';
-    } elseif ('Capitec Bank' == $request->bank_branch) {
+    } elseif ($request->bank_branch == 'Capitec Bank') {
         $bank_branch_code = '470010';
-    } elseif ('First National Bank' == $request->bank_branch) {
+    } elseif ($request->bank_branch == 'First National Bank') {
         $bank_branch_code = '250655';
-    } elseif ('Investec Bank' == $request->bank_branch) {
+    } elseif ($request->bank_branch == 'Investec Bank') {
         $bank_branch_code = '580105';
-    } elseif ('Nedbank' == $request->bank_branch) {
+    } elseif ($request->bank_branch == 'Nedbank') {
         $bank_branch_code = '198765';
-    } elseif ('Nedbank Corporate' == $request->bank_branch) {
+    } elseif ($request->bank_branch == 'Nedbank Corporate') {
         $bank_branch_code = '720026';
-    } elseif ('Postbank' == $request->bank_branch) {
+    } elseif ($request->bank_branch == 'Postbank') {
         $bank_branch_code = '460005';
-    } elseif ('Standard Bank' == $request->bank_branch) {
+    } elseif ($request->bank_branch == 'Standard Bank') {
         $bank_branch_code = '051001';
-    } elseif ('Sasfin Bank' == $request->bank_branch) {
+    } elseif ($request->bank_branch == 'Sasfin Bank') {
         $bank_branch_code = '683000';
     }
 
     $account_type = 'Current';
-    if ('Postbank' == $request->bank_branch) {
+    if ($request->bank_branch == 'Postbank') {
         $account_type = 'Savings';
     }
 
     if (str_contains($request->bank_branch, 'Nedbank')) {
         if (str_starts_with($request->bank_account_number, 1)) {
-            'Nedbank' == $request->bank_branch;
+            $request->bank_branch == 'Nedbank';
             $bank_branch_code = '198765';
         }
         if (str_starts_with($request->bank_account_number, 2)) {
-            'Nedbank' == $request->bank_branch;
+            $request->bank_branch == 'Nedbank';
             $account_type = 'Savings';
             $bank_branch_code = '198765';
         }
         if (str_starts_with($request->bank_account_number, 9)) {
-            'Nedbank Corporate' == $request->bank_branch;
+            $request->bank_branch == 'Nedbank Corporate';
             $account_type = 'Savings';
             $bank_branch_code = '720026';
         }
@@ -567,7 +550,7 @@ function aftersave_debitorders_set_branch_code($request)
 
     \DB::table('acc_debit_orders')->where('id', $request->id)->update($data);
     $debit_order = \DB::table('acc_debit_orders')->where('id', $request->id)->get()->first();
-    $netcash = new \NetCash();
+    $netcash = new \NetCash;
     $response = $netcash->validateBankAccount($debit_order);
 
     \DB::table('acc_debit_orders')->where('id', $request->id)->update($response);
@@ -580,9 +563,9 @@ function process_monthly_debit_orders()
 
 function generate_monthly_debit_orders()
 {
-       
+
     $enabled = get_admin_setting('enable_debit_orders');
-    if (!$enabled) {
+    if (! $enabled) {
         return false;
     }
     //return false;
@@ -600,7 +583,7 @@ function generate_monthly_debit_orders()
     if ($batch_exists) {
         // check batch status
         $batch = \DB::table('acc_debit_order_batch')->where('created_at', 'LIKE', $today.'%')->get()->first();
-        if (!$batch->uploaded) {
+        if (! $batch->uploaded) {
             // upload batch
             $batch_name_arr = explode('.', $batch->batch_file);
             $batch_name = $batch_name_arr[0];
@@ -656,16 +639,16 @@ function generate_monthly_debit_orders()
                 debit_order_created_email($batch->id);
                 $account_ids = \DB::table('acc_debit_orders')->pluck('account_id')->toArray();
                 foreach ($account_ids as $account_id) {
-                    (new DBEvent())->setAccountAging($account_id);
+                    (new DBEvent)->setAccountAging($account_id);
                 }
             }
         }
     } else {
-        
+
         if (empty(session('debit_order_action_date'))) {
-            if(date('d')  > 25){
+            if (date('d') > 25) {
                 $action_date = date('Y-m-01', strtotime('next month'));
-            }else{
+            } else {
                 $action_date = date('Y-m-d', strtotime('+ 2 days'));
             }
 
@@ -696,7 +679,7 @@ function generate_monthly_debit_orders()
 
 function create_single_debit_order($account_id, $retry_date = false)
 {
-    if (!$retry_date) {
+    if (! $retry_date) {
         session(['debit_order_retry_count' => 0]);
     }
     // schedule_voice_monthly monthly 1st 6:40
@@ -733,8 +716,6 @@ function create_single_debit_order($account_id, $retry_date = false)
     }
 }
 
-
-
 function authorize_single_debit_order($batch_id)
 {
     $today = date('Y-m-d');
@@ -746,7 +727,7 @@ function authorize_single_debit_order($batch_id)
         $batch_name_arr = explode('.', $batch->batch_file);
         $batch_name = $batch_name_arr[0];
         $netcash = new \NetCash($batch_name);
-        if (!$batch->uploaded) {
+        if (! $batch->uploaded) {
             // upload batch
             $netcash->upload();
             $result_file = $batch_name.'result.txt';
@@ -811,15 +792,14 @@ function account_has_authorised_debit_order($account_id)
     if ($count > 0) {
         return true;
     }
+
     return false;
 }
-
-
 
 function account_has_processed_debit_order($account_id, $retry = false)
 {
     $valid = \DB::table('acc_debit_orders')->where('account_id', $account_id)->where('validated', 1)->where('status', 'Enabled')->count();
-    if (!$valid) {
+    if (! $valid) {
         return 'No Debit order details exists for this account. Please verify debit order status and bank details';
     }
     /*
@@ -844,50 +824,47 @@ function account_has_processed_debit_order($account_id, $retry = false)
     if ($authed_debit_orders > 1) { // multiple debit orders
         return 'Debit order processed.';
     }
-    if (!$authed) {
+    if (! $authed) {
         $debit_order_details_exists = \DB::table('acc_debit_orders')->where('account_id', $account_id)->count();
-        if (!$debit_order_details_exists) {
+        if (! $debit_order_details_exists) {
             return 'Debit order bank details does not exists, customer needs to fill out debit order form.';
         } else {
             $debit_order_details_validated = \DB::table('acc_debit_orders')->where('account_id', $account_id)->where('validated', 1)->count();
-            if (!$debit_order_details_validated) {
+            if (! $debit_order_details_validated) {
                 $debit_order = \DB::table('acc_debit_orders')->where('account_id', $account_id)->get()->first();
-                $netcash = new \NetCash();
+                $netcash = new \NetCash;
                 $response = $netcash->validateBankAccount($debit_order);
 
                 \DB::table('acc_debit_orders')->where('id', $debit_order->id)->update($response);
             }
 
             $debit_order_details_validated = \DB::table('acc_debit_orders')->where('account_id', $account_id)->where('validated', 1)->count();
-            if (!$debit_order_details_validated) {
-                return  "Debit order bank details not verified. Please verify bank details manually.";
+            if (! $debit_order_details_validated) {
+                return 'Debit order bank details not verified. Please verify bank details manually.';
             }
-
-
 
             $debit_order_created = \DB::table('acc_debit_order_batch')
                 ->where('limit_account_id', $account_id)
                 ->count();
-            if (!$debit_order_created) {
+            if (! $debit_order_created) {
                 create_single_debit_order($account_id);
             }
 
             $debit_order_created = \DB::table('acc_debit_order_batch')
                 ->where('limit_account_id', $account_id)
                 ->count();
-            if (!$debit_order_created) {
+            if (! $debit_order_created) {
                 return 'Debit order could not be created for this account.';
             }
+
             return 'Debit order created for this account.';
         }
     }
 
-
-
     $debit_order_count = \DB::table('acc_cashbook_transactions')
         ->join('acc_debit_order_batch', 'acc_cashbook_transactions.debit_order_batch_id', '=', 'acc_debit_order_batch.id')
         ->where('acc_cashbook_transactions.account_id', $account_id)
-        ->whereIn('acc_cashbook_transactions.api_status', ['Complete','Declined'])
+        ->whereIn('acc_cashbook_transactions.api_status', ['Complete', 'Declined'])
         ->where('acc_debit_order_batch.authorise_result', 'Debit order authorised')
         ->count();
 
@@ -895,18 +872,20 @@ function account_has_processed_debit_order($account_id, $retry = false)
         $first_debit_order = \DB::table('acc_cashbook_transactions')
             ->join('acc_debit_order_batch', 'acc_cashbook_transactions.debit_order_batch_id', '=', 'acc_debit_order_batch.id')
             ->where('acc_cashbook_transactions.account_id', $account_id)
-            ->whereIn('acc_cashbook_transactions.api_status', ['Complete','Declined'])
+            ->whereIn('acc_cashbook_transactions.api_status', ['Complete', 'Declined'])
             ->where('acc_debit_order_batch.authorise_result', 'Debit order authorised')
             ->get()->first();
 
         if ($first_debit_order->api_status == 'Declined') {
             if ($retry) {
                 create_single_debit_order($account_id);
+
                 return 'Previous Debit Order declined. New Debit Order submitted.';
             } else {
                 $form = 'Debit Order Declined.<br>';
                 $form .= '<label for="retry_debit_order" >Retry Debit Order</label><br>';
                 $form .= '<input type="checkbox" name="retry_debit_order" id="retry_debit_order"  ><br>';
+
                 return $form;
             }
 
@@ -923,7 +902,7 @@ function account_has_processed_debit_order($account_id, $retry = false)
         $first_debit_order = \DB::table('acc_cashbook_transactions')
             ->join('acc_debit_order_batch', 'acc_cashbook_transactions.debit_order_batch_id', '=', 'acc_debit_order_batch.id')
             ->where('acc_cashbook_transactions.account_id', $account_id)
-            ->whereIn('acc_cashbook_transactions.api_status', ['Complete','Declined'])
+            ->whereIn('acc_cashbook_transactions.api_status', ['Complete', 'Declined'])
             ->where('acc_debit_order_batch.authorise_result', 'Debit order authorised')
             ->orderBy('acc_cashbook_transactions.id', 'desc')
             ->get()->first();
@@ -939,18 +918,18 @@ function account_has_processed_debit_order($account_id, $retry = false)
             return 'Debit order processed.';
         }
     }
+
     return 'Debit order error.';
 }
-
 
 function schedule_verify_all_debit_orders()
 {
     $enabled = get_admin_setting('enable_debit_orders');
-    if (!$enabled) {
+    if (! $enabled) {
         return false;
     }
     //return false;
-    $netcash = new \NetCash();
+    $netcash = new \NetCash;
     $debit_orders = \DB::table('acc_debit_orders')->where('status', '!=', 'Deleted')->get();
     foreach ($debit_orders as $debit_order) {
         $response = $netcash->validateBankAccount($debit_order);
@@ -963,7 +942,7 @@ function schedule_verify_all_debit_orders()
     }
 
     foreach ($debit_orders as $debit_order) {
-        if (!$debit_order->validated) {
+        if (! $debit_order->validated) {
             $account = dbgetaccount($debit_order->account_id);
             $data['debit_company'] = $account->company;
             $data['function_name'] = __FUNCTION__;

@@ -22,7 +22,6 @@ class CreateIspPbxNumbersTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
      *

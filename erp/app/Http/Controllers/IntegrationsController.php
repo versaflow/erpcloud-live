@@ -61,19 +61,17 @@ class IntegrationsController extends BaseController
         \DB::table('crm_tickets')->updateOrInsert(['zendesk_id' => $zendesk_id], $data);
     }
 
-    public function zapierFacebookComments(Request $request)
-    {
-    }
+    public function zapierFacebookComments(Request $request) {}
 
     public function respondInbox(Request $request)
     {
         //85BQ3CbDHcBX5LssiKdsLK3TM/nl5uf3XbEChi54jaw=
         $post_data = $request->all();
-        if (!empty($post_data['message']['message']['subject']) && str_contains($post_data['message']['message']['subject'], 'Altaro')) {
+        if (! empty($post_data['message']['message']['subject']) && str_contains($post_data['message']['message']['subject'], 'Altaro')) {
             $vm_backup_errors = '';
             $subject = $post_data['message']['message']['subject'];
-            $success = (!str_contains($subject, 'Failed')) ? 1 : 0;
-            if (!$success) {
+            $success = (! str_contains($subject, 'Failed')) ? 1 : 0;
+            if (! $success) {
                 $vm_backup_errors .= $subject.PHP_EOL;
             }
             system_log('backup', 'Altaro VM Backup', $subject, 'vm', 'daily', $success);
@@ -89,22 +87,22 @@ class IntegrationsController extends BaseController
         try {
             $post_data = (object) $request->all();
             $exists = \DB::table('crm_accounts')->where('company', $post_data->name)->where('phone', $post_data->phone)->where('email', $post_data->email)->count();
-            if (!$exists) {
+            if (! $exists) {
                 $marketing_lead = [
-                'type' => 'lead',
-                'contact' => $post_data->name,
-                'company' => $post_data->name,
-                'status' => 'Enabled',
-                'pricelist_id' => 1,
-                'partner_id' => 1,
-                'email' => $post_data->email,
+                    'type' => 'lead',
+                    'contact' => $post_data->name,
+                    'company' => $post_data->name,
+                    'status' => 'Enabled',
+                    'pricelist_id' => 1,
+                    'partner_id' => 1,
+                    'email' => $post_data->email,
 
-                'phone' => $post_data->phone,
-                'source' => 'Respond Lead Form',
-                'external_id' => $request->id,
-                'created_at' => date('Y-m-d H:i:s'),
-                'created_by' => get_system_user_id(),
-            ];
+                    'phone' => $post_data->phone,
+                    'source' => 'Respond Lead Form',
+                    'external_id' => $request->id,
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'created_by' => get_system_user_id(),
+                ];
                 foreach ($marketing_lead as $k => $v) {
                     if (empty($v)) {
                         $marketing_lead[$k] = '';
@@ -112,7 +110,7 @@ class IntegrationsController extends BaseController
                 }
                 $account_id = \DB::table('crm_accounts')->insertGetId($marketing_lead);
                 $note = $post_data->notes;
-                if (!empty($note)) {
+                if (! empty($note)) {
                     dbinsert('erp_module_notes', ['note' => $note, 'row_id' => $account_id, 'module_id' => 343]);
                 }
                 schedule_assign_customers_to_salesman();
@@ -142,7 +140,7 @@ class IntegrationsController extends BaseController
 
         if ($source == 'instagram') {
             $exists = \DB::table('crm_accounts')->where('external_id', $request->id)->count();
-            if (!$exists) {
+            if (! $exists) {
                 $marketing_lead = [
                     'type' => 'lead',
                     'contact' => $post_data['full_name'],
@@ -193,11 +191,11 @@ class IntegrationsController extends BaseController
         if ($source == 'facebook') {
             $exists = \DB::table('crm_accounts')->where('external_id', $request->id)->count();
             $company = $post_data['full_name'];
-            if (!empty($post_data['company_name'])) {
+            if (! empty($post_data['company_name'])) {
                 $company = $post_data['company_name'];
             }
 
-            if (!$exists) {
+            if (! $exists) {
                 $marketing_lead = [
                     'type' => 'lead',
                     'contact' => $post_data['full_name'],
@@ -236,9 +234,7 @@ class IntegrationsController extends BaseController
         }
     }
 
-    public function pabblyWebhooks(Request $request)
-    {
-    }
+    public function pabblyWebhooks(Request $request) {}
 
     public function pbxTextToSpeech(Request $request)
     {
@@ -261,7 +257,7 @@ class IntegrationsController extends BaseController
 
         $cmd = 'cd '.$tts_dir.' && php tts.php "'.$text.'" '.$tts_output_dir.$file_title.' "" "" wav';
         $result = \Erp::ssh('localhost', 'root', 'Ahmed777', $cmd);
-        if (!str_contains($result, 'Audio content written')) {
+        if (! str_contains($result, 'Audio content written')) {
             throw new \ErrorException('Audio file could not be generated');
         }
 
@@ -305,15 +301,15 @@ class IntegrationsController extends BaseController
             return json_alert('Function name and code required', 'warning');
         }
 
-        if (substr_count($request->function_code, 'function ') > 1 && !str_contains($request->function_code, 'where(function')) {
+        if (substr_count($request->function_code, 'function ') > 1 && ! str_contains($request->function_code, 'where(function')) {
             return json_alert('Cannot declare more than one function', 'warning');
         }
-        if (substr_count($request->function_code, 'function ') != 1 && !str_contains($request->function_code, 'where(function')) {
+        if (substr_count($request->function_code, 'function ') != 1 && ! str_contains($request->function_code, 'where(function')) {
             return json_alert('Function declaration invalid', 'warning');
         }
         $result = set_function_code($request->function_name, $request->function_code);
 
-        if (!$result) {
+        if (! $result) {
             return json_alert('Code contains syntax errors.', 'error');
         }
 
@@ -332,8 +328,8 @@ class IntegrationsController extends BaseController
         */
 
         $post_data = (array) request()->all();
-        if (!empty($post_data['WW91ciBuYW1l-1']) && !empty($post_data['WW91ciBFLW1haWw-2']) && !empty($post_data['g-recaptcha-response'])) {
-            if (!$this->validateCaptcha($post_data['g-recaptcha-response'], '6LdnTdwiAAAAAFILMCiz50Zr0EYnOzE5CW3o2CWr', 'netstream.store')) {
+        if (! empty($post_data['WW91ciBuYW1l-1']) && ! empty($post_data['WW91ciBFLW1haWw-2']) && ! empty($post_data['g-recaptcha-response'])) {
+            if (! $this->validateCaptcha($post_data['g-recaptcha-response'], '6LdnTdwiAAAAAFILMCiz50Zr0EYnOzE5CW3o2CWr', 'netstream.store')) {
                 return redirect()->back();
             }
             $data = [
@@ -352,23 +348,23 @@ class IntegrationsController extends BaseController
             ];
 
             $exists = \DB::table('crm_accounts')->where('company', $data['company'])->where('created_at', 'like', date('Y-m-d').'%')->count();
-            if (!$exists) {
+            if (! $exists) {
                 $id = \DB::table('crm_accounts')->insertGetId($data);
 
                 module_log(343, $id, 'created');
                 $note = 'Product: '.$post_data['UHJvZHVjdA-4'];
-                if (!empty($post_data['WW91ciBtZXNzYWdl-5'])) {
+                if (! empty($post_data['WW91ciBtZXNzYWdl-5'])) {
                     $note .= '<br>Message: '.$post_data['WW91ciBtZXNzYWdl-5'];
                 }
 
                 $data = [
-                'created_at' => date('Y-m-d H:i:s'),
-                'created_by' => get_user_id_default(),
-                'row_id' => $id,
-                'module_id' => 343,
-                'note' => $note,
-                'is_deleted' => 0,
-            ];
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'created_by' => get_user_id_default(),
+                    'row_id' => $id,
+                    'module_id' => 343,
+                    'note' => $note,
+                    'is_deleted' => 0,
+                ];
 
                 \DB::connection('default')->table('erp_module_notes')->insert($data);
             }
@@ -381,8 +377,8 @@ class IntegrationsController extends BaseController
     {
         $post_data = (array) request()->all();
 
-        if (!empty($post_data['RnVsbCBOYW1l-1']) && !empty($post_data['RS1tYWls-2']) && !empty($post_data['g-recaptcha-response'])) {
-            if (!$this->validateCaptcha($post_data['g-recaptcha-response'], '6LetRdwiAAAAAM6OKrkfE19BJ4-tN42ysZ7TKwip', 'cloudtelecoms.co.za')) {
+        if (! empty($post_data['RnVsbCBOYW1l-1']) && ! empty($post_data['RS1tYWls-2']) && ! empty($post_data['g-recaptcha-response'])) {
+            if (! $this->validateCaptcha($post_data['g-recaptcha-response'], '6LetRdwiAAAAAM6OKrkfE19BJ4-tN42ysZ7TKwip', 'cloudtelecoms.co.za')) {
                 return redirect()->back();
             }
 
@@ -400,12 +396,12 @@ class IntegrationsController extends BaseController
                 'type' => 'lead',
             ];
             $exists = \DB::table('crm_accounts')->where('company', $data['company'])->where('created_at', 'like', date('Y-m-d').'%')->count();
-            if (!$exists) {
+            if (! $exists) {
                 $id = \DB::table('crm_accounts')->insertGetId($data);
 
                 module_log(343, $id, 'created');
 
-                if (!empty($post_data['TWVzc2FnZQ-4'])) {
+                if (! empty($post_data['TWVzc2FnZQ-4'])) {
                     $note = '<br>Message: '.$post_data['TWVzc2FnZQ-4'];
                     $data = [
                         'created_at' => date('Y-m-d H:i:s'),
@@ -429,8 +425,8 @@ class IntegrationsController extends BaseController
         try {
             $url = 'https://www.google.com/recaptcha/api/siteverify';
             $data = ['secret' => $key,
-                     'response' => $captcha,
-                     ];
+                'response' => $captcha,
+            ];
 
             $options = [
                 'http' => [
@@ -455,7 +451,7 @@ class IntegrationsController extends BaseController
 
     public function flexmonster($id, $company_id = false)
     {
-        if (!$company_id) {
+        if (! $company_id) {
             $company_id = session('instance')->id;
         }
 
@@ -466,7 +462,7 @@ class IntegrationsController extends BaseController
             $report_conn = $instance->db_connection;
         }
         $report_exists = \DB::connection($instance->db_connection)->table('erp_reports')->where('id', $id)->count();
-        if (!$report_exists) {
+        if (! $report_exists) {
             return json_alert('Invalid report id', 'error');
         }
 
@@ -474,7 +470,7 @@ class IntegrationsController extends BaseController
 
         $report = \DB::connection($instance->db_connection)->table('erp_reports')->where('id', $id)->get()->first();
         if ($report->fds) {
-            $flexmonster = new \Flexmonster();
+            $flexmonster = new \Flexmonster;
             $flexmonster->loadIndexes();
             $flexmonster->dataServerRestart();
         }
@@ -494,7 +490,7 @@ class IntegrationsController extends BaseController
             $query_error = $ex->getMessage();
         }
 
-        if (!$valid_query) {
+        if (! $valid_query) {
             exception_log('invalid query');
 
             return redirect()->to($querybuilder_url);
@@ -512,7 +508,7 @@ class IntegrationsController extends BaseController
             'user_id' => $user_id,
             'readonly' => 1,
         ];
-        if (!empty(request()->editreport)) {
+        if (! empty(request()->editreport)) {
             $data['readonly'] = 0;
         }
         $token = \Erp::encode($data);
@@ -534,7 +530,7 @@ class IntegrationsController extends BaseController
                 $token = \Erp::decode($request->token);
 
                 $db_conn = \DB::table('erp_instances')->where('id', $token['instance_id'])->pluck('db_connection')->first();
-                if (!$db_conn) {
+                if (! $db_conn) {
                     return json_alert('Invalid instance id', 'error');
                 }
 
@@ -543,7 +539,7 @@ class IntegrationsController extends BaseController
                 }
                 // check role
                 $role_id = \DB::connection($db_conn)->table('erp_users')->where('id', $token['user_id'])->pluck('role_id')->first();
-                if (!$role_id) {
+                if (! $role_id) {
                     return json_alert('Invalid user role', 'error');
                 }
 
@@ -554,7 +550,7 @@ class IntegrationsController extends BaseController
             }
 
             $report_exists = \DB::connection($db_conn)->table('erp_reports')->where('id', $token['report_id'])->count();
-            if (!$report_exists) {
+            if (! $report_exists) {
                 return json_alert('Invalid report id', 'error');
             }
 
@@ -579,17 +575,17 @@ class IntegrationsController extends BaseController
                 $query_error = $ex->getMessage();
             }
 
-            if (!$valid_query) {
+            if (! $valid_query) {
                 return redirect()->to($querybuilder_url);
             }
 
             // REPORT DATA
             if ($report->fds) {
                 $datasource = [
-                'type' => 'api',
-                'url' => 'http://156.0.96.71:'.$report->report_port,
-                'index' => $report->report_index,
-            ];
+                    'type' => 'api',
+                    'url' => 'http://156.0.96.71:'.$report->report_port,
+                    'index' => $report->report_index,
+                ];
             } else {
                 $sql_conn = ($report->connection == 'default') ? $db_conn : $report->connection;
 
@@ -604,19 +600,19 @@ class IntegrationsController extends BaseController
             $subtitle = '';
 
             $query_data = unserialize($report_row->query_data);
-            if (!empty($query_data['filter_period']) && !empty($query_data['filter_period'])) {
+            if (! empty($query_data['filter_period']) && ! empty($query_data['filter_period'])) {
                 $title .= ' <br> Period: '.date('Y-m', strtotime($query_data['filter_period']));
 
-                if (!empty($report_row->sql_where)) {
+                if (! empty($report_row->sql_where)) {
                     $subtitle .= ' <br> '.$report_row->sql_where;
                 }
-            } elseif (!empty($query_data['date_filter_column']) && !empty($query_data['date_filter_value'])) {
+            } elseif (! empty($query_data['date_filter_column']) && ! empty($query_data['date_filter_value'])) {
                 $title .= '('.$query_data['date_filter_column'].' = '.$query_data['date_filter_value'].')';
 
-                if (!empty($report_row->sql_where)) {
+                if (! empty($report_row->sql_where)) {
                     $subtitle .= ' <br> '.$report_row->sql_where;
                 }
-            } elseif (!empty($report_row->sql_where)) {
+            } elseif (! empty($report_row->sql_where)) {
                 $subtitle .= $report_row->sql_where;
             }
 
@@ -629,26 +625,26 @@ class IntegrationsController extends BaseController
             $config = \DB::connection($db_conn)->table('erp_reports')->where('id', $report->id)->pluck('report_config')->first();
             $report_state = json_decode($config);
 
-            if (!empty($report_state)) {
+            if (! empty($report_state)) {
                 $report_config = $report_state->report;
 
                 $report_config = json_decode($report_config);
-                if (!empty($report_config->options)) {
+                if (! empty($report_config->options)) {
                     $report_config->options->datePattern = 'yyyy-MM-dd';
                     $report_config->options->dateTimePattern = 'yyyy-MM-dd HH:mm';
                 }
                 $report_config->name = $name;
-                if (!empty($report_config->options) && !empty($report_config->options->grid) && !empty($report_config->options->grid->title)) {
+                if (! empty($report_config->options) && ! empty($report_config->options->grid) && ! empty($report_config->options->grid->title)) {
                     $report_config->options->grid->title = $name;
                 }
             }
             // if(is_dev()){
 
-            if (!empty($report_config)) {
-                $erp_reports = new \ErpReports();
+            if (! empty($report_config)) {
+                $erp_reports = new \ErpReports;
                 $erp_reports->setErpConnection($db_conn);
                 $mappings = $erp_reports->getDateMappings($report->id);
-                if (!empty($mappings) && is_array($mappings) && count($mappings) > 0) {
+                if (! empty($mappings) && is_array($mappings) && count($mappings) > 0) {
                     $report_config->mapping = $mappings;
                 }
             }
@@ -660,17 +656,17 @@ class IntegrationsController extends BaseController
             $connection_info = $databases[$report->connection];
             $connection_string = 'Server='.$connection_info['host'].';Port='.$connection_info['port'].';Uid='.$connection_info['username'].';Pwd='.$connection_info['password'].';Database='.$connection_info['database'].'; convert zero datetime=True';
             $response = [
-            'querybuilder_url' => $querybuilder_url,
-            'datasource' => $datasource,
-            'status' => 'success',
-            'instance_id' => $token['instance_id'],
-            'report_id' => $token['report_id'],
-            'report' => $report,
-            'report_state' => json_encode($report_config),
-            'connection_string' => $connection_string,
-            'edit_access' => ($role_id == 1 || $role_id == 2 || $role_id == 34) ? true : false,
-            'license_key' => 'Z7WC-XJDA5X-174651-3P1M1N-2M1F2Q-1W0X14-2Z295O-204A4S-4L255S-4V411N-3Q6K6U-0N',
-        ];
+                'querybuilder_url' => $querybuilder_url,
+                'datasource' => $datasource,
+                'status' => 'success',
+                'instance_id' => $token['instance_id'],
+                'report_id' => $token['report_id'],
+                'report' => $report,
+                'report_state' => json_encode($report_config),
+                'connection_string' => $connection_string,
+                'edit_access' => ($role_id == 1 || $role_id == 2 || $role_id == 34) ? true : false,
+                'license_key' => 'Z7WC-XJDA5X-174651-3P1M1N-2M1F2Q-1W0X14-2Z295O-204A4S-4L255S-4V411N-3Q6K6U-0N',
+            ];
             if ($token['readonly'] == 1) {
                 $response['edit_access'] = false;
             }
@@ -689,7 +685,7 @@ class IntegrationsController extends BaseController
             $token = \Erp::decode($request->token);
 
             $db_conn = \DB::table('erp_instances')->where('id', $token['instance_id'])->pluck('db_connection')->first();
-            if (!$db_conn) {
+            if (! $db_conn) {
                 return json_alert('Invalid instance id', 'error');
             }
 
@@ -698,7 +694,7 @@ class IntegrationsController extends BaseController
             }
             // check role
             $role_id = \DB::connection($db_conn)->table('erp_users')->where('id', $token['user_id'])->pluck('role_id')->first();
-            if (!$role_id) {
+            if (! $role_id) {
                 return json_alert('Invalid user role', 'error');
             }
 
@@ -708,7 +704,7 @@ class IntegrationsController extends BaseController
             }
         }
         $report_exists = \DB::connection($db_conn)->table('erp_reports')->where('id', $token['report_id'])->count();
-        if (!$report_exists) {
+        if (! $report_exists) {
             return json_alert('Invalid report id', 'error');
         }
         $report = \DB::connection($db_conn)->table('erp_reports')->where('id', $token['report_id'])->get()->first();
@@ -736,7 +732,7 @@ class IntegrationsController extends BaseController
             $token = \Erp::decode($request->token);
 
             $db_conn = \DB::table('erp_instances')->where('id', $token['instance_id'])->pluck('db_connection')->first();
-            if (!$db_conn) {
+            if (! $db_conn) {
                 return json_alert('Invalid instance id', 'error');
             }
 
@@ -745,7 +741,7 @@ class IntegrationsController extends BaseController
             }
             // check role
             $role_id = \DB::connection($db_conn)->table('erp_users')->where('id', $token['user_id'])->pluck('role_id')->first();
-            if (!$role_id) {
+            if (! $role_id) {
                 return json_alert('Invalid user role', 'error');
             }
 
@@ -755,7 +751,7 @@ class IntegrationsController extends BaseController
             }
         }
         $report_exists = \DB::connection($db_conn)->table('erp_reports')->where('id', $token['report_id'])->count();
-        if (!$report_exists) {
+        if (! $report_exists) {
             return json_alert('Invalid report id', 'error');
         }
 
@@ -781,12 +777,12 @@ class IntegrationsController extends BaseController
 
             $data['files'][] = $filepath;
 
-            if (!empty($data['files']) && count($data['files']) > 0) {
+            if (! empty($data['files']) && count($data['files']) > 0) {
                 $data['internal_function'] = 'report_emails';
                 $data['frequency'] = ucfirst($report->email_frequency);
                 $data['report_name'] = $report_name;
                 //$data['test_debug'] = 1;
-               // erp_process_notification(1, $data);
+                // erp_process_notification(1, $data);
             }
         } catch (\Throwable $ex) {
             exception_log($ex);
@@ -834,7 +830,7 @@ class IntegrationsController extends BaseController
                     $date = $message->getDate()[0];
                     $flags = [];
                     $flags_collection = $message->getFlags();
-                    if (!empty($flags_collection)) {
+                    if (! empty($flags_collection)) {
                         $flags = $message->getFlags()->toArray();
                     }
                     $msg = [
@@ -858,7 +854,7 @@ class IntegrationsController extends BaseController
 
                     $msg['CC'] = [];
                     $cc = $message->getCc();
-                    if (!empty($cc)) {
+                    if (! empty($cc)) {
                         $cc = $cc->get();
                         foreach ($cc as $c) {
                             $msg['CC'][] = $c->personal;
@@ -868,7 +864,7 @@ class IntegrationsController extends BaseController
 
                     $msg['BCC'] = [];
                     $bcc = $message->getBcc();
-                    if (!empty($bcc)) {
+                    if (! empty($bcc)) {
                         $bcc = $bcc->get();
                         foreach ($bcc as $b) {
                             $msg['BCC'][] = $b->personal;
@@ -884,7 +880,7 @@ class IntegrationsController extends BaseController
                     'HasChild' => $folder->has_children,
                     'Count' => $message_count,
                 ];
-                ++$i;
+                $i++;
                 $folders_json[] = $folder_data;
             }
             $data['folders'] = $folders_json;
@@ -966,7 +962,7 @@ class IntegrationsController extends BaseController
                 'message' => 'Mailbox not found',
             ];
         }
-        if (!empty($error)) {
+        if (! empty($error)) {
             return redirect()->back()->with($error);
         }
         $data = ['menu_name' => 'Mailbox'];
@@ -1003,7 +999,7 @@ class IntegrationsController extends BaseController
                     $date = $message->getDate()[0];
                     $flags = [];
                     $flags_collection = $message->getFlags();
-                    if (!empty($flags_collection)) {
+                    if (! empty($flags_collection)) {
                         $flags = $message->getFlags()->toArray();
                     }
                     $msg = [
@@ -1027,7 +1023,7 @@ class IntegrationsController extends BaseController
 
                     $msg['CC'] = [];
                     $cc = $message->getCc();
-                    if (!empty($cc)) {
+                    if (! empty($cc)) {
                         $cc = $cc->get();
                         foreach ($cc as $c) {
                             $msg['CC'][] = $c->personal;
@@ -1037,7 +1033,7 @@ class IntegrationsController extends BaseController
 
                     $msg['BCC'] = [];
                     $bcc = $message->getBcc();
-                    if (!empty($bcc)) {
+                    if (! empty($bcc)) {
                         $bcc = $bcc->get();
                         foreach ($bcc as $b) {
                             $msg['BCC'][] = $b->personal;
@@ -1053,7 +1049,7 @@ class IntegrationsController extends BaseController
                     'HasChild' => $folder->has_children,
                     'Count' => $message_count,
                 ];
-                ++$i;
+                $i++;
                 $folders_json[] = $folder_data;
             }
             $data['folders'] = $folders_json;
@@ -1062,6 +1058,7 @@ class IntegrationsController extends BaseController
             exception_log($ex);
             $error = $ex->getMessage().' '.$ex->getFile().':'.$ex->getLine();
         }
+
         //dd($data);
         return view('__app.components.mailbox', $data);
     }
@@ -1087,7 +1084,7 @@ class IntegrationsController extends BaseController
             //Get all Mailboxes
             /* @var \Webklex\PHPIMAP\Support\FolderCollection $folders */
 
-            if (!empty($request->get_folders)) {
+            if (! empty($request->get_folders)) {
                 $folders = $client->getFolders();
                 $folders_json = [];
                 $i = 1;
@@ -1099,13 +1096,14 @@ class IntegrationsController extends BaseController
                         'HasChild' => $folder->has_children,
                         'Count' => '',
                     ];
-                    ++$i;
+                    $i++;
                 }
+
                 // echo $folders_json;
                 return response()->json($folders_json);
             }
 
-            if (!empty($request->get_emails)) {
+            if (! empty($request->get_emails)) {
                 $messages_json = [];
                 $folder = $client->getFolder($request->get_emails);
 
@@ -1118,7 +1116,7 @@ class IntegrationsController extends BaseController
                     $date = $message->getDate()[0];
                     $flags = [];
                     $flags_collection = $message->getFlags();
-                    if (!empty($flags_collection)) {
+                    if (! empty($flags_collection)) {
                         $flags = $message->getFlags()->toArray();
                     }
                     $msg = [
@@ -1142,7 +1140,7 @@ class IntegrationsController extends BaseController
 
                     $msg['CC'] = [];
                     $cc = $message->getCc();
-                    if (!empty($cc)) {
+                    if (! empty($cc)) {
                         $cc = $cc->get();
                         foreach ($cc as $c) {
                             $msg['CC'][] = $c->personal;
@@ -1152,7 +1150,7 @@ class IntegrationsController extends BaseController
 
                     $msg['BCC'] = [];
                     $bcc = $message->getBcc();
-                    if (!empty($bcc)) {
+                    if (! empty($bcc)) {
                         $bcc = $bcc->get();
                         foreach ($bcc as $b) {
                             $msg['BCC'][] = $b->personal;
@@ -1209,16 +1207,16 @@ class IntegrationsController extends BaseController
     {
         $connection = 'default';
 
-        if (!empty($request->report_connection)) {
+        if (! empty($request->report_connection)) {
             $connection = $request->report_connection;
         }
-        if (!empty($request->company_id)) {
+        if (! empty($request->company_id)) {
             $companies = \DB::table('erp_instances')->get();
             $erp = $companies->where('id', $request->company_id)->first();
             $connection = $erp->db_connection;
         }
 
-        if (!is_superadmin()) {
+        if (! is_superadmin()) {
             if ($request->ajax()) {
                 return json_alert('No access', 'error');
             } else {
@@ -1235,7 +1233,7 @@ class IntegrationsController extends BaseController
         $sql_json = \DB::connection($connection)->table('erp_reports')->where('id', $id)->pluck('rules_json')->first();
         $data = unserialize($config);
 
-        if (!empty($data['db_columns']) && is_array($data['db_columns']) && count($data['db_columns']) > 0) {
+        if (! empty($data['db_columns']) && is_array($data['db_columns']) && count($data['db_columns']) > 0) {
             foreach ($data['db_columns'] as $i => $col) {
                 $col_arr = explode('.', $col);
                 $table = $col_arr[0];
@@ -1244,10 +1242,10 @@ class IntegrationsController extends BaseController
                 if ($c == 'default') {
                     $c = $connection;
                 }
-                if (!in_array($table, $data['db_tables'])) {
+                if (! in_array($table, $data['db_tables'])) {
                     unset($data['db_columns'][$i]);
                 }
-                if (!\Schema::connection($c)->hasColumn($table, $field)) {
+                if (! \Schema::connection($c)->hasColumn($table, $field)) {
                     unset($data['db_columns'][$i]);
                 }
             }
@@ -1271,7 +1269,7 @@ class IntegrationsController extends BaseController
         foreach ($connections as $c) {
             $data['connections'][] = (object) ['text' => $c, 'value' => $c];
         }
-        $erp_reports = new \ErpReports();
+        $erp_reports = new \ErpReports;
         $erp_reports->setErpConnection($connection);
 
         $data['tables_ds'] = $erp_reports->reportGetTables($request);
@@ -1295,10 +1293,10 @@ class IntegrationsController extends BaseController
             'current year',
         ];
 
-        if (!empty($sql_json)) {
+        if (! empty($sql_json)) {
             $rules_json = json_decode($sql_json);
 
-            if (!empty($rules_json->rules) && count($rules_json->rules) > 0) {
+            if (! empty($rules_json->rules) && count($rules_json->rules) > 0) {
                 foreach ($rules_json->rules as $i => $rule) {
                     if (str_contains($rule->field, '.')) {
                         foreach ($data['filters_ds'] as $filter_ds) {
@@ -1323,7 +1321,7 @@ class IntegrationsController extends BaseController
         $data['connection'] = $connection;
         $filters_datasource = [];
 
-        if (!empty($sql_query) && $report->invalid_query == 0) {
+        if (! empty($sql_query) && $report->invalid_query == 0) {
             $filter_sql = $erp_reports->reportFilterSQL($id);
             //dd($filter_sql);
             try {
@@ -1334,6 +1332,7 @@ class IntegrationsController extends BaseController
         }
         $data['filters_datasource'] = $filters_datasource;
         $data['enable_filters'] = false;
+
         //dd($data);
         return view('__app.components.query', $data);
     }
@@ -1341,7 +1340,7 @@ class IntegrationsController extends BaseController
     public function reportQueryDateFilter(Request $request)
     {
         try {
-            if (!empty($request->report_id) && !empty($request->date_filter_field) && !empty($request->date_filter_value)) {
+            if (! empty($request->report_id) && ! empty($request->date_filter_field) && ! empty($request->date_filter_value)) {
                 $id = $request->report_id;
                 $config = \DB::table('erp_reports')->where('id', $id)->pluck('query_data')->first();
                 $query_data = unserialize($config);
@@ -1367,7 +1366,7 @@ class IntegrationsController extends BaseController
                 }
 
                 \DB::table('erp_reports')->where('id', $id)->update(['query_data' => serialize($query_data)]);
-                $erp_reports = new \ErpReports();
+                $erp_reports = new \ErpReports;
                 $erp_reports->setErpConnection(session('instance')->db_connection);
                 $sql = $erp_reports->reportSQL($id);
 
@@ -1395,11 +1394,11 @@ class IntegrationsController extends BaseController
                 abort(500, 'Invalid connection');
             }
 
-            $erp_reports = new \ErpReports();
+            $erp_reports = new \ErpReports;
             $erp_reports->setErpConnection($connection);
 
             if ($request->action == 'save') {
-                if (!empty($request->sql_json)) {
+                if (! empty($request->sql_json)) {
                     $request->sql_json = json_encode($request->sql_json);
                 }
                 $data = $request->all();
@@ -1419,13 +1418,13 @@ class IntegrationsController extends BaseController
 
                 \DB::connection($connection)->table('erp_reports')->where('id', $request->id)->update(['tables_used' => implode(',', $data['db_tables'])]);
 
-                if (!empty($data['db_columns']) && is_array($data['db_columns']) && count($data['db_columns']) > 0) {
+                if (! empty($data['db_columns']) && is_array($data['db_columns']) && count($data['db_columns']) > 0) {
                     foreach ($data['db_columns'] as $i => $col) {
                         $col_arr = explode('.', $col);
                         $table = $col_arr[0];
                         $field = $col_arr[1];
 
-                        if (!in_array($table, $data['db_tables'])) {
+                        if (! in_array($table, $data['db_tables'])) {
                             unset($data['db_columns'][$i]);
                         }
                     }
@@ -1440,7 +1439,7 @@ class IntegrationsController extends BaseController
 
                 $sql_where = \DB::connection($connection)->table('erp_reports')->where('id', $request->id)->pluck('sql_where')->first();
 
-                if (!empty($request->sql_where)) {
+                if (! empty($request->sql_where)) {
                     $request_where = str_replace('__', '.', $request->sql_where);
                     $request_where = str_replace('"', "'", $request->sql_where);
                     \DB::connection($connection)->table('erp_reports')->where('id', $request->id)->update(['sql_where' => $request_where]);
@@ -1455,7 +1454,7 @@ class IntegrationsController extends BaseController
                 \DB::connection($connection)->table('erp_reports')->where('id', $request->id)->update(['sql_query' => $sql]);
                 \DB::connection($connection)->table('erp_reports')->where('id', $request->id)->update(['connection' => $data['db_conn']]);
 
-                if (!empty($request->reset_joins) && $request->reset_joins == 1) {
+                if (! empty($request->reset_joins) && $request->reset_joins == 1) {
                     $erp_reports->reportResetJoinsById($request->id);
                 }
                 /*
@@ -1472,8 +1471,8 @@ class IntegrationsController extends BaseController
 
             if ($request->action == 'save_rules') {
                 $sql_json = '';
-                if (!empty($request->sql_json)) {
-                    if (!empty($request->sql_json['rules']) && count($request->sql_json['rules']) > 0) {
+                if (! empty($request->sql_json)) {
+                    if (! empty($request->sql_json['rules']) && count($request->sql_json['rules']) > 0) {
                         foreach ($request->sql_json['rules'] as $rule) {
                             if ($rule['type'] == 'date') {
                                 $v = date('Y-m-d', strtotime($rule['value']));
@@ -1493,15 +1492,15 @@ class IntegrationsController extends BaseController
             }
 
             if ($request->action == 'get_columns') {
-                return  $erp_reports->reportGetColumns($request);
+                return $erp_reports->reportGetColumns($request);
             }
 
             if ($request->action == 'get_date_columns') {
-                return  $erp_reports->reportGetDateColumns($request);
+                return $erp_reports->reportGetDateColumns($request);
             }
 
             if ($request->action == 'get_filter_columns') {
-                return  $erp_reports->reportGetFilterColumns($request);
+                return $erp_reports->reportGetFilterColumns($request);
             }
 
             if ($request->action == 'get_join_columns') {
@@ -1509,7 +1508,7 @@ class IntegrationsController extends BaseController
             }
 
             if ($request->action == 'reset_joins') {
-                return  $erp_reports->reportResetJoinsByRequest($request);
+                return $erp_reports->reportResetJoinsByRequest($request);
             }
         } catch (\Throwable $ex) {
             exception_log($ex);
@@ -1533,7 +1532,7 @@ class IntegrationsController extends BaseController
         }
 
         $result = pbx_call($request->outbound_caller_id, 12, 'account', $request->number_to_call);
-        if (true === $result) {
+        if ($result === true) {
             return json_alert('Call sent to PBX');
         } else {
             return json_alert($result, 'error');
@@ -1620,7 +1619,7 @@ class IntegrationsController extends BaseController
         $menu_name = get_menu_url_from_table('hd_tickets');
 
         session(['troubleshooter_form' => true]);
-        $request_data = new \Illuminate\Http\Request();
+        $request_data = new \Illuminate\Http\Request;
         $url = $menu_name.'/edit';
 
         $request_data->server->set('REQUEST_URI', $url);
@@ -1647,11 +1646,11 @@ class IntegrationsController extends BaseController
             $menu_name = get_menu_url_from_table('hd_tickets');
 
             session(['troubleshooter_form' => true]);
-            $request_data = new \Illuminate\Http\Request();
+            $request_data = new \Illuminate\Http\Request;
             $url = $menu_name.'/edit';
 
             $request_data->server->set('REQUEST_URI', $url);
-            $data['ticket'] = app('App\Http\Controllers\ModuleController')->getEdit($request_data);
+            $data['ticket'] = app(\App\Http\Controllers\ModuleController::class)->getEdit($request_data);
 
             return view('__app.components.pages.helpdesk', $data);
         }
@@ -1672,7 +1671,7 @@ class IntegrationsController extends BaseController
                     if (empty($request->ip_address)) {
                         return json_alert('IP Address required.', 'warning');
                     }
-                    $pbx = new \FusionPBX();
+                    $pbx = new \FusionPBX;
                     $blocked = $pbx->checkBlockedIP($request->ip_address);
 
                     $ts = \DB::table('crm_troubleshooter')->where('parent_id', session('troubleshooting')->id)->get()->first();
@@ -1718,10 +1717,10 @@ class IntegrationsController extends BaseController
 
         $file = $request->file('import');
         $filename = $file->getClientOriginalName();
-        if (!str_ends_with($filename, '.csv') && $provider == 'SRSPlus') {
+        if (! str_ends_with($filename, '.csv') && $provider == 'SRSPlus') {
             return json_alert('Please upload .csv file', 'error');
         }
-        if (!str_ends_with($filename, '.txt') && str_contains($provider, 'ZACR')) {
+        if (! str_ends_with($filename, '.txt') && str_contains($provider, 'ZACR')) {
             return json_alert('Please upload .txt file', 'error');
         }
 
@@ -1731,11 +1730,11 @@ class IntegrationsController extends BaseController
 
         $uploadSuccess = $file->move($domains_dir, $filename);
 
-        if (!$uploadSuccess) {
+        if (! $uploadSuccess) {
             return json_alert('Upload Failed!', 'error');
         }
 
-        $records = (new FastExcel())->import($domains_dir.$filename);
+        $records = (new FastExcel)->import($domains_dir.$filename);
 
         $records_count = count($records);
 
@@ -1743,27 +1742,27 @@ class IntegrationsController extends BaseController
 
         foreach ($zacr_domains as $domain) {
             $sub = \DB::table('sub_services')->where('status', '!=', 'Deleted')->where('detail', $domain)->count();
-            if (!$sub) {
+            if (! $sub) {
                 try {
                     $info = zacr_domain_info($domain);
 
                     $delete = false;
                     foreach ($info['data']['domain:infData']['domain:status'] as $s) {
-                        if (!empty($s['s']) && $s['s'] == 'pendingDelete') {
+                        if (! empty($s['s']) && $s['s'] == 'pendingDelete') {
                             $delete = true;
                         }
 
-                        if (!empty($s['@attributes']['s']) && ($s['@attributes']['s'] == 'pendingDelete' || $s['@attributes']['s'] == 'inactive')) {
+                        if (! empty($s['@attributes']['s']) && ($s['@attributes']['s'] == 'pendingDelete' || $s['@attributes']['s'] == 'inactive')) {
                             $delete = true;
                         }
 
-                        if (!empty($s['@content']) && $s['@content'] == 'PendingManualSuspension') {
+                        if (! empty($s['@content']) && $s['@content'] == 'PendingManualSuspension') {
                             $delete = true;
                         }
                     }
                     if ($delete) {
                         $zacr_expiring_domains[] = $domain;
-                        --$autorenew_count;
+                        $autorenew_count--;
                     } else {
                         $data = [
                             'account_id' => 0,
@@ -1807,11 +1806,11 @@ class IntegrationsController extends BaseController
         if (empty($request->provider)) {
             return json_alert('Provider required.', 'error');
         }
-        if (strlen($number_start) != 11 || !preg_match('/[0-9]+/', $number_start) == true) {
+        if (strlen($number_start) != 11 || ! preg_match('/[0-9]+/', $number_start) == true) {
             return json_alert('Invalid number range start.', 'error');
         }
 
-        if (strlen($number_end) != 11 || !preg_match('/[0-9]+/', $number_end) == true) {
+        if (strlen($number_end) != 11 || ! preg_match('/[0-9]+/', $number_end) == true) {
             return json_alert('Invalid number range end.', 'error');
         }
 
@@ -1834,7 +1833,7 @@ class IntegrationsController extends BaseController
             return json_alert('Number range start and end Prefix does not match.', 'error');
         }
 
-        if ('2787' == substr($number_start, 0, 4) || '087' == substr($number_start, 0, 3)) {
+        if (substr($number_start, 0, 4) == '2787' || substr($number_start, 0, 3) == '087') {
             $product_id = 127; // 087
         } else {
             if (str_starts_with($number_start, '2712786')) { // 012786
@@ -1850,7 +1849,7 @@ class IntegrationsController extends BaseController
         if ($number_start != $number_end) {
             while ($number_start != $number_end) {
                 $exists = \DB::connection($conn)->table('p_phone_numbers')->where('number', $number_start)->count();
-                if (!$exists) {
+                if (! $exists) {
                     if ($conn == 'pbx') {
                         $uuid = pbx_uuid('p_phone_numbers', 'number_uuid');
                     } else {
@@ -1876,11 +1875,11 @@ class IntegrationsController extends BaseController
                     ];
                     \DB::connection($conn)->table('p_phone_numbers')->insert($data);
                 }
-                ++$number_start;
+                $number_start++;
             }
         } elseif ($number_start == $number_end) {
             $exists = \DB::connection($conn)->table('p_phone_numbers')->where('number', $number_start)->count();
-            if (!$exists) {
+            if (! $exists) {
                 if ($conn == 'pbx') {
                     $uuid = pbx_uuid('p_phone_numbers', 'number_uuid');
                 } else {
@@ -1907,7 +1906,7 @@ class IntegrationsController extends BaseController
 
     public function pbxNumberChange(Request $request)
     {
-        $erp = new \DBEvent();
+        $erp = new \DBEvent;
         $current_number = \DB::connection('pbx')->table('p_phone_numbers')->where('id', $request->id)->get()->first();
         $new_number = \DB::connection('pbx')->table('p_phone_numbers')->where('id', $request->number)->get()->first();
         if (empty($current_number->domain_uuid)) {
@@ -1916,7 +1915,7 @@ class IntegrationsController extends BaseController
         $current_account_id = \DB::connection('pbx')->table('v_domains')->where('domain_uuid', $current_number->domain_uuid)->pluck('account_id')->first();
         $subscription_exists = \DB::connection('default')->table('sub_services')->where('account_id', $current_account_id)
             ->where('detail', $current_number->number)->where('status', '!=', 'Deleted')->count();
-        if (!$subscription_exists) {
+        if (! $subscription_exists) {
             return json_alert('Subscription not found.', 'warning');
         }
 
@@ -1941,7 +1940,7 @@ class IntegrationsController extends BaseController
             'domain_uuid' => null,
             'wholesale_ext' => 0,
         ];
-        if (!empty($request->spam_number)) {
+        if (! empty($request->spam_number)) {
             $old_data['status'] = 'Disabled';
             $old_data['is_spam'] = 1;
         }
@@ -1985,7 +1984,7 @@ class IntegrationsController extends BaseController
             }
         }
 
-        if (!empty($request->logout)) {
+        if (! empty($request->logout)) {
             session()->forget('invoice_list');
 
             return redirect()->to('/accountant_access');
@@ -1997,7 +1996,7 @@ class IntegrationsController extends BaseController
 
             return view('__app.components.pages.invoice_list', $data);
         }
-        if (!empty(session('invoice_list')) && session('invoice_list') === true) {
+        if (! empty(session('invoice_list')) && session('invoice_list') === true) {
             $data['verify_auth'] = false;
             $data['menu_name'] = 'Documents';
 
@@ -2048,11 +2047,11 @@ class IntegrationsController extends BaseController
                 $unsubscribe_note = 'You are sending too frequently';
             }
 
-            if (!empty($request->unsubscribereasonnotes)) {
+            if (! empty($request->unsubscribereasonnotes)) {
                 $unsubscribe_note .= ' - '.$request->unsubscribereasonnotes;
             }
 
-            if (!empty($link_data['account_id'])) {
+            if (! empty($link_data['account_id'])) {
                 \DB::table('erp_mail_queue')->where('account_id', $link_data['account_id'])->where('processed', 0)->delete();
                 \DB::table('crm_accounts')->where('id', $link_data['account_id'])->update(['newsletter' => 0, 'unsubscribe_note' => $unsubscribe_note]);
             }
@@ -2068,7 +2067,7 @@ class IntegrationsController extends BaseController
     public function webForm(Request $request, $encoded_link = null)
     {
         // redirect invalid link
-        if (empty(session('webform_module_id')) && !$encoded_link) {
+        if (empty(session('webform_module_id')) && ! $encoded_link) {
             return redirect()->to('/');
         }
 
@@ -2080,24 +2079,24 @@ class IntegrationsController extends BaseController
                 return redirect()->to('/');
             }
             $valid_module = \DB::table('erp_cruds')->where('id', $link_data['module_id'])->where('public_access', 1)->count();
-            if (!$valid_module) {
+            if (! $valid_module) {
                 return redirect()->to('/');
             }
             session(['webform_data' => $link_data]);
             session(['webform_module_id' => $link_data['module_id']]);
 
-            if (!empty($link_data['account_id'])) {
+            if (! empty($link_data['account_id'])) {
                 session(['webform_account_id' => $link_data['account_id']]);
             }
-            if (!empty($link_data['is_contract'])) {
+            if (! empty($link_data['is_contract'])) {
                 session(['webform_is_contract' => $link_data['is_contract']]);
             }
 
-            if (!empty($link_data['subscription_id'])) {
+            if (! empty($link_data['subscription_id'])) {
                 session(['webform_subscription_id' => $link_data['subscription_id']]);
             }
 
-            if (!empty($link_data['id'])) {
+            if (! empty($link_data['id'])) {
                 session(['webform_id' => $link_data['id']]);
             }
 
@@ -2105,21 +2104,21 @@ class IntegrationsController extends BaseController
             // }
 
             // set request data and call controller
-            if (!empty(session('webform_module_id'))) {
+            if (! empty(session('webform_module_id'))) {
                 $menu_name = get_menu_url(session('webform_module_id'));
 
-                $request_data = new \Illuminate\Http\Request();
+                $request_data = new \Illuminate\Http\Request;
                 $url = $menu_name.'/edit';
-                if (!empty(session('webform_id'))) {
+                if (! empty(session('webform_id'))) {
                     $url .= '/'.session('webform_id');
                 }
-                if (!empty($link_data['account_id'])) {
+                if (! empty($link_data['account_id'])) {
                     $url .= '?account_id='.$link_data['account_id'];
                 }
 
                 $request_data->server->set('REQUEST_URI', $url);
 
-                return app('App\Http\Controllers\ModuleController')->getEdit($request_data);
+                return app(\App\Http\Controllers\ModuleController::class)->getEdit($request_data);
             }
         }
     }
@@ -2129,7 +2128,7 @@ class IntegrationsController extends BaseController
         if (empty($request->ip_address)) {
             return json_alert('IP Address required.', 'warning');
         }
-        $pbx = new \FusionPBX();
+        $pbx = new \FusionPBX;
         /*
         $result = $pbx->unblockIP($request->ip_address);
         $blocked = $pbx->checkBlockedIP($request->ip_address);
@@ -2209,7 +2208,7 @@ class IntegrationsController extends BaseController
         $address = $request->addressinput;
         $latlong_arr = explode(',', $latlong);
 
-        $axxess = new \Axxess();
+        $axxess = new \Axxess;
         //$axxess = $axxess->setDebug();
         if ($request->provider == 'mtn') {
             $available = $axxess->checkMtnFixedLteAvailability($latlong_arr[0], $latlong_arr[1], $address, $request->bbox, $request->width, $request->height, $request->ico, $request->jco);
@@ -2252,7 +2251,7 @@ class IntegrationsController extends BaseController
         $address = $request->addressinput;
         $latlong_arr = explode(',', $latlong);
 
-        $axxess = new \Axxess();
+        $axxess = new \Axxess;
         //$axxess = $axxess->setDebug();
         $available = $axxess->checkFibreAvailability($latlong_arr[0], $latlong_arr[1], $address);
         if (empty($available) || $available->intCode != 200 || empty($available->arrAvailableProvidersGuids) || (is_array($available->arrAvailableProvidersGuids) && count($available->arrAvailableProvidersGuids) == 0)) {
@@ -2266,7 +2265,7 @@ class IntegrationsController extends BaseController
         $processed_providers = [];
 
         foreach ($available->arrAvailableProvidersGuids as $provider) {
-            if (!empty($provider->guidNetworkProviderId)) {
+            if (! empty($provider->guidNetworkProviderId)) {
                 $preorder = '';
 
                 if ($provider->intPreOrder == 0) {
@@ -2282,7 +2281,7 @@ class IntegrationsController extends BaseController
                         ->get();
                 }
 
-                if (!in_array($provider_name, $processed_providers)) {
+                if (! in_array($provider_name, $processed_providers)) {
                     $processed_providers[] = $provider_name;
                     if (count($available_products_arr) > 0) {
                         $show_provider = true;
@@ -2302,8 +2301,8 @@ class IntegrationsController extends BaseController
             }
         }
 
-        if (!empty($show_provider)) {
-            if (!empty($request->reseller) && $request->reseller == 1) {
+        if (! empty($show_provider)) {
+            if (! empty($request->reseller) && $request->reseller == 1) {
                 return json_alert('<b>Fibre products available for this location</b>', 'success', $mapdata);
             } else {
                 return json_alert('<b>Fibre products available for this location</b>: '.$available_products, 'success', $mapdata);
@@ -2371,7 +2370,7 @@ class IntegrationsController extends BaseController
     {
         $id = $request->debit_order_id;
         $batch = \DB::table('acc_debit_order_batch')->where('id', $id)->get()->first();
-        if (!empty($batch->result) && 'FILE NOT READY' != $batch->result) {
+        if (! empty($batch->result) && $batch->result != 'FILE NOT READY') {
             return json_alert('Batch report already generated.', 'warning');
         }
         $batch_name_arr = explode('.', $batch->batch_file);
@@ -2392,7 +2391,7 @@ class IntegrationsController extends BaseController
             return json_alert('Invalid Batch.', 'warning');
         }
 
-        if (str_contains($batch->result, 'SUCCESSFUL') && !str_contains($batch->result, 'UNSUCCESSFUL')) {
+        if (str_contains($batch->result, 'SUCCESSFUL') && ! str_contains($batch->result, 'UNSUCCESSFUL')) {
             $complete = $netcash->createTransactions($batch->id);
             if ($complete) {
                 return json_alert('Transactions Created.');
@@ -2440,7 +2439,7 @@ class IntegrationsController extends BaseController
         $instance->directory = $instance_dir;
         $instance->app_ids = get_installed_app_ids();
         $currency = $instance->currency;
-        if ('ZAR' == $currency) {
+        if ($currency == 'ZAR') {
             $instance->currency_symbol = 'R';
         } else {
             $fmt = new \NumberFormatter("en-us@currency=$currency", \NumberFormatter::CURRENCY);
@@ -2497,12 +2496,12 @@ class IntegrationsController extends BaseController
 
             // PRODUCTS
             $products = \DB::table('crm_products')
-            ->select('crm_products.id', 'crm_products.name', 'crm_products.description', 'crm_pricelist_items.price_tax')
-            ->join('crm_pricelist_items', 'crm_pricelist_items.product_id', '=', 'crm_products.id')
-            ->where('crm_products.code', 'like', 'netstream%')
-            ->where('crm_products.status', '!=', 'Deleted')
-            ->where('crm_pricelist_items.pricelist_id', 1)
-            ->get();
+                ->select('crm_products.id', 'crm_products.name', 'crm_products.description', 'crm_pricelist_items.price_tax')
+                ->join('crm_pricelist_items', 'crm_pricelist_items.product_id', '=', 'crm_products.id')
+                ->where('crm_products.code', 'like', 'netstream%')
+                ->where('crm_products.status', '!=', 'Deleted')
+                ->where('crm_pricelist_items.pricelist_id', 1)
+                ->get();
 
             $selected_product = false;
             foreach ($products as $product) {
@@ -2510,7 +2509,7 @@ class IntegrationsController extends BaseController
                     $selected_product = $product;
                 }
             }
-            if (!$selected_product) {
+            if (! $selected_product) {
                 $error = 'Invalid Product selected';
             }
 
@@ -2518,10 +2517,10 @@ class IntegrationsController extends BaseController
                 return $error;
             }
 
-            $payfast_subscription = new PayfastSubscription();
+            $payfast_subscription = new PayfastSubscription;
             $payfast_subscription->setDebug(1);
             $form = $payfast_subscription->getSignupForm($selected_product, $_POST['name_first'], $_POST['name_last']);
-            if (!$form) {
+            if (! $form) {
                 return 'Unexpected Error, please try again later.';
             }
 
@@ -2733,7 +2732,7 @@ class IntegrationsController extends BaseController
 
             // save token to db
             $exists = \DB::table('acc_payfast_subscriptions')->where('token', $request->token)->count();
-            if (!$exists) {
+            if (! $exists) {
                 $subscription_data = [
                     'created_at' => date('Y-m-d H:i:s'),
                     'token' => $request->token,
@@ -2744,7 +2743,7 @@ class IntegrationsController extends BaseController
             }
 
             $created_at = date('Y-m-d H:i:s');
-            $db = new \DBEvent();
+            $db = new \DBEvent;
             $cashbook = \DB::table('acc_cashbook')->where('id', 5)->get()->first();
 
             $reference = $request->m_payment_id.'_'.$request->pf_payment_id;
@@ -2782,7 +2781,7 @@ class IntegrationsController extends BaseController
 
             $pre_payment_exists = \DB::table('acc_cashbook_transactions')->where('reference', $reference)->count();
 
-            if (!$pre_payment_exists) {
+            if (! $pre_payment_exists) {
                 if (isset($post_data->amount_fee)) {
                     $fee_data = [
                         'ledger_account_id' => 22,
@@ -2797,7 +2796,7 @@ class IntegrationsController extends BaseController
 
                     $fee_result = $db->setTable('acc_cashbook_transactions')->save($fee_data);
 
-                    if (!is_array($fee_result) || empty($fee_result['id'])) {
+                    if (! is_array($fee_result) || empty($fee_result['id'])) {
                         throw new \ErrorException('Error inserting Payfast Fee into journals.'.json_encode($fee_result));
                     }
                 }
@@ -2816,7 +2815,7 @@ class IntegrationsController extends BaseController
 
                 $result = $db->setTable('acc_cashbook_transactions')->save($api_data);
 
-                if (!is_array($result) || empty($result['id'])) {
+                if (! is_array($result) || empty($result['id'])) {
                     if ($fee_result['id']) {
                         $db->setTable('acc_general_journals')->deleteRecord(['id' => $fee_result['id']]);
                     }
@@ -2865,7 +2864,7 @@ class IntegrationsController extends BaseController
                 ];
                 \DB::table('acc_payfast_subscriptions')->where('token', $request->token)->update($subscription_data);
 
-                if (!str_contains($ex->getMessage(), 'OrderStatus is not Approved')) {
+                if (! str_contains($ex->getMessage(), 'OrderStatus is not Approved')) {
                     exception_email($ex, 'PayFast response error '.date('Y-m-d H:i:s'));
                 }
             } catch (\Throwable $err) {
@@ -2918,12 +2917,12 @@ class IntegrationsController extends BaseController
 
         try {
             $event = \Stripe\Webhook::constructEvent(
-            $payload, $sig_header, $endpoint_secret
+                $payload, $sig_header, $endpoint_secret
             );
             // Handle the event
             if ($event->type == 'checkout.session.completed' || $event->type == 'checkout.session.async_payment_succeeded') {
                 // check if using testing api
-                if (!$event->livemode) {
+                if (! $event->livemode) {
                     // check payment success
                     if ($event->data->object->payment_status == 'paid' &&
                     $event->data->object->status == 'complete' &&
@@ -2936,7 +2935,7 @@ class IntegrationsController extends BaseController
                         $api_data = json_encode($event->data->object);
 
                         $exists = \DB::table('acc_cashbook_transactions')->where('cashbook_id', 13)->where('stripe_id', $stripe_id)->count();
-                        if (!$exists) {
+                        if (! $exists) {
                             $account = dbgetaccount($account_id);
                             if ($account && $account->id) {
                                 $payment_data = [
@@ -2952,7 +2951,7 @@ class IntegrationsController extends BaseController
                                     'reference' => 'Stripe Payment '.$stripe_id,
                                     'api_status' => 'Complete',
                                 ];
-                                $db = new \DBEvent();
+                                $db = new \DBEvent;
                                 $db->setTable('acc_cashbook_transactions')->save($payment_data);
                             }
                         }
@@ -2983,7 +2982,7 @@ class IntegrationsController extends BaseController
 
         try {
             $event = \Stripe\Webhook::constructEvent(
-            $payload, $sig_header, $endpoint_secret
+                $payload, $sig_header, $endpoint_secret
             );
             // Handle the event
             if ($event->type == 'checkout.session.completed' || $event->type == 'checkout.session.async_payment_succeeded') {
@@ -3000,7 +2999,7 @@ class IntegrationsController extends BaseController
                         $stripe_id = $event->data->object->payment_intent;
                         $api_data = json_encode($event->data->object);
                         $exists = \DB::table('acc_cashbook_transactions')->where('cashbook_id', 13)->where('stripe_id', $stripe_id)->count();
-                        if (!$exists) {
+                        if (! $exists) {
                             $account = dbgetaccount($account_id);
                             if ($account && $account->id) {
                                 $payment_data = [
@@ -3016,7 +3015,7 @@ class IntegrationsController extends BaseController
                                     'reference' => 'Stripe Payment '.$stripe_id,
                                     'api_status' => 'Complete',
                                 ];
-                                $db = new \DBEvent();
+                                $db = new \DBEvent;
                                 $db->setTable('acc_cashbook_transactions')->save($payment_data);
                             }
                         }
@@ -3042,7 +3041,7 @@ class IntegrationsController extends BaseController
         try {
             $post_data = (object) $request->all();
             $created_at = date('Y-m-d H:i:s');
-            $db = new \DBEvent();
+            $db = new \DBEvent;
             $cashbook = \DB::table('acc_cashbook')->where('id', 5)->get()->first();
 
             $reference = $request->m_payment_id;
@@ -3080,7 +3079,7 @@ class IntegrationsController extends BaseController
 
             $pre_payment_exists = \DB::table('acc_cashbook_transactions')->where('reference', $reference)->count();
 
-            if (!$pre_payment_exists) {
+            if (! $pre_payment_exists) {
                 if (isset($post_data->amount_fee)) {
                     $fee_data = [
                         'ledger_account_id' => 22,
@@ -3094,7 +3093,7 @@ class IntegrationsController extends BaseController
                     ];
 
                     $fee_result = $db->setTable('acc_cashbook_transactions')->save($fee_data);
-                    if (!is_array($fee_result) || empty($fee_result['id'])) {
+                    if (! is_array($fee_result) || empty($fee_result['id'])) {
                         throw new \ErrorException('Error inserting Payfast Fee into journals.'.json_encode($fee_result));
                     }
                 }
@@ -3113,7 +3112,7 @@ class IntegrationsController extends BaseController
 
                 $result = $db->setTable('acc_cashbook_transactions')->save($api_data);
 
-                if (!is_array($result) || empty($result['id'])) {
+                if (! is_array($result) || empty($result['id'])) {
                     if ($fee_result['id']) {
                         $db->setTable('acc_general_journals')->deleteRecord(['id' => $fee_result['id']]);
                     }
@@ -3125,7 +3124,7 @@ class IntegrationsController extends BaseController
             if (str_contains($currenturl, 'vehicledb') || session('instance')->directory == 'vehicledb') {
                 $is_vehicledb = true;
             }
-            if ($is_vehicledb && !empty($request->custom_int2)) {
+            if ($is_vehicledb && ! empty($request->custom_int2)) {
                 $result = create_vehicledb_invoice($account_id, $amount, $request->custom_int2, 'Credits purchased - Payfast');
             }
         } catch (\Throwable $ex) {
@@ -3150,7 +3149,7 @@ class IntegrationsController extends BaseController
                 }
                 dbinsert('acc_cashbook_transactions', $api_data);
 
-                if (!str_contains($ex->getMessage(), 'OrderStatus is not Approved')) {
+                if (! str_contains($ex->getMessage(), 'OrderStatus is not Approved')) {
                     exception_email($ex, 'PayFast response error '.date('Y-m-d H:i:s'));
                 }
             } catch (\Throwable $err) {
@@ -3182,7 +3181,6 @@ class IntegrationsController extends BaseController
         */
     }
 
-
     public function appleResponse(Request $request)
     {
 
@@ -3196,7 +3194,7 @@ class IntegrationsController extends BaseController
             $post_data = (object) $request->all();
 
             $created_at = date('Y-m-d H:i:s');
-            $db = new \DBEvent();
+            $db = new \DBEvent;
             $cashbook = \DB::table('acc_cashbook')->where('id', 5)->get()->first();
 
             $reference = $request->m_payment_id;
@@ -3219,12 +3217,12 @@ class IntegrationsController extends BaseController
             }
 
             $payment_data = [
-            'docdate' => date('Y-m-d', strtotime($created_at)),
-            'total' => $amount,
-            'reference' => $reference,
-            'account_id' => $account_id,
-            'source' => 'Apple',
-        ];
+                'docdate' => date('Y-m-d', strtotime($created_at)),
+                'total' => $amount,
+                'reference' => $reference,
+                'account_id' => $account_id,
+                'source' => 'Apple',
+            ];
 
             if ($account->currency == 'USD') {
                 $payment_data['total'] = convert_currency_zar_to_usd($payment_data['total']);
@@ -3233,42 +3231,42 @@ class IntegrationsController extends BaseController
 
             $pre_payment_exists = \DB::table('acc_cashbook_transactions')->where('reference', $reference)->count();
 
-            if (!$pre_payment_exists) {
+            if (! $pre_payment_exists) {
                 if (isset($post_data->amount_fee)) {
                     $fee_data = [
-                    'ledger_account_id' => 22,
-                    'cashbook_id' => $cashbook->id,
-                    'total' => abs($post_data->amount_fee),
-                    'api_id' => $post_data->pf_payment_id,
-                    'reference' => 'Apple Fee '.$post_data->pf_payment_id,
-                    'api_status' => 'Complete',
-                    'doctype' => 'Cashbook Control Payment',
-                    'docdate' => date('Y-m-d H:i:s', strtotime($created_at)),
-                ];
+                        'ledger_account_id' => 22,
+                        'cashbook_id' => $cashbook->id,
+                        'total' => abs($post_data->amount_fee),
+                        'api_id' => $post_data->pf_payment_id,
+                        'reference' => 'Apple Fee '.$post_data->pf_payment_id,
+                        'api_status' => 'Complete',
+                        'doctype' => 'Cashbook Control Payment',
+                        'docdate' => date('Y-m-d H:i:s', strtotime($created_at)),
+                    ];
 
                     $fee_result = $db->setTable('acc_cashbook_transactions')->save($fee_data);
 
-                    if (!is_array($fee_result) || empty($fee_result['id'])) {
+                    if (! is_array($fee_result) || empty($fee_result['id'])) {
                         aa('Error inserting Apple Fee into journals', ['fee_result' => $fee_result]);
                         throw new \ErrorException('Error inserting Apple Fee into journals.'.json_encode($fee_result));
                     }
                 }
 
                 $api_data = [
-                'api_status' => 'Complete',
-                'account_id' => $account_id,
-                'reference' => $reference,
-                'total' => $amount,
-                'doctype' => 'Cashbook Customer Receipt',
-                'cashbook_id' => $cashbook->id,
-                'docdate' => date('Y-m-d H:i:s', strtotime($created_at)),
-                'api_data' => serialize($post_data),
-                'api_id' => $post_data->pf_payment_id,
-            ];
+                    'api_status' => 'Complete',
+                    'account_id' => $account_id,
+                    'reference' => $reference,
+                    'total' => $amount,
+                    'doctype' => 'Cashbook Customer Receipt',
+                    'cashbook_id' => $cashbook->id,
+                    'docdate' => date('Y-m-d H:i:s', strtotime($created_at)),
+                    'api_data' => serialize($post_data),
+                    'api_id' => $post_data->pf_payment_id,
+                ];
 
                 $result = $db->setTable('acc_cashbook_transactions')->save($api_data);
 
-                if (!is_array($result) || empty($result['id'])) {
+                if (! is_array($result) || empty($result['id'])) {
                     if (isset($fee_result['id'])) {
                         $db->setTable('acc_general_journals')->deleteRecord(['id' => $fee_result['id']]);
                     }
@@ -3282,7 +3280,7 @@ class IntegrationsController extends BaseController
                 $is_telecloudMobile = true;
             }
 
-            if ($is_telecloudMobile && !empty($request->custom_int2)) {
+            if ($is_telecloudMobile && ! empty($request->custom_int2)) {
                 addAirtime($account_id, $amount);
             }
 
@@ -3291,29 +3289,29 @@ class IntegrationsController extends BaseController
             if (str_contains($currenturl, 'vehicledb') || session('instance')->directory == 'vehicledb') {
                 $is_vehicledb = true;
             }
-            if ($is_vehicledb && !empty($request->custom_int2)) {
+            if ($is_vehicledb && ! empty($request->custom_int2)) {
                 $result = create_vehicledb_invoice($account_id, $amount, $request->custom_int2, 'Credits purchased - Apple');
             }
 
             return response()->json(['message' => 'success'], 200);
         } catch (\Throwable $ex) {
 
-                        return response()->json(['message' => 'success'], 200);
+            return response()->json(['message' => 'success'], 200);
 
             aa('Exception caught from integrationContller', ['exception' => $ex]);
             exception_log($ex);
             try {
                 $api_data = [
-                'api_status' => 'Invalid',
-                'account_id' => $account_id,
-                'reference' => $reference,
-                'total' => $amount,
-                'cashbook_id' => $cashbook->id,
-                'docdate' => date('Y-m-d H:i:s', strtotime($created_at)),
-                'api_data' => serialize($post_data),
-                'api_id' => $post_data->pf_payment_id,
-                'api_error' => $ex->getMessage(),
-            ];
+                    'api_status' => 'Invalid',
+                    'account_id' => $account_id,
+                    'reference' => $reference,
+                    'total' => $amount,
+                    'cashbook_id' => $cashbook->id,
+                    'docdate' => date('Y-m-d H:i:s', strtotime($created_at)),
+                    'api_data' => serialize($post_data),
+                    'api_id' => $post_data->pf_payment_id,
+                    'api_error' => $ex->getMessage(),
+                ];
 
                 foreach ($api_data as $k => $v) {
                     if (empty($v)) {
@@ -3323,7 +3321,7 @@ class IntegrationsController extends BaseController
                 dbinsert('acc_cashbook_transactions', $api_data);
                 aa('API data inserted after exception', ['api_data' => $api_data]);
 
-                if (!str_contains($ex->getMessage(), 'OrderStatus is not Approved')) {
+                if (! str_contains($ex->getMessage(), 'OrderStatus is not Approved')) {
                     exception_email($ex, 'Apple response error '.date('Y-m-d H:i:s'));
                 }
             } catch (\Throwable $err) {
@@ -3333,16 +3331,16 @@ class IntegrationsController extends BaseController
                 }
 
                 $api_data = [
-                'api_status' => 'Invalid',
-                'account_id' => $account_id,
-                'reference' => '',
-                'total' => 0,
-                'cashbook_id' => $cashbook->id,
-                'docdate' => date('Y-m-d H:i:s'),
-                'api_data' => serialize($post_data),
-                'api_id' => 0,
-                'api_error' => $err->getMessage(),
-            ];
+                    'api_status' => 'Invalid',
+                    'account_id' => $account_id,
+                    'reference' => '',
+                    'total' => 0,
+                    'cashbook_id' => $cashbook->id,
+                    'docdate' => date('Y-m-d H:i:s'),
+                    'api_data' => serialize($post_data),
+                    'api_id' => 0,
+                    'api_error' => $err->getMessage(),
+                ];
 
                 exception_email($err, 'Apple response error '.date('Y-m-d H:i:s'));
                 dbinsert('acc_cashbook_transactions', $api_data);
@@ -3533,22 +3531,22 @@ class IntegrationsController extends BaseController
 
     public function payNow(Request $request, $encoded_link)
     {
-//        abort(403);
+        //        abort(403);
 
         $data = decode_paynow_link($encoded_link);
 
-        if (!$data || empty($data) || 0 == count($data)) {
+        if (! $data || empty($data) || count($data) == 0) {
             return Redirect::to('/')->with('message', 'Invalid Link2')->with('status', 'error');
         }
 
         $customer_id = $data['account_id'];
         $amount = $data['amount'];
 
-        if (!$customer_id && !empty(session('account_id'))) {
+        if (! $customer_id && ! empty(session('account_id'))) {
             $customer_id = session('account_id');
         }
 
-        if (!$customer_id) {
+        if (! $customer_id) {
             return Redirect::to('/')
                 ->with('message', 'No Access')->with('status', 'error');
         }
@@ -3556,7 +3554,7 @@ class IntegrationsController extends BaseController
         $customer = dbgetaccount($customer_id);
         $reseller = dbgetaccount($customer->partner_id);
 
-        if (empty($customer) || 'Deleted' == $customer->status) {
+        if (empty($customer) || $customer->status == 'Deleted') {
             return Redirect::to('/')
                 ->with('message', 'Invalid Account')->with('status', 'error');
         }
@@ -3589,7 +3587,7 @@ class IntegrationsController extends BaseController
     public function domainSearchWebsite(Request $request)
     {
         // header("Access-Control-Allow-Origin: *");
-        if (!empty($request->domain_name)) {
+        if (! empty($request->domain_name)) {
             $domain_name = $request->domain_name;
             $tld = get_tld($domain_name);
             $domain = $domain_name;
@@ -3600,7 +3598,7 @@ class IntegrationsController extends BaseController
         }
         $supported_tld = valid_tld($domain);
 
-        if (!$supported_tld) {
+        if (! $supported_tld) {
             return cors_json_alert('Tld not supported', 'danger');
         }
 
@@ -3634,7 +3632,7 @@ class IntegrationsController extends BaseController
             $domain_name = strtolower($request->domain_name);
             $tld = $request->tld;
 
-            if (!is_valid_domain_name($request->domain_name)) {
+            if (! is_valid_domain_name($request->domain_name)) {
                 return json_alert('Invalid domain name', 'warning');
             }
 
@@ -3643,7 +3641,7 @@ class IntegrationsController extends BaseController
             }
             $domain = $domain_name.'.'.$tld;
             $supported_tld = valid_tld($domain);
-            if (!$supported_tld) {
+            if (! $supported_tld) {
                 return json_alert('Tld not supported', 'warning');
             }
 
@@ -3663,7 +3661,7 @@ class IntegrationsController extends BaseController
             $data['tlds'] = get_supported_tlds();
             $data['menu_name'] = 'Domain Search';
             $data['embed'] = false;
-            if (!empty($request->embed)) {
+            if (! empty($request->embed)) {
                 $data['embed'] = true;
             }
 
@@ -3677,7 +3675,7 @@ class IntegrationsController extends BaseController
 
         if ($account_id) {
             $subscriptions = \DB::table('sub_services')->where('status'.'!=', 'Deleted')->where('account_id', $account_id)->get();
-            if (!empty($subscriptions) && count($subscriptions) > 0) {
+            if (! empty($subscriptions) && count($subscriptions) > 0) {
                 $response['status'] = 'Success';
                 $balances = [];
                 foreach ($subscriptions as $sub) {
@@ -3746,7 +3744,7 @@ class IntegrationsController extends BaseController
                 $sms['charactercount'] = strlen($message);
                 $sms['message'] = $message;
                 $result = $db->save($sms);
-                if (!is_array($result) || empty($result['id'])) {
+                if (! is_array($result) || empty($result['id'])) {
                     $response['status'] = 'Invalid Number(s)';
                     $response['message'] = $result;
                     $response['sms_id'] = null;

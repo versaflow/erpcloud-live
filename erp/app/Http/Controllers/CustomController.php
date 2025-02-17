@@ -11,9 +11,9 @@ class CustomController extends BaseController
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
-            if (!session()->has('user_id') || empty(session('user_id')) ||
-            !session()->has('account_id') || empty(session('account_id')) ||
-            !session()->has('role_id') || empty(session('role_id'))) {
+            if (! session()->has('user_id') || empty(session('user_id')) ||
+            ! session()->has('account_id') || empty(session('account_id')) ||
+            ! session()->has('role_id') || empty(session('role_id'))) {
                 \Auth::logout();
                 \Session::flush();
 
@@ -48,15 +48,15 @@ class CustomController extends BaseController
         }
         $ck_completed = true;
         foreach ($checklist_items as $ck) {
-            if (!$ck['checked']) {
+            if (! $ck['checked']) {
                 $ck_completed = false;
             }
         }
         \DB::table('hd_support_tickets')->where('id', $request->id)->update(['updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default(), 'checklist_completed' => $ck_completed, 'checklist_items_completed' => json_encode($checklist_items_completed)]);
-        if (!$ck_completed) {
+        if (! $ck_completed) {
             return json_alert('Complete all checklist items', 'warning');
         }
-        if (!$row->checklist_completed) {
+        if (! $row->checklist_completed) {
             return json_alert('Checklist items completed', 'success');
         }
 
@@ -78,7 +78,7 @@ class CustomController extends BaseController
 
         $mail_data['notification_id'] = $request->notification_id;
         try {
-            if (1 != $customer->partner_id) {
+            if ($customer->partner_id != 1) {
                 $mail_data['reseller_user_company'] = $customer->company;
                 $mail_result = erp_process_notification($customer->partner_id, $mail_data);
             } else {
@@ -132,7 +132,7 @@ class CustomController extends BaseController
                 $company = str_replace([' QUERY', ' DISPUTE'], '', $company);
                 $exists = \DB::table('crm_accounts')->where('company', $company)->count();
 
-                if (!$exists) {
+                if (! $exists) {
                     $notfound_result .= $company.' company not found.<br>';
                 } else {
                     $debtor_status_id = 0;
@@ -223,7 +223,7 @@ class CustomController extends BaseController
         // aa($request->all());
         foreach ($request->product_id as $i => $val) {
             $product = \DB::table('crm_products')->where('id', $val)->get()->first();
-            if (!$product->special_price_incl) {
+            if (! $product->special_price_incl) {
                 $line_qty = $request->qty[$i];
                 $line_price = $request->price[$i];
                 foreach ($product_list as $j => $item) {
@@ -294,7 +294,7 @@ class CustomController extends BaseController
         $field = \DB::connection('default')->table('erp_module_fields')->where('id', $field_id)->get()->first();
         $module = \DB::connection('default')->table('erp_cruds')->where('id', $field->module_id)->get()->first();
         $row = [];
-        if (!empty($request->row_id)) {
+        if (! empty($request->row_id)) {
             $row = \DB::connection($module->connection)->table($module->db_table)->where($module->db_key, $request->row_id)->get()->first();
             $row = (array) $row;
         }
@@ -310,12 +310,12 @@ class CustomController extends BaseController
 
         $values = collect($results)->pluck('value')->toArray();
         $text_filter = false;
-        if (!empty($request->where[0]['value'])) {
+        if (! empty($request->where[0]['value'])) {
             $text_filter = $request->where[0]['value'];
         }
-        if ($field->field_type == 'select_module' && !empty($text_filter)) {
+        if ($field->field_type == 'select_module' && ! empty($text_filter)) {
             if (is_numeric($text_filter)) {
-                if (!in_array($text_filter, $values)) {
+                if (! in_array($text_filter, $values)) {
                     $filter = $text_filter;
                     $results = collect($results)->filter(function ($item) use ($filter) {
                         return str_contains(strtolower($item->text), strtolower($filter));
@@ -327,7 +327,7 @@ class CustomController extends BaseController
                     return str_contains(strtolower($item->text), strtolower($filter));
                 })->values()->all();
             }
-        } elseif (!empty($text_filter)) {
+        } elseif (! empty($text_filter)) {
             $filter = $text_filter;
             $results = collect($results)->filter(function ($item) use ($filter) {
                 return str_contains(strtolower($item->text), strtolower($filter));
@@ -351,7 +351,7 @@ class CustomController extends BaseController
         $field = \DB::connection('default')->table('erp_module_fields')->where('id', $field_id)->get()->first();
         $module = \DB::connection('default')->table('erp_cruds')->where('id', $field->module_id)->get()->first();
         $row = [];
-        if (!empty($request->row_id)) {
+        if (! empty($request->row_id)) {
             $row = \DB::connection($module->connection)->table($module->db_table)->where($module->db_key, $request->row_id)->get()->first();
             $row = (array) $row;
         }
@@ -367,9 +367,9 @@ class CustomController extends BaseController
 
         $values = collect($results)->pluck('value')->toArray();
 
-        if ($field->field_type == 'select_module' && !empty($request->filter)) {
+        if ($field->field_type == 'select_module' && ! empty($request->filter)) {
             if (is_numeric($request->filter)) {
-                if (!in_array($request->filter, $values)) {
+                if (! in_array($request->filter, $values)) {
                     $filter = $request->filter;
                     $results = collect($results)->filter(function ($item) use ($filter) {
                         return str_contains(strtolower($item->text), strtolower($filter));
@@ -381,7 +381,7 @@ class CustomController extends BaseController
                     return str_contains(strtolower($item->text), strtolower($filter));
                 });
             }
-        } elseif (!empty($request->filter)) {
+        } elseif (! empty($request->filter)) {
             $filter = $request->filter;
             $results = collect($results)->filter(function ($item) use ($filter) {
                 return str_contains(strtolower($item->text), strtolower($filter));
@@ -408,7 +408,7 @@ class CustomController extends BaseController
                 }
             }
 
-            if (!empty($request->id)) {
+            if (! empty($request->id)) {
                 $form_count = \DB::connection('default')->table('erp_forms')->where('id', '!=', $request->id)->where('module_id', $request->module_id)->where('role_id', $request->role_id)->count();
                 if ($form_count) {
                     return json_alert('Form with role already exists', 'warning');
@@ -427,7 +427,7 @@ class CustomController extends BaseController
                 \DB::connection('default')->table('erp_forms')->where('id', $request->id)->update($data);
             }
 
-            if (!empty($request->copy_role_id)) {
+            if (! empty($request->copy_role_id)) {
                 unset($data['id']);
                 $data['role_id'] = $request->copy_role_id;
                 \DB::connection('default')->table('erp_forms')->updateOrInsert(['module_id' => $data['module_id'], 'role_id' => $data['role_id']], $data);
@@ -437,6 +437,7 @@ class CustomController extends BaseController
         } catch (\Throwable $ex) {
             exception_log($ex);
             $error = $ex->getMessage().' '.$ex->getFile().':'.$ex->getLine();
+
             //aa($error);
             return json_alert($ex->getMessage(), 'error');
         }
@@ -456,13 +457,13 @@ class CustomController extends BaseController
 
         // UPLOAD FILE
         if ($method == 'POST') {
-            if (!empty($request->{$field->field})) {
+            if (! empty($request->{$field->field})) {
                 $file = $request->{$field->field};
             } else {
                 $file = $request->file;
             }
             $destinationPath = uploads_path($field->module_id);
-            if (!is_dir($destinationPath)) {
+            if (! is_dir($destinationPath)) {
                 mkdir($destinationPath);
             }
             $filename = ($file->getClientOriginalName() > '') ? $file->getClientOriginalName() : $request->name;
@@ -531,7 +532,7 @@ class CustomController extends BaseController
             $kb_url = get_menu_url_from_module_id(1948);
 
             $pricing_access = \DB::connection('default')->table('erp_forms')->where('module_id', 508)->where('role_id', session('role_id'))->where('is_view', 1)->count();
-            if (!$pricing_access) {
+            if (! $pricing_access) {
                 $pricing_url = get_menu_url_from_module_id(1931);
             }
 
@@ -542,12 +543,12 @@ class CustomController extends BaseController
             $deleted_items = [];
 
             $c = 'default';
-            if (!empty($request->params['keyword'])) {
+            if (! empty($request->params['keyword'])) {
                 $search_text = $request->params['keyword'];
             } else {
                 $search_text = $request->where[0]['value'];
             }
-            if (!empty($request->searchtext)) {
+            if (! empty($request->searchtext)) {
                 $search_text = $request->searchtext;
             }
 
@@ -595,20 +596,20 @@ class CustomController extends BaseController
                     $url = $resellers_url;
 
                     $data = [
-                    'id' => $customer->id,
-                    'type' => 'Resellers',
-                    'module_name' => 'Resellers',
-                    'icon' => 'fas fa-user-friends',
-                    'name' => $customer->company.' ('.$customer->status.')',
-                    'phone' => $customer->phone,
-                    'balance' => currency_formatted($customer->balance, $customer->currency),
-                    'email' => $customer->email,
-                    'account_id' => $customer->id,
-                    'link' => url($url.'?id='.$customer->id),
-                    'status' => $customer->status,
-                    'support_link' => url($subscriptions_url.'?partner_id='.$customer->id),
-                    'desc' => 'Type: '.$customer->type.' | Balance: '.currency_formatted($customer->balance, $customer->currency),
-                ];
+                        'id' => $customer->id,
+                        'type' => 'Resellers',
+                        'module_name' => 'Resellers',
+                        'icon' => 'fas fa-user-friends',
+                        'name' => $customer->company.' ('.$customer->status.')',
+                        'phone' => $customer->phone,
+                        'balance' => currency_formatted($customer->balance, $customer->currency),
+                        'email' => $customer->email,
+                        'account_id' => $customer->id,
+                        'link' => url($url.'?id='.$customer->id),
+                        'status' => $customer->status,
+                        'support_link' => url($subscriptions_url.'?partner_id='.$customer->id),
+                        'desc' => 'Type: '.$customer->type.' | Balance: '.currency_formatted($customer->balance, $customer->currency),
+                    ];
 
                     if ($customer->status == 'Deleted') {
                         $deleted_items[] = $data;
@@ -649,20 +650,20 @@ class CustomController extends BaseController
                     $url = $accounts_url;
 
                     $data = [
-                    'id' => $customer->id,
-                    'type' => 'Customers',
-                    'module_name' => 'Customers',
-                    'icon' => 'fas fa-user-friends',
-                    'name' => $customer->company.' ('.$customer->status.')',
-                    'phone' => $customer->phone,
-                    'balance' => currency_formatted($customer->balance, $customer->currency),
-                    'email' => $customer->email,
-                    'account_id' => $customer->id,
-                    'link' => url($url.'?id='.$customer->id),
-                    'status' => $customer->status,
-                    'support_link' => url($subscriptions_url.'?account_id='.$customer->id),
-                    'desc' => 'Type: '.$customer->type.' | Balance: '.currency_formatted($customer->balance, $customer->currency),
-                ];
+                        'id' => $customer->id,
+                        'type' => 'Customers',
+                        'module_name' => 'Customers',
+                        'icon' => 'fas fa-user-friends',
+                        'name' => $customer->company.' ('.$customer->status.')',
+                        'phone' => $customer->phone,
+                        'balance' => currency_formatted($customer->balance, $customer->currency),
+                        'email' => $customer->email,
+                        'account_id' => $customer->id,
+                        'link' => url($url.'?id='.$customer->id),
+                        'status' => $customer->status,
+                        'support_link' => url($subscriptions_url.'?account_id='.$customer->id),
+                        'desc' => 'Type: '.$customer->type.' | Balance: '.currency_formatted($customer->balance, $customer->currency),
+                    ];
                     if ($customer->pabx_domain > '') {
                         $data['pbx_domain'] = $customer->pabx_domain;
                         $data['pbx_balance'] = $customer->pabx_domain;
@@ -682,19 +683,19 @@ class CustomController extends BaseController
                     $url = $accounts_url;
 
                     $data = [
-                    'id' => $customer->id,
-                    'type' => 'Reseller Users',
-                    'module_name' => 'Reseller Users',
-                    'icon' => 'fas fa-user-friends',
-                    'name' => $customer->company.' ('.$customer->status.')',
-                    'phone' => $customer->phone,
-                    'balance' => currency_formatted($customer->balance, $customer->currency),
-                    'email' => $customer->email,
-                    'account_id' => $customer->id,
-                    'link' => url($url.'?id='.$customer->id),
-                    'status' => $customer->status,
-                    'desc' => 'Type: '.$customer->type.' | Balance: '.currency_formatted($customer->balance, $customer->currency),
-                ];
+                        'id' => $customer->id,
+                        'type' => 'Reseller Users',
+                        'module_name' => 'Reseller Users',
+                        'icon' => 'fas fa-user-friends',
+                        'name' => $customer->company.' ('.$customer->status.')',
+                        'phone' => $customer->phone,
+                        'balance' => currency_formatted($customer->balance, $customer->currency),
+                        'email' => $customer->email,
+                        'account_id' => $customer->id,
+                        'link' => url($url.'?id='.$customer->id),
+                        'status' => $customer->status,
+                        'desc' => 'Type: '.$customer->type.' | Balance: '.currency_formatted($customer->balance, $customer->currency),
+                    ];
                     if ($customer->pabx_domain > '') {
                         $data['pbx_domain'] = $customer->pabx_domain;
                         $data['pbx_balance'] = $customer->pabx_domain;
@@ -714,19 +715,19 @@ class CustomController extends BaseController
                     $url = $leads_url;
 
                     $data = [
-                    'id' => $customer->id,
-                    'type' => 'Leads',
-                    'module_name' => 'Leads',
-                    'icon' => 'fas fa-user-friends',
-                    'name' => $customer->company.' ('.$customer->status.')',
-                    'phone' => $customer->phone,
-                    'balance' => currency_formatted($customer->balance, $customer->currency),
-                    'email' => $customer->email,
-                    'account_id' => $customer->id,
-                    'link' => url($url.'?id='.$customer->id),
-                    'status' => $customer->status,
-                    'desc' => 'Type: '.$customer->type,
-                ];
+                        'id' => $customer->id,
+                        'type' => 'Leads',
+                        'module_name' => 'Leads',
+                        'icon' => 'fas fa-user-friends',
+                        'name' => $customer->company.' ('.$customer->status.')',
+                        'phone' => $customer->phone,
+                        'balance' => currency_formatted($customer->balance, $customer->currency),
+                        'email' => $customer->email,
+                        'account_id' => $customer->id,
+                        'link' => url($url.'?id='.$customer->id),
+                        'status' => $customer->status,
+                        'desc' => 'Type: '.$customer->type,
+                    ];
                     if ($customer->status == 'Deleted') {
                         $deleted_items[] = $data;
                     } else {
@@ -812,15 +813,15 @@ class CustomController extends BaseController
 
                 foreach ($suppliers as $supplier) {
                     $data = [
-                    'type' => 'Supplier',
-                    'module_name' => 'Suppliers',
-                    'icon' => 'fas fa-shipping-fast',
-                    'name' => $supplier->company.' ('.currency_formatted($supplier->balance, $supplier->currency).')',
-                    'phone' => $supplier->phone,
-                    'email' => $supplier->email,
-                    'account_id' => $supplier->id,
-                    'link' => url($suppliers_url.'?id='.$supplier->id),
-                ];
+                        'type' => 'Supplier',
+                        'module_name' => 'Suppliers',
+                        'icon' => 'fas fa-shipping-fast',
+                        'name' => $supplier->company.' ('.currency_formatted($supplier->balance, $supplier->currency).')',
+                        'phone' => $supplier->phone,
+                        'email' => $supplier->email,
+                        'account_id' => $supplier->id,
+                        'link' => url($suppliers_url.'?id='.$supplier->id),
+                    ];
                     $autocomplete_response[] = $data;
                 }
 
@@ -837,7 +838,7 @@ class CustomController extends BaseController
                         $modules_query->select($global_search_module->db_key, $display_field);
                     }
 
-                    $modules_query->where(function ($modules_query) use ($search_text,$display_field) {
+                    $modules_query->where(function ($modules_query) use ($search_text, $display_field) {
                         $modules_query->orWhere($display_field, 'LIKE', '%'.$search_text.'%');
                     });
                     if ($has_is_deleted) {
@@ -848,7 +849,7 @@ class CustomController extends BaseController
                     }
 
                     foreach ($text_fields as $text_field) {
-                        $modules_query->orWhere(function ($modules_query) use ($search_text,$text_field) {
+                        $modules_query->orWhere(function ($modules_query) use ($search_text, $text_field) {
                             $modules_query->orWhere($text_field, 'LIKE', '%'.$search_text.'%');
                         });
                     }
@@ -863,12 +864,12 @@ class CustomController extends BaseController
                         }
 
                         $data = [
-                        'type' => 'Module',
-                        'module_name' => $global_search_module->name,
-                        'icon' => 'fas fa-cubes',
-                        'name' => $global_search_module->name.' - '.$row->{$display_field},
-                        'link' => url($link),
-                    ];
+                            'type' => 'Module',
+                            'module_name' => $global_search_module->name,
+                            'icon' => 'fas fa-cubes',
+                            'name' => $global_search_module->name.' - '.$row->{$display_field},
+                            'link' => url($link),
+                        ];
                         if ($global_search_module->id == 1948) {
                             $data['email_link'] = '/email_form/default/1?faq_id='.$row->id;
                         }
@@ -972,7 +973,7 @@ class CustomController extends BaseController
 
     public function stripoSaveDefault(Request $request)
     {
-        if (!str_contains($request->html, 'get_email_logo')) {
+        if (! str_contains($request->html, 'get_email_logo')) {
             return json_alert('Logo url cannot be changed', 'warning');
         }
 
@@ -1009,9 +1010,7 @@ class CustomController extends BaseController
         return view('__app.components.transaction_airtime', $data);
     }
 
-    public function airtimeFormPost(Request $request)
-    {
-    }
+    public function airtimeFormPost(Request $request) {}
 
     public function companyInfoEdit(Request $request)
     {
@@ -1073,10 +1072,10 @@ class CustomController extends BaseController
     {
         $service_table = 'sub_activations';
 
-        if (!empty($request->type) && $request->type == 'operations') {
+        if (! empty($request->type) && $request->type == 'operations') {
             $service_table = 'sub_activations';
         }
-        if (!empty($request->type) && $request->type == 'topup') {
+        if (! empty($request->type) && $request->type == 'topup') {
             $service_table = 'sub_service_topups';
         }
 
@@ -1085,21 +1084,21 @@ class CustomController extends BaseController
             return json_alert('Invalid Id', 'error');
         }
 
-        if ($service_table == 'sub_activations' && !empty($provision->provision_type) && ($provision->provision_type == 'phone_number' || $provision->provision_type == 'airtime_prepaid' || $provision->provision_type == 'airtime_contract' || $provision->provision_type == 'airtime_unlimited')) {
+        if ($service_table == 'sub_activations' && ! empty($provision->provision_type) && ($provision->provision_type == 'phone_number' || $provision->provision_type == 'airtime_prepaid' || $provision->provision_type == 'airtime_contract' || $provision->provision_type == 'airtime_unlimited')) {
             $extension_product_ids = get_activation_type_product_ids('pbx_extension');
             $pending_extensions = \DB::table('sub_services')->where('id', '!=', $request->id)->where('account_id', $provision->account_id)->whereIn('product_id', $extension_product_ids)->where('status', 'Pending')->count();
-            if ($pending_extensions && !in_array($provision->product_id, $extension_product_ids)) {
+            if ($pending_extensions && ! in_array($provision->product_id, $extension_product_ids)) {
                 return json_alert('Please provision pending extensions first.', 'warning');
             }
 
             $sip_trunk_product_ids = get_activation_type_product_ids('sip_trunk');
             $pending_sip_trunks = \DB::table('sub_services')->where('id', '!=', $request->id)->where('account_id', $provision->account_id)->whereIn('product_id', $sip_trunk_product_ids)->where('status', 'Pending')->count();
-            if ($pending_sip_trunks && !in_array($provision->product_id, $pending_sip_trunks)) {
+            if ($pending_sip_trunks && ! in_array($provision->product_id, $pending_sip_trunks)) {
                 return json_alert('Please provision pending sip trunks first.', 'warning');
             }
         }
 
-        if ('Pending' != $provision->status) {
+        if ($provision->status != 'Pending') {
             return json_alert('Invalid Provision Status', 'error');
         }
 
@@ -1115,7 +1114,7 @@ class CustomController extends BaseController
         }
 
         // get total num pr>ovision steps
-        $current_step = !empty($provision->step) ? $provision->step : 1;
+        $current_step = ! empty($provision->step) ? $provision->step : 1;
         $is_admin = (check_access('1,31')) ? 1 : 0;
 
         $num_steps = \DB::table('sub_activation_plans')->where('activation_type_id', $product->provision_plan_id)->where('status', 'Enabled')->count();
@@ -1141,7 +1140,7 @@ class CustomController extends BaseController
                 return json_alert('Invalid Id2', 'error');
             }
 
-            if ('Pending' != $provision->status) {
+            if ($provision->status != 'Pending') {
                 return json_alert('Invalid Provision Status', 'error');
             }
 
@@ -1155,7 +1154,7 @@ class CustomController extends BaseController
             }
 
             // get total num provision steps
-            $current_step = !empty($provision->step) ? $provision->step : 1;
+            $current_step = ! empty($provision->step) ? $provision->step : 1;
             $is_admin = (session('role_level') == 'Admin') ? 1 : 0;
 
             $num_steps = \DB::table('sub_activation_plans')->where('activation_type_id', $product->provision_plan_id)->where('status', 'Enabled')->count();
@@ -1164,12 +1163,12 @@ class CustomController extends BaseController
                 $step_number = $request->step_number + 1;
                 if ($current_step != $step_number) {
                     $repeatable = \DB::table('sub_activation_plans')
-                    ->where('activation_type_id', $product->provision_plan_id)->where('status', 'Enabled')
-                    ->where('step', $step_number)
-                    ->where('repeatable', 1)
-                    ->where('automated', 0)
-                    ->count();
-                    if (!$repeatable) {
+                        ->where('activation_type_id', $product->provision_plan_id)->where('status', 'Enabled')
+                        ->where('step', $step_number)
+                        ->where('repeatable', 1)
+                        ->where('automated', 0)
+                        ->count();
+                    if (! $repeatable) {
                         return json_alert('You cannot redo this step.', 'error');
                     } else {
                         $current_step = $step_number;
@@ -1180,25 +1179,25 @@ class CustomController extends BaseController
             $provision_plans = \DB::table('sub_activation_plans')->where('activation_type_id', $product->provision_plan_id)->where('status', 'Enabled')->orderBy('step')->get();
             foreach ($provision_plans as $provision_plan) {
                 if ($current_step == $provision_plan->step) {
-                    if (!$is_admin && $provision_plan->admin_only) {
+                    if (! $is_admin && $provision_plan->admin_only) {
                         return json_alert('An administrator needs to complete the following provisioning process.', 'error');
                     }
                 }
-                if ('Email' == $provision_plan->type && $provision_plan->automated && $current_step == $provision_plan->step) {
+                if ($provision_plan->type == 'Email' && $provision_plan->automated && $current_step == $provision_plan->step) {
                     $step_record = \DB::table('sub_activation_steps')
-                    ->where('provision_plan_id', $provision_plan->id)
-                    ->where('provision_id', $provision->id)
-                    ->where('service_table', $service_table)
-                    ->get()->first();
+                        ->where('provision_plan_id', $provision_plan->id)
+                        ->where('provision_id', $provision->id)
+                        ->where('service_table', $service_table)
+                        ->get()->first();
 
                     if (empty($step_record)) {
                         \DB::table('sub_activation_steps')
-                        ->insert([
-                            'service_table' => $service_table,
-                            'provision_id' => $provision->id,
-                            'provision_plan_id' => $provision_plan->id,
-                            'created_at' => date('Y-m-d H:i:s'),
-                        ]);
+                            ->insert([
+                                'service_table' => $service_table,
+                                'provision_id' => $provision->id,
+                                'provision_plan_id' => $provision_plan->id,
+                                'created_at' => date('Y-m-d H:i:s'),
+                            ]);
                     }
 
                     $step_update_data['updated_at'] = date('Y-m-d H:i:s');
@@ -1206,7 +1205,7 @@ class CustomController extends BaseController
                     $mail_data = [];
                     $customer = dbgetaccount($provision->account_id);
                     $reseller = dbgetaccount($customer->partner_id);
-                    if (1 == $customer->partner_id) {
+                    if ($customer->partner_id == 1) {
                         $mail_data['partner_company'] = 'Cloud Telecoms';
                         $mail_data['partner_email'] = 'no-reply@telecloud.co.za';
                     } else {
@@ -1225,16 +1224,16 @@ class CustomController extends BaseController
                     $mail_data['message'] = $provision_plan->step_email;
                     $mail_data['message_box_id'] = $provision_plan->id;
                     $mail_data['customer'] = $customer;
-                    if (!empty($provision_plan->email_id)) {
+                    if (! empty($provision_plan->email_id)) {
                         $mail_data['notification_id'] = $provision_plan->email_id;
                     }
                     $sub = \DB::table($service_table)->where('id', $provision->id)->get()->first();
                     $product = \DB::table('crm_products')->where('id', $sub->product_id)->get()->first();
-                    if (!empty($product)) {
+                    if (! empty($product)) {
                         $provision_plan_name = \DB::table('sub_activation_types')->where('id', $product->provision_plan_id)->pluck('name')->first();
-                        if (!empty($provision_plan_name)) {
+                        if (! empty($provision_plan_name)) {
                             $email_id = \DB::table('sub_activation_plans')->where('activation_type_id', $product->provision_plan_id)->where('email_id', '>', '')->pluck('email_id')->first();
-                            if (!empty($email_id)) {
+                            if (! empty($email_id)) {
                                 $customer = dbgetaccount($sub->account_id);
 
                                 $mail_data['detail'] = $sub->detail;
@@ -1243,7 +1242,7 @@ class CustomController extends BaseController
                                 $mail_data['product_description'] = $product->name;
 
                                 $activation_data = get_activation_email_data($provision_plan_name, $sub, $customer, $provision, $service_table);
-                                if (!empty($activation_data) && count($activation_data) > 0) {
+                                if (! empty($activation_data) && count($activation_data) > 0) {
                                     foreach ($activation_data as $k => $v) {
                                         $mail_data[$k] = $v;
                                     }
@@ -1255,7 +1254,7 @@ class CustomController extends BaseController
                         $mail_data['subscription_id'] = $provision->id;
                         $mail_data['activation_email'] = true;
 
-                        if (1 != $customer->partner_id) {
+                        if ($customer->partner_id != 1) {
                             $mail_data['reseller_user_company'] = $customer->company;
                             $mail_result = erp_process_notification($customer->partner_id, $mail_data);
                         } else {
@@ -1270,37 +1269,37 @@ class CustomController extends BaseController
 
                     $step_update_data['result'] = $mail_result;
                     \DB::table('sub_activation_steps')
-                    ->where('provision_plan_id', $request->provision_plan_id)
-                    ->where('provision_id', $request->provision_id)
-                    ->where('service_table', $service_table)
-                    ->update($step_update_data);
-                } elseif ('Function' == $provision_plan->type && $provision_plan->automated && $current_step == $provision_plan->step) {
-                    if (!empty($provision->detail)) {
+                        ->where('provision_plan_id', $request->provision_plan_id)
+                        ->where('provision_id', $request->provision_id)
+                        ->where('service_table', $service_table)
+                        ->update($step_update_data);
+                } elseif ($provision_plan->type == 'Function' && $provision_plan->automated && $current_step == $provision_plan->step) {
+                    if (! empty($provision->detail)) {
                         return json_alert('Provision detail already set1', 'error');
                     }
                     $step_record = \DB::table('sub_activation_steps')
-                    ->where('provision_plan_id', $provision_plan->id)
-                    ->where('provision_id', $provision->id)
-                    ->where('service_table', $service_table)
-                    ->get()->first();
+                        ->where('provision_plan_id', $provision_plan->id)
+                        ->where('provision_id', $provision->id)
+                        ->where('service_table', $service_table)
+                        ->get()->first();
 
                     if (empty($step_record)) {
                         \DB::table('sub_activation_steps')
-                        ->insert([
-                            'service_table' => $service_table,
-                            'provision_id' => $provision->id,
-                            'provision_plan_id' => $provision_plan->id,
-                            'created_at' => date('Y-m-d H:i:s'),
-                        ]);
+                            ->insert([
+                                'service_table' => $service_table,
+                                'provision_id' => $provision->id,
+                                'provision_plan_id' => $provision_plan->id,
+                                'created_at' => date('Y-m-d H:i:s'),
+                            ]);
                     }
 
                     $step_update_data['updated_at'] = date('Y-m-d H:i:s');
                     $provision_function = 'provision_'.function_format($provision_plan->name);
-                    if (!empty($provision_plan->function_name)) {
+                    if (! empty($provision_plan->function_name)) {
                         $provision_function = $provision_plan->function_name;
                     }
                     // aa($provision_function);
-                    if (!function_exists($provision_function)) {
+                    if (! function_exists($provision_function)) {
                         return json_alert('Provision function does not exists', 'error');
                     }
                     $product = \DB::table('crm_products')->where('id', $provision->product_id)->get()->first();
@@ -1312,37 +1311,37 @@ class CustomController extends BaseController
                         $provision_result['detail'] = 'test';
                     } else {
                         $provision_result = $provision_function($provision, '', $customer, $product);
-                        $step_update_data['result'] = (!empty($provision_result['detail'])) ? $provision_result['detail'] : $provision_result;
+                        $step_update_data['result'] = (! empty($provision_result['detail'])) ? $provision_result['detail'] : $provision_result;
                     }
 
-                    if (true === $step_update_data['result'] || is_array($provision_result)) {
+                    if ($step_update_data['result'] === true || is_array($provision_result)) {
                         $step_update_data['result'] = 'complete';
                     }
-                    if (!empty($provision_result['detail'])) {
+                    if (! empty($provision_result['detail'])) {
                         $step_update_data['subscription_detail'] = $provision_result['detail'];
                     }
-                    if (!empty($provision_result['info'])) {
+                    if (! empty($provision_result['info'])) {
                         $step_update_data['subscription_info'] = json_encode($provision_result['info'], true);
                     }
 
-                    if (!empty($provision_result['table_data'])) {
+                    if (! empty($provision_result['table_data'])) {
                         unset($provision_result['table_data']['service_table']);
                         $step_update_data['table_data'] = json_encode($provision_result['table_data'], true);
                     }
 
-                    if (!empty($provision_result['detail'])) {
+                    if (! empty($provision_result['detail'])) {
                         if ($service_table != 'sub_service_topups') {
                             \DB::table($service_table)->where('id', $provision->id)->update(['detail' => $provision_result['detail']]);
                         }
                     }
 
                     \DB::table('sub_activation_steps')
-                    ->where('provision_plan_id', $provision_plan->id)
-                    ->where('provision_id', $provision->id)
-                    ->where('service_table', $service_table)
-                    ->update($step_update_data);
+                        ->where('provision_plan_id', $provision_plan->id)
+                        ->where('provision_id', $provision->id)
+                        ->where('service_table', $service_table)
+                        ->update($step_update_data);
 
-                    if (!is_array($provision_result) && true !== $provision_result) {
+                    if (! is_array($provision_result) && $provision_result !== true) {
                         return json_alert($provision_result, 'error');
                     }
                 }
@@ -1350,26 +1349,26 @@ class CustomController extends BaseController
                 if ($provision_plan->automated && $current_step == $provision_plan->step) {
                     if ($provision_plan->add_subscription) {
                         $subscription_data = \DB::table('sub_activation_steps')
-                        ->where('provision_id', $provision->id)
-                        ->where('service_table', $service_table)
-                        ->whereNotNull('subscription_detail')
-                        ->get()->first();
+                            ->where('provision_id', $provision->id)
+                            ->where('service_table', $service_table)
+                            ->whereNotNull('subscription_detail')
+                            ->get()->first();
                         if (empty($subscription_data)) {
                             $j = 1;
                             $detail = $provision_plan_name.'_'.$j;
                             $detail_exists = \DB::table('sub_services')
-                        ->where('account_id', $provision->account_id)
-                        ->where('product_id', $provision->product_id)
-                        ->where('detail', $detail)
-                        ->count();
+                                ->where('account_id', $provision->account_id)
+                                ->where('product_id', $provision->product_id)
+                                ->where('detail', $detail)
+                                ->count();
                             while ($detail_exists) {
-                                ++$j;
+                                $j++;
                                 $detail = $provision_plan_name.'_'.$j;
                                 $detail_exists = \DB::table('sub_services')
-                            ->where('account_id', $provision->account_id)
-                            ->where('product_id', $provision->product_id)
-                            ->where('detail', $detail)
-                            ->count();
+                                    ->where('account_id', $provision->account_id)
+                                    ->where('product_id', $provision->product_id)
+                                    ->where('detail', $detail)
+                                    ->count();
                             }
                             $subscription_data = (object) ['detail' => $detail];
                         }
@@ -1388,73 +1387,73 @@ class CustomController extends BaseController
                         }
                         */
                         $detail = $subscription_data->subscription_detail;
-                        if (!$provision->is_test) {
-                            $erp_subscription = new \ErpSubs();
+                        if (! $provision->is_test) {
+                            $erp_subscription = new \ErpSubs;
                             $erp_subscription->createSubscription($provision->account_id, $provision->product_id, $detail, $provision->invoice_id, $provision->bill_frequency, $provision->bundle_id);
                         }
 
-                        if (!empty($subscription_data->subscription_info)) {
+                        if (! empty($subscription_data->subscription_info)) {
                             $subscription_info = json_decode($subscription_data->subscription_info, true);
                             if ($service_table == 'sub_services') {
                                 \DB::table('sub_services')
-                                ->where('id', $provision->id)
-                                ->update($subscription_info);
+                                    ->where('id', $provision->id)
+                                    ->update($subscription_info);
                             } else {
                                 if (empty($provision->subscription_id)) {
                                     $provision->subscription_id = \DB::table('sub_services')
-                                    ->where('account_id', $provision->account_id)
-                                    ->where('product_id', $provision->product_id)
-                                    ->where('detail', $detail)
-                                    ->where('invoice_id', $provision->invoice_id)
-                                    ->pluck('id')->first();
+                                        ->where('account_id', $provision->account_id)
+                                        ->where('product_id', $provision->product_id)
+                                        ->where('detail', $detail)
+                                        ->where('invoice_id', $provision->invoice_id)
+                                        ->pluck('id')->first();
                                 }
 
                                 if ($provision->subscription_id) {
                                     \DB::table('sub_services')
-                                    ->where('id', $provision->subscription_id)
-                                    ->update($subscription_info);
+                                        ->where('id', $provision->subscription_id)
+                                        ->update($subscription_info);
                                 }
                             }
                         }
                     }
 
                     if ($current_step == $num_steps) {
-                        if (!empty($subscription_data->table_data)) {
+                        if (! empty($subscription_data->table_data)) {
                             $table_data_list = provision_get_table_data($provision->id, $service_table);
 
-                            if (!empty($table_data_list) && is_array($table_data_list)) {
+                            if (! empty($table_data_list) && is_array($table_data_list)) {
                                 foreach ($table_data_list as $insert_table => $insert_data) {
                                     if (is_array($insert_data)) {
                                         $insert_table_cols = get_columns_from_schema($insert_table);
                                         if (in_array('subscription_id', $insert_table_cols)) {
                                             $insert_data['subscription_id'] = \DB::table('sub_services')
-                                ->where('account_id', $provision->account_id)
-                                ->where('product_id', $provision->product_id)
-                                ->where('detail', $detail)
-                                ->where('status', 'Enabled')->pluck('id')->first();
+                                                ->where('account_id', $provision->account_id)
+                                                ->where('product_id', $provision->product_id)
+                                                ->where('detail', $detail)
+                                                ->where('status', 'Enabled')->pluck('id')->first();
                                         }
                                         unset($insert_data['service_table']);
 
-                                        if ('isp_data_ip_ranges' == $insert_table) {
+                                        if ($insert_table == 'isp_data_ip_ranges') {
                                             \DB::connection('default')->table('isp_data_ip_ranges')
-                                ->where('ip_range', $insert_data['ip_range'])
-                                ->update($insert_data);
-                                        } elseif ('isp_data_iptv' == $insert_table) {
+                                                ->where('ip_range', $insert_data['ip_range'])
+                                                ->update($insert_data);
+                                        } elseif ($insert_table == 'isp_data_iptv') {
                                             unset($insert_data['trial']);
                                             \DB::connection('default')->table('isp_data_iptv')
-                                ->where('username', $insert_data['username'])
-                                ->update($insert_data);
-                                        } elseif ('p_phone_numbers' == $insert_table) {
+                                                ->where('username', $insert_data['username'])
+                                                ->update($insert_data);
+                                        } elseif ($insert_table == 'p_phone_numbers') {
                                             $customer = dbgetaccount($provision->account_id);
                                             $domain_uuid = \DB::connection('pbx')->table('v_domains')->where('domain_name', $customer->pabx_domain)->pluck('domain_uuid')->first();
 
                                             pbx_add_number($customer->pabx_domain, $insert_data['number']);
                                             unset($insert_data['supplier_id']);
                                             \DB::connection('pbx')->table('p_phone_numbers')->where('number', $insert_data['number'])
-                                    ->update($insert_data);
+                                                ->update($insert_data);
                                         } elseif ($insert_table == 'isp_host_websites') {
                                             $exists = \DB::table($insert_table)->where('domain', $insert_data['domain'])->count();
-                                            if (!$exists) {
+                                            if (! $exists) {
                                                 \DB::table($insert_table)->insert($insert_data);
                                             } else {
                                                 \DB::table($insert_table)->where('domain', $insert_data['domain'])->update(['to_register' => 1, 'status' => 'Enabled']);
@@ -1471,16 +1470,16 @@ class CustomController extends BaseController
                             send_user_guide_to_customer($provision->account_id, $user_guide_id);
                         }
                         $date_activated = date('Y-m-d H:i:s');
-                        if (!empty($subscription_info['date_activated'])) {
+                        if (! empty($subscription_info['date_activated'])) {
                             $date_activated = $subscription_info['date_activated'];
                         }
 
                         if ($service_table == 'sub_services') {
                             \DB::table($service_table)
-                    ->where('id', $provision->id)
-                    ->update(['bundle_id' => $provision->bundle_id, 'status' => 'Enabled', 'date_activated' => $date_activated, 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default()]);
+                                ->where('id', $provision->id)
+                                ->update(['bundle_id' => $provision->bundle_id, 'status' => 'Enabled', 'date_activated' => $date_activated, 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default()]);
 
-                            if (!empty($provision->bundle_id)) {
+                            if (! empty($provision->bundle_id)) {
                                 $pending_bundle_activations = \DB::table('sub_activations')->where('bundle_id', $provision->bundle_id)->where('status', 'Pending')->count();
                                 if ($pending_bundle_activations == 0) {
                                     \DB::table('sub_services')->where('id', $provision->bundle_id)->where('status', 'Pending')->update(['status' => 'Enabled']);
@@ -1488,10 +1487,10 @@ class CustomController extends BaseController
                             }
                         } else {
                             \DB::table($service_table)
-                    ->where('id', $provision->id)
-                    ->update(['bundle_id' => $provision->bundle_id, 'status' => 'Enabled', 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default()]);
+                                ->where('id', $provision->id)
+                                ->update(['bundle_id' => $provision->bundle_id, 'status' => 'Enabled', 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default()]);
 
-                            if (!empty($provision->bundle_id)) {
+                            if (! empty($provision->bundle_id)) {
                                 $pending_bundle_activations = \DB::table('sub_activations')->where('bundle_id', $provision->bundle_id)->where('status', 'Pending')->count();
                                 if ($pending_bundle_activations == 0) {
                                     \DB::table('sub_services')->where('id', $provision->bundle_id)->where('status', 'Pending')->update(['status' => 'Enabled']);
@@ -1500,7 +1499,7 @@ class CustomController extends BaseController
                         }
 
                         module_log(554, $provision->id, 'updated', 'activation completed');
-                        if (!empty(session('user_id'))) {
+                        if (! empty(session('user_id'))) {
                             return json_alert('Provision Completed', 'success', ['close_dialog' => 1, 'close_left_dialog' => 1]);
                         }
                     } elseif ($current_step < $num_steps) {
@@ -1509,30 +1508,30 @@ class CustomController extends BaseController
                         $next_step = \DB::table('sub_activation_plans')->where('activation_type_id', $product->provision_plan_id)->where('step', '>', $current_step)->where('status', '!=', 'Deleted')->orderby('step')->pluck('step')->first();
 
                         \DB::table($service_table)
-                ->where('id', $provision->id)
-                ->update(['step' => $next_step, 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default()]);
+                            ->where('id', $provision->id)
+                            ->update(['step' => $next_step, 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default()]);
                         update_admin_only_activations();
                         module_log(554, $provision->id, 'updated', 'activation step '.$current_step.' completed');
                         $step_update_data['completed'] = 1;
                         \DB::table('sub_activation_steps')
-                ->where('provision_plan_id', $provision_plan->id)
-                ->where('provision_id', $provision->id)
-                ->where('service_table', $service_table)
-                ->update($step_update_data);
+                            ->where('provision_plan_id', $provision_plan->id)
+                            ->where('provision_id', $provision->id)
+                            ->where('service_table', $service_table)
+                            ->update($step_update_data);
 
-                        ++$current_step;
+                        $current_step++;
                     }
                 }
 
-                if (!$provision_plan->automated) {
+                if (! $provision_plan->automated) {
                     if ($current_step == $provision_plan->step) {
                         $data['provision_plan_id'] = $provision_plan->id;
                         $data['provision_id'] = $provision->id;
-                        if ('Function' == $provision_plan->type) {
+                        if ($provision_plan->type == 'Function') {
                             if ($provision->is_test) {
-                                $data['provision_form'] = (!empty($provision_plan->function_name)) ? $provision_plan->function_name : $provision_plan->name.' function';
+                                $data['provision_form'] = (! empty($provision_plan->function_name)) ? $provision_plan->function_name : $provision_plan->name.' function';
                             } else {
-                                if (!empty($provision->detail)) {
+                                if (! empty($provision->detail)) {
                                     return json_alert('Provision detail already set', 'error');
                                 }
                                 $data['provision_form'] = build_provision_form($provision, $provision_plan, $service_table);
@@ -1540,19 +1539,19 @@ class CustomController extends BaseController
                                     return json_alert(data['provision_form'][0], 'warning');
                                 }
 
-                                if (!$data['provision_form']) {
+                                if (! $data['provision_form']) {
                                     return json_alert('Provision form does not exist', 'warning');
                                 }
                             }
                         }
 
-                        if ('Module' == $provision_plan->type) {
+                        if ($provision_plan->type == 'Module') {
                             if (empty($provision_plan->module_id)) {
                                 return json_alert('Activation type module_id not set', 'warning');
                             }
                             $menu_name = get_menu_url($provision_plan->module_id);
 
-                            $model = new \App\Models\ErpModel();
+                            $model = new \App\Models\ErpModel;
 
                             $model->setMenuData($menu_name);
 
@@ -1568,20 +1567,20 @@ class CustomController extends BaseController
                             $data['exclude_input_script'] = true;
                         }
 
-                        if ('Fibremap' == $provision_plan->type) {
+                        if ($provision_plan->type == 'Fibremap') {
                             $data['provision_form'] = '<iframe id="provision_iframe" src="/axxess_map_provision?service_table='.$service_table.'&num_steps='.$num_steps.'&current_step='.$current_step.'&provision_id='.$provision->id.'&provision_plan_id='.$provision_plan->id.'" width="100%" frameborder="0px" height="600px" onerror="alert(\'Failed\')" style="margin-bottom:-5px;"><!-- //required for browser compatibility --></iframe>';
                         }
-                        if ('LTE5Gmap' == $provision_plan->type) {
+                        if ($provision_plan->type == 'LTE5Gmap') {
                             $data['provision_form'] = '<iframe id="provision_iframe" src="/axxess_map_mtn5g_provision?service_table='.$service_table.'&num_steps='.$num_steps.'&current_step='.$current_step.'&provision_id='.$provision->id.'&provision_plan_id='.$provision_plan->id.'" width="100%" frameborder="0px" height="600px" onerror="alert(\'Failed\')" style="margin-bottom:-5px;"><!-- //required for browser compatibility --></iframe>';
                         }
 
-                        if ('Iframe' == $provision_plan->type) {
+                        if ($provision_plan->type == 'Iframe') {
                             $iframe_url = str_replace('{{$account_id}}', $provision->account_id, $provision_plan->iframe_url);
                             $iframe_url = str_replace('{{$sub_id}}', $provision->id, $iframe_url);
                             $data['provision_form'] = '<iframe id="provision_iframe" src="'.$iframe_url.'" width="100%" frameborder="0px" height="600px" onerror="alert(\'Failed\')" style="margin-bottom:-5px;"><!-- //required for browser compatibility --></iframe>';
                         }
 
-                        if ('Email' == $provision_plan->type) {
+                        if ($provision_plan->type == 'Email') {
                             $mail_data = [];
                             $customer = dbgetaccount($provision->account_id);
                             $reseller = dbgetaccount($customer->partner_id);
@@ -1603,11 +1602,11 @@ class CustomController extends BaseController
 
                             $sub = \DB::table($service_table)->where('id', $provision->id)->get()->first();
                             $product = \DB::table('crm_products')->where('id', $sub->product_id)->get()->first();
-                            if (!empty($product)) {
+                            if (! empty($product)) {
                                 $provision_plan_name = \DB::table('sub_activation_types')->where('id', $product->provision_plan_id)->pluck('name')->first();
-                                if (!empty($provision_plan_name)) {
+                                if (! empty($provision_plan_name)) {
                                     $email_id = \DB::table('sub_activation_plans')->where('activation_type_id', $product->provision_plan_id)->where('email_id', '>', '')->pluck('email_id')->first();
-                                    if (!empty($email_id)) {
+                                    if (! empty($email_id)) {
                                         $customer = dbgetaccount($sub->account_id);
 
                                         $mail_data['detail'] = $sub->detail;
@@ -1616,12 +1615,12 @@ class CustomController extends BaseController
                                         $mail_data['product_description'] = $product->name;
 
                                         $subscription_data = \DB::table('sub_activation_steps')
-                                        ->where('provision_id', $provision->id)
-                                        ->where('service_table', $service_table)
-                                        ->whereNotNull('subscription_detail')->get()->first();
+                                            ->where('provision_id', $provision->id)
+                                            ->where('service_table', $service_table)
+                                            ->whereNotNull('subscription_detail')->get()->first();
 
                                         $activation_data = get_activation_email_data($provision_plan_name, $sub, $customer, $provision, $service_table);
-                                        if (!empty($activation_data) && count($activation_data) > 0) {
+                                        if (! empty($activation_data) && count($activation_data) > 0) {
                                             foreach ($activation_data as $k => $v) {
                                                 $mail_data[$k] = $v;
                                             }
@@ -1630,7 +1629,7 @@ class CustomController extends BaseController
                                 }
                             }
 
-                            if (!empty($provision_plan->email_id)) {
+                            if (! empty($provision_plan->email_id)) {
                                 $newsletter = \DB::table('crm_email_manager')->where('id', $provision_plan->email_id)->get()->first();
                                 $subject = $newsletter->name;
                                 $mail_data['subject'] = $newsletter->name;
@@ -1654,21 +1653,21 @@ class CustomController extends BaseController
                             $data['provision_form'] = email_form($provision_plan->email_id, $provision->account_id, $mail_data);
                         }
 
-                        if ('Checklist' == $provision_plan->type) {
+                        if ($provision_plan->type == 'Checklist') {
                             $product_monthly = \DB::table('crm_products')->where('is_subscription', 1)->where('id', $provision->product_id)->count();
                             if ($product_monthly && $provision_plan->name == 'products') {
                                 $product_monthly = \DB::table('crm_products')->where('is_subscription', 1)->where('id', $provision->product_id)->count();
 
                                 $data['provision_form'] = account_has_processed_debit_order($provision->account_id);
                             }
-                            if (!empty($data['provision_form'])) {
+                            if (! empty($data['provision_form'])) {
                                 $data['provision_form'] = $data['provision_form'].'<br>'.build_provision_checklist($provision, $provision_plan, $service_table);
                             } else {
                                 $data['provision_form'] = build_provision_checklist($provision, $provision_plan, $service_table);
                             }
                         }
 
-                        if ('Debitorder' == $provision_plan->type) {
+                        if ($provision_plan->type == 'Debitorder') {
                             $account = dbgetaccount($provision->account_id);
 
                             $data['provision_form'] = account_has_processed_debit_order($provision->account_id);
@@ -1682,18 +1681,18 @@ class CustomController extends BaseController
             $data['num_steps'] = $num_steps;
             $data['current_step'] = $current_step;
             $num_automated = \DB::table('sub_activation_plans')
-            ->where('activation_type_id', $product->provision_plan_id)
-            ->where('automated', 1)
-            ->where('status', 'Enabled')
-            ->where('step', '<', $current_step)
-            ->count();
+                ->where('activation_type_id', $product->provision_plan_id)
+                ->where('automated', 1)
+                ->where('status', 'Enabled')
+                ->where('step', '<', $current_step)
+                ->count();
             $num_deleted = \DB::table('sub_activation_plans')
-            ->where('activation_type_id', $product->provision_plan_id)
-            ->where('status', 'Deleted')
-            ->count();
+                ->where('activation_type_id', $product->provision_plan_id)
+                ->where('status', 'Deleted')
+                ->count();
             $data['selected_tab'] = (($current_step - $num_automated) - 1);
             $data['menu_route'] = $this->data['menu_route'];
-            if (!empty($request->topup)) {
+            if (! empty($request->topup)) {
                 $data['topup'] = 1;
             } else {
                 $data['topup'] = 0;
@@ -1718,7 +1717,7 @@ class CustomController extends BaseController
             $provision = \DB::table($service_table)->where('id', $request->provision_id)->get()->first();
 
             $provision_plan = \DB::table('sub_activation_plans')->where('id', $request->provision_plan_id)->get()->first();
-            if ($provision_plan->step < $provision->step && !$provision_plan->repeatable) {
+            if ($provision_plan->step < $provision->step && ! $provision_plan->repeatable) {
                 return json_alert('Invalid Provision Step', 'warning');
             }
             $product = \DB::table('crm_products')->where('id', $provision->product_id)->get()->first();
@@ -1751,13 +1750,13 @@ class CustomController extends BaseController
             $provision = \DB::table($service_table)->where('id', $request->provision_id)->get()->first();
 
             $provision_plan = \DB::table('sub_activation_plans')->where('id', $request->provision_plan_id)->get()->first();
-            if ($provision_plan->step < $provision->step && !$provision_plan->repeatable) {
+            if ($provision_plan->step < $provision->step && ! $provision_plan->repeatable) {
                 return json_alert('Invalid Provision Step', 'warning');
             }
-            if ('Fibremap' == $provision_plan->type) {
+            if ($provision_plan->type == 'Fibremap') {
                 $default_values = ['provision_plan_id', 'provision_id', 'current_step', 'num_steps', 'form_step', 'topup'];
                 foreach ($request->all() as $k => $v) {
-                    if (!in_array($k, $default_values)) {
+                    if (! in_array($k, $default_values)) {
                         $inputs[$k] = $v;
                     }
                 }
@@ -1786,7 +1785,7 @@ class CustomController extends BaseController
                 $address = $request->addressinput;
                 $latlong_arr = explode(',', $latlong);
 
-                $axxess = new \Axxess();
+                $axxess = new \Axxess;
                 //$axxess = $axxess->setDebug();
                 $available = $axxess->checkFibreAvailability($latlong_arr[0], $latlong_arr[1], $address);
 
@@ -1796,7 +1795,7 @@ class CustomController extends BaseController
 
                 $available_products = '';
                 foreach ($available->arrAvailableProvidersGuids as $provider) {
-                    if ($provider->intPreOrder == 0 && !empty($provider->guidNetworkProviderId)) {
+                    if ($provider->intPreOrder == 0 && ! empty($provider->guidNetworkProviderId)) {
                         $available_products_arr = \DB::table('isp_data_products')
                             ->where('guidNetworkProviderId', $provider->guidNetworkProviderId)
                             ->where('product_id', '!=', 0)
@@ -1822,10 +1821,10 @@ class CustomController extends BaseController
                     ->update($step_update_data);
             }
 
-            if ('LTE5Gmap' == $provision_plan->type) {
+            if ($provision_plan->type == 'LTE5Gmap') {
                 $default_values = ['provision_plan_id', 'provision_id', 'current_step', 'num_steps', 'form_step', 'topup'];
                 foreach ($request->all() as $k => $v) {
-                    if (!in_array($k, $default_values)) {
+                    if (! in_array($k, $default_values)) {
                         $inputs[$k] = $v;
                     }
                 }
@@ -1856,7 +1855,7 @@ class CustomController extends BaseController
                 $address = $request->addressinput;
                 $latlong_arr = explode(',', $latlong);
 
-                $axxess = new \Axxess();
+                $axxess = new \Axxess;
                 //$axxess = $axxess->setDebug();
                 $available = $axxess->checkFibreAvailability($latlong_arr[0], $latlong_arr[1], $address, $strBBox, $strWidth, $strHeight, $strICoOrdinate, $strJCoOrdinate);
                 //checkMtn5GAvailability($strLatitude, $strLongitude, $strAddress, $strBBox, $strWidth, $strHeight, $strICoOrdinate, $strJCoOrdinate)
@@ -1874,18 +1873,18 @@ class CustomController extends BaseController
                     ->update($step_update_data);
             }
 
-            if ('Module' == $provision_plan->type) {
+            if ($provision_plan->type == 'Module') {
                 $provision_form_fields = ['provision_plan_id', 'provision_id', 'current_step', 'num_steps', 'service_table'];
                 $request->replace($request->except($provision_form_fields));
-                $erp = new \DBEvent();
+                $erp = new \DBEvent;
                 $erp->setModule($provision_plan->module_id);
                 $result = $erp->save($request);
-                if (!is_array($result) || empty($result['id'])) {
+                if (! is_array($result) || empty($result['id'])) {
                     return $result;
                 }
             }
 
-            if ('Iframe' == $provision_plan->type) {
+            if ($provision_plan->type == 'Iframe') {
                 \DB::table($service_table)
                     ->where('id', $provision->id)
                     ->increment('step');
@@ -1904,15 +1903,15 @@ class CustomController extends BaseController
                 return json_alert($succes_msg, 'info', ['provision_id' => $request->provision_id, 'provision_url' => $provision_url]);
             }
 
-            if ('Function' == $provision_plan->type) {
-                if (!empty($provision->detail)) {
+            if ($provision_plan->type == 'Function') {
+                if (! empty($provision->detail)) {
                     // return json_alert('Provision detail already set2', 'error');
                 }
                 $default_values = ['provision_plan_id', 'provision_id', 'current_step', 'num_steps', 'form_step', 'topup'];
                 $inputs = [];
 
                 foreach ($request->all() as $k => $v) {
-                    if (!in_array($k, $default_values)) {
+                    if (! in_array($k, $default_values)) {
                         $inputs[$k] = $v;
                     }
                 }
@@ -1925,10 +1924,10 @@ class CustomController extends BaseController
 
                 $provision_function = 'provision_'.function_format($provision_plan->name);
 
-                if (!empty($provision_plan->function_name)) {
+                if (! empty($provision_plan->function_name)) {
                     $provision_function = $provision_plan->function_name;
                 }
-                if (!function_exists($provision_function)) {
+                if (! function_exists($provision_function)) {
                     return json_alert('Provision function does not exist.', 'error');
                 }
 
@@ -1945,29 +1944,29 @@ class CustomController extends BaseController
                     $provision_result['detail'] = 'test';
                 } else {
                     $provision_result = $provision_function($provision, $input_data, $customer, $product);
-                    $step_update_data['result'] = (!empty($provision_result['detail'])) ? $provision_result['detail'] : $provision_result;
+                    $step_update_data['result'] = (! empty($provision_result['detail'])) ? $provision_result['detail'] : $provision_result;
                 }
 
-                if (true === $step_update_data['result'] || is_array($provision_result)) {
+                if ($step_update_data['result'] === true || is_array($provision_result)) {
                     $step_update_data['result'] = 'complete';
                 }
-                if (!empty($provision_result['detail'])) {
+                if (! empty($provision_result['detail'])) {
                     $step_update_data['subscription_detail'] = $provision_result['detail'];
                 }
-                if (!empty($provision_result['info'])) {
+                if (! empty($provision_result['info'])) {
                     $step_update_data['subscription_info'] = json_encode($provision_result['info'], true);
                 }
 
-                if (!empty($provision_result['table_data'])) {
+                if (! empty($provision_result['table_data'])) {
                     unset($provision_result['table_data']['service_table']);
                     $step_update_data['table_data'] = json_encode($provision_result['table_data'], true);
                 }
 
-                if (!empty($provision_result['detail'])) {
+                if (! empty($provision_result['detail'])) {
                     \DB::table($service_table)->where('id', $provision->id)->update(['detail' => $provision_result['detail'], 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default()]);
                 }
 
-                if (!empty($provision_result['ref'])) {
+                if (! empty($provision_result['ref'])) {
                     if ($service_table != 'sub_service_topups') {
                         \DB::table($service_table)->where('id', $provision->id)->update(['ref' => $provision_result['ref']]);
                     }
@@ -1979,12 +1978,12 @@ class CustomController extends BaseController
                     ->where('service_table', $service_table)
                     ->update($step_update_data);
 
-                if (!is_array($provision_result) && true !== $provision_result) {
+                if (! is_array($provision_result) && $provision_result !== true) {
                     return json_alert($provision_result, 'Provision Result Error');
                 }
             }
 
-            if ('Email' == $provision_plan->type) {
+            if ($provision_plan->type == 'Email') {
                 $mail_data['partner_company'] = $request->partner_company;
                 $mail_data['partner_email'] = $request->partner_email;
                 $mail_data['customer_type'] = $request->customer_type;
@@ -2001,7 +2000,7 @@ class CustomController extends BaseController
                 $mail_data['activation_email'] = true;
                 $mail_data['notification_id'] = $request->notification_id;
                 try {
-                    if (1 != $customer->partner_id) {
+                    if ($customer->partner_id != 1) {
                         $mail_data['reseller_user_company'] = $customer->company;
                         $mail_result = erp_process_notification($customer->partner_id, $mail_data);
                     } else {
@@ -2019,7 +2018,7 @@ class CustomController extends BaseController
 
                 $plan_name = \DB::table('sub_activation_plans')->where('id', $request->provision_plan_id)->pluck('name')->first();
                 $has_function_step = \DB::table('sub_activation_plans')->where('activation_type_id', $product->provision_plan_id)->where('type', 'Function')->count();
-                if (!$has_function_step) {
+                if (! $has_function_step) {
                     $step_update_data['subscription_detail'] = $provision->provision_type.'_'.$provision->id;
                 }
 
@@ -2036,7 +2035,7 @@ class CustomController extends BaseController
                 $succes_msg = $mail_result;
             }
 
-            if ('Checklist' == $provision_plan->type) {
+            if ($provision_plan->type == 'Checklist') {
                 $product_monthly = \DB::table('crm_products')->where('is_subscription', 1)->where('id', $provision->product_id)->count();
                 if ($product_monthly && $provision_plan->name == 'products') {
                     $step_update_data['input'] = account_has_processed_debit_order($provision->account_id);
@@ -2048,7 +2047,7 @@ class CustomController extends BaseController
                 $checklist_post = [];
 
                 foreach ($request->all() as $k => $v) {
-                    if (!in_array($k, $default_values)) {
+                    if (! in_array($k, $default_values)) {
                         $checklist_post[] = $k;
                     }
                 }
@@ -2063,14 +2062,14 @@ class CustomController extends BaseController
                 $checklist = explode(PHP_EOL, $checklist_plan);
                 foreach ($checklist as $i => $list_item) {
                     $item_id = 'checklist_item_'.$i;
-                    if (!in_array($item_id, $checklist_post)) {
+                    if (! in_array($item_id, $checklist_post)) {
                         return json_alert('Complete checklist to continue', 'warning', ['close_dialog' => 1, 'close_left_dialog' => 1]);
                     }
                 }
             }
 
-            if ('Debitorder' == $provision_plan->type) {
-                if (!empty($request->retry_debit_order)) {
+            if ($provision_plan->type == 'Debitorder') {
+                if (! empty($request->retry_debit_order)) {
                     $step_update_data['input'] = account_has_processed_debit_order($provision->account_id, true);
                 } else {
                     $step_update_data['input'] = account_has_processed_debit_order($provision->account_id, false);
@@ -2100,10 +2099,10 @@ class CustomController extends BaseController
                     $j = 1;
                     $detail = $provision_plan_name.'_'.$j;
                     $detail_exists = \DB::table('sub_services')
-                    ->where('account_id', $provision->account_id)
-                    ->where('product_id', $provision->product_id)
-                    ->where('detail', $detail)
-                    ->count();
+                        ->where('account_id', $provision->account_id)
+                        ->where('product_id', $provision->product_id)
+                        ->where('detail', $detail)
+                        ->count();
                     // while($detail_exists){
                     //     $j++;
                     //     $detail = $provision_plan_name.'_'.$j;
@@ -2129,12 +2128,12 @@ class CustomController extends BaseController
                 // aa($subscription_data);
                 $detail = $subscription_data->subscription_detail;
 
-                if (!$provision->is_test) {
-                    $erp_subscription = new \ErpSubs();
+                if (! $provision->is_test) {
+                    $erp_subscription = new \ErpSubs;
                     $erp_subscription->createSubscription($provision->account_id, $provision->product_id, $detail, $provision->invoice_id, $provision->bill_frequency, $provision->bundle_id);
                 }
 
-                if (!empty($subscription_data->subscription_info)) {
+                if (! empty($subscription_data->subscription_info)) {
                     $subscription_info = json_decode($subscription_data->subscription_info, true);
                     if ($provision->product_id == 126) {
                         \DB::table('sub_services')
@@ -2156,33 +2155,33 @@ class CustomController extends BaseController
                     \DB::table('isp_data_ip_ranges')->where('ip_range', $detail)->update(['account_id' => $provision->account_id]);
                 }
 
-                if (!empty($subscription_data->table_data)) {
+                if (! empty($subscription_data->table_data)) {
                     $table_data_list = provision_get_table_data($provision->id, $service_table);
                     // aa($table_data_list);
-                    if (!empty($table_data_list) && is_array($table_data_list)) {
+                    if (! empty($table_data_list) && is_array($table_data_list)) {
                         foreach ($table_data_list as $insert_table => $insert_data) {
                             if (is_array($insert_data)) {
                                 $insert_table_cols = get_columns_from_schema($insert_table);
                                 if (in_array('subscription_id', $insert_table_cols)) {
                                     $insert_data['subscription_id'] = \DB::table('sub_services')
-                                    ->where('account_id', $provision->account_id)
-                                    ->where('product_id', $provision->product_id)
-                                    ->where('detail', $detail)
-                                    ->where('status', 'Enabled')->pluck('id')->first();
+                                        ->where('account_id', $provision->account_id)
+                                        ->where('product_id', $provision->product_id)
+                                        ->where('detail', $detail)
+                                        ->where('status', 'Enabled')->pluck('id')->first();
                                 }
                                 // aa($insert_data['subscription_id']);
                                 unset($insert_data['service_table']);
 
-                                if ('isp_data_ip_ranges' == $insert_table) {
+                                if ($insert_table == 'isp_data_ip_ranges') {
                                     \DB::connection('default')->table('isp_data_ip_ranges')
-                                    ->where('ip_range', $insert_data['ip_range'])
-                                    ->update($insert_data);
-                                } elseif ('isp_data_iptv' == $insert_table) {
+                                        ->where('ip_range', $insert_data['ip_range'])
+                                        ->update($insert_data);
+                                } elseif ($insert_table == 'isp_data_iptv') {
                                     unset($insert_data['trial']);
                                     $r = \DB::connection('default')->table('isp_data_iptv')
-                                    ->where('username', $insert_data['username'])
-                                    ->update($insert_data);
-                                } elseif ('p_phone_numbers' == $insert_table) {
+                                        ->where('username', $insert_data['username'])
+                                        ->update($insert_data);
+                                } elseif ($insert_table == 'p_phone_numbers') {
                                     $customer = dbgetaccount($provision->account_id);
                                     $domain_uuid = \DB::connection('pbx')->table('v_domains')->where('domain_name', $customer->pabx_domain)->pluck('domain_uuid')->first();
 
@@ -2193,7 +2192,7 @@ class CustomController extends BaseController
                                 } else {
                                     if ($insert_table == 'isp_host_websites') {
                                         $exists = \DB::table($insert_table)->where('domain', $insert_data['domain'])->count();
-                                        if (!$exists) {
+                                        if (! $exists) {
                                             \DB::table($insert_table)->insert($insert_data);
                                         } else {
                                             \DB::table($insert_table)->where('domain', $insert_data['domain'])->update(['to_register' => 1, 'status' => 'Enabled']);
@@ -2218,7 +2217,7 @@ class CustomController extends BaseController
                     send_user_guide_to_customer($provision->account_id, $user_guide_id);
                 }
 
-                if (!empty($subscription_info['date_activated'])) {
+                if (! empty($subscription_info['date_activated'])) {
                     $date_activated = $subscription_info['date_activated'];
                 }
                 \DB::table('sub_activation_steps')
@@ -2230,7 +2229,7 @@ class CustomController extends BaseController
                     \DB::table($service_table)
                         ->where('id', $provision->id)
                         ->update(['bundle_id' => $provision->bundle_id, 'status' => 'Enabled', 'date_activated' => $date_activated, 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default()]);
-                    if (!empty($provision->bundle_id)) {
+                    if (! empty($provision->bundle_id)) {
                         $pending_bundle_activations = \DB::table('sub_activations')->where('bundle_id', $provision->bundle_id)->where('status', 'Pending')->count();
                         if ($pending_bundle_activations == 0) {
                             \DB::table('sub_services')->where('id', $provision->bundle_id)->where('status', 'Pending')->update(['status' => 'Enabled']);
@@ -2240,7 +2239,7 @@ class CustomController extends BaseController
                     \DB::table($service_table)
                         ->where('id', $provision->id)
                         ->update(['bundle_id' => $provision->bundle_id, 'status' => 'Enabled', 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default()]);
-                    if (!empty($provision->bundle_id)) {
+                    if (! empty($provision->bundle_id)) {
                         $pending_bundle_activations = \DB::table('sub_activations')->where('bundle_id', $provision->bundle_id)->where('status', 'Pending')->count();
                         if ($pending_bundle_activations == 0) {
                             \DB::table('sub_services')->where('id', $provision->bundle_id)->where('status', 'Pending')->update(['status' => 'Enabled']);
@@ -2302,21 +2301,21 @@ class CustomController extends BaseController
             return json_alert('Invalid Id', 'error');
         }
 
-        if ($service_table == 'sub_activations' && !empty($provision->provision_type) && ($provision->provision_type == 'phone_number' || $provision->provision_type == 'airtime_prepaid' || $provision->provision_type == 'airtime_contract' || $provision->provision_type == 'airtime_unlimited')) {
+        if ($service_table == 'sub_activations' && ! empty($provision->provision_type) && ($provision->provision_type == 'phone_number' || $provision->provision_type == 'airtime_prepaid' || $provision->provision_type == 'airtime_contract' || $provision->provision_type == 'airtime_unlimited')) {
             $extension_product_ids = get_activation_type_product_ids('pbx_extension');
             $pending_extensions = \DB::table('sub_services')->where('id', '!=', $request->id)->where('account_id', $provision->account_id)->whereIn('product_id', $extension_product_ids)->where('status', 'Pending')->count();
-            if ($pending_extensions && !in_array($provision->product_id, $extension_product_ids)) {
+            if ($pending_extensions && ! in_array($provision->product_id, $extension_product_ids)) {
                 return json_alert('Please provision pending extensions first.', 'warning');
             }
 
             $sip_trunk_product_ids = get_activation_type_product_ids('sip_trunk');
             $pending_sip_trunks = \DB::table('sub_services')->where('id', '!=', $request->id)->where('account_id', $provision->account_id)->whereIn('product_id', $sip_trunk_product_ids)->where('status', 'Pending')->count();
-            if ($pending_sip_trunks && !in_array($provision->product_id, $pending_sip_trunks)) {
+            if ($pending_sip_trunks && ! in_array($provision->product_id, $pending_sip_trunks)) {
                 return json_alert('Please provision pending sip trunks first.', 'warning');
             }
         }
 
-        if ('Pending' != $provision->status) {
+        if ($provision->status != 'Pending') {
             return json_alert('Invalid Provision Status', 'error');
         }
 
@@ -2337,7 +2336,7 @@ class CustomController extends BaseController
         }
 
         // get total num provision steps
-        $current_step = !empty($provision->step) ? $provision->step : 1;
+        $current_step = ! empty($provision->step) ? $provision->step : 1;
         $is_admin = (check_access('1,31')) ? 1 : 0;
 
         $num_steps = \DB::table('sub_activation_plans')->where('activation_type_id', $product->deactivate_plan_id)->where('status', 'Enabled')->count();
@@ -2362,7 +2361,7 @@ class CustomController extends BaseController
                 return json_alert('Invalid Id2', 'error');
             }
 
-            if ('Pending' != $provision->status) {
+            if ($provision->status != 'Pending') {
                 return json_alert('Invalid Provision Status', 'error');
             }
 
@@ -2381,7 +2380,7 @@ class CustomController extends BaseController
             }
 
             // get total num provision steps
-            $current_step = !empty($provision->step) ? $provision->step : 1;
+            $current_step = ! empty($provision->step) ? $provision->step : 1;
 
             $is_admin = (session('role_level') == 'Admin') ? 1 : 0;
 
@@ -2397,7 +2396,7 @@ class CustomController extends BaseController
                         ->where('repeatable', 1)
                         ->where('automated', 0)
                         ->count();
-                    if (!$repeatable) {
+                    if (! $repeatable) {
                         return json_alert('You cannot redo this step.', 'error');
                     } else {
                         $current_step = $step_number;
@@ -2407,12 +2406,12 @@ class CustomController extends BaseController
 
             foreach ($provision_plans as $provision_plan) {
                 if ($current_step == $provision_plan->step) {
-                    if (!$is_admin && $provision_plan->admin_only) {
+                    if (! $is_admin && $provision_plan->admin_only) {
                         return json_alert('An administrator needs to complete the following provisioning process.', 'error');
                     }
                 }
 
-                if ('Email' == $provision_plan->type && $provision_plan->automated && $current_step == $provision_plan->step) {
+                if ($provision_plan->type == 'Email' && $provision_plan->automated && $current_step == $provision_plan->step) {
                     $step_record = \DB::table('sub_activation_steps')
                         ->where('deactivate_plan_id', $provision_plan->id)
                         ->where('provision_id', $provision->id)
@@ -2434,7 +2433,7 @@ class CustomController extends BaseController
                     $mail_data = [];
                     $customer = dbgetaccount($provision->account_id);
                     $reseller = dbgetaccount($customer->partner_id);
-                    if (1 == $customer->partner_id) {
+                    if ($customer->partner_id == 1) {
                         $mail_data['partner_company'] = 'Cloud Telecoms';
                         $mail_data['partner_email'] = 'no-reply@telecloud.co.za';
                     } else {
@@ -2454,17 +2453,17 @@ class CustomController extends BaseController
                     $mail_data['message'] = $provision_plan->step_email;
                     $mail_data['message_box_id'] = $provision_plan->id;
                     $mail_data['customer'] = $customer;
-                    if (!empty($provision_plan->email_id)) {
+                    if (! empty($provision_plan->email_id)) {
                         $mail_data['notification_id'] = $provision_plan->email_id;
                     }
 
                     $sub = \DB::table($service_table)->where('id', $provision->id)->get()->first();
                     $product = \DB::table('crm_products')->where('id', $sub->product_id)->get()->first();
-                    if (!empty($product)) {
+                    if (! empty($product)) {
                         $provision_plan_name = \DB::table('sub_activation_types')->where('id', $product->deactivate_plan_id)->pluck('name')->first();
-                        if (!empty($provision_plan_name)) {
+                        if (! empty($provision_plan_name)) {
                             $email_id = \DB::table('sub_activation_plans')->where('activation_type_id', $product->deactivate_plan_id)->where('email_id', '>', '')->pluck('email_id')->first();
-                            if (!empty($email_id)) {
+                            if (! empty($email_id)) {
                                 $customer = dbgetaccount($sub->account_id);
 
                                 $mail_data['detail'] = $sub->detail;
@@ -2472,7 +2471,7 @@ class CustomController extends BaseController
                                 $mail_data['product_code'] = $product->code;
                                 $mail_data['product_description'] = $product->name;
                                 $activation_data = get_activation_email_data($provision_plan_name, $sub, $customer, $provision, $service_table);
-                                if (!empty($activation_data) && count($activation_data) > 0) {
+                                if (! empty($activation_data) && count($activation_data) > 0) {
                                     foreach ($activation_data as $k => $v) {
                                         $mail_data[$k] = $v;
                                     }
@@ -2485,7 +2484,7 @@ class CustomController extends BaseController
                         $mail_data['subscription_id'] = $provision->id;
                         $mail_data['activation_email'] = true;
 
-                        if (1 != $customer->partner_id) {
+                        if ($customer->partner_id != 1) {
                             $mail_data['reseller_user_company'] = $customer->company;
                             $mail_result = erp_process_notification($customer->partner_id, $mail_data);
                         } else {
@@ -2505,8 +2504,8 @@ class CustomController extends BaseController
                         ->where('provision_id', $request->provision_id)
                         ->where('service_table', $service_table)
                         ->update($step_update_data);
-                } elseif ('Function' == $provision_plan->type && $provision_plan->automated && $current_step == $provision_plan->step) {
-                    if (!empty($provision->detail)) {
+                } elseif ($provision_plan->type == 'Function' && $provision_plan->automated && $current_step == $provision_plan->step) {
+                    if (! empty($provision->detail)) {
                         // return json_alert('Provision detail already set1', 'error');
                     }
                     $step_record = \DB::table('sub_activation_steps')
@@ -2527,10 +2526,10 @@ class CustomController extends BaseController
 
                     $step_update_data['updated_at'] = date('Y-m-d H:i:s');
                     $provision_function = 'provision_'.function_format($provision_plan->name);
-                    if (!empty($provision_plan->function_name)) {
+                    if (! empty($provision_plan->function_name)) {
                         $provision_function = $provision_plan->function_name;
                     }
-                    if (!function_exists($provision_function)) {
+                    if (! function_exists($provision_function)) {
                         return json_alert('Provision function does not exists', 'error');
                     }
 
@@ -2541,25 +2540,25 @@ class CustomController extends BaseController
                         $provision_result['detail'] = 'test';
                     } else {
                         $provision_result = $provision_function($provision, '', $customer, $product);
-                        $step_update_data['result'] = (!empty($provision_result['detail'])) ? $provision_result['detail'] : '';
+                        $step_update_data['result'] = (! empty($provision_result['detail'])) ? $provision_result['detail'] : '';
                     }
 
-                    if (true === $step_update_data['result'] || is_array($provision_result)) {
+                    if ($step_update_data['result'] === true || is_array($provision_result)) {
                         $step_update_data['result'] = 'complete';
                     }
-                    if (!empty($provision_result['detail'])) {
+                    if (! empty($provision_result['detail'])) {
                         $step_update_data['subscription_detail'] = $provision_result['detail'];
                     }
-                    if (!empty($provision_result['info'])) {
+                    if (! empty($provision_result['info'])) {
                         $step_update_data['subscription_info'] = json_encode($provision_result['info'], true);
                     }
 
-                    if (!empty($provision_result['table_data'])) {
+                    if (! empty($provision_result['table_data'])) {
                         unset($provision_result['table_data']['service_table']);
                         $step_update_data['table_data'] = json_encode($provision_result['table_data'], true);
                     }
 
-                    if (!empty($provision_result['detail'])) {
+                    if (! empty($provision_result['detail'])) {
                         if ($service_table != 'sub_service_topups') {
                             \DB::table($service_table)->where('id', $provision->id)->update(['detail' => $provision_result['detail'], 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default()]);
                         }
@@ -2571,7 +2570,7 @@ class CustomController extends BaseController
                         ->where('service_table', $service_table)
                         ->update($step_update_data);
 
-                    if (!is_array($provision_result) && true !== $provision_result) {
+                    if (! is_array($provision_result) && $provision_result !== true) {
                         return json_alert($provision_result, 'error');
                     }
                 }
@@ -2583,7 +2582,7 @@ class CustomController extends BaseController
                             send_user_guide_to_customer($provision->account_id, $user_guide_id);
                         }
                         $date_activated = date('Y-m-d H:i:s');
-                        if (!empty($subscription_info['date_activated'])) {
+                        if (! empty($subscription_info['date_activated'])) {
                             $date_activated = $subscription_info['date_activated'];
                         }
 
@@ -2591,7 +2590,7 @@ class CustomController extends BaseController
                             \DB::table($service_table)
                                 ->where('id', $provision->id)
                                 ->update(['bundle_id' => $provision->bundle_id, 'status' => 'Enabled', 'date_activated' => $date_activated, 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default()]);
-                            if (!empty($provision->bundle_id)) {
+                            if (! empty($provision->bundle_id)) {
                                 $pending_bundle_activations = \DB::table('sub_activations')->where('bundle_id', $provision->bundle_id)->where('status', 'Pending')->count();
                                 if ($pending_bundle_activations == 0) {
                                     \DB::table('sub_services')->where('id', $provision->bundle_id)->where('status', 'Pending')->update(['status' => 'Enabled']);
@@ -2601,7 +2600,7 @@ class CustomController extends BaseController
                             \DB::table($service_table)
                                 ->where('id', $provision->id)
                                 ->update(['bundle_id' => $provision->bundle_id, 'status' => 'Enabled', 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default()]);
-                            if (!empty($provision->bundle_id)) {
+                            if (! empty($provision->bundle_id)) {
                                 $pending_bundle_activations = \DB::table('sub_activations')->where('bundle_id', $provision->bundle_id)->where('status', 'Pending')->count();
                                 if ($pending_bundle_activations == 0) {
                                     \DB::table('sub_services')->where('id', $provision->bundle_id)->where('status', 'Pending')->update(['status' => 'Enabled']);
@@ -2609,7 +2608,7 @@ class CustomController extends BaseController
                             }
                         }
 
-                        $ErpSubs = new \ErpSubs();
+                        $ErpSubs = new \ErpSubs;
 
                         $result = $ErpSubs->deleteSubscription($provision->subscription_id);
                         if ($result !== true) {
@@ -2636,19 +2635,19 @@ class CustomController extends BaseController
                             ->where('service_table', $service_table)
                             ->update($step_update_data);
 
-                        ++$current_step;
+                        $current_step++;
                     }
                 }
 
-                if (!$provision_plan->automated) {
+                if (! $provision_plan->automated) {
                     if ($current_step == $provision_plan->step) {
                         $data['deactivate_plan_id'] = $provision_plan->id;
                         $data['provision_id'] = $provision->id;
-                        if ('Function' == $provision_plan->type) {
+                        if ($provision_plan->type == 'Function') {
                             if ($provision->is_test) {
-                                $data['provision_form'] = (!empty($provision_plan->function_name)) ? $provision_plan->function_name : $provision_plan->name.' function';
+                                $data['provision_form'] = (! empty($provision_plan->function_name)) ? $provision_plan->function_name : $provision_plan->name.' function';
                             } else {
-                                if (!empty($provision->detail)) {
+                                if (! empty($provision->detail)) {
                                     //  return json_alert('Provision detail already set', 'error');
                                 }
                                 $data['provision_form'] = build_provision_form($provision, $provision_plan, $service_table);
@@ -2656,19 +2655,19 @@ class CustomController extends BaseController
                                     return json_alert(data['provision_form'][0], 'warning');
                                 }
 
-                                if (!$data['provision_form']) {
+                                if (! $data['provision_form']) {
                                     return json_alert('Provision form does not exist', 'warning');
                                 }
                             }
                         }
 
-                        if ('Module' == $provision_plan->type) {
+                        if ($provision_plan->type == 'Module') {
                             if (empty($provision_plan->module_id)) {
                                 return json_alert('Activation type module_id not set', 'warning');
                             }
                             $menu_name = get_menu_url($provision_plan->module_id);
 
-                            $model = new \App\Models\ErpModel();
+                            $model = new \App\Models\ErpModel;
 
                             $model->setMenuData($menu_name);
 
@@ -2684,13 +2683,13 @@ class CustomController extends BaseController
                             $data['exclude_input_script'] = true;
                         }
 
-                        if ('Iframe' == $provision_plan->type) {
+                        if ($provision_plan->type == 'Iframe') {
                             $iframe_url = str_replace('{{$account_id}}', $provision->account_id, $provision_plan->iframe_url);
                             $iframe_url = str_replace('{{$sub_id}}', $provision->id, $iframe_url);
                             $data['provision_form'] = '<iframe id="provision_iframe" src="'.$iframe_url.'" width="100%" frameborder="0px" height="600px" onerror="alert(\'Failed\')" style="margin-bottom:-5px;"><!-- //required for browser compatibility --></iframe>';
                         }
 
-                        if ('Email' == $provision_plan->type) {
+                        if ($provision_plan->type == 'Email') {
                             $mail_data = [];
                             $customer = dbgetaccount($provision->account_id);
                             $reseller = dbgetaccount($customer->partner_id);
@@ -2712,11 +2711,11 @@ class CustomController extends BaseController
 
                             $sub = \DB::table($service_table)->where('id', $provision->id)->get()->first();
 
-                            if (!empty($product)) {
+                            if (! empty($product)) {
                                 $provision_plan_name = \DB::table('sub_activation_types')->where('id', $product->deactivate_plan_id)->pluck('name')->first();
-                                if (!empty($provision_plan_name)) {
+                                if (! empty($provision_plan_name)) {
                                     $email_id = \DB::table('sub_activation_plans')->where('activation_type_id', $product->deactivate_plan_id)->where('email_id', '>', '')->pluck('email_id')->first();
-                                    if (!empty($email_id)) {
+                                    if (! empty($email_id)) {
                                         $customer = dbgetaccount($sub->account_id);
 
                                         $mail_data['detail'] = $sub->detail;
@@ -2730,7 +2729,7 @@ class CustomController extends BaseController
                                             ->whereNotNull('subscription_detail')->get()->first();
 
                                         $activation_data = get_activation_email_data($provision_plan_name, $sub, $customer, $provision, $service_table);
-                                        if (!empty($activation_data) && count($activation_data) > 0) {
+                                        if (! empty($activation_data) && count($activation_data) > 0) {
                                             foreach ($activation_data as $k => $v) {
                                                 $mail_data[$k] = $v;
                                             }
@@ -2739,7 +2738,7 @@ class CustomController extends BaseController
                                 }
                             }
 
-                            if (!empty($provision_plan->email_id)) {
+                            if (! empty($provision_plan->email_id)) {
                                 $newsletter = \DB::table('crm_email_manager')->where('id', $provision_plan->email_id)->get()->first();
                                 $subject = $newsletter->name;
                                 $mail_data['subject'] = $newsletter->name;
@@ -2758,21 +2757,21 @@ class CustomController extends BaseController
                             $data['provision_form'] = email_form($provision_plan->email_id, $provision->account_id, $mail_data);
                         }
 
-                        if ('Checklist' == $provision_plan->type) {
+                        if ($provision_plan->type == 'Checklist') {
                             $product_monthly = \DB::table('crm_products')->where('is_subscription', 1)->where('id', $provision->product_id)->count();
                             if ($product_monthly && $provision_plan->name == 'products') {
                                 $product_monthly = \DB::table('crm_products')->where('is_subscription', 1)->where('id', $provision->product_id)->count();
 
                                 $data['provision_form'] = account_has_processed_debit_order($provision->account_id);
                             }
-                            if (!empty($data['provision_form'])) {
+                            if (! empty($data['provision_form'])) {
                                 $data['provision_form'] = $data['provision_form'].'<br>'.build_provision_checklist($provision, $provision_plan, $service_table);
                             } else {
                                 $data['provision_form'] = build_provision_checklist($provision, $provision_plan, $service_table);
                             }
                         }
 
-                        if ('Debitorder' == $provision_plan->type) {
+                        if ($provision_plan->type == 'Debitorder') {
                             $account = dbgetaccount($provision->account_id);
 
                             $data['provision_form'] = account_has_processed_debit_order($provision->account_id);
@@ -2797,7 +2796,7 @@ class CustomController extends BaseController
                 ->count();
             $data['selected_tab'] = (($current_step - $num_automated) - 1);
             $data['menu_route'] = $this->data['menu_route'];
-            if (!empty($request->topup)) {
+            if (! empty($request->topup)) {
                 $data['topup'] = 1;
             } else {
                 $data['topup'] = 0;
@@ -2822,7 +2821,7 @@ class CustomController extends BaseController
             $provision = \DB::table($service_table)->where('id', $request->provision_id)->get()->first();
 
             $provision_plan = \DB::table('sub_activation_plans')->where('id', $request->deactivate_plan_id)->get()->first();
-            if ($provision_plan->step < $provision->step && !$provision_plan->repeatable) {
+            if ($provision_plan->step < $provision->step && ! $provision_plan->repeatable) {
                 return json_alert('Invalid Provision Step11', 'warning');
             }
             $product = \DB::table('crm_products')->where('id', $provision->product_id)->get()->first();
@@ -2856,7 +2855,7 @@ class CustomController extends BaseController
 
             $step_update_data['updated_at'] = date('Y-m-d H:i:s');
 
-            if ('Module' == $provision_plan->type) {
+            if ($provision_plan->type == 'Module') {
                 $post_data = (array) $request->all();
                 $provision_form_fields = ['deactivate_plan_id', 'provision_id', 'current_step', 'num_steps', 'service_table'];
 
@@ -2865,15 +2864,15 @@ class CustomController extends BaseController
                         unset($post_data[$key]);
                     }
                 }
-                $erp = new \DBEvent();
+                $erp = new \DBEvent;
                 $erp->setModule($provision_plan->module_id);
                 $result = $erp->save($post_data);
-                if (!is_array($result) || empty($result['id'])) {
+                if (! is_array($result) || empty($result['id'])) {
                     return $result;
                 }
             }
 
-            if ('Iframe' == $provision_plan->type) {
+            if ($provision_plan->type == 'Iframe') {
                 \DB::table($service_table)
                     ->where('id', $provision->id)
                     ->increment('step');
@@ -2892,12 +2891,12 @@ class CustomController extends BaseController
                 return json_alert($succes_msg, 'info', ['provision_id' => $request->provision_id, 'provision_url' => $provision_url]);
             }
 
-            if ('Function' == $provision_plan->type) {
+            if ($provision_plan->type == 'Function') {
                 $default_values = ['deactivate_plan_id', 'provision_id', 'current_step', 'num_steps', 'form_step', 'topup'];
                 $inputs = [];
 
                 foreach ($request->all() as $k => $v) {
-                    if (!in_array($k, $default_values)) {
+                    if (! in_array($k, $default_values)) {
                         $inputs[$k] = $v;
                     }
                 }
@@ -2911,10 +2910,10 @@ class CustomController extends BaseController
 
                 $provision_function = 'provision_'.function_format($provision_plan->name);
 
-                if (!empty($provision_plan->function_name)) {
+                if (! empty($provision_plan->function_name)) {
                     $provision_function = $provision_plan->function_name;
                 }
-                if (!function_exists($provision_function)) {
+                if (! function_exists($provision_function)) {
                     return json_alert('Provision function does not exists', 'error');
                 }
 
@@ -2931,29 +2930,29 @@ class CustomController extends BaseController
                     $provision_result['detail'] = 'test';
                 } else {
                     $provision_result = $provision_function($provision, $input_data, $customer, $product);
-                    $step_update_data['result'] = (!empty($provision_result['detail'])) ? $provision_result['detail'] : $provision_result;
+                    $step_update_data['result'] = (! empty($provision_result['detail'])) ? $provision_result['detail'] : $provision_result;
                 }
 
-                if (true === $step_update_data['result'] || is_array($provision_result)) {
+                if ($step_update_data['result'] === true || is_array($provision_result)) {
                     $step_update_data['result'] = 'complete';
                 }
-                if (!empty($provision_result['detail'])) {
+                if (! empty($provision_result['detail'])) {
                     $step_update_data['subscription_detail'] = $provision_result['detail'];
                 }
-                if (!empty($provision_result['info'])) {
+                if (! empty($provision_result['info'])) {
                     $step_update_data['subscription_info'] = json_encode($provision_result['info'], true);
                 }
 
-                if (!empty($provision_result['table_data'])) {
+                if (! empty($provision_result['table_data'])) {
                     unset($provision_result['table_data']['service_table']);
                     $step_update_data['table_data'] = json_encode($provision_result['table_data'], true);
                 }
 
-                if (!empty($provision_result['detail'])) {
+                if (! empty($provision_result['detail'])) {
                     \DB::table($service_table)->where('id', $provision->id)->update(['detail' => $provision_result['detail'], 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default()]);
                 }
 
-                if (!empty($provision_result['ref'])) {
+                if (! empty($provision_result['ref'])) {
                     if ($service_table != 'sub_service_topups') {
                         \DB::table($service_table)->where('id', $provision->id)->update(['ref' => $provision_result['ref']]);
                     }
@@ -2965,12 +2964,12 @@ class CustomController extends BaseController
                     ->where('service_table', $service_table)
                     ->update($step_update_data);
 
-                if (!is_array($provision_result) && true !== $provision_result) {
+                if (! is_array($provision_result) && $provision_result !== true) {
                     return json_alert($provision_result, 'error');
                 }
             }
 
-            if ('Email' == $provision_plan->type) {
+            if ($provision_plan->type == 'Email') {
                 $mail_data['partner_company'] = $request->partner_company;
                 $mail_data['partner_email'] = $request->partner_email;
                 $mail_data['customer_type'] = $request->customer_type;
@@ -2988,7 +2987,7 @@ class CustomController extends BaseController
                 $mail_data['activation_email'] = true;
                 $mail_data['notification_id'] = $request->notification_id;
                 try {
-                    if (1 != $customer->partner_id) {
+                    if ($customer->partner_id != 1) {
                         $mail_data['reseller_user_company'] = $customer->company;
                         $mail_result = erp_process_notification($customer->partner_id, $mail_data);
                     } else {
@@ -3005,7 +3004,7 @@ class CustomController extends BaseController
 
                 $plan_name = \DB::table('sub_activation_plans')->where('id', $request->deactivate_plan_id)->pluck('name')->first();
                 $has_function_step = \DB::table('sub_activation_plans')->where('activation_type_id', $product->deactivate_plan_id)->where('type', 'Function')->count();
-                if (!$has_function_step) {
+                if (! $has_function_step) {
                     $step_update_data['subscription_detail'] = $provision->provision_type.'_'.$provision->id;
                 }
 
@@ -3022,7 +3021,7 @@ class CustomController extends BaseController
                 $succes_msg = $mail_result;
             }
 
-            if ('Checklist' == $provision_plan->type) {
+            if ($provision_plan->type == 'Checklist') {
                 $product_monthly = \DB::table('crm_products')->where('is_subscription', 1)->where('id', $provision->product_id)->count();
                 if ($product_monthly && $provision_plan->name == 'products') {
                     $step_update_data['input'] = account_has_processed_debit_order($provision->account_id);
@@ -3034,7 +3033,7 @@ class CustomController extends BaseController
                 $checklist_post = [];
 
                 foreach ($request->all() as $k => $v) {
-                    if (!in_array($k, $default_values)) {
+                    if (! in_array($k, $default_values)) {
                         $checklist_post[] = $k;
                     }
                 }
@@ -3049,14 +3048,14 @@ class CustomController extends BaseController
                 $checklist = explode(PHP_EOL, $checklist_plan);
                 foreach ($checklist as $i => $list_item) {
                     $item_id = 'checklist_item_'.$i;
-                    if (!in_array($item_id, $checklist_post)) {
+                    if (! in_array($item_id, $checklist_post)) {
                         return json_alert('Complete checklist to continue', 'warning', ['close_dialog' => 1, 'close_left_dialog' => 1]);
                     }
                 }
             }
 
-            if ('Debitorder' == $provision_plan->type) {
-                if (!empty($request->retry_debit_order)) {
+            if ($provision_plan->type == 'Debitorder') {
+                if (! empty($request->retry_debit_order)) {
                     $step_update_data['input'] = account_has_processed_debit_order($provision->account_id, true);
                 } else {
                     $step_update_data['input'] = account_has_processed_debit_order($provision->account_id, false);
@@ -3084,7 +3083,7 @@ class CustomController extends BaseController
                 $step_update_data['completed'] = 1;
                 $date_activated = date('Y-m-d H:i:s');
 
-                if (!empty($subscription_info['date_activated'])) {
+                if (! empty($subscription_info['date_activated'])) {
                     $date_activated = $subscription_info['date_activated'];
                 }
                 \DB::table('sub_activation_steps')
@@ -3096,7 +3095,7 @@ class CustomController extends BaseController
                     \DB::table($service_table)
                         ->where('id', $provision->id)
                         ->update(['bundle_id' => $provision->bundle_id, 'status' => 'Enabled', 'date_activated' => $date_activated, 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default()]);
-                    if (!empty($provision->bundle_id)) {
+                    if (! empty($provision->bundle_id)) {
                         $pending_bundle_activations = \DB::table('sub_activations')->where('bundle_id', $provision->bundle_id)->where('status', 'Pending')->count();
                         if ($pending_bundle_activations == 0) {
                             \DB::table('sub_services')->where('id', $provision->bundle_id)->where('status', 'Pending')->update(['status' => 'Enabled']);
@@ -3106,14 +3105,14 @@ class CustomController extends BaseController
                     \DB::table($service_table)
                         ->where('id', $provision->id)
                         ->update(['bundle_id' => $provision->bundle_id, 'status' => 'Enabled', 'updated_at' => date('Y-m-d H:i:s'), 'updated_by' => get_user_id_default()]);
-                    if (!empty($provision->bundle_id)) {
+                    if (! empty($provision->bundle_id)) {
                         $pending_bundle_activations = \DB::table('sub_activations')->where('bundle_id', $provision->bundle_id)->where('status', 'Pending')->count();
                         if ($pending_bundle_activations == 0) {
                             \DB::table('sub_services')->where('id', $provision->bundle_id)->where('status', 'Pending')->update(['status' => 'Enabled']);
                         }
                     }
                 }
-                $ErpSubs = new \ErpSubs();
+                $ErpSubs = new \ErpSubs;
 
                 $result = $ErpSubs->deleteSubscription($provision->subscription_id);
                 if ($result !== true) {
@@ -3192,7 +3191,7 @@ class CustomController extends BaseController
             // $data['attachments'] = [];
             $data['form_submit'] = 1;
 
-            if (!empty($request->template)) {
+            if (! empty($request->template)) {
                 $newsletter = \DB::connection('default')->table('crm_newsletters')->where('id', $request->template)->get()->first();
                 $css = \Erp::decode($newsletter->stripo_css);
                 $data['message'] .= '<style>'.$css.'</style>';
@@ -3213,7 +3212,7 @@ class CustomController extends BaseController
 
             $mail_result = erp_process_notification($request->account_id, $data);
 
-            if (false !== stripos($mail_result, 'failed')) {
+            if (stripos($mail_result, 'failed') !== false) {
                 return json_alert($mail_result, 'error');
             } else {
                 return json_alert($mail_result);
@@ -3232,7 +3231,7 @@ class CustomController extends BaseController
         $data['newsletter'] = \DB::table('crm_email_manager')->where('id', $id)->get()->first();
         $data['groups'] = ['Test', 'Debit Orders', 'Admins', 'Leads', 'Resellers & Customers', 'Resellers', 'Customers', 'Vodacom LTE Customers', 'Fibre Customers', 'PBX', 'Leads'];
 
-        if (1 != session('account_id')) {
+        if (session('account_id') != 1) {
             $data['groups'] = ['Test', 'Leads', 'Customers'];
         }
         $data['statuses'] = ['Not Deleted', 'Enabled', 'Disabled', 'Deleted', 'All'];
@@ -3241,7 +3240,7 @@ class CustomController extends BaseController
         $data['function_name'] = $button_function;
         $data['notification_id'] = $id;
         $data['from_company'] = $reseller->company;
-        $data['from_email'] = (!empty($reseller->sales_email)) ? $reseller->sales_email : $reseller->email;
+        $data['from_email'] = (! empty($reseller->sales_email)) ? $reseller->sales_email : $reseller->email;
         $data['pricelists'] = \DB::table('crm_pricelists')->where('partner_id', 1)->pluck('name', 'id');
 
         $newsletter = \DB::table('crm_email_manager')->where('id', $id)->get()->first();
@@ -3288,11 +3287,11 @@ class CustomController extends BaseController
         $mail['notification_id'] = $notification_id;
         $mail['add_unsubscribe'] = 1;
 
-        if (!empty($newsletter->attachment_file)) {
+        if (! empty($newsletter->attachment_file)) {
             $mail['newsletter_attachment'] = $newsletter->attachment_file;
         }
 
-        if ('Test' == $filters->groups) {
+        if ($filters->groups == 'Test') {
             \Storage::disk('local')->put('bulkemailprogress', 60);
             $mail['to_email'] = \DB::table('erp_users')->where('id', session('user_id'))->pluck('email')->first();
             if (session('instance')->id == 1 && session('user_id') != 1) {
@@ -3316,7 +3315,7 @@ class CustomController extends BaseController
 
         /// admins
 
-        if ('Admins' == $filters->groups) {
+        if ($filters->groups == 'Admins') {
             $admins = \DB::table('erp_users')->where('account_id', 1)->get();
             $data = [
                 'subject' => $newsletter->name,
@@ -3335,7 +3334,7 @@ class CustomController extends BaseController
             $mail['communication_id'] = $id;
             foreach ($admins as $i => $admin) {
                 \Storage::disk('local')->put('bulkemailprogress', (($i / count($admins)) * 100));
-                if (!empty($admin->email)) {
+                if (! empty($admin->email)) {
                     $mail['to_email'] = $admin->email;
                     $mail['ignore_queue_check'] = 1;
                     $mail['bulk_smtp'] = 1;
@@ -3366,7 +3365,7 @@ class CustomController extends BaseController
             $id = \DB::table('erp_communications')->insertGetId($data);
             $mail['communication_id'] = $id;
 
-            if (!empty($account_ids)) {
+            if (! empty($account_ids)) {
                 foreach ($account_ids as $i => $account_id) {
                     \Storage::disk('local')->put('bulkemailprogress', (($i / count($account_ids)) * 100));
 
@@ -3375,49 +3374,49 @@ class CustomController extends BaseController
             }
         }
 
-        if ($filters->groups != 'Debit Order' && !str_contains($filters->groups, 'Lead') && 'Admins' != $filters->groups) {
+        if ($filters->groups != 'Debit Order' && ! str_contains($filters->groups, 'Lead') && $filters->groups != 'Admins') {
             unset($mail['to_email']);
 
             $account_ids = [];
             $query = \DB::table('crm_accounts');
-            if (!str_contains($newsletter->subject, 'Ratesheet') && !str_contains($newsletter->subject, 'Pricelist')) {
+            if (! str_contains($newsletter->subject, 'Ratesheet') && ! str_contains($newsletter->subject, 'Pricelist')) {
                 $query->where('newsletter', 1);
             }
             $query->where('partner_id', session('account_id'));
 
-            if ('Resellers & Customers' == $filters->groups) {
+            if ($filters->groups == 'Resellers & Customers') {
                 $query->where('type', '!=', 'lead');
                 $query->where('type', '!=', 'reseller_user');
             }
 
-            if ('Resellers' == $filters->groups) {
+            if ($filters->groups == 'Resellers') {
                 $query->where('type', 'reseller');
             }
 
-            if ('Vodacom LTE Customers' == $filters->groups) {
+            if ($filters->groups == 'Vodacom LTE Customers') {
                 $lte_account_ids = \DB::table('sub_services')->where('provision_type', 'lte_sim_card')->where('status', '!=', 'Deleted')->pluck('account_id')->toArray();
                 $query->whereIn('id', $lte_account_ids);
             }
 
-            if ('Fibre Customers' == $filters->groups) {
+            if ($filters->groups == 'Fibre Customers') {
                 $fibre_account_ids = \DB::table('sub_services')->where('provision_type', 'like', '%fibre%')->where('status', '!=', 'Deleted')->pluck('account_id')->toArray();
                 $query->whereIn('id', $fibre_account_ids);
             }
 
-            if ('PBX' == $filters->groups) {
+            if ($filters->groups == 'PBX') {
                 $pbx_account_ids = \DB::table('isp_voice_pbx_domains')->pluck('account_id')->toArray();
                 $query->whereIn('id', $pbx_account_ids);
             }
 
-            if ('Customers' == $filters->groups) {
+            if ($filters->groups == 'Customers') {
                 $query->where('type', 'customer');
             }
 
-            if ('Leads' == $filters->groups) {
+            if ($filters->groups == 'Leads') {
                 $query->where('type', 'lead');
             }
-            if ('All' != $filters->status) {
-                if ('Not Deleted' == $filters->status) {
+            if ($filters->status != 'All') {
+                if ($filters->status == 'Not Deleted') {
                     $query->where('status', '!=', 'Deleted');
                 } else {
                     $query->where('status', $filters->status);
@@ -3442,7 +3441,7 @@ class CustomController extends BaseController
             $id = \DB::table('erp_communications')->insertGetId($data);
             $mail['communication_id'] = $id;
 
-            if (!empty($account_ids)) {
+            if (! empty($account_ids)) {
                 foreach ($account_ids as $i => $account_id) {
                     \Storage::disk('local')->put('bulkemailprogress', (($i / count($account_ids)) * 100));
 
@@ -3458,6 +3457,7 @@ class CustomController extends BaseController
     public function formChangeAjax(Request $request, $function_name)
     {
         $response = $function_name($request);
+
         //aa($response);
         return response()->json($response);
     }
@@ -3467,7 +3467,7 @@ class CustomController extends BaseController
         try {
             if (str_contains($action, 'supplier')) {
                 $supplier = \DB::connection('default')->table('crm_suppliers')->where('id', $id)->get()->first();
-            } elseif ('accounts' == $menu_name) {
+            } elseif ($menu_name == 'accounts') {
                 $account = dbgetaccount($id);
             } else {
                 $account = dbgetaccount($id);
@@ -3487,7 +3487,7 @@ class CustomController extends BaseController
                 return redirect($url.'/edit/'.$id);
             }
 
-            if ('account' == $action) {
+            if ($action == 'account') {
                 if ($account->type == 'reseller') {
                     $url = get_menu_url_from_table('crm_accounts');
 
@@ -3499,16 +3499,16 @@ class CustomController extends BaseController
                 }
             }
 
-            if ('accountedit' == $action) {
+            if ($action == 'accountedit') {
                 return redirect($url.'/edit/'.$account->id);
             }
 
             $url = get_menu_url_from_table('erp_communication_lines');
-            if ('communications' == $action) {
+            if ($action == 'communications') {
                 return redirect($url.'?account_id='.$account->id);
             }
 
-            if ('note' == $action) {
+            if ($action == 'note') {
                 $url = get_menu_url_from_table('crm_commitment_dates');
 
                 return redirect($url.'/edit?type=Note&account_id='.$account->id);
@@ -3518,17 +3518,17 @@ class CustomController extends BaseController
                 $data['customer_type'] = 'supplier';
 
                 return email_form(1, $supplier->id, $data);
-            } elseif ('email' == $action) {
-                if (!empty($account->type) && $account->type == 'reseller_user' && session('role_level') == 'Admin') {
+            } elseif ($action == 'email') {
+                if (! empty($account->type) && $account->type == 'reseller_user' && session('role_level') == 'Admin') {
                     $account = dbgetaccount($account->partner_id);
                 }
 
                 return email_form(1, $account->id, $data);
             }
 
-            if ('call' == $action || str_contains($action, 'contact_phone') || 'supplier_call' == $action) {
+            if ($action == 'call' || str_contains($action, 'contact_phone') || $action == 'supplier_call') {
                 $id = $account->id;
-                if (!empty($account->type) && $account->type == 'reseller_user') {
+                if (! empty($account->type) && $account->type == 'reseller_user') {
                     $account = dbgetaccount($account->partner_id);
                 }
                 $reseller = dbgetaccount(session('account_id'));
@@ -3536,10 +3536,10 @@ class CustomController extends BaseController
                 if (empty($reseller->pbx_domain) && empty($pbx_extension)) {
                     return json_alert('Pbx domain on settings and pbx extension on user settings is required to use click to call.', 'error');
                 }
-                if (!empty($reseller->pbx_domain) && empty($pbx_extension)) {
+                if (! empty($reseller->pbx_domain) && empty($pbx_extension)) {
                     return json_alert('Pbx extension on user settings is required to use click to call.', 'error');
                 }
-                if (empty($reseller->pbx_domain) && !empty($pbx_extension)) {
+                if (empty($reseller->pbx_domain) && ! empty($pbx_extension)) {
                     return json_alert('Pbx domain on settings is required to use click to call.', 'error');
                 }
 
@@ -3552,11 +3552,11 @@ class CustomController extends BaseController
                     }
                 }
 
-                if ('call' == $action) {
+                if ($action == 'call') {
                     $number = $account->phone;
                 }
 
-                if ('supplier_call' == $action) {
+                if ($action == 'supplier_call') {
                     $number = $supplier->phone;
                     $id = $supplier->id;
                 }
@@ -3576,7 +3576,7 @@ class CustomController extends BaseController
 
                 $result = pbx_call($number, $id);
 
-                if (true === $result) {
+                if ($result === true) {
                     return json_alert('Call sent to PBX');
                 } else {
                     return json_alert($result, 'error');
@@ -3605,7 +3605,7 @@ class CustomController extends BaseController
             $group_ids_module_access = [];
             foreach ($request->role_id as $gid) {
                 foreach ($access_items as $t => $v) {
-                    if ('is_menu' == $t) {
+                    if ($t == 'is_menu') {
                         continue;
                     }
 
@@ -3664,7 +3664,7 @@ class CustomController extends BaseController
         }
         \DB::connection('default')->table('erp_menu')->where('unlisted', 1)->update(['parent_id' => 0]);
         cache_clear();
-        if (true == $request->ajax()) {
+        if ($request->ajax() == true) {
             return response()->json(['status' => 'success', 'message' => 'Permission Has Changed Successful']);
         } else {
             return Redirect::to($module_name)
@@ -3675,7 +3675,7 @@ class CustomController extends BaseController
     public function deliveriesPodUpload(Request $request, $id)
     {
         try {
-            if (!empty($request->remove_file)) {
+            if (! empty($request->remove_file)) {
                 $file = \DB::table('sub_activations')->where('id', $id)->pluck('pod_file')->first();
                 if (file_exists(uploads_path(554).$file)) {
                     unlink(uploads_path(554).$file);
@@ -3727,7 +3727,7 @@ class CustomController extends BaseController
     public function journalInvoiceUpload(Request $request, $id)
     {
         try {
-            if (!empty($request->remove_file)) {
+            if (! empty($request->remove_file)) {
                 $file = \DB::table('acc_general_journals')->where('id', $id)->pluck('invoice_file')->first();
                 if (file_exists(uploads_path(181).$file)) {
                     unlink(uploads_path(181).$file);
@@ -3779,7 +3779,7 @@ class CustomController extends BaseController
     public function supplierInvoiceUpload(Request $request, $id)
     {
         try {
-            if (!empty($request->remove_file)) {
+            if (! empty($request->remove_file)) {
                 $file = \DB::table('crm_supplier_documents')->where('id', $id)->pluck('supporting_document')->first();
                 if (file_exists(uploads_supplier_documents_path().$file)) {
                     unlink(uploads_supplier_documents_path().$file);
@@ -3831,7 +3831,7 @@ class CustomController extends BaseController
     public function bankingInvoiceUpload(Request $request, $id)
     {
         try {
-            if (!empty($request->remove_file)) {
+            if (! empty($request->remove_file)) {
                 $file = \DB::table('acc_cashbook_transactions')->where('id', $id)->pluck('supporting_document')->first();
                 if (file_exists(uploads_supplier_documents_path().$file)) {
                     unlink(uploads_supplier_documents_path().$file);
@@ -3883,7 +3883,7 @@ class CustomController extends BaseController
     public function documentsInvoiceUpload(Request $request, $id)
     {
         try {
-            if (!empty($request->remove_file)) {
+            if (! empty($request->remove_file)) {
                 $file = \DB::table('crm_documents')->where('id', $id)->pluck('invoice_file')->first();
                 if (file_exists(uploads_documents_path().$file)) {
                     unlink(uploads_documents_path().$file);
@@ -3944,7 +3944,7 @@ class CustomController extends BaseController
         $file_name = export_pricelist($request->pricelist_id);
 
         foreach ($request->send_to as $recipient) {
-            if ('All Partners' == $recipient) {
+            if ($recipient == 'All Partners') {
                 $customers = \DB::table('crm_accounts')
                     ->where('type', 'reseller')->where('partner_id', $reseller->id)->where('status', '!=', 'Deleted')
                     ->get();
@@ -3954,7 +3954,7 @@ class CustomController extends BaseController
                     $data['attachment'] = $file_name;
                     erp_process_notification($customer->id, $data);
                 }
-            } elseif ('All Customers' == $recipient) {
+            } elseif ($recipient == 'All Customers') {
                 $customers = \DB::table('crm_accounts')
                     ->where('type', 'customer')->where('partner_id', $reseller->id)->where('status', '!=', 'Deleted')
                     ->get();
@@ -3988,11 +3988,11 @@ class CustomController extends BaseController
                 return json_alert('Statement balance does not match', 'warning');
             }
             $manager_override = false;
-            if (check_access('1,31') && !empty($request->manager_override)) {
+            if (check_access('1,31') && ! empty($request->manager_override)) {
                 $manager_override = true;
             }
 
-            if (!$manager_override && empty($request->file($field)) && $balance != 0) {
+            if (! $manager_override && empty($request->file($field)) && $balance != 0) {
                 return json_alert('File required', 'error');
             }
 
@@ -4011,7 +4011,7 @@ class CustomController extends BaseController
                     $filename = str_replace([' ', ','], '_', $filename);
 
                     $uploadSuccess = $file->move($destinationPath, $filename);
-                    if (!$uploadSuccess) {
+                    if (! $uploadSuccess) {
                         return json_alert('Upload error', 'error');
                     }
                 } else {
@@ -4031,7 +4031,7 @@ class CustomController extends BaseController
     public function bankofxImport(Request $request)
     {
         try {
-            $erp = new \DBEvent();
+            $erp = new \DBEvent;
             if (empty($_FILES)) {
                 return json_alert('Invalid File', 'error');
             }
@@ -4041,11 +4041,11 @@ class CustomController extends BaseController
             if ($request->cashbook_id == 10 && is_main_instance()) {
                 $admin->ofx_file_name = '62851344037.ofx';
             }
-            if (!str_contains($file_name, str_replace('.ofx', '', $admin->ofx_file_name))) {
+            if (! str_contains($file_name, str_replace('.ofx', '', $admin->ofx_file_name))) {
                 return json_alert('Invalid File Name - Required: '.$admin->ofx_file_name, 'error');
             }
 
-            if ('ofx' != $file_ext) {
+            if ($file_ext != 'ofx') {
                 return json_alert('Invalid File Extension', 'error');
             }
 
@@ -4058,18 +4058,18 @@ class CustomController extends BaseController
             if ($handle) {
                 while (false !== ($line = fgets($handle))) {
                     // New transaction.
-                    if (false !== strstr($line, '<STMTTRN>')) {
-                        $txn = new \stdClass();
+                    if (strstr($line, '<STMTTRN>') !== false) {
+                        $txn = new \stdClass;
                         $txn->trxdate = null;
                         $txn->total = null;
                         $txn->memo = null;
-                    } elseif (false !== strstr($line, '<DTPOSTED>')) {
+                    } elseif (strstr($line, '<DTPOSTED>') !== false) {
                         $txn->trxdate = date('Y-m-d', strtotime(substr($line, 10)));
-                    } elseif (false !== strstr($line, '<TRNAMT>')) {
+                    } elseif (strstr($line, '<TRNAMT>') !== false) {
                         $txn->total = floatval(substr($line, 8));
-                    } elseif (false !== strstr($line, '<MEMO>')) {
+                    } elseif (strstr($line, '<MEMO>') !== false) {
                         $txn->memo = substr($line, 6);
-                    } elseif (false !== strstr($line, '</STMTTRN>')) {
+                    } elseif (strstr($line, '</STMTTRN>') !== false) {
                         // End of transaction.
                         $transactions[] = $txn;
                     }
@@ -4081,7 +4081,7 @@ class CustomController extends BaseController
             }
             $txn->memo = str_replace(PHP_EOL, '', $txn->memo);
 
-            if (empty($transactions) || 0 == count($transactions)) {
+            if (empty($transactions) || count($transactions) == 0) {
                 return json_alert('No transactions to process', 'error');
             }
 
@@ -4090,7 +4090,7 @@ class CustomController extends BaseController
                 ->orderBy('docdate', 'desc')
                 ->pluck('docdate')->first();
 
-            if (!empty($reconciled_date)) {
+            if (! empty($reconciled_date)) {
                 $last_reconciled_date = $reconciled_date;
             } else {
                 $last_reconciled_date = '0000-00-00';
@@ -4110,7 +4110,7 @@ class CustomController extends BaseController
                 $transaction->memo = str_replace(["\n", "\r"], '', $transaction->memo);
                 $transaction->reference = $transaction->memo;
 
-                if (0 == $transaction->total) {
+                if ($transaction->total == 0) {
                     continue;
                 }
 
@@ -4137,18 +4137,18 @@ class CustomController extends BaseController
                     ->where('cashbook_id', $request->cashbook_id)
                     ->count();
                 $api_trx_exists = \DB::table('acc_cashbook_transactions')
-                ->where('docdate', $transaction->trxdate)
-                ->where('api_id', '>', 0)
-                ->where('total', $transaction->total)
-                ->where('cashbook_id', $request->cashbook_id)
-                ->count();
+                    ->where('docdate', $transaction->trxdate)
+                    ->where('api_id', '>', 0)
+                    ->where('total', $transaction->total)
+                    ->where('cashbook_id', $request->cashbook_id)
+                    ->count();
 
                 $fnb_trx_exists = \DB::table('acc_cashbook_transactions')
-                ->where('docdate', $transaction->trxdate)
-                ->where('api_data', '>', '')
-                ->where('total', $transaction->total)
-                ->where('cashbook_id', $request->cashbook_id)
-                ->count();
+                    ->where('docdate', $transaction->trxdate)
+                    ->where('api_data', '>', '')
+                    ->where('total', $transaction->total)
+                    ->where('cashbook_id', $request->cashbook_id)
+                    ->count();
 
                 if ($exists || $api_trx_exists || $fnb_trx_exists) {
                     continue; // skip duplicates in file and existing transactions
@@ -4172,7 +4172,7 @@ class CustomController extends BaseController
             $cashbook_account_ids = \DB::table('acc_cashbook')->where('allow_allocate', 1)->pluck('id')->toArray();
 
             $trx = \DB::table('acc_cashbook_transactions')->where('id', $request->bank_id)->get()->first();
-            if (!is_dev() && !in_array($trx->cashbook_id, $cashbook_account_ids)) {
+            if (! is_dev() && ! in_array($trx->cashbook_id, $cashbook_account_ids)) {
                 return json_alert('Manual allocations are not allowed for this cashbook.', 'error');
             }
 
@@ -4180,58 +4180,58 @@ class CustomController extends BaseController
             //     // return json_alert('Invalid allocate account.', 'error');
             // }
 
-            if (!empty($request->ledger_account_id) && !empty($request->control_account_id) && is_cashbook_ledger_account($request->control_account_id)) {
+            if (! empty($request->ledger_account_id) && ! empty($request->control_account_id) && is_cashbook_ledger_account($request->control_account_id)) {
                 if ($trx->total < 0) {
                     return json_alert('Only incoming payments can be allocated to cashbook control account', 'error');
                 }
             }
 
             $allocate_count = 0;
-            if (!empty($request->supplier_id)) {
-                ++$allocate_count;
+            if (! empty($request->supplier_id)) {
+                $allocate_count++;
             }
-            if (!empty($request->account_id)) {
-                ++$allocate_count;
+            if (! empty($request->account_id)) {
+                $allocate_count++;
             }
-            if (!empty($request->ledger_account_id)) {
-                ++$allocate_count;
+            if (! empty($request->ledger_account_id)) {
+                $allocate_count++;
             }
             if ($allocate_count > 1) {
                 return json_alert('Can only allocate to a single account.', 'error');
             }
 
-            if (!empty($request->ledger_account_id) && $request->ledger_account_id == 4) {
+            if (! empty($request->ledger_account_id) && $request->ledger_account_id == 4) {
                 return json_alert('Invalid ledger account.', 'error');
             }
 
-            if (!empty($request->ledger_account_id) && $request->ledger_account_id == 57 && empty($request->control_account_id)) {
+            if (! empty($request->ledger_account_id) && $request->ledger_account_id == 57 && empty($request->control_account_id)) {
                 return json_alert('Control account required.', 'error');
             }
 
-            if (!empty($request->reference_match_id) && !empty($request->reference_match)) {
+            if (! empty($request->reference_match_id) && ! empty($request->reference_match)) {
                 \DB::table('acc_bank_references')->where('id', $request->reference_match_id)->update(['reference' => $request->reference_match]);
-            } elseif (!empty($request->reference_match)) {
+            } elseif (! empty($request->reference_match)) {
                 $reference_exists = \DB::table('acc_bank_references')->where('reference', $request->reference_match)->count();
 
                 if ($reference_exists) {
                     if ($request->account_id > 0) {
                         $same_account = \DB::table('acc_bank_references')->where('reference', $request->reference_match)->where('account_id', $request->account_id)->count();
 
-                        if (!$same_account) {
+                        if (! $same_account) {
                             \DB::table('acc_bank_references')->where('reference', $request->reference_match)
                                 ->update(['supplier_id' => 0, 'ledger_account_id' => 0, 'account_id' => $request->account_id]);
                         }
                     }
                     if ($request->supplier_id > 0) {
                         $same_account = \DB::table('acc_bank_references')->where('reference', $request->reference_match)->where('supplier_id', $request->supplier_id)->count();
-                        if (!$same_account) {
+                        if (! $same_account) {
                             \DB::table('acc_bank_references')->where('reference', $request->reference_match)
                                 ->update(['supplier_id' => $request->supplier_id, 'ledger_account_id' => 0, 'account_id' => 0]);
                         }
                     }
                     if ($request->ledger_account_id > 0) {
                         $same_account = \DB::table('acc_bank_references')->where('reference', $request->reference_match)->where('ledger_account_id', $request->ledger_account_id)->count();
-                        if (!$same_account) {
+                        if (! $same_account) {
                             \DB::table('acc_bank_references')->where('reference', $request->reference_match)
                                 ->update(['supplier_id' => 0, 'ledger_account_id' => $request->ledger_account_id, 'control_account_id' => $request->control_account_id, 'account_id' => 0]);
                         }
@@ -4263,11 +4263,11 @@ class CustomController extends BaseController
                 }
             }
 
-            $erp = new \DBEvent();
+            $erp = new \DBEvent;
 
             $trx = \DB::table('acc_cashbook_transactions')->where('id', $request->bank_id)->get()->first();
             if ($trx->account_id > 0) {
-                if (!str_contains($trx->reference, 'SWIFT') && $trx->total > 0) {
+                if (! str_contains($trx->reference, 'SWIFT') && $trx->total > 0) {
                     $account = dbgetaccount($trx->account_id);
                     if ($account->bank_allocate_airtime) {
                         return json_alert('Cannot re-allocate transactions applied to airtime customers.', 'error');
@@ -4278,7 +4278,7 @@ class CustomController extends BaseController
             $trx_data = (array) $trx;
             $period = date('Y-m', strtotime($trx->docdate));
             $period_status = dbgetcell('acc_periods', 'period', $period, 'status');
-            if ('Open' != $period_status) {
+            if ($period_status != 'Open') {
                 return json_alert('Period closed', 'warning');
             }
 
@@ -4302,28 +4302,28 @@ class CustomController extends BaseController
                 delete_journal_entry_by_cashbook_transaction_id($trx->id);
             }
 
-            if (!empty($request->account_id)) {
+            if (! empty($request->account_id)) {
                 $account_id = $request->account_id;
                 $trx_data['account_id'] = $account_id;
                 $trx_data['doctype'] = 'Cashbook Customer Receipt';
                 unset($trx_data['supplier_id']);
                 unset($trx_data['ledger_account_id']);
-            } elseif (!empty($request->supplier_id)) {
+            } elseif (! empty($request->supplier_id)) {
                 $supplier_id = $request->supplier_id;
 
                 $trx_data['supplier_id'] = $supplier_id;
                 $trx_data['doctype'] = 'Cashbook Supplier Payment';
                 unset($trx_data['ledger_account_id']);
                 unset($trx_data['account_id']);
-            } elseif (!empty($request->ledger_account_id)) {
-                if (!empty($request->control_account_id) && is_cashbook_ledger_account($request->control_account_id)) {
+            } elseif (! empty($request->ledger_account_id)) {
+                if (! empty($request->control_account_id) && is_cashbook_ledger_account($request->control_account_id)) {
                     $trx_data['control_account_id'] = $request->control_account_id;
                     \DB::table('acc_cashbook_transactions')->where('cashbook_transaction_id', $trx->id)->delete();
                     cashbook_control_transfer($request->control_account_id, $trx->total, $trx->docdate, $trx->id);
                 }
 
                 $taxable = dbgetcell('acc_ledger_accounts', 'id', $request->ledger_account_id, 'taxable');
-                if (!$taxable && !empty($request->vat_invoice)) {
+                if (! $taxable && ! empty($request->vat_invoice)) {
                     $taxable = true;
                 }
                 if ($taxable) {
@@ -4344,7 +4344,7 @@ class CustomController extends BaseController
             }
             $trx_data['allocate_reference'] = '';
             $trx_data['bank_reference_id'] = 0;
-            if (!empty($trx->bank_reference_id)) {
+            if (! empty($trx->bank_reference_id)) {
                 \DB::table('acc_bank_references')->where('id', $trx->bank_reference_id)->update(['is_deleted' => 1]);
             }
 
@@ -4357,14 +4357,14 @@ class CustomController extends BaseController
             \DB::table('acc_cashbook_transactions')->whereIn('cashbook_id', $cashbook_bank_ids)->whereNull('doctype')->where('supplier_id', '>', 0)->update(['doctype' => 'Cashbook Supplier Payment']);
             \DB::table('acc_cashbook_transactions')->whereIn('cashbook_id', $cashbook_bank_ids)->whereNull('doctype')->where('ledger_account_id', '>', 0)->update(['doctype' => 'Cashbook Expense']);
 
-            $erp = new \DBEvent();
+            $erp = new \DBEvent;
             $erp->setTable('acc_cashbook_transactions');
 
-            if (!empty($request->account_id)) {
+            if (! empty($request->account_id)) {
                 \DB::table('crm_documents')->where('account_id', $request->account_id)->where('total', $trx->total)->where('doctype', 'Quotation')->update(['doctype' => 'Order']);
                 $erp->setDebtorBalance($request->account_id);
             }
-            if (!empty($request->supplier_id)) {
+            if (! empty($request->supplier_id)) {
                 $erp->setCreditorBalance($request->supplier_id);
             }
 
@@ -4405,7 +4405,7 @@ class CustomController extends BaseController
 
                 $require_file = true;
 
-                if (!is_superadmin() && !empty($request->manager_override)) {
+                if (! is_superadmin() && ! empty($request->manager_override)) {
                     $require_file = false;
                 }
                 if (is_superadmin() || is_dev()) {
@@ -4448,7 +4448,7 @@ class CustomController extends BaseController
                 }
 
                 $subscription = \DB::table('sub_services')->where('id', $request->subscription_id)->get()->first();
-                $sub = new \ErpSubs();
+                $sub = new \ErpSubs;
                 $sub->migrate($request->subscription_id, $request->new_product_id);
                 $result = $sub->processMigrationByAccountId($subscription->account_id);
 
@@ -4473,9 +4473,9 @@ class CustomController extends BaseController
         $site = \DB::table('isp_host_websites')->where('domain', $request->domain)->get()->first();
 
         // SEND PASSWORD EMAIL
-        if (!empty($request->mailboxuser_send)) {
+        if (! empty($request->mailboxuser_send)) {
             $exists = \DB::table('isp_hosting_emails')->where('subscription_id', $request->subscription_id)->where('email', $request->mailboxuser_send.'@'.$site->domain)->count();
-            if (!$exists) {
+            if (! $exists) {
                 return json_alert('Password needs to be changed and saved first.', 'warning');
             } else {
                 $hosting_email = \DB::table('isp_hosting_emails')->where('subscription_id', $request->subscription_id)->where('email', $request->mailboxuser_send.'@'.$site->domain)->get()->first();
@@ -4493,12 +4493,12 @@ class CustomController extends BaseController
         }
 
         // DELETE EMAIL
-        if (!empty($request->mailboxuser_delete)) {
-            $result = (new \Interworx())->setServer($site->server)->setDomain($site->domain)->deleteEmail($request->mailboxuser_delete);
+        if (! empty($request->mailboxuser_delete)) {
+            $result = (new \Interworx)->setServer($site->server)->setDomain($site->domain)->deleteEmail($request->mailboxuser_delete);
 
-            if (0 != $result['status']) {
+            if ($result['status'] != 0) {
                 $error = 'Error saving mailbox.';
-                if (!is_array($result['payload'])) {
+                if (! is_array($result['payload'])) {
                     $error = $result['payload'];
                 }
 
@@ -4509,7 +4509,7 @@ class CustomController extends BaseController
         }
 
         // ADD EMAIL
-        if (!empty($request->mailbox_username)) {
+        if (! empty($request->mailbox_username)) {
             if (str_contains($request->mailbox_username, '@')) {
                 $error = 'Remove @'.$request->domain.' from the username.';
 
@@ -4519,11 +4519,11 @@ class CustomController extends BaseController
                 return json_alert('Fill all fields.', 'warning');
             }
 
-            $result = (new \Interworx())->setServer($site->server)->setDomain($site->domain)->createEmail($request->mailbox_username, $request->mailbox_password);
+            $result = (new \Interworx)->setServer($site->server)->setDomain($site->domain)->createEmail($request->mailbox_username, $request->mailbox_password);
 
-            if (0 != $result['status']) {
+            if ($result['status'] != 0) {
                 $error = 'Error saving mailbox.';
-                if (!is_array($result['payload'])) {
+                if (! is_array($result['payload'])) {
                     $error = $result['payload'];
                 }
                 if (str_contains($error, ' is not between 6 and 128')) {
@@ -4557,15 +4557,15 @@ class CustomController extends BaseController
         $update_password = false;
         $mail_list = explode(',', $request->mail_list);
         foreach ($data as $key => $val) {
-            if (!in_array($key, $mail_list)) {
+            if (! in_array($key, $mail_list)) {
                 continue;
             }
-            if (!empty($val)) {
-                $result = (new \Interworx())->setServer($site->server)->setDomain($site->domain)->editEmail($key, $val);
+            if (! empty($val)) {
+                $result = (new \Interworx)->setServer($site->server)->setDomain($site->domain)->editEmail($key, $val);
 
-                if (0 != $result['status']) {
+                if ($result['status'] != 0) {
                     $error = 'Error updating mailbox.';
-                    if (!is_array($result['payload'])) {
+                    if (! is_array($result['payload'])) {
                         $error = $result['payload'];
                     }
                     if (str_contains($error, ' is not between 6 and 128')) {
@@ -4583,7 +4583,7 @@ class CustomController extends BaseController
                 $email_data['internal_function'] = 'send_interworx_email_details';
                 // erp_process_notification($site->account_id, $email_data, $function_variables);
                 $exists = \DB::table('isp_hosting_emails')->where('subscription_id', $request->subscription_id)->where('email', $key.'@'.$site->domain)->count();
-                if (!$exists) {
+                if (! $exists) {
                     $data = [
                         'email' => $key.'@'.$site->domain,
                         'pass' => $val,
@@ -4614,12 +4614,12 @@ class CustomController extends BaseController
         $site = \DB::table('isp_host_websites')->where('domain', $request->domain)->get()->first();
 
         // DELETE FTP
-        if (!empty($request->ftpuser_delete)) {
-            $result = (new \Interworx())->setServer($site->server)->setDomain($site->domain)->deleteFtp($request->ftpuser_delete);
+        if (! empty($request->ftpuser_delete)) {
+            $result = (new \Interworx)->setServer($site->server)->setDomain($site->domain)->deleteFtp($request->ftpuser_delete);
 
-            if (0 != $result['status']) {
+            if ($result['status'] != 0) {
                 $error = 'Error saving ftp.';
-                if (!is_array($result['payload'])) {
+                if (! is_array($result['payload'])) {
                     $error = $result['payload'];
                 }
 
@@ -4630,7 +4630,7 @@ class CustomController extends BaseController
         }
 
         // CREATE FTP
-        if (!empty($request->ftp_username)) {
+        if (! empty($request->ftp_username)) {
             if (empty($request->ftp_password) || empty($request->ftp_homedir)) {
                 return json_alert('Fill all fields.', 'warning');
             }
@@ -4639,11 +4639,11 @@ class CustomController extends BaseController
 
                 return json_alert($error, 'warning');
             }
-            $result = (new \Interworx())->setServer($site->server)->setDomain($site->domain)->createFtp($request->ftp_username, $request->ftp_password, $request->ftp_homedir);
+            $result = (new \Interworx)->setServer($site->server)->setDomain($site->domain)->createFtp($request->ftp_username, $request->ftp_password, $request->ftp_homedir);
 
-            if (0 != $result['status']) {
+            if ($result['status'] != 0) {
                 $error = 'Error saving ftp.';
-                if (!is_array($result['payload'])) {
+                if (! is_array($result['payload'])) {
                     $error = $result['payload'];
                 }
                 if (str_contains($error, ' is not between 6 and 128')) {
@@ -4665,7 +4665,7 @@ class CustomController extends BaseController
         // UPDATE PASSWORD
         $update_password = false;
         foreach ($data as $key => $val) {
-            if ('_token' == $key) {
+            if ($key == '_token') {
                 continue;
             }
             if (str_contains($key, 'homedir')) {
@@ -4676,13 +4676,13 @@ class CustomController extends BaseController
                 continue;
             }
 
-            if ('domain' !== $key) {
-                if (!empty($val)) {
-                    $result = (new \Interworx())->setServer($site->server)->setDomain($site->domain)->editFtp($key, $val, $data[$key.'homedir']);
+            if ($key !== 'domain') {
+                if (! empty($val)) {
+                    $result = (new \Interworx)->setServer($site->server)->setDomain($site->domain)->editFtp($key, $val, $data[$key.'homedir']);
 
-                    if (0 != $result['status']) {
+                    if ($result['status'] != 0) {
                         $error = 'Error updating ftp.';
-                        if (!is_array($result['payload'])) {
+                        if (! is_array($result['payload'])) {
                             $error = $result['payload'];
                         }
                         if (str_contains($error, ' is not between 6 and 128')) {
@@ -4718,7 +4718,7 @@ class CustomController extends BaseController
             ->where('account_id', $account_id)
             ->get();
 
-        if (empty($list) || 0 == count($list)) {
+        if (empty($list) || count($list) == 0) {
             return json_alert('No records to export.', 'warning');
         }
         $file_title = clean($account->company).' - SMS Report';
@@ -4734,7 +4734,7 @@ class CustomController extends BaseController
             ];
         }
 
-        $export = new App\Exports\CollectionExport();
+        $export = new App\Exports\CollectionExport;
         $export->setData($excel_list);
 
         Excel::store($export, session('instance')->directory.'/'.$file_name, 'attachments');
@@ -4752,11 +4752,11 @@ class CustomController extends BaseController
         $grid_view = \DB::table('erp_grid_views')->where('id', $request->id)->get()->first();
         $settings = $request->settings;
 
-        if (!empty($request->query_string)) {
+        if (! empty($request->query_string)) {
             $query_string = $request->query_string;
             $settings = json_decode($request->settings);
 
-            if (!empty($settings->persistData)) {
+            if (! empty($settings->persistData)) {
                 $settings = $settings->persistData;
                 $settings = json_decode($settings);
             }
@@ -4786,7 +4786,7 @@ class CustomController extends BaseController
         }
 
         \DB::table('erp_grid_views')->where('id', $request->id)->update(['settings' => $settings]);
-        $erp = new \DBEvent();
+        $erp = new \DBEvent;
         $erp->setTable('erp_grid_views');
         $erp->setProperties(['request' => (object) ['id' => $request->id]]);
 
@@ -4832,7 +4832,7 @@ class CustomController extends BaseController
             // if(date('d') > 2 && date('d') < 20){
             //     return json_alert('Billing cannot be created mid month','warning');
             // }
-            $billing = new \EldoBilling();
+            $billing = new \EldoBilling;
 
             $billing->monthly_billing($request->billing_date);
 

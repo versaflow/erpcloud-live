@@ -16,6 +16,7 @@ class ErpXero
         $accessToken = session('xero_token');
         $tenantId = session('xero_tenants')[0]->tenantId;
         $xero = new \XeroPHP\Application($accessToken, $tenantId);
+
         return $xero->load(\XeroPHP\Models\Accounting\Contact::class)->execute();
     }
 
@@ -24,6 +25,7 @@ class ErpXero
         $accessToken = session('xero_token');
         $tenantId = session('xero_tenants')[0]->tenantId;
         $xero = new \XeroPHP\Application($accessToken, $tenantId);
+
         return $xero->load(\XeroPHP\Models\Accounting\Payment::class)->execute();
     }
 }
