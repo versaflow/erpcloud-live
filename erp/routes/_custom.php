@@ -2675,7 +2675,7 @@ Route::get('bulkemailprogress', function () {
     echo currency($percentage);
 });
 
-Route::group(['middleware' => 'auth'], function () {
+Route::middleware('auth')->group(function () {
     Route::get('logs', 'LogController@index');
 });
 
