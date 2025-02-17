@@ -9,7 +9,7 @@ function schedule_process_pending_topups()
             \DB::connection('default')->table('sub_service_topups')->where('id', $topup->id)->update(['processing' => 1]);
             $request_data = new \Illuminate\Http\Request;
             $request_data->id = $topup->id;
-            $result = app('App\Http\Controllers\CustomController')->provisionService($request_data, 'sub_service_topups', $topup->id);
+            $result = app(\App\Http\Controllers\CustomController::class)->provisionService($request_data, 'sub_service_topups', $topup->id);
             // aa($result);
             if ($result) {
                 \DB::connection('default')->table('sub_service_topups')->where('id', $topup->id)->update(['processing' => 1]);

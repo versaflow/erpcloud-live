@@ -183,7 +183,7 @@ function create_provision_items($invoice)
                         $request_data = new \Illuminate\Http\Request;
                         $request_data->id = $id;
 
-                        app('App\Http\Controllers\CustomController')->provisionService($request_data, 'sub_activations', $id);
+                        app(\App\Http\Controllers\CustomController::class)->provisionService($request_data, 'sub_activations', $id);
                     }
                 } else {
                     aa('2');
@@ -448,7 +448,7 @@ function create_provision_items($invoice)
                     $request_data->id = $id;
 
                     if (empty($subscription_id) && ! $invoice_has_sip_trunks && ! $invoice_has_extensions) {
-                        app('App\Http\Controllers\CustomController')->provisionService($request_data, 'sub_activations', $id);
+                        app(\App\Http\Controllers\CustomController::class)->provisionService($request_data, 'sub_activations', $id);
                     }
                 } else {
                     aa('2.2');
@@ -481,7 +481,7 @@ function create_provision_items($invoice)
                             $request_data = new \Illuminate\Http\Request;
                             $request_data->id = $id;
 
-                            app('App\Http\Controllers\CustomController')->provisionService($request_data, 'sub_activations', $id);
+                            app(\App\Http\Controllers\CustomController::class)->provisionService($request_data, 'sub_activations', $id);
                         }
                     }
                 }

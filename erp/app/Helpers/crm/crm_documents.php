@@ -491,7 +491,7 @@ function aftersave_documents_send_for_approval($request)
         $url = get_menu_url_from_module_id(353).'/approve';
 
         $request = Request::create($url, 'post', $data);
-        $result = app('App\Http\Controllers\ModuleController')->postApproveTransaction($request);
+        $result = app(\App\Http\Controllers\ModuleController::class)->postApproveTransaction($request);
         \DB::table('crm_documents')->where('id', $request->id)->update(['send_approve_on_submit' => 0]);
     }
 }

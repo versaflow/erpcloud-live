@@ -689,7 +689,7 @@ function button_opportunities_approve_document($request)
     $url .= '/approve';
 
     $request = Request::create($url, 'post', $data);
-    $result = app('App\Http\Controllers\ModuleController')->postApproveTransaction($request);
+    $result = app(\App\Http\Controllers\ModuleController::class)->postApproveTransaction($request);
 
     return $result;
 }

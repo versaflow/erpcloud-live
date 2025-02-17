@@ -444,7 +444,7 @@ function process_approval($request)
         $url = get_menu_url_from_module_id($approval->module_id).'/approve';
 
         $request = Request::create($url, 'post', $data);
-        $result = app('App\Http\Controllers\ModuleController')->postApproveTransaction($request);
+        $result = app(\App\Http\Controllers\ModuleController::class)->postApproveTransaction($request);
         $new_doctype = \DB::table('crm_documents')->where('id', $id)->pluck('doctype')->first();
 
         if ($doctype != $new_doctype) {
@@ -471,7 +471,7 @@ function process_approval($request)
         $url = get_menu_url_from_table('crm_supplier_documents').'/approve';
 
         $request = Request::create($url, 'post', $data);
-        $result = app('App\Http\Controllers\ModuleController')->postApproveTransaction($request);
+        $result = app(\App\Http\Controllers\ModuleController::class)->postApproveTransaction($request);
 
         $new_doctype = \DB::table('crm_supplier_documents')->where('id', $id)->pluck('doctype')->first();
 
@@ -544,7 +544,7 @@ function process_approval($request)
         \DB::table('crm_products')->where('id', $id)->update(['delete_approved' => 1]);
 
         $request = Request::create($url, 'post', $data);
-        $result = app('App\Http\Controllers\ModuleController')->postDelete($request);
+        $result = app(\App\Http\Controllers\ModuleController::class)->postDelete($request);
         $result_data = $result->getData();
 
         if ($result_data->message && str_contains($result_data->message, 'Deleted')) {
@@ -565,7 +565,7 @@ function process_approval($request)
         \DB::table('crm_accounts')->where('id', $id)->update(['cancel_approved' => 1]);
 
         $request = Request::create($url, 'post', $data);
-        $result = app('App\Http\Controllers\ModuleController')->postCancel($request);
+        $result = app(\App\Http\Controllers\ModuleController::class)->postCancel($request);
         $result_data = $result->getData();
         if ($result_data->status == 'success') {
             dbset('crm_approvals', 'id', $approval->id, ['processed' => 1, 'processed_at' => date('Y-m-d H:i:s'), 'processed_by' => session('user_id')]);
@@ -599,7 +599,7 @@ function process_approval($request)
         \DB::connection('default')->table('crm_approvals')->where('id', $approval->id)->update(['approved' => 1]);
 
         $request = Request::create($url, 'post', $data);
-        $result = app('App\Http\Controllers\ModuleController')->postDelete($request);
+        $result = app(\App\Http\Controllers\ModuleController::class)->postDelete($request);
         $result_data = $result->getData();
 
         if ($result_data->message && str_contains($result_data->message, 'Deleted')) {
@@ -861,7 +861,7 @@ function button_approvals_process($request)
         $url = get_menu_url_from_module_id($approval->module_id).'/approve';
 
         $request = Request::create($url, 'post', $data);
-        $result = app('App\Http\Controllers\ModuleController')->postApproveTransaction($request);
+        $result = app(\App\Http\Controllers\ModuleController::class)->postApproveTransaction($request);
         $new_doctype = \DB::table('crm_documents')->where('id', $id)->pluck('doctype')->first();
 
         if ($doctype != $new_doctype) {
@@ -885,7 +885,7 @@ function button_approvals_process($request)
         $url = get_menu_url_from_table('crm_supplier_documents').'/approve';
 
         $request = Request::create($url, 'post', $data);
-        $result = app('App\Http\Controllers\ModuleController')->postApproveTransaction($request);
+        $result = app(\App\Http\Controllers\ModuleController::class)->postApproveTransaction($request);
 
         $new_doctype = \DB::table('crm_supplier_documents')->where('id', $id)->pluck('doctype')->first();
 
@@ -950,7 +950,7 @@ function button_approvals_process($request)
         \DB::table('crm_products')->where('id', $id)->update(['delete_approved' => 1]);
 
         $request = Request::create($url, 'post', $data);
-        $result = app('App\Http\Controllers\ModuleController')->postDelete($request);
+        $result = app(\App\Http\Controllers\ModuleController::class)->postDelete($request);
         $result_data = $result->getData();
 
         if ($result_data->message && str_contains($result_data->message, 'Deleted')) {
@@ -970,7 +970,7 @@ function button_approvals_process($request)
         \DB::table('crm_accounts')->where('id', $id)->update(['cancel_approved' => 1]);
 
         $request = Request::create($url, 'post', $data);
-        $result = app('App\Http\Controllers\ModuleController')->postCancel($request);
+        $result = app(\App\Http\Controllers\ModuleController::class)->postCancel($request);
         $result_data = $result->getData();
         if ($result_data->status == 'success') {
             dbset('crm_approvals', 'id', $approval->id, ['processed' => 1, 'processed_at' => date('Y-m-d H:i:s'), 'processed_by' => session('user_id')]);
@@ -1002,7 +1002,7 @@ function button_approvals_process($request)
         \DB::connection('default')->table('crm_approvals')->where('id', $approval->id)->update(['approved' => 1]);
 
         $request = Request::create($url, 'post', $data);
-        $result = app('App\Http\Controllers\ModuleController')->postDelete($request);
+        $result = app(\App\Http\Controllers\ModuleController::class)->postDelete($request);
         $result_data = $result->getData();
 
         if ($result_data->message && str_contains($result_data->message, 'Deleted')) {

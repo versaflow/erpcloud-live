@@ -1650,7 +1650,7 @@ class IntegrationsController extends BaseController
             $url = $menu_name.'/edit';
 
             $request_data->server->set('REQUEST_URI', $url);
-            $data['ticket'] = app('App\Http\Controllers\ModuleController')->getEdit($request_data);
+            $data['ticket'] = app(\App\Http\Controllers\ModuleController::class)->getEdit($request_data);
 
             return view('__app.components.pages.helpdesk', $data);
         }
@@ -2118,7 +2118,7 @@ class IntegrationsController extends BaseController
 
                 $request_data->server->set('REQUEST_URI', $url);
 
-                return app('App\Http\Controllers\ModuleController')->getEdit($request_data);
+                return app(\App\Http\Controllers\ModuleController::class)->getEdit($request_data);
             }
         }
     }

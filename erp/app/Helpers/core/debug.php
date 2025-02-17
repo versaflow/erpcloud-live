@@ -1797,7 +1797,7 @@ function payfast_fix()
     $request = new \Illuminate\Http\Request($data);
     $request->setMethod('POST');
 
-    $r = app('App\Http\Controllers\IntegrationsController')->payfastResponse($request);
+    $r = app(\App\Http\Controllers\IntegrationsController::class)->payfastResponse($request);
 }
 
 function pbx_restore_account($account_id)

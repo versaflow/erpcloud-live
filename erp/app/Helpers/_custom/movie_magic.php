@@ -31,7 +31,7 @@ function schedule_process_easypanel_activations()
             $id = $activation->id;
             $request_data->id = $id;
             aa($request_data); // Log request data
-            app('App\Http\Controllers\CustomController')->provisionService($request_data, 'sub_activations', $id);
+            app(\App\Http\Controllers\CustomController::class)->provisionService($request_data, 'sub_activations', $id);
         }
     }
 }
@@ -74,7 +74,7 @@ function schedule_process_easypanel_activations_trial()
         $id = $activation->id;
         $request_data = new \Illuminate\Http\Request;
         $request_data->id = $id;
-        app('App\Http\Controllers\CustomController')->provisionService($request_data, 'sub_activations', $id);
+        app(\App\Http\Controllers\CustomController::class)->provisionService($request_data, 'sub_activations', $id);
     }
 }
 
