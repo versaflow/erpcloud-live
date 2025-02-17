@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\IntegrationsController;
+use Illuminate\Support\Facades\Route;
+
 Route::post('import_facebook_leads', function () {
     if (session('role_level') != 'Admin') {
         return false;
@@ -501,11 +504,11 @@ Route::any('layout_set_default/{layout_id?}', function ($layout_id) {
     return json_alert('Done');
 });
 
-Route::any('zapier_facebook_comments', 'IntegrationsController@zapierFacebookComments');
-Route::any('whatsapp_webhook', 'IntegrationsController@whatsappWebhook');
-Route::any('zapier_webhooks', 'IntegrationsController@zapierWebhooks');
-Route::any('zapier_instagram', 'IntegrationsController@zapierInstagram');
-Route::any('zapier_zendesk', 'IntegrationsController@zapierZendesk');
+Route::any('zapier_facebook_comments', [IntegrationsController::class, 'zapierFacebookComments']);
+Route::any('whatsapp_webhook', [IntegrationsController::class, 'whatsappWebhook']);
+Route::any('zapier_webhooks', [IntegrationsController::class, 'zapierWebhooks']);
+Route::any('zapier_instagram', [IntegrationsController::class, 'zapierInstagram']);
+Route::any('zapier_zendesk', [IntegrationsController::class, 'zapierZendesk']);
 
 Route::any('layout_tracking_enable/{layout_id?}', function ($layout_id) {
     if (session('role_level') == 'Admin') {
@@ -628,11 +631,11 @@ Route::any('update_yodlee_accounts', function () {
     }
 });
 
-Route::any('pbx_tts', 'IntegrationsController@pbxTextToSpeech');
+Route::any('pbx_tts', [IntegrationsController::class, 'pbxTextToSpeech']);
 
 /// website contact forms
-Route::any('contact_form_netstream', 'IntegrationsController@contactFormNetstream');
-Route::any('contact_form_cloudtelecoms', 'IntegrationsController@contactFormCloudtelecoms');
+Route::any('contact_form_netstream', [IntegrationsController::class, 'contactFormNetstream']);
+Route::any('contact_form_cloudtelecoms', [IntegrationsController::class, 'contactFormCloudtelecoms']);
 
 Route::get('ticket_system', function () {
     if (session('role_level') == 'Admin') {
@@ -743,10 +746,10 @@ Route::any('pbx_gateway_status/{token?}', function ($token) {
 /// PBX END
 
 /// FLEXMONSTER START
-Route::any('flexmonster/{id}/{company_id?}', 'IntegrationsController@flexmonster');
-Route::any('flexmonster_load', 'IntegrationsController@flexmonsterLoad');
-Route::any('flexmonster_save_state', 'IntegrationsController@flexmonsterSaveState');
-Route::any('flexmonster_export_save', 'IntegrationsController@flexmonsterExportSave');
+Route::any('flexmonster/{id}/{company_id?}', [IntegrationsController::class, 'flexmonster']);
+Route::any('flexmonster_load', [IntegrationsController::class, 'flexmonsterLoad']);
+Route::any('flexmonster_save_state', [IntegrationsController::class, 'flexmonsterSaveState']);
+Route::any('flexmonster_export_save', [IntegrationsController::class, 'flexmonsterExportSave']);
 Route::any('flexmonster_export/{report_id}/{format?}', function ($report_id, $format = 'html') {
     $report = \DB::connection('default')->table('erp_reports')->where('id', $report_id)->get()->first();
     $report_conn = $report->connection;
@@ -861,18 +864,18 @@ Route::get('download_product_stocktake_file', function () {
     return response()->download($file_path, $file_name);
 });
 //Route::get('kernel_list', 'CoreController@kernelList');
-Route::any('mail_manager', 'IntegrationsController@mailManager');
+Route::any('mail_manager', [IntegrationsController::class, 'mailManager']);
 // REPORT ROUTES START
-Route::any('report_query/{id?}', 'IntegrationsController@reportQuery');
-Route::post('report_query_save', 'IntegrationsController@reportQuerySave');
-Route::any('report_query_date_filter', 'IntegrationsController@reportQueryDateFilter');
-Route::any('report_query_reset', 'IntegrationsController@reportQueryReset');
+Route::any('report_query/{id?}', [IntegrationsController::class, 'reportQuery']);
+Route::post('report_query_save', [IntegrationsController::class, 'reportQuerySave']);
+Route::any('report_query_date_filter', [IntegrationsController::class, 'reportQueryDateFilter']);
+Route::any('report_query_reset', [IntegrationsController::class, 'reportQueryReset']);
 // REPORT ROUTES ENDS
 
-Route::get('code_edit/{function_name}', 'IntegrationsController@getFunctionCode');
-Route::post('code_edit_save', 'IntegrationsController@postFunctionCode');
+Route::get('code_edit/{function_name}', [IntegrationsController::class, 'getFunctionCode']);
+Route::post('code_edit_save', [IntegrationsController::class, 'postFunctionCode']);
 
-Route::any('flowchart/{id?}', 'IntegrationsController@diagram');
+Route::any('flowchart/{id?}', [IntegrationsController::class, 'diagram']);
 
 Route::get('flowchart_edit/{id?}', function ($id) {
     $diagram = \DB::table('crm_flowcharts')->where('id', $id)->get()->first();
@@ -890,7 +893,7 @@ Route::get('flowchart_edit2/{id?}', function ($id) {
 
     return view('__app.components.diagram_xml', $data);
 });
-Route::post('diagram_save', 'IntegrationsController@diagramSave');
+Route::post('diagram_save', [IntegrationsController::class, 'diagramSave']);
 
 Route::get('gateway_start/{gateway_uuid?}', function ($gateway_uuid) {
     if (! is_superadmin()) {
@@ -941,7 +944,7 @@ Route::get('dbninja', function () {
 
 Route::get('nfig', function () {});
 
-Route::post('exportcdrbygateway', 'IntegrationsController@exportCdrByGateway');
+Route::post('exportcdrbygateway', [IntegrationsController::class, 'exportCdrByGateway']);
 
 Route::get('download_pricelist_new', function () {
     $file_name = export_pricelist(1, 'xlsx');
@@ -1176,10 +1179,10 @@ Route::any('c9pbx_dev', function () {
 
 Route::any('c9dev', function () {});
 
-Route::any('lte_simswop', 'IntegrationsController@lteSimswop');
-Route::any('clear_callee_id_number', 'IntegrationsController@clearCalleeIDNumber');
+Route::any('lte_simswop', [IntegrationsController::class, 'lteSimswop']);
+Route::any('clear_callee_id_number', [IntegrationsController::class, 'clearCalleeIDNumber']);
 
-Route::any('knowledgebase', 'IntegrationsController@knowledgebase');
+Route::any('knowledgebase', [IntegrationsController::class, 'knowledgebase']);
 
 Route::any('kb_content/{kb_id?}', function ($id) {
     $guide = \DB::table('crm_training_guides')->where('id', $id)->pluck('guide')->first();
@@ -1187,12 +1190,12 @@ Route::any('kb_content/{kb_id?}', function ($id) {
     return '<div class="p-3">'.$guide.'</div>';
 });
 
-Route::any('submitticket', 'IntegrationsController@submitTicket');
+Route::any('submitticket', [IntegrationsController::class, 'submitTicket']);
 
-Route::any('pbx_number_change', 'IntegrationsController@pbxNumberChange');
+Route::any('pbx_number_change', [IntegrationsController::class, 'pbxNumberChange']);
 
-Route::any('pbx_number_import', 'IntegrationsController@pbxNumberImport');
-Route::any('domains_import', 'IntegrationsController@domainsImport');
+Route::any('pbx_number_import', [IntegrationsController::class, 'pbxNumberImport']);
+Route::any('domains_import', [IntegrationsController::class, 'domainsImport']);
 
 Route::any('download_invoice/{type?}/{id?}', function ($type, $id) {
     if (! empty(session('invoice_list')) && session('invoice_list') === true) {
@@ -1211,9 +1214,9 @@ Route::any('download_invoice/{type?}/{id?}', function ($type, $id) {
     }
 });
 
-Route::any('accountant_access', 'IntegrationsController@invoiceList');
+Route::any('accountant_access', [IntegrationsController::class, 'invoiceList']);
 
-Route::any('pbx_test_call', 'IntegrationsController@pbxTestCall');
+Route::any('pbx_test_call', [IntegrationsController::class, 'pbxTestCall']);
 Route::any('pbx_test_call_form/{number}', function ($number) {
     if (session('role_id') > 10) {
         return json_alert('No Access', 'warning');
@@ -1241,17 +1244,17 @@ Route::any('fnb_api', function () {
     }
 });
 
-Route::post('check_lte_coverage', 'IntegrationsController@checkAxxessLteCoverage');
-Route::post('check_fibre_coverage', 'IntegrationsController@checkFibreCoverage');
-Route::any('mail_unsubscribe/{encoded_link?}', 'IntegrationsController@mailUnsubscribe');
+Route::post('check_lte_coverage', [IntegrationsController::class, 'checkAxxessLteCoverage']);
+Route::post('check_fibre_coverage', [IntegrationsController::class, 'checkFibreCoverage']);
+Route::any('mail_unsubscribe/{encoded_link?}', [IntegrationsController::class, 'mailUnsubscribe']);
 
-Route::get('document_popup/{id?}', 'IntegrationsController@documentPopup');
-Route::post('update_doc_delivery', 'IntegrationsController@updateDocDelivery');
+Route::get('document_popup/{id?}', [IntegrationsController::class, 'documentPopup']);
+Route::post('update_doc_delivery', [IntegrationsController::class, 'updateDocDelivery']);
 
 //webform route validate encoded url and redirect to webform
-Route::any('webform/{encoded_link?}', 'IntegrationsController@webForm');
+Route::any('webform/{encoded_link?}', [IntegrationsController::class, 'webForm']);
 
-Route::any('cdr_export', 'IntegrationsController@cdrExport');
+Route::any('cdr_export', [IntegrationsController::class, 'cdrExport']);
 
 Route::any('builder_notes/{id?}', function ($id) {
     $notes = \DB::table('crm_email_manager')->where('id', $id)->pluck('notes')->first();
@@ -1265,7 +1268,7 @@ Route::get('check_fail2ban/{account_id?}', function ($account_id = 0) {
     return view('__app.button_views.unblock_pbx_ip', $data);
 });
 
-Route::post('check_fail2ban', 'IntegrationsController@checkFail2Ban');
+Route::post('check_fail2ban', [IntegrationsController::class, 'checkFail2Ban']);
 
 Route::get('flush_fail2ban', function () {
     $pbx = new FusionPBX;
@@ -1277,11 +1280,11 @@ Route::get('flush_fail2ban', function () {
     }
 });
 
-Route::any('debit_order_create', 'IntegrationsController@debitOrderCreate');
-Route::any('debit_order_upload', 'IntegrationsController@debitOrderUpload');
-Route::any('debit_order_report', 'IntegrationsController@debitOrderReport');
+Route::any('debit_order_create', [IntegrationsController::class, 'debitOrderCreate']);
+Route::any('debit_order_upload', [IntegrationsController::class, 'debitOrderUpload']);
+Route::any('debit_order_report', [IntegrationsController::class, 'debitOrderReport']);
 
-Route::any('interworx_email', 'IntegrationsController@interworxEmail');
+Route::any('interworx_email', [IntegrationsController::class, 'interworxEmail']);
 
 /// STRIPE
 
@@ -1291,8 +1294,8 @@ Route::any('stripe_payment/{account_id?}/{amount?}', function ($account_id, $amo
 
     return Redirect::to($url);
 });
-Route::any('stripe_webhook', 'IntegrationsController@stripeWebhook');
-Route::any('stripe_webhook_test', 'IntegrationsController@stripeWebhookTestMode');
+Route::any('stripe_webhook', [IntegrationsController::class, 'stripeWebhook']);
+Route::any('stripe_webhook_test', [IntegrationsController::class, 'stripeWebhookTestMode']);
 Route::any('stripe_return', function () {
     return Redirect::to('/')->with('message', 'Payment Successful')->with('status', 'success');
 });
@@ -1307,13 +1310,13 @@ Route::any('payfast_return', function () {
 Route::any('payfast_cancel', function () {
     return Redirect::to('/')->with('message', 'Payment Cancelled')->with('status', 'warning');
 });
-Route::any('payfast_notify', 'IntegrationsController@payfastResponse');
-Route::any('apple_notify', 'IntegrationsController@appleResponse');
-Route::any('payfast_subscription_notify', 'IntegrationsController@payfastSubscriptionResponse');
+Route::any('payfast_notify', [IntegrationsController::class, 'payfastResponse']);
+Route::any('apple_notify', [IntegrationsController::class, 'appleResponse']);
+Route::any('payfast_subscription_notify', [IntegrationsController::class, 'payfastSubscriptionResponse']);
 
-Route::any('payfast_subscription_signup_notify', 'IntegrationsController@payfastSignupSubscriptionResponse');
+Route::any('payfast_subscription_signup_notify', [IntegrationsController::class, 'payfastSignupSubscriptionResponse']);
 
-Route::any('payfast_netstream_signup_form', 'IntegrationsController@payfastNetstreamSignupForm');
+Route::any('payfast_netstream_signup_form', [IntegrationsController::class, 'payfastNetstreamSignupForm']);
 
 Route::any('integrations/payfast_button/{account_id?}/{amount?}/{redirect?}', function ($account_id, $amount, $redirect = false) {
     $account = dbgetaccount($account_id);
@@ -1350,10 +1353,10 @@ Route::any('integrations/payfast_get_signature/{account_id?}/{amount?}', functio
 });
 /// PAYFAST END
 
-Route::get('paynow/{encoded_link?}', 'IntegrationsController@payNow');
-Route::get('payment_options/{encoded_link?}', 'IntegrationsController@payNow');
-Route::any('domain_search/{any?}', 'IntegrationsController@domainSearch');
-Route::any('domain_search_website', 'IntegrationsController@domainSearchWebsite');
+Route::get('paynow/{encoded_link?}', [IntegrationsController::class, 'payNow']);
+Route::get('payment_options/{encoded_link?}', [IntegrationsController::class, 'payNow']);
+Route::any('domain_search/{any?}', [IntegrationsController::class, 'domainSearch']);
+Route::any('domain_search_website', [IntegrationsController::class, 'domainSearchWebsite']);
 
 /// Panels
 Route::any('iframe/{menu_slug?}', function ($menu_slug) {
@@ -1881,13 +1884,13 @@ Route::get('get_cdr_log', function () {
     }
 });
 
-Route::any('workspace_old_user/{user_id?}', 'IntegrationsController@kanban');
+Route::any('workspace_old_user/{user_id?}', [IntegrationsController::class, 'kanban']);
 
-Route::any('tinymce_images', 'IntegrationsController@tinymceImages');
+Route::any('tinymce_images', [IntegrationsController::class, 'tinymceImages']);
 
-Route::any('sms_result', 'IntegrationsController@smsResult');
+Route::any('sms_result', [IntegrationsController::class, 'smsResult']);
 
-Route::any('reamaze_log_call', 'IntegrationsController@reamazeLogCall');
+Route::any('reamaze_log_call', [IntegrationsController::class, 'reamazeLogCall']);
 
 Route::get('registration_failures_cmd_ajax', function () {
     if (session('role_level') == 'Admin') {

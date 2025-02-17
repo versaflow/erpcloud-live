@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\CoreController;
+use App\Http\Controllers\CustomController;
+use App\Http\Controllers\ModuleController;
+use Illuminate\Support\Facades\Route;
 use App\Models\_UriValidator;
 use Illuminate\Routing\Matching\UriValidator;
 use Illuminate\Routing\Route as IlluminateRoute;
@@ -25,10 +29,10 @@ include 'store.php';
 include 'supportboard.php';
 include 'filemanager.php';
 
-Route::any('/', 'CoreController@index');
+Route::any('/', [CoreController::class, 'index']);
 
-Route::get('install', 'CoreController@getInstall');
-Route::post('install', 'CoreController@postInstall');
+Route::get('install', [CoreController::class, 'getInstall']);
+Route::post('install', [CoreController::class, 'postInstall']);
 
 Route::any('menu_permissions/{menu_id?}/{module_id?}', function ($menu_id = null, $module_id = null) {
     if ($module_id > 0) {
@@ -627,15 +631,15 @@ Route::any('pbx_menu_sort_ajax/{menu_item_uuid?}/{target_id?}/{position?}', func
 // Custom Controller
 //Route::any('provision_service', 'CustomController@provisionService');
 
-Route::any('provision', 'CustomController@provisionWizard');
-Route::any('provision_service/{table?}/{id?}', 'CustomController@provisionService');
-Route::any('provision_service_post', 'CustomController@provisionServicePost');
+Route::any('provision', [CustomController::class, 'provisionWizard']);
+Route::any('provision_service/{table?}/{id?}', [CustomController::class, 'provisionService']);
+Route::any('provision_service_post', [CustomController::class, 'provisionServicePost']);
 
-Route::any('service_deactivate', 'CustomController@deactivateWizard');
-Route::any('deactivate_service/{table?}/{id?}', 'CustomController@deactivateService');
-Route::any('deactivate_service_post', 'CustomController@deactivateServicePost');
+Route::any('service_deactivate', [CustomController::class, 'deactivateWizard']);
+Route::any('deactivate_service/{table?}/{id?}', [CustomController::class, 'deactivateService']);
+Route::any('deactivate_service_post', [CustomController::class, 'deactivateServicePost']);
 
-Route::any('support_form_post', 'CustomController@supportFormPost');
+Route::any('support_form_post', [CustomController::class, 'supportFormPost']);
 
 Route::get('provision_test', function () {
     return 'true';
@@ -804,30 +808,30 @@ Route::get('email_form/{type?}/{id?}/{to_email?}', function ($type, $id, $to_ema
     return email_form($email_id, $account_id, $data);
 });
 
-Route::post('email_send/{any?}', 'CustomController@emailSend');
+Route::post('email_send/{any?}', [CustomController::class, 'emailSend']);
 
-Route::get('bulkemail_form/{any?}', 'CustomController@bulkEmailForm');
-Route::post('bulkemail_send', 'CustomController@bulkEmailSend');
+Route::get('bulkemail_form/{any?}', [CustomController::class, 'bulkEmailForm']);
+Route::post('bulkemail_send', [CustomController::class, 'bulkEmailSend']);
 
-Route::any('context_menu/{menu_name?}/{action?}/{id?}', 'CustomController@contextMenu');
-Route::any('form_change_ajax/{function?}', 'CustomController@formChangeAjax');
+Route::any('context_menu/{menu_name?}/{action?}/{id?}', [CustomController::class, 'contextMenu']);
+Route::any('form_change_ajax/{function?}', [CustomController::class, 'formChangeAjax']);
 
-Route::post('permissions_save', 'CustomController@permissionsSave');
-Route::post('supplier_invoice_upload/{id?}', 'CustomController@supplierInvoiceUpload');
-Route::post('banking_invoice_upload/{id?}', 'CustomController@bankingInvoiceUpload');
-Route::post('debtors_file_upload', 'CustomController@debtorsFileUpload');
-Route::post('deliveries_pod/{id?}', 'CustomController@deliveriesPodUpload');
-Route::post('journal_invoice_upload/{id?}', 'CustomController@journalInvoiceUpload');
+Route::post('permissions_save', [CustomController::class, 'permissionsSave']);
+Route::post('supplier_invoice_upload/{id?}', [CustomController::class, 'supplierInvoiceUpload']);
+Route::post('banking_invoice_upload/{id?}', [CustomController::class, 'bankingInvoiceUpload']);
+Route::post('debtors_file_upload', [CustomController::class, 'debtorsFileUpload']);
+Route::post('deliveries_pod/{id?}', [CustomController::class, 'deliveriesPodUpload']);
+Route::post('journal_invoice_upload/{id?}', [CustomController::class, 'journalInvoiceUpload']);
 
-Route::post('documents_invoice_upload/{id?}', 'CustomController@documentsInvoiceUpload');
+Route::post('documents_invoice_upload/{id?}', [CustomController::class, 'documentsInvoiceUpload']);
 
-Route::post('pricelist_send', 'CustomController@pricelistSend');
+Route::post('pricelist_send', [CustomController::class, 'pricelistSend']);
 
-Route::post('cashbook_allocate', 'CustomController@cashbookAllocate');
+Route::post('cashbook_allocate', [CustomController::class, 'cashbookAllocate']);
 
-Route::any('subscription_migrate', 'CustomController@subscriptionMigrate');
+Route::any('subscription_migrate', [CustomController::class, 'subscriptionMigrate']);
 
-Route::any('sms_report/{account_id?}', 'CustomController@smsReport');
+Route::any('sms_report/{account_id?}', [CustomController::class, 'smsReport']);
 
 Route::get('manage_mailboxes/{sub_id?}', function ($sub_id) {
     $sub = \DB::table('sub_services')->where('id', $sub_id)->get()->first();
@@ -882,8 +886,8 @@ Route::any('manage_mailbox_send/{sub_id?}', function ($sub_id) {
     return email_form($email_id, $site->account_id, $email_data);
 });
 
-Route::any('postmailbox', 'CustomController@postMailBox');
-Route::any('postftp', 'CustomController@postFtp');
+Route::any('postmailbox', [CustomController::class, 'postMailBox']);
+Route::any('postftp', [CustomController::class, 'postFtp']);
 
 Route::get('view_statement/{full_statement?}', function ($full_statement = false) {
     $account_id = session('account_id');
@@ -895,72 +899,72 @@ Route::get('view_statement/{full_statement?}', function ($full_statement = false
 })->name('view_statement');
 
 // Module Controller
-Route::any('{module}', 'ModuleController@index');
-Route::any('{module}/minigrid', 'ModuleController@miniGrid');
-Route::any('{module}/data', 'ModuleController@data');
+Route::any('{module}', [ModuleController::class, 'index']);
+Route::any('{module}/minigrid', [ModuleController::class, 'miniGrid']);
+Route::any('{module}/data', [ModuleController::class, 'data']);
 
-Route::any('{module}/linked_modules', 'ModuleController@linkedModules');
-Route::any('{module}/kanban/{layout_id?}', 'ModuleController@kanban');
-Route::any('{module}/kanban_data', 'ModuleController@kanbanData');
-Route::any('{module}/kanban_update', 'ModuleController@kanbanUpdate');
-Route::any('{module}/aggrid_data', 'ModuleController@aggridData');
-Route::any('{module}/aggrid_refresh_row', 'ModuleController@aggridRefreshRow');
-Route::any('{module}/aggrid_refresh_data', 'ModuleController@aggridRefreshData');
-Route::any('{module}/aggrid_detail_data', 'ModuleController@aggridDetailData');
-Route::any('{module}/aggrid_detail_search', 'ModuleController@aggridDetailSearch');
-Route::any('{module}/aggrid_layout_data', 'ModuleController@aggridLayoutData');
-Route::any('{module}/aggrid_sidebar_data', 'ModuleController@aggridSidebarData');
-Route::any('{module}/aggrid_layout_save', 'ModuleController@aggridLayoutSave');
-Route::any('{module}/aggrid_communications_panel', 'ModuleController@aggridCommunicationsPanel');
+Route::any('{module}/linked_modules', [ModuleController::class, 'linkedModules']);
+Route::any('{module}/kanban/{layout_id?}', [ModuleController::class, 'kanban']);
+Route::any('{module}/kanban_data', [ModuleController::class, 'kanbanData']);
+Route::any('{module}/kanban_update', [ModuleController::class, 'kanbanUpdate']);
+Route::any('{module}/aggrid_data', [ModuleController::class, 'aggridData']);
+Route::any('{module}/aggrid_refresh_row', [ModuleController::class, 'aggridRefreshRow']);
+Route::any('{module}/aggrid_refresh_data', [ModuleController::class, 'aggridRefreshData']);
+Route::any('{module}/aggrid_detail_data', [ModuleController::class, 'aggridDetailData']);
+Route::any('{module}/aggrid_detail_search', [ModuleController::class, 'aggridDetailSearch']);
+Route::any('{module}/aggrid_layout_data', [ModuleController::class, 'aggridLayoutData']);
+Route::any('{module}/aggrid_sidebar_data', [ModuleController::class, 'aggridSidebarData']);
+Route::any('{module}/aggrid_layout_save', [ModuleController::class, 'aggridLayoutSave']);
+Route::any('{module}/aggrid_communications_panel', [ModuleController::class, 'aggridCommunicationsPanel']);
 
-Route::any('{module}/get_report_config/{id?}', 'ModuleController@aggridReportConfig');
-Route::any('{module}/view_report/{id?}', 'ModuleController@aggridReport');
+Route::any('{module}/get_report_config/{id?}', [ModuleController::class, 'aggridReportConfig']);
+Route::any('{module}/view_report/{id?}', [ModuleController::class, 'aggridReport']);
 
-Route::any('{module}/report_data/{id?}', 'ModuleController@aggridReportData');
-Route::any('{module}/report_client_data/{id?}', 'ModuleController@aggridReportClientData');
-Route::any('{module}/report_state_save/{id?}', 'ModuleController@aggridReportStateSave');
-Route::any('{module}/report_state_load/{id?}', 'ModuleController@aggridReportStateLoad');
+Route::any('{module}/report_data/{id?}', [ModuleController::class, 'aggridReportData']);
+Route::any('{module}/report_client_data/{id?}', [ModuleController::class, 'aggridReportClientData']);
+Route::any('{module}/report_state_save/{id?}', [ModuleController::class, 'aggridReportStateSave']);
+Route::any('{module}/report_state_load/{id?}', [ModuleController::class, 'aggridReportStateLoad']);
 
-Route::any('{module}/report_calculated_fields/{action?}/{report_id?}', 'ModuleController@aggridReportCalculatedFields');
+Route::any('{module}/report_calculated_fields/{action?}/{report_id?}', [ModuleController::class, 'aggridReportCalculatedFields']);
 
-Route::any('{module}/layoutdata', 'ModuleController@getLayoutData');
+Route::any('{module}/layoutdata', [ModuleController::class, 'getLayoutData']);
 
-Route::get('{module}/view/{id?}', 'ModuleController@getView');
+Route::get('{module}/view/{id?}', [ModuleController::class, 'getView']);
 
-Route::get('{module}/getnotes/{id?}', 'ModuleController@getRecordNotes');
-Route::any('{module}/addnote', 'ModuleController@addRecordNote');
-Route::any('{module}/deletenote', 'ModuleController@deleteRecordNote');
+Route::get('{module}/getnotes/{id?}', [ModuleController::class, 'getRecordNotes']);
+Route::any('{module}/addnote', [ModuleController::class, 'addRecordNote']);
+Route::any('{module}/deletenote', [ModuleController::class, 'deleteRecordNote']);
 
-Route::get('{module}/getcontacts/{account_type?}/{id?}', 'ModuleController@getRecordContacts');
-Route::any('{module}/addcontact', 'ModuleController@addRecordContact');
-Route::any('{module}/deletecontact', 'ModuleController@deleteRecordContact');
+Route::get('{module}/getcontacts/{account_type?}/{id?}', [ModuleController::class, 'getRecordContacts']);
+Route::any('{module}/addcontact', [ModuleController::class, 'addRecordContact']);
+Route::any('{module}/deletecontact', [ModuleController::class, 'deleteRecordContact']);
 
-Route::get('{module}/getfiles/{id?}', 'ModuleController@getRecordFiles');
-Route::any('{module}/addfile', 'ModuleController@addRecordFile');
-Route::any('{module}/deletefile', 'ModuleController@deleteRecordFile');
+Route::get('{module}/getfiles/{id?}', [ModuleController::class, 'getRecordFiles']);
+Route::any('{module}/addfile', [ModuleController::class, 'addRecordFile']);
+Route::any('{module}/deletefile', [ModuleController::class, 'deleteRecordFile']);
 
-Route::get('{module}/getchangelog/{id?}', 'ModuleController@getRecordChangeLog');
-Route::get('{module}/edit/{id?}', 'ModuleController@getEdit');
-Route::get('{module}/cancelform/{id?}', 'ModuleController@getCancelForm');
-Route::get('{module}/import', 'ModuleController@getImport');
-Route::post('{module}/postimport/{data?}', 'ModuleController@postImport');
+Route::get('{module}/getchangelog/{id?}', [ModuleController::class, 'getRecordChangeLog']);
+Route::get('{module}/edit/{id?}', [ModuleController::class, 'getEdit']);
+Route::get('{module}/cancelform/{id?}', [ModuleController::class, 'getCancelForm']);
+Route::get('{module}/import', [ModuleController::class, 'getImport']);
+Route::post('{module}/postimport/{data?}', [ModuleController::class, 'postImport']);
 
-Route::post('{module}/save/{data?}', 'ModuleController@postSave');
+Route::post('{module}/save/{data?}', [ModuleController::class, 'postSave']);
 
-Route::post('{module}/cell_editor/{data?}', 'ModuleController@getCellEditor');
-Route::post('{module}/save_cell/{data?}', 'ModuleController@postSaveCell');
-Route::post('{module}/update_tree_data/{data?}', 'ModuleController@updateTreeData');
-Route::post('{module}/save_row/{data?}', 'ModuleController@postSaveRow');
-Route::post('{module}/save_header/{data?}', 'ModuleController@postSaveHeader');
-Route::post('{module}/duplicate/{data?}', 'ModuleController@postDuplicate');
-Route::post('{module}/approve/{data?}', 'ModuleController@postApproveTransaction');
-Route::post('{module}/delete/{data?}', 'ModuleController@postDelete');
-Route::post('{module}/manager_delete/{data?}', 'ModuleController@postManagerDelete');
-Route::post('{module}/restore/{data?}', 'ModuleController@postRestore');
+Route::post('{module}/cell_editor/{data?}', [ModuleController::class, 'getCellEditor']);
+Route::post('{module}/save_cell/{data?}', [ModuleController::class, 'postSaveCell']);
+Route::post('{module}/update_tree_data/{data?}', [ModuleController::class, 'updateTreeData']);
+Route::post('{module}/save_row/{data?}', [ModuleController::class, 'postSaveRow']);
+Route::post('{module}/save_header/{data?}', [ModuleController::class, 'postSaveHeader']);
+Route::post('{module}/duplicate/{data?}', [ModuleController::class, 'postDuplicate']);
+Route::post('{module}/approve/{data?}', [ModuleController::class, 'postApproveTransaction']);
+Route::post('{module}/delete/{data?}', [ModuleController::class, 'postDelete']);
+Route::post('{module}/manager_delete/{data?}', [ModuleController::class, 'postManagerDelete']);
+Route::post('{module}/restore/{data?}', [ModuleController::class, 'postRestore']);
 
-Route::any('{module}/cancel/{data?}', 'ModuleController@postCancel');
-Route::post('{module}/cancelform/{data?}', 'ModuleController@postCancelForm');
-Route::post('{module}/sort/{data?}', 'ModuleController@postSort');
-Route::post('{module}/password_confirmed_action/{data?}', 'ModuleController@passwordConfirmedAction');
+Route::any('{module}/cancel/{data?}', [ModuleController::class, 'postCancel']);
+Route::post('{module}/cancelform/{data?}', [ModuleController::class, 'postCancelForm']);
+Route::post('{module}/sort/{data?}', [ModuleController::class, 'postSort']);
+Route::post('{module}/password_confirmed_action/{data?}', [ModuleController::class, 'passwordConfirmedAction']);
 
-Route::any('{module}/button/{button_id?}/{grid_id?}/{is_iframe?}', 'ModuleController@button');
+Route::any('{module}/button/{button_id?}/{grid_id?}/{is_iframe?}', [ModuleController::class, 'button']);

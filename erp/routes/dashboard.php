@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
+use Illuminate\Support\Facades\Route;
+
 /* DASHBOARD */
 
-Route::any('dashboard', 'DashboardController@index');
+Route::any('dashboard', [DashboardController::class, 'index']);
 // Route::any('pinned', 'DashboardController@pinnned');
 // Route::any('home', 'DashboardController@pinnned');
 
@@ -74,14 +77,14 @@ Route::any('pinned_iframe/{id?}', function ($id) {
     return view('__app.components.iframe', $data);
 });
 
-Route::any('save_dashboard_state', 'DashboardController@saveDashboardState');
-Route::any('staff_dashboard', 'DashboardController@staffDashboard');
-Route::any('getchartdata/{id?}', 'DashboardController@getChartData');
-Route::any('removechart/{id?}', 'DashboardController@removeChart');
+Route::any('save_dashboard_state', [DashboardController::class, 'saveDashboardState']);
+Route::any('staff_dashboard', [DashboardController::class, 'staffDashboard']);
+Route::any('getchartdata/{id?}', [DashboardController::class, 'getChartData']);
+Route::any('removechart/{id?}', [DashboardController::class, 'removeChart']);
 
-Route::any('save_dashboard_panels', 'DashboardController@saveDashboardPanels');
+Route::any('save_dashboard_panels', [DashboardController::class, 'saveDashboardPanels']);
 
-Route::any('dashboard_charts', 'DashboardController@aggridCharts');
+Route::any('dashboard_charts', [DashboardController::class, 'aggridCharts']);
 
 Route::get('dashboard_charts_content/{role_id?}', function ($role_id) {
     $data = [];

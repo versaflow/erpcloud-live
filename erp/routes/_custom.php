@@ -1,5 +1,10 @@
 <?php
 
+use App\Http\Controllers\CustomController;
+use App\Http\Controllers\IntegrationsController;
+use App\Http\Controllers\LogController;
+use Illuminate\Support\Facades\Route;
+
 Route::get('service_account_filter/{account_id?}', function ($account_id = 0) {
     \Erp::set_service_account_session($account_id);
 });
@@ -784,7 +789,7 @@ Route::any('download_available_ip_ranges', function () {
     return response()->download($file_path, $file_name);
 });
 
-Route::post('bank_ofx_import', 'CustomController@bankofxImport');
+Route::post('bank_ofx_import', [CustomController::class, 'bankofxImport']);
 
 Route::any('download_pricelist_zar', function () {
     $pricelist = \DB::connection('default')->table('crm_pricelists')->where('partner_id', 1)->where('currency', 'ZAR')->get()->first();
@@ -1450,11 +1455,11 @@ Route::any('formio_view/{id?}', function ($id) {
     return view('__app.forms.module_form', $data);
 });
 
-Route::any('formio_adhoc_save', 'CustomController@formioAdhocSave');
-Route::any('formio_adhoc_submit', 'CustomController@formioAdhocSubmit');
+Route::any('formio_adhoc_save', [CustomController::class, 'formioAdhocSave']);
+Route::any('formio_adhoc_submit', [CustomController::class, 'formioAdhocSubmit']);
 
 // formio module forms
-Route::post('formio_calculated_values', 'CustomController@formioCalculatedValues');
+Route::post('formio_calculated_values', [CustomController::class, 'formioCalculatedValues']);
 Route::any('formio_builder/{id?}', function ($id) {
     if (is_superadmin()) {
         $form = \DB::connection('default')->table('erp_adhoc_forms')->where('id', $id)->get()->first();
@@ -1499,10 +1504,10 @@ Route::any('formio_builder_ajax_fields/{id?}', function ($id) {
     return response()->json(['components' => $available_fields, 'component_order' => array_keys($available_fields)]);
 });
 
-Route::any('formio_save', 'CustomController@formioSave');
-Route::any('formio_submit_file/{field_id?}', 'CustomController@formioSubmitFile');
-Route::any('formio_select_options/{field_id?}/{row_val?}', 'CustomController@formioSelectOptions');
-Route::any('syncfusion_select_options/{field_id?}/{row_val?}', 'CustomController@syncfusionSelectOptions');
+Route::any('formio_save', [CustomController::class, 'formioSave']);
+Route::any('formio_submit_file/{field_id?}', [CustomController::class, 'formioSubmitFile']);
+Route::any('formio_select_options/{field_id?}/{row_val?}', [CustomController::class, 'formioSelectOptions']);
+Route::any('syncfusion_select_options/{field_id?}/{row_val?}', [CustomController::class, 'syncfusionSelectOptions']);
 
 Route::any('dashboard_reports/{module_id?}', function ($module_id) {
     $companies_datasource = \DB::connection('system')->table('erp_instances')->select('id', 'name')->get()->toArray();
@@ -1618,7 +1623,7 @@ Route::any('task_reports_load/{report_id?}/{company_id?}/{refresh?}', function (
     }
 });
 
-Route::any('global_search', 'CustomController@globalSearch');
+Route::any('global_search', [CustomController::class, 'globalSearch']);
 
 Route::any('stripo_html/{id?}', function ($id) {
     if ($id == 'default') {
@@ -1686,11 +1691,11 @@ Route::any('stripo_default', function () {
         return view('__app.components.pages.stripo_default', $data);
     }
 });
-Route::any('stripo_save', 'CustomController@stripoSave');
-Route::any('stripo_save_default', 'CustomController@stripoSaveDefault');
+Route::any('stripo_save', [CustomController::class, 'stripoSave']);
+Route::any('stripo_save_default', [CustomController::class, 'stripoSaveDefault']);
 
-Route::get('airtime_form', 'CustomController@airtimeForm');
-Route::post('airtime_form_post', 'CustomController@airtimeFormPost');
+Route::get('airtime_form', [CustomController::class, 'airtimeForm']);
+Route::post('airtime_form_post', [CustomController::class, 'airtimeFormPost']);
 
 Route::any('make_payment', function () {
     if (! session('account_id')) {
@@ -1964,7 +1969,7 @@ Route::any('gitcommit', function () {
     }
 });
 
-Route::get('support_helpdesk', 'IntegrationsController@helpdesk');
+Route::get('support_helpdesk', [IntegrationsController::class, 'helpdesk']);
 /*
 Route::get('helpdesk', function () {
     return redirect()->to('freescout_login');
@@ -2133,10 +2138,10 @@ Route::get('company_info_edit', function () {
         return view('__app.button_views.company_info', $data);
     }
 });
-Route::post('company_info_edit', 'CustomController@companyInfoEdit');
+Route::post('company_info_edit', [CustomController::class, 'companyInfoEdit']);
 
-Route::post('electricity_recovered', 'CustomController@electricityRecovered');
-Route::post('ledger_rebuild', 'CustomController@ledgerRebuild');
+Route::post('electricity_recovered', [CustomController::class, 'electricityRecovered']);
+Route::post('ledger_rebuild', [CustomController::class, 'ledgerRebuild']);
 
 /** STATEMENTS **/
 Route::any('document_download/{file?}', function ($file = false) {
@@ -2668,7 +2673,7 @@ Route::any('restore_supplier/{id?}', function ($id) {
     }
 });
 
-Route::post('supplier_recon', 'CustomController@supplierRecon');
+Route::post('supplier_recon', [CustomController::class, 'supplierRecon']);
 
 Route::get('bulkemailprogress', function () {
     $percentage = \Storage::disk('local')->get('bulkemailprogress');
@@ -2676,7 +2681,7 @@ Route::get('bulkemailprogress', function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('logs', 'LogController@index');
+    Route::get('logs', [LogController::class, 'index']);
 });
 
 Route::any('systemchangespopup/{id?}', function ($account_id) {
@@ -3027,7 +3032,7 @@ Route::any('supplier_products/{account_id?}/{type?}', function ($account_id, $ty
     return response()->json($product_list);
 });
 
-Route::post('form_products_update', 'CustomController@formProductsUpdate');
+Route::post('form_products_update', [CustomController::class, 'formProductsUpdate']);
 
 Route::any('delete_grid_config/{config_id}', function ($config_id) {
     $grid_view = \DB::table('erp_grid_views')->where('id', $config_id)->get()->first();
@@ -3079,9 +3084,9 @@ Route::get('download_import_file_sample/{module_id}', function ($module_id) {
     return response()->download($file_path, $file_name);
 });
 
-Route::post('cdr_archive_table', 'CustomController@setCDRArchive');
-Route::post('process_billing', 'CustomController@processBilling');
-Route::post('save_grid_config', 'CustomController@saveGridView');
+Route::post('cdr_archive_table', [CustomController::class, 'setCDRArchive']);
+Route::post('process_billing', [CustomController::class, 'processBilling']);
+Route::post('save_grid_config', [CustomController::class, 'saveGridView']);
 
 Route::get('module_field_toggle_totals/{status?}/{field_id?}', function ($status, $field_id) {
     \DB::table('erp_module_fields')->where('id', $field_id)->update(['pinned_row_total' => $status]);

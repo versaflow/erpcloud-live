@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\IntegrationsController;
+use Illuminate\Support\Facades\Route;
+
 Route::get('test_layout_export', function () {
     $file_path = export_billing_summary_layout(575);
 
@@ -210,7 +213,7 @@ Route::any('aggrid_demo', function () {
     return view('__app.test.aggrid_demo', $data);
 });
 
-Route::any('agrid_demodata', 'IntegrationsController@agridData');
+Route::any('agrid_demodata', [IntegrationsController::class, 'agridData']);
 
 Route::any('test_exception', function () {
     // try {
@@ -297,8 +300,8 @@ Route::any('iframe_test', function () {
     echo '<iframe src="https://reports.cloudtelecoms.io/?token=eyJ1bnN0YWmjZV91ZCoIMSw4cpVwbgJ0Xi3koj24Mjkmo4w4dXN3c391ZCoIMzYmNn0=" width="100%" frameborder="0px" height="400px" onerror="alert(\'Failed\')" style="margin-bottom:-5px;"><!-- //required for browser compatibility --></iframe> ';
 });
 
-Route::any('mailbox', 'IntegrationsController@mailBox');
-Route::any('mailbox_data', 'IntegrationsController@mailBoxData');
+Route::any('mailbox', [IntegrationsController::class, 'mailBox']);
+Route::any('mailbox_data', [IntegrationsController::class, 'mailBoxData']);
 
 Route::any('last_active/{id?}', function ($id) {
     if (is_dev()) {
